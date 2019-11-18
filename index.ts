@@ -2,7 +2,7 @@ import { AnyField, Fields } from "@phosphor/datastore";
 import { ReadonlyJSONObject } from "@phosphor/coreutils";
 
 // Q: Do we add "refrefsh xxx" method?
-// N: No we automatically refresh on the server.
+// N: Yes. 
 
 // Q: Do we fully normalize into tables?
 // A: No, only enough to allow collaboration.
@@ -31,6 +31,15 @@ export const TABLES: { [id: string]: { [name: string]: AnyField } } = {
           };
         };
       };
+    }>({ value: null })
+  },
+  status: {
+    // Table with only one row
+    status: Fields.Register<null | {
+      started: string;
+      last_activity: string;
+      connections: number;
+      kernels: number;
     }>({ value: null })
   }
 };

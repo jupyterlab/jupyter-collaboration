@@ -9,9 +9,16 @@ from typing import *
 app = FastAPI()
 
 
-# @app.post("/refresh_kernelspecs")
-# def refresh_kernelspecs(kernel_id: Optional[str] = None):
-#     """
-#     Update the kernelspecs table.
-#     """
-#     ...
+@app.post("/refresh_kernelspecs")
+def refresh_kernelspecs():
+    """
+    Update the kernelspecs table.
+    """
+    ...
+
+@app.post("/refresh_status")
+def refresh_status():
+    """
+    Update the status table.
+    """
+    ...
