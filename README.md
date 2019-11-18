@@ -4,6 +4,18 @@
 ![](./diagram.png)
 
 
+- [ ] Finish API spec
+  - [x] kernelspecs
+  - [x] status
+  - [x] terminals
+  - [x] kernels
+  - [ ] sessions
+  - [ ] contents
+  - [ ] config
+  - [ ] api-spec
+  - [ ] See if we need to add any for comm messages
+- [ ] Look into ORM on top of tables, using Ian's work
+- [ ] Spell out undo/redo behavior
 
 ## `jupyterlab/lumino-datastore`
 
