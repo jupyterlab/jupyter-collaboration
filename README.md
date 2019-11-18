@@ -1,7 +1,7 @@
 # JupyterLab Real Time Collaboration Plan!
 
 
-![](./diagram)
+![](./diagram.png)
 
 
 
