@@ -9,7 +9,7 @@
   - [x] status
   - [x] terminals
   - [x] kernels
-  - [ ] sessions
+  - [x] sessions
   - [ ] contents
   - [ ] config
   - [ ] api-spec

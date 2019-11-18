@@ -46,5 +46,11 @@ export const TABLES: { [id: string]: { [name: string]: AnyField } } = {
     last_activity: Fields.String(),
     connections: Fields.Number(),
     execution_state: Fields.Number()
+  },
+  sessions: {
+    path: Fields.String(),
+    name: Fields.String(),
+    type: Fields.String(),
+    kernel_id: Fields.String(),
   }
 };

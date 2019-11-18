@@ -6,6 +6,7 @@ is nicer than writing YAML!
 from fastapi import FastAPI
 from typing import *
 from dataclasses import dataclass
+import json
 
 app = FastAPI()
 
@@ -74,12 +75,48 @@ def interrupt_kernel(id: str) -> None:
     ...
 
 
-@app.post("/kernels/restart")
-def restart_kernel(id: str) -> None:
+@app.post("/sessions/refresh")
+def refresh_sessions() -> None:
     """
-    Restarts a kernel
+    Refresh sessions.
     """
     ...
 
 
-print(app.openapi())
+@app.delete("/sessions")
+def delete_sessions(id: str) -> None:
+    """
+    Deletes a session.
+    """
+    ...
+
+
+@app.post("/sessions", response_model=str)
+def create_session(
+    path: str,
+    type: str,
+    name: Optional[str] = None,
+    kernel_name: Optional[str] = None,
+    kernel_id: Optional[str] = None,
+) -> str:
+    """
+    Creates a new session or returns existing one if path exists
+    """
+    ...
+
+
+@app.patch("/sessions")
+def update_session(
+    id: str,
+    path: Optional[str] = None,
+    name: Optional[str] = None,
+    type: Optional[str] = None,
+    kernel_name: Optional[str] = None,
+    kernel_id: Optional[str] = None,
+) -> None:
+    """
+    Updates an existing session.
+    """
+    ...
+
+print(json.dumps(app.openapi()))

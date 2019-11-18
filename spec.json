@@ -33,7 +33,14 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response_Create_Terminal_Terminals_Post",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "summary": "Create Terminal",
@@ -60,7 +67,7 @@
         "operationId": "delete_terminal_terminals_delete",
         "parameters": [
           {
-            "required": True,
+            "required": true,
             "schema": { "title": "Name", "type": "string" },
             "name": "name",
             "in": "query"
@@ -109,7 +116,7 @@
         "operationId": "create_kernel_kernels_post",
         "parameters": [
           {
-            "required": True,
+            "required": true,
             "schema": { "title": "Name", "type": "string" },
             "name": "name",
             "in": "query"
@@ -136,7 +143,7 @@
         "operationId": "delete_kernel_kernels_delete",
         "parameters": [
           {
-            "required": True,
+            "required": true,
             "schema": { "title": "Id", "type": "string" },
             "name": "id",
             "in": "query"
@@ -165,7 +172,7 @@
         "operationId": "interrupt_kernel_kernels_interrupt_post",
         "parameters": [
           {
-            "required": True,
+            "required": true,
             "schema": { "title": "Id", "type": "string" },
             "name": "id",
             "in": "query"
@@ -173,8 +180,79 @@
         ]
       }
     },
-    "/kernels/restart": {
+    "/sessions/refresh": {
       "post": {
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        },
+        "summary": "Refresh Sessions",
+        "description": "Refresh sessions.",
+        "operationId": "refresh_sessions_sessions_refresh_post"
+      }
+    },
+    "/sessions": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response_Create_Session_Sessions_Post",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "summary": "Create Session",
+        "description": "Creates a new session or returns existing one if path exists",
+        "operationId": "create_session_sessions_post",
+        "parameters": [
+          {
+            "required": true,
+            "schema": { "title": "Path", "type": "string" },
+            "name": "path",
+            "in": "query"
+          },
+          {
+            "required": true,
+            "schema": { "title": "Type", "type": "string" },
+            "name": "type",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": { "title": "Name", "type": "string" },
+            "name": "name",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": { "title": "Kernel_Name", "type": "string" },
+            "name": "kernel_name",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": { "title": "Kernel_Id", "type": "string" },
+            "name": "kernel_id",
+            "in": "query"
+          }
+        ]
+      },
+      "delete": {
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -189,14 +267,71 @@
             }
           }
         },
-        "summary": "Restart Kernel",
-        "description": "Restarts a kernel",
-        "operationId": "restart_kernel_kernels_restart_post",
+        "summary": "Delete Sessions",
+        "description": "Deletes a session.",
+        "operationId": "delete_sessions_sessions_delete",
         "parameters": [
           {
-            "required": True,
+            "required": true,
             "schema": { "title": "Id", "type": "string" },
             "name": "id",
+            "in": "query"
+          }
+        ]
+      },
+      "patch": {
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "summary": "Update Session",
+        "description": "Updates an existing session.",
+        "operationId": "update_session_sessions_patch",
+        "parameters": [
+          {
+            "required": true,
+            "schema": { "title": "Id", "type": "string" },
+            "name": "id",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": { "title": "Path", "type": "string" },
+            "name": "path",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": { "title": "Name", "type": "string" },
+            "name": "name",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": { "title": "Type", "type": "string" },
+            "name": "type",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": { "title": "Kernel_Name", "type": "string" },
+            "name": "kernel_name",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": { "title": "Kernel_Id", "type": "string" },
+            "name": "kernel_id",
             "in": "query"
           }
         ]
