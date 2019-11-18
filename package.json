@@ -1,0 +1,13 @@
+{
+  "name": "jupyter-datastore",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Saul Shanabrook <s.shanabrook@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "3.7.2"
+  },
+  "dependencies": {
+    "@phosphor/datastore": "0.8.0"
+  }
+}
