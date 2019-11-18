@@ -6,3 +6,10 @@ http://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/notebo
 
 https://github.com/jupyter/jupyter/wiki/Jupyter-Notebook-Server-API
 
+
+Generating spec:
+
+
+```bash
+python main.py > spec.json
+```

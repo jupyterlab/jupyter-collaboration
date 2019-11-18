@@ -1,0 +1,235 @@
+{
+  "openapi": "3.0.2",
+  "info": { "title": "Fast API", "version": "0.1.0" },
+  "paths": {
+    "/kernelspecs/refresh": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        },
+        "summary": "Refresh Kernelspecs",
+        "description": "Update the kernelspecs table.",
+        "operationId": "refresh_kernelspecs_kernelspecs_refresh_post"
+      }
+    },
+    "/status/refresh": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        },
+        "summary": "Refresh Status",
+        "description": "Update the status table.",
+        "operationId": "refresh_status_status_refresh_post"
+      }
+    },
+    "/terminals": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        },
+        "summary": "Create Terminal",
+        "description": "Creates a new terminal and returns the name.",
+        "operationId": "create_terminal_terminals_post"
+      },
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "summary": "Delete Terminal",
+        "description": "Deletes a terminal.",
+        "operationId": "delete_terminal_terminals_delete",
+        "parameters": [
+          {
+            "required": True,
+            "schema": { "title": "Name", "type": "string" },
+            "name": "name",
+            "in": "query"
+          }
+        ]
+      }
+    },
+    "/kernels/refresh": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        },
+        "summary": "Refresh Kernels",
+        "description": "Update the kernels table.",
+        "operationId": "refresh_kernels_kernels_refresh_post"
+      }
+    },
+    "/kernels": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response_Create_Kernel_Kernels_Post",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "summary": "Create Kernel",
+        "description": "Creates a new kernel and returns the ID",
+        "operationId": "create_kernel_kernels_post",
+        "parameters": [
+          {
+            "required": True,
+            "schema": { "title": "Name", "type": "string" },
+            "name": "name",
+            "in": "query"
+          }
+        ]
+      },
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "summary": "Delete Kernel",
+        "description": "Kills a kernel",
+        "operationId": "delete_kernel_kernels_delete",
+        "parameters": [
+          {
+            "required": True,
+            "schema": { "title": "Id", "type": "string" },
+            "name": "id",
+            "in": "query"
+          }
+        ]
+      }
+    },
+    "/kernels/interrupt": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "summary": "Interrupt Kernel",
+        "description": "Interrupts a kernel",
+        "operationId": "interrupt_kernel_kernels_interrupt_post",
+        "parameters": [
+          {
+            "required": True,
+            "schema": { "title": "Id", "type": "string" },
+            "name": "id",
+            "in": "query"
+          }
+        ]
+      }
+    },
+    "/kernels/restart": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "summary": "Restart Kernel",
+        "description": "Restarts a kernel",
+        "operationId": "restart_kernel_kernels_restart_post",
+        "parameters": [
+          {
+            "required": True,
+            "schema": { "title": "Id", "type": "string" },
+            "name": "id",
+            "in": "query"
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "title": "HTTPValidationError",
+        "type": "object",
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ValidationError" }
+          }
+        }
+      },
+      "ValidationError": {
+        "title": "ValidationError",
+        "required": ["loc", "msg", "type"],
+        "type": "object",
+        "properties": {
+          "loc": {
+            "title": "Location",
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "msg": { "title": "Message", "type": "string" },
+          "type": { "title": "Error Type", "type": "string" }
+        }
+      }
+    }
+  }
+}
