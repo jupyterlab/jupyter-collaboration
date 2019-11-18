@@ -1,12 +1,36 @@
 import { AnyField, Fields } from "@phosphor/datastore";
+import { ReadonlyJSONObject } from "@phosphor/coreutils";
+
+// Q: Do we add "refrefsh xxx" method?
+// N: No we automatically refresh on the server.
+
+// Q: Do we fully normalize into tables?
+// A: No, only enough to allow collaboration.
+//    So anything that might need to be merged should be its own field.
 
 export const TABLES: { [id: string]: { [name: string]: AnyField } } = {
   kernelspecs: {
-    // path for kernel.js file
-    kernelJS: Fields.String(),
-    // path for kernel.css file
-    kernelCSS: Fields.String(),
-    // mapping from `widthxheight` to filename
-    logos: Fields.Map<string>()
+    // Table with only one row
+    kernelspecs: Fields.Register<null | {
+      default: string;
+      kernelspecs: {
+        [filename: string]: {
+          name: string;
+          KernelSpecFile: {
+            language: string;
+            argv: Array<string>;
+            display_name: string;
+            codemirror_mode: string | null | ReadonlyJSONObject;
+            env: null | { [env_var: string]: string };
+            help_links: Array<{ text: string; url: string }>;
+          };
+          resources: {
+            "kernel.js": string;
+            "kernel.css": string;
+            logos: { [widthxheight: string]: string };
+          };
+        };
+      };
+    }>({ value: null })
   }
 };

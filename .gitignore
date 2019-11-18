@@ -2,3 +2,4 @@ node_modules
 yarn.lock
 .vscode
 .mypy_cache
+*.code-workspace
