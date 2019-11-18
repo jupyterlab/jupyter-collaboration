@@ -4,7 +4,7 @@
 ![](./diagram.png)
 
 
-- [ ] Finish API spec
+- [ ] `jupyterlab/jupyter-datastore` API spec
   - [x] kernelspecs
   - [x] status
   - [x] terminals
@@ -14,8 +14,11 @@
   - [ ] config
   - [ ] api-spec
   - [ ] See if we need to add any for comm messages
+- [ ]  `jupyterlab/lumino-datastore` API spec
+  - [ ] Create API spec based on Vidar's work
 - [ ] Look into ORM on top of tables, using Ian's work
-- [ ] Spell out undo/redo behavior
+- [ ] Think about undo/redo behavior!
+- [ ] Think about users and permissioning!
 
 ## `jupyterlab/lumino-datastore`
 
