@@ -2,7 +2,7 @@ import { AnyField, Fields } from "@phosphor/datastore";
 import { ReadonlyJSONObject } from "@phosphor/coreutils";
 
 // Q: Do we add "refrefsh xxx" method?
-// N: Yes. 
+// N: Yes.
 
 // Q: Do we fully normalize into tables?
 // A: No, only enough to allow collaboration.
@@ -41,5 +41,8 @@ export const TABLES: { [id: string]: { [name: string]: AnyField } } = {
       connections: number;
       kernels: number;
     }>({ value: null })
+  },
+  terminals: {
+    name: Fields.String()
   }
 };
