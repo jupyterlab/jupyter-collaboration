@@ -1,6 +1,37 @@
-https://jupyter-client.readthedocs.io/en/stable/messaging.html
+# JupyterLab Real Time Collaboration Plan!
 
-https://hackmd.io/gPIgfHQuStW-6J0hGg9Uag
+
+![](./diagram)
+
+
+
+## `jupyterlab/lumino-datastore`
+
+
+
+
+
+## `jupyterlab/jupyter-datastore`
+
+The Jupyter Datastore package gives you an up to date data model of the Jupyter Server data structures in your browser. It also provides an interface to take actions on the Jupyter Server.
+
+It is meant to be a building block for any Jupyter web UIs.
+
+Goals:
+
+* Save notebook outputs even when client is closed
+* Add undo/redo
+* Sync models between browser windows
+
+
+RTC models in `./spec.ts`
+
+API spec in `main.py`, translated to OpenAPI spec in `spec.json` which will be implemented in Node.
+
+---
+
+
+https://jupyter-client.readthedocs.io/en/stable/messaging.html
 
 http://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/notebook/master/notebook/services/api/api.yaml#/contents/post_api_contents__path_
 
