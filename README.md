@@ -11,6 +11,7 @@ of the kernel websocket methods as REST calls.
 
 ## Why?
 
+- Keep models updated when clients are closed.
 - Reduce complexity on the clients.
 - Works with existing infrastructure, i.e. Jupyter Server; doesn't disrupt old way to interact with server (can be run side-by-side).
 - Single source of truth datastore on the server.
