@@ -342,7 +342,14 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response_Refresh_Content_Content_Refresh_Post",
+                  "type": "string"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -354,7 +361,7 @@
           }
         },
         "summary": "Refresh Content",
-        "description": "Updates an existing session.",
+        "description": "Updates the content and returns the ID",
         "operationId": "refresh_content_content_refresh_post",
         "parameters": [
           {
@@ -383,6 +390,120 @@
             "required": false,
             "schema": { "title": "Format", "type": "string" },
             "name": "format",
+            "in": "query"
+          }
+        ]
+      }
+    },
+    "/content": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response_Create_Content_Content_Post",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "summary": "Create Content",
+        "description": "Creates new content and returns the ID.",
+        "operationId": "create_content_content_post",
+        "parameters": [
+          {
+            "required": false,
+            "schema": { "title": "Copy_From", "type": "string" },
+            "name": "copy_from",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": { "title": "Ext", "type": "string" },
+            "name": "ext",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": { "title": "Type", "type": "string" },
+            "name": "type",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": { "title": "Path", "type": "string", "default": "" },
+            "name": "path",
+            "in": "query"
+          }
+        ]
+      },
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "summary": "Delete Content",
+        "description": "Deletes the content",
+        "operationId": "delete_content_content_delete",
+        "parameters": [
+          {
+            "required": true,
+            "schema": { "title": "Id", "type": "string" },
+            "name": "id",
+            "in": "query"
+          }
+        ]
+      },
+      "patch": {
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "summary": "Rename Content",
+        "description": "Renames the content",
+        "operationId": "rename_content_content_patch",
+        "parameters": [
+          {
+            "required": true,
+            "schema": { "title": "Id", "type": "string" },
+            "name": "id",
+            "in": "query"
+          },
+          {
+            "required": true,
+            "schema": { "title": "New_Path", "type": "string" },
+            "name": "new_path",
             "in": "query"
           }
         ]

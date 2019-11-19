@@ -3,6 +3,33 @@ Describe API in fast API then translate to openapi b/c writing python
 is nicer than writing YAML!
 """
 
+# TODO: Make requests the same
+
+# CONFIG: refresh every x seconds
+
+# https://resgate.io/
+# https://www.cncf.io/blog/2018/10/24/grpc-web-is-going-ga/
+# https://wamp-proto.org/
+
+
+# TOD
+# Make API the same.
+# Responses can change
+
+
+# Websockets?
+# Need to change execute
+
+# Add a new API
+
+# Consoles?
+# Store history of request/response in datastore?
+
+# New websocket is just a cell to put output.
+
+# Rewrite all
+
+# Need websockets for `execute_input` and comms.
 from fastapi import FastAPI
 from typing import *
 import json

@@ -13,6 +13,8 @@ import { nbformat } from "@jupyterlab/coreutils";
 // Q: Where should selections go?
 // A: ?
 
+
+
 // Q: Should output refer to cells or vice versa?
 // A: ?
 
@@ -21,6 +23,8 @@ import { nbformat } from "@jupyterlab/coreutils";
 
 // Q: Should we use REST or websockets?
 // A: https://www.cncf.io/blog/2018/04/12/crcp-the-curiously-reoccurring-communications-pattern/
+// https://github.com/wamp-proto/wamp-proto
+// https://nats.io/blog/resgate_nats/
 export const TABLES: { [id: string]: { [name: string]: AnyField } } = {
   kernelspecs: {
     // have all as one field instead of many fields, because won't ever change this
