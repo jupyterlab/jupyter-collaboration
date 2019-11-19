@@ -14,7 +14,10 @@ import { nbformat } from "@jupyterlab/coreutils";
 // A: ?
 
 // Q: Should output refer to cells or vice versa?
+// A: ?
 
+// Q: Why does this have to proxy all iopub messages?
+// A: So that it can keep kernel state up to date: https://jupyter-client.readthedocs.io/en/stable/messaging.html#request-reply
 export const TABLES: { [id: string]: { [name: string]: AnyField } } = {
   kernelspecs: {
     // have all as one field instead of many fields, because won't ever change this
