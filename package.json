@@ -8,6 +8,7 @@
     "typescript": "3.7.2"
   },
   "dependencies": {
+    "@jupyterlab/coreutils": "3.2.0",
     "@phosphor/datastore": "0.8.0"
   }
 }

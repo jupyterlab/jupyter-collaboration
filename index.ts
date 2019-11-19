@@ -1,5 +1,6 @@
 import { AnyField, Fields } from "@phosphor/datastore";
-import { ReadonlyJSONObject } from "@phosphor/coreutils";
+import { ReadonlyJSONObject, ReadonlyJSONValue } from "@phosphor/coreutils";
+import { nbformat } from "@jupyterlab/coreutils";
 
 // Q: Do we add "refrefsh xxx" method?
 // N: Yes.
@@ -8,6 +9,11 @@ import { ReadonlyJSONObject } from "@phosphor/coreutils";
 // A: No, only enough to allow collaboration.
 //    So anything that might need to be merged should be its own field.
 //    Also, we want to minimize the size of diffs.
+
+// Q: Where should selections go?
+// A: ?
+
+// Q: Should output refer to cells or vice versa?
 
 export const TABLES: { [id: string]: { [name: string]: AnyField } } = {
   kernelspecs: {
@@ -51,6 +57,64 @@ export const TABLES: { [id: string]: { [name: string]: AnyField } } = {
     path: Fields.String(),
     name: Fields.String(),
     type: Fields.String(),
-    kernel_id: Fields.String(),
+    kernel_id: Fields.String()
+  },
+
+  contents: {
+    name: Fields.String(),
+    path: Fields.String(),
+    type: Fields.Register<null | "directory" | "file" | "notebook">({
+      value: null
+    }),
+    writeable: Fields.Boolean(),
+    created: Fields.String(),
+    last_modified: Fields.String(),
+    size: Fields.Register<null | number>({
+      value: null
+    }),
+    mimetype: Fields.Register<null | string>({
+      value: null
+    }),
+    format: Fields.Register<null | "text" | "base64" | "notebook">({
+      value: null
+    })
+  },
+  text_content: {
+    // Should relation be to content or from this one?
+    content_id: Fields.String(),
+    content: Fields.Text()
+  },
+  base64_content: {
+    content_id: Fields.String(),
+    content: Fields.String()
+  },
+  folders: {
+    content_id: Fields.String(),
+    content: Fields.List<string>()
+  },
+  notebooks: {
+    content_id: Fields.String(),
+    nbformat: Fields.Number(),
+    nbformatMinor: Fields.Number(),
+    cells: Fields.List<string>(),
+    metadata: Fields.Map<ReadonlyJSONValue>()
+  },
+  cells: {
+    attachments: Fields.Map<nbformat.IMimeBundle>(),
+    executionCount: Fields.Register<nbformat.ExecutionCount>({ value: null }),
+    metadata: Fields.Map<ReadonlyJSONValue>(),
+    mimeType: Fields.String(),
+    outputs: Fields.List<string>(),
+    text: Fields.Text(),
+    trusted: Fields.Boolean(),
+    type: Fields.Register<nbformat.CellType>({ value: "code" })
+  },
+  outputs: {
+    trusted: Fields.Boolean(),
+    type: Fields.String(),
+    executionCount: Fields.Register<nbformat.ExecutionCount>({ value: null }),
+    data: Fields.Register<ReadonlyJSONObject>({ value: {} }),
+    metadata: Fields.Register<ReadonlyJSONObject>({ value: {} }),
+    raw: Fields.Register<ReadonlyJSONObject>({ value: {} })
   }
 };

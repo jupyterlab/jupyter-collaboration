@@ -336,6 +336,57 @@
           }
         ]
       }
+    },
+    "/content/refresh": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "summary": "Refresh Content",
+        "description": "Updates an existing session.",
+        "operationId": "refresh_content_content_refresh_post",
+        "parameters": [
+          {
+            "required": true,
+            "schema": { "title": "Path", "type": "string" },
+            "name": "path",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "title": "Content",
+              "type": "boolean",
+              "default": false
+            },
+            "name": "content",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": { "title": "Type", "type": "string" },
+            "name": "type",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": { "title": "Format", "type": "string" },
+            "name": "format",
+            "in": "query"
+          }
+        ]
+      }
     }
   },
   "components": {

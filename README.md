@@ -10,7 +10,7 @@
   - [x] terminals
   - [x] kernels
   - [x] sessions
-  - [ ] contents
+  - [x] contents
   - [ ] config
   - [ ] api-spec
   - [ ] See if we need to add any for comm messages

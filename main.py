@@ -5,7 +5,6 @@ is nicer than writing YAML!
 
 from fastapi import FastAPI
 from typing import *
-from dataclasses import dataclass
 import json
 
 app = FastAPI()
@@ -118,5 +117,48 @@ def update_session(
     Updates an existing session.
     """
     ...
+
+
+@app.post("/content/refresh", response_model=str)
+def refresh_content(
+    path: str,
+    content: Optional[bool] = False,
+    type: Optional[str] = None,
+    format: Optional[str] = None,
+) -> str:
+    """
+    Updates the content and returns the ID
+    """
+    ...
+
+
+@app.post("/content", response_model=str)
+def create_content(
+    copy_from: Optional[str] = None,
+    ext: Optional[str] = None,
+    type: Optional[str] = None,
+    path: str = "",
+) -> str:
+    """
+    Creates new content and returns the ID.
+    """
+    ...
+
+
+@app.delete("/content")
+def delete_content(id: str) -> None:
+    """
+    Deletes the content
+    """
+    ...
+
+
+@app.patch("/content")
+def rename_content(id: str, new_path: str) -> None:
+    """
+    Renames the content
+    """
+    ...
+
 
 print(json.dumps(app.openapi()))
