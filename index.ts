@@ -18,6 +18,9 @@ import { nbformat } from "@jupyterlab/coreutils";
 
 // Q: Why does this have to proxy all iopub messages?
 // A: So that it can keep kernel state up to date: https://jupyter-client.readthedocs.io/en/stable/messaging.html#request-reply
+
+// Q: Should we use REST or websockets?
+// A: https://www.cncf.io/blog/2018/04/12/crcp-the-curiously-reoccurring-communications-pattern/
 export const TABLES: { [id: string]: { [name: string]: AnyField } } = {
   kernelspecs: {
     // have all as one field instead of many fields, because won't ever change this
