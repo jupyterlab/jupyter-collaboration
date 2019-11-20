@@ -32,6 +32,11 @@ of the kernel websocket methods as REST calls.
   - [ ] Add a table for kernel executions (for consoles)
   - [ ] Deal with `request_input`, either in websockets or CRDT.
   - [ ] Spec out websockets for comms
+  - [ ] Add config for refresh
+- [ ] Research alternative communication layers
+  - [ ] https://resgate.io/
+  - [ ] https://www.cncf.io/blog/2018/10/24/grpc-web-is-going-ga/
+  - [ ] https://wamp-proto.org/
 - [ ] `jupyterlab/lumino-datastore` API spec
   - [ ] Create API spec based on Vidar's work
 - [ ] Look into ORM on top of tables, using Ian's work
