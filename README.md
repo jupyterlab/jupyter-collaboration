@@ -1,5 +1,18 @@
 # Real Time Collaboration
 
+This monorepo contains current work on Real Time collaboration for use in JupyterLab and other web applications.
+
+It is currently in the planning stage, but eventually we see it containing a number of seperate projects like:
+
+* `js/rtc-client`: Real time collaboration client in Javascript, builds on `@lumino/datastore`
+* `py/rtc_relay`: Python patch relay server to syncrhonize patches for `js/rtc-client`
+* `js/jupyter-rtc`: Holds schema for Jupyter RTC tables that are used in server and client.
+* `js/jupyter-rtc-server`: Server to keep datastore in sync with jupyter server.
+* `js/jupyter-rtc-client`: Client to access Jupyter data, uses `py/rtc_relay
+
+Most of the work currently is living in [a PR to JupyterLab](https://github.com/jupyterlab/jupyterlab/pull/6871) and documented on [an issue](https://github.com/jupyterlab/jupyterlab/issues/5382) there.
+
+
 ## Comparison
 
 Our current approach is to handle all communication on the clients. Alternatively,
@@ -61,23 +74,16 @@ Goals:
 
 RTC models in [`./spec.ts`](./spec.ts)
 
-## API spec in [`main.py`](./main.py), translated to OpenAPI spec in [`spec.json`](./spec.json) which will be implemented in Node.
+API spec in [`main.py`](./main.py), translated to OpenAPI spec in [`spec.json`](./spec.json) which will be implemented in Node.
 
-https://jupyter-client.readthedocs.io/en/stable/messaging.html
+Resources:
 
-http://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/notebook/master/notebook/services/api/api.yaml#/contents/post_api_contents__path_
-
-https://github.com/jupyter/jupyter/wiki/Jupyter-Notebook-Server-API
+* https://jupyter-client.readthedocs.io/en/stable/messaging.html
+* http://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/notebook/master/notebook/services/api/api.yaml#/contents/post_api_contents__path_
+* https://github.com/jupyter/jupyter/wiki/Jupyter-Notebook-Server-API
 
 Generating spec:
 
 ```bash
 python main.py > spec.json
 ```
-This monorepo contains current work on Real Time collaboration for use in JupyterLab and other web applications.
-
-* `js/rtc-client`: Real time collaboration client in Javascript, builds on `@lumino/datastore`
-* `py/rtc_relay`: Python patch relay server to syncrhonize patches for `js/rtc-client`
-* `js/jupyter-rtc`: Holds schema for Jupyter RTC tables that are used in server and client.
-* `js/jupyter-rtc-server`: Server to keep datastore in sync with jupyter server.
-* `js/jupyter-rtc-client`: Client to access Jupyter data, uses `py/rtc_relay
