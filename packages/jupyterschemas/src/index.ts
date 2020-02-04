@@ -1,6 +1,6 @@
-import { AnyField, Fields } from "@phosphor/datastore";
-import { ReadonlyJSONObject, ReadonlyJSONValue } from "@phosphor/coreutils";
-import { nbformat } from "@jupyterlab/coreutils";
+import { AnyField, Fields } from "@lumino/datastore";
+import { ReadonlyJSONObject, ReadonlyJSONValue } from "@lumino/coreutils";
+import * as nbformat from "@jupyterlab/nbformat";
 
 // Q: Do we add "refrefsh xxx" method?
 // N: Yes.
@@ -12,8 +12,6 @@ import { nbformat } from "@jupyterlab/coreutils";
 
 // Q: Where should selections go?
 // A: ?
-
-
 
 // Q: Should output refer to cells or vice versa?
 // A: ?
@@ -110,7 +108,7 @@ export const TABLES: { [id: string]: { [name: string]: AnyField } } = {
     metadata: Fields.Map<ReadonlyJSONValue>()
   },
   cells: {
-    attachments: Fields.Map<nbformat.IMimeBundle>(),
+    attachments: Fields.Map<ReadonlyJSONObject>(),
     executionCount: Fields.Register<nbformat.ExecutionCount>({ value: null }),
     metadata: Fields.Map<ReadonlyJSONValue>(),
     mimeType: Fields.String(),
