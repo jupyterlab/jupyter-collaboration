@@ -6,7 +6,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
-    - run: yarn
+    - name: Installl Firefox
+      run: sudo apt-get install firefox
     - run: yarn run build
     - run: yarn run build:test
-    - run: yarn run test
+    - run: yarn run test:firefox:headless
