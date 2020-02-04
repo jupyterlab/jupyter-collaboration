@@ -9,12 +9,8 @@
 |----------------------------------------------------------------------------*/
 
 import {
-  IIterator, map, StringExt, toArray, toObject
+  each, IIterator, map, toArray, toObject
 } from '@lumino/algorithm';
-
-import {
-  BPlusTree
-} from '@lumino/collections';
 
 import {
   UUID
@@ -33,7 +29,7 @@ import {
 } from '@lumino/signaling';
 
 import {
-  IDatastore, ITable
+  IDatastore
 } from './interface';
 
 import {
@@ -41,8 +37,8 @@ import {
 } from './table';
 
 
-export class DummyStore implements IDatastore, IMessageHandler {
-  static create(options: IDatastore.IOptions): DummyStore {
+export class Dummystore implements IDatastore, IMessageHandler {
+  static create(options: IDatastore.IOptions): Dummystore {
     let {schemas} = options;
     // Throws an error for invalid schemas:
     Private.validateSchemas(schemas);
@@ -56,13 +52,13 @@ export class DummyStore implements IDatastore, IMessageHandler {
       patch: {},
     };
 
-    let tables = new BPlusTree<Table<Schema>>(Private.recordCmp);
+    let tables = {} as {[key: string]: Table<Schema>};
     // Otherwise, simply create a new, empty table
-    tables.assign(map(schemas, s => {
-      return Table.create(s, context);
-    }));
+    each(schemas, s => {
+      tables[s.id] = Table.create(s, context);
+    });
 
-    return new DummyStore(context, tables);
+    return new Dummystore(context, tables);
   }
 
 
@@ -147,7 +143,7 @@ export class DummyStore implements IDatastore, IMessageHandler {
    * @returns An iterator.
    */
   iter(): IIterator<Table<Schema>> {
-    return this._tables.iter();
+    return map(Object.keys(this._tables), key => this._tables[key]);
   }
 
   /**
@@ -163,7 +159,7 @@ export class DummyStore implements IDatastore, IMessageHandler {
    * `O(log32 n)`
    */
   get<S extends Schema>(schema: S): Table<S> {
-    let t = this._tables.get(schema.id, Private.recordIdCmp);
+    let t = this._tables[schema.id];
     if (t === undefined) {
       throw new Error(`No table found for schema with id: ${schema.id}`);
     }
@@ -291,7 +287,7 @@ export class DummyStore implements IDatastore, IMessageHandler {
    */
   private constructor(
     context: Datastore.Context,
-    tables: BPlusTree<Table<Schema>>,
+    tables: {[key: string]: Table<Schema>},
   ) {
     this._context = context;
     this._tables = tables;
@@ -330,7 +326,7 @@ export class DummyStore implements IDatastore, IMessageHandler {
   }
 
   private _disposed = false;
-  private _tables: BPlusTree<Table<Schema>>;
+  private _tables: {[key: string]: Table<Schema>};
   private _context: Datastore.Context;
   private _changed = new Signal<IDatastore, Datastore.IChangedArgs>(this);
 }
@@ -352,22 +348,6 @@ namespace Private {
     if (errors.length) {
       throw new Error(errors.join('\n\n'));
     }
-  }
-
-  /**
-   * A three-way record comparison function.
-   */
-  export
-  function recordCmp<S extends Schema>(a: ITable<S>, b: ITable<S>): number {
-    return StringExt.cmp(a.schema.id, b.schema.id);
-  }
-
-  /**
-   * A three-way record id comparison function.
-   */
-  export
-  function recordIdCmp<S extends Schema>(table: ITable<S>, id: string): number {
-    return StringExt.cmp(table.schema.id, id);
   }
 
   export

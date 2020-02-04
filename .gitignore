@@ -3,3 +3,6 @@ yarn.lock
 .vscode
 .mypy_cache
 *.code-workspace
+
+packages/**/lib
+packages/**/build
