@@ -1,4 +1,4 @@
-# Real Time Collaboration
+# Real Time Collaboration ![.github/workflows/nodejs.yml](https://github.com/jupyterlab/rtc/workflows/.github/workflows/nodejs.yml/badge.svg)
 
 This monorepo contains current work on Real Time collaboration for use in JupyterLab and other web applications.
 
