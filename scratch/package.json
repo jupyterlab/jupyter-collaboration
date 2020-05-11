@@ -9,6 +9,6 @@
   },
   "dependencies": {
     "@jupyterlab/coreutils": "3.2.0",
-    "@phosphor/datastore": "0.8.0"
+    "@lumino/datastore": "0.8.0"
   }
 }

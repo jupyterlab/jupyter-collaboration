@@ -3,11 +3,11 @@
 
 import { URLExt } from '@jupyterlab/coreutils';
 
-import { PromiseDelegate } from '@phosphor/coreutils';
+import { PromiseDelegate } from '@lumino/coreutils';
 
-import { Datastore } from '@phosphor/datastore';
+import { Datastore } from '@lumino/datastore';
 
-import { IMessageHandler, Message, MessageLoop } from '@phosphor/messaging';
+import { IMessageHandler, Message, MessageLoop } from '@lumino/messaging';
 
 import { ServerConnection, WSConnection } from '@jupyterlab/services';
 

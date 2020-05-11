@@ -1,9 +1,9 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { Datastore, Record, Schema, Table } from '@phosphor/datastore';
+import { Datastore, Record, Schema, Table } from '@lumino/datastore';
 
-import { DisposableDelegate, IDisposable } from '@phosphor/disposable';
+import { DisposableDelegate, IDisposable } from '@lumino/disposable';
 
 /**
  * A namespace for Datastore helper functions.

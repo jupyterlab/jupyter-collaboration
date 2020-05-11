@@ -1,9 +1,9 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { ReadonlyJSONObject, UUID } from '@phosphor/coreutils';
+import { ReadonlyJSONObject, UUID } from '@lumino/coreutils';
 
-import { Datastore } from '@phosphor/datastore';
+import { Datastore } from '@lumino/datastore';
 
 /**
  * Namespace for datastore collaboration statics.

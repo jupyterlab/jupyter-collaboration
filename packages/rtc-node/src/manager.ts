@@ -1,7 +1,7 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { Schema, Datastore } from '@phosphor/datastore';
+import { Schema, Datastore } from '@lumino/datastore';
 
 import { CollaborationClient } from './client';
 import { PageConfig } from '@jupyterlab/coreutils';

@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 
-import { IIterator } from '@phosphor/algorithm';
+import { IIterator } from '@lumino/algorithm';
 
 /**
  * Create an iterator for the keys in an object.
@@ -20,7 +20,7 @@ import { IIterator } from '@phosphor/algorithm';
  *
  * #### Example
  * ```typescript
- * import { each, keys } from '@phosphor/algorithm';
+ * import { each, keys } from '@lumino/algorithm';
  *
  * let data = { one: 1, two: 2, three: 3 };
  *
@@ -45,7 +45,7 @@ export function iterKeys<T>(object: {
  *
  * #### Example
  * ```typescript
- * import { each, values } from '@phosphor/algorithm';
+ * import { each, values } from '@lumino/algorithm';
  *
  * let data = { one: 1, two: 2, three: 3 };
  *
@@ -70,7 +70,7 @@ export function iterValues<T>(object: {
  *
  * #### Example
  * ```typescript
- * import { each, items } from '@phosphor/algorithm';
+ * import { each, items } from '@lumino/algorithm';
  *
  * let data = { one: 1, two: 2, three: 3 };
  *
