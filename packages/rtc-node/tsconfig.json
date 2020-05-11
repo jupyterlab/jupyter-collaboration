@@ -1,16 +1,13 @@
 {
-  "extends": "../../tsconfigbase",
   "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
     "outDir": "lib",
-    "rootDir": "src"
+    "rootDir": "src",
+    "strict": true,
+    "declaration": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/*"],
-  "references": [
-    {
-      "path": "../coreutils"
-    },
-    {
-      "path": "../services"
-    }
-  ]
+  "include": ["src/*"]
 }
