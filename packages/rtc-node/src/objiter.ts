@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 
-import { IIterator } from '@lumino/algorithm';
+import { IIterator } from "@lumino/algorithm";
 
 /**
  * Create an iterator for the keys in an object.

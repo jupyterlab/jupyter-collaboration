@@ -1,9 +1,9 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { Datastore, Record, Schema, Table } from '@lumino/datastore';
+import { Datastore, Record, Schema, Table } from "@lumino/datastore";
 
-import { DisposableDelegate, IDisposable } from '@lumino/disposable';
+import { DisposableDelegate, IDisposable } from "@lumino/disposable";
 
 /**
  * A namespace for Datastore helper functions.
@@ -25,7 +25,7 @@ export namespace DatastoreExt {
     datastore: Datastore,
     update: (id: string) => void
   ): string {
-    let id = '';
+    let id = "";
     if (!datastore.inTransaction) {
       id = datastore.beginTransaction();
     }
@@ -81,7 +81,7 @@ export namespace DatastoreExt {
    */
   export type FieldLocation<
     S extends Schema,
-    F extends keyof S['fields']
+    F extends keyof S["fields"]
   > = RecordLocation<S> & {
     /**
      * The field in question.
@@ -133,10 +133,10 @@ export namespace DatastoreExt {
    * #### Notes
    * This will throw an error if the record does not exist in the given table.
    */
-  export function getField<S extends Schema, F extends keyof S['fields']>(
+  export function getField<S extends Schema, F extends keyof S["fields"]>(
     datastore: Datastore,
     loc: FieldLocation<S, F>
-  ): S['fields'][F]['ValueType'] {
+  ): S["fields"][F]["ValueType"] {
     const record = datastore.get(loc.schema).get(loc.record);
     if (!record) {
       throw Error(`The record ${loc.record} could not be found`);
@@ -186,7 +186,7 @@ export namespace DatastoreExt {
   ): void {
     let table = datastore.get(loc.schema);
     table.update({
-      [loc.record]: update
+      [loc.record]: update,
     });
   }
 
@@ -203,18 +203,18 @@ export namespace DatastoreExt {
    * This does not begin a transaction, so usage of this function should be
    * combined with `beginTransaction`/`endTransaction`, or `withTransaction`.
    */
-  export function updateField<S extends Schema, F extends keyof S['fields']>(
+  export function updateField<S extends Schema, F extends keyof S["fields"]>(
     datastore: Datastore,
     loc: FieldLocation<S, F>,
-    update: S['fields'][F]['UpdateType']
+    update: S["fields"][F]["UpdateType"]
   ): void {
     let table = datastore.get(loc.schema);
     // TODO: this cast may be made unnecessary once microsoft/TypeScript#13573
     // is fixed, possibly by microsoft/TypeScript#26797 lands.
     table.update({
       [loc.record]: {
-        [loc.field]: update
-      } as Record.Update<S>
+        [loc.field]: update,
+      } as Record.Update<S>,
     });
   }
 
@@ -300,10 +300,10 @@ export namespace DatastoreExt {
    *
    * @returns an `IDisposable` that can be disposed to remove the listener.
    */
-  export function listenField<S extends Schema, F extends keyof S['fields']>(
+  export function listenField<S extends Schema, F extends keyof S["fields"]>(
     datastore: Datastore,
     loc: FieldLocation<S, F>,
-    slot: (source: Datastore, args: S['fields'][F]['ChangeType']) => void,
+    slot: (source: Datastore, args: S["fields"][F]["ChangeType"]) => void,
     thisArg?: any
   ): IDisposable {
     const wrapper = (source: Datastore, args: Datastore.IChangedArgs) => {

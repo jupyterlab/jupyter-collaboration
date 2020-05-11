@@ -1,14 +1,14 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { URLExt } from '@jupyterlab/coreutils';
+import { URLExt } from "@jupyterlab/coreutils";
 
-import { ServerConnection } from '@jupyterlab/services';
+import { ServerConnection } from "@jupyterlab/services";
 
 /**
  *
  */
-const DATASTORE_REST_URL = '/lab/api/datastore';
+const DATASTORE_REST_URL = "/lab/api/datastore";
 
 /**
  * Query the server for current, accessible collaborations.
@@ -30,7 +30,7 @@ export async function currentCollaborations(
     queryParams.push(`token=${encodeURIComponent(token)}`);
   }
   if (queryParams) {
-    url = url + `?${queryParams.join('&')}`;
+    url = url + `?${queryParams.join("&")}`;
   }
   const response = await ServerConnection.makeRequest(url, {}, settings);
   return response.json();

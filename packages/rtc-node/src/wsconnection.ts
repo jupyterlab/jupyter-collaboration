@@ -1,9 +1,9 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { PromiseDelegate } from '@phosphor/coreutils';
+import { PromiseDelegate } from "@lumino/coreutils";
 
-import { IDisposable } from '@phosphor/disposable';
+import { IDisposable } from "@lumino/disposable";
 
 /**
  * Abstract base for a class that sends/receives messages over websocket.
@@ -38,6 +38,9 @@ export abstract class WSConnection<TSendMsg, TRecvMsg> implements IDisposable {
    * A promise that resolves once the connection is open.
    */
   get ready(): Promise<void> {
+    if (!this._readyDelegate) {
+      throw new Error();
+    }
     return this._readyDelegate.promise;
   }
 
@@ -54,7 +57,7 @@ export abstract class WSConnection<TSendMsg, TRecvMsg> implements IDisposable {
    */
   protected sendMessage(msg: TSendMsg) {
     if (!this._ws || this._wsStopped) {
-      throw new Error('Web socket not connected');
+      throw new Error("Web socket not connected");
     }
 
     const value = this.serializeWSMessage(msg);
@@ -95,15 +98,13 @@ export abstract class WSConnection<TSendMsg, TRecvMsg> implements IDisposable {
   }
 
   protected deserializeWSMessage(data: unknown): TRecvMsg {
-    if (typeof data !== 'string') {
-      console.error(`Invalid websocket message data type: ${typeof data}`);
-      return;
+    if (typeof data !== "string") {
+      throw new Error(`Invalid websocket message data type: ${typeof data}`);
     }
     try {
       return JSON.parse(data);
     } catch (error) {
-      console.error(`Invalid message: ${error.message}`);
-      return;
+      throw new Error(`Invalid message: ${error.message}`);
     }
   }
 
@@ -142,6 +143,9 @@ export abstract class WSConnection<TSendMsg, TRecvMsg> implements IDisposable {
     if (!this.isDisposed) {
       this.reconnectAttempt = 0;
       this._wsStopped = false;
+      if (!this._readyDelegate) {
+        throw new Error();
+      }
       this._readyDelegate.resolve(undefined);
     }
   }
@@ -155,7 +159,7 @@ export abstract class WSConnection<TSendMsg, TRecvMsg> implements IDisposable {
 
     let handled = this.handleMessage(msg);
     if (!handled) {
-      console.log('Unhandled websocket message.', msg);
+      console.log("Unhandled websocket message.", msg);
     }
   }
 
@@ -169,6 +173,9 @@ export abstract class WSConnection<TSendMsg, TRecvMsg> implements IDisposable {
 
   private _onWSError(evt: Event) {
     if (!this._isDisposed) {
+      if (!this._readyDelegate) {
+        throw new Error();
+      }
       this._readyDelegate.reject(evt);
     }
   }
@@ -189,9 +196,9 @@ export abstract class WSConnection<TSendMsg, TRecvMsg> implements IDisposable {
       this._createSocket();
       this.ready
         .then(() => {
-          console.log('Websocket reconnected');
+          console.log("Websocket reconnected");
         })
-        .catch(reason => {
+        .catch((reason) => {
           console.warn(`Websocket reconnect failed`, reason);
         });
     }, delay);

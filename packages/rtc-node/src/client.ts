@@ -1,22 +1,23 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { URLExt } from '@jupyterlab/coreutils';
+import { URLExt } from "@jupyterlab/coreutils";
 
-import { PromiseDelegate } from '@lumino/coreutils';
+import { PromiseDelegate } from "@lumino/coreutils";
 
-import { Datastore } from '@lumino/datastore';
+import { Datastore } from "@lumino/datastore";
 
-import { IMessageHandler, Message, MessageLoop } from '@lumino/messaging';
+import { IMessageHandler, Message, MessageLoop } from "@lumino/messaging";
 
-import { ServerConnection, WSConnection } from '@jupyterlab/services';
+import { ServerConnection } from "@jupyterlab/services";
 
-import { Collaboration } from './wsmessages';
+import { Collaboration } from "./wsmessages";
+import { WSConnection } from "./wsconnection";
 
 /**
  * The url for the datastore service.
  */
-const DATASTORE_SERVICE_URL = 'lab/api/datastore';
+const DATASTORE_SERVICE_URL = "lab/api/datastore";
 
 /**
  * The default treshold for idle time, in seconds.
@@ -45,19 +46,19 @@ export class CollaborationClient extends WSConnection<
   /**
    * The permissions for the current use on the datastore session.
    */
-  get permissions(): Promise<CollaborationClient.Permissions> {
-    return Promise.resolve().then(async () => {
-      await this.ready;
-      const msg = Collaboration.createMessage('permissions-request', {});
-      const reply = await this._requestMessageReply(msg);
-      return reply.content;
-    });
-  }
+  // get permissions(): Promise<CollaborationClient.Permissions> {
+  //   return Promise.resolve().then(async () => {
+  //     await this.ready;
+  //     const msg = Collaboration.createMessage('permissions-request', {});
+  //     const reply = await this._requestMessageReply(msg);
+  //     return reply.content;
+  //   });
+  // }
 
   processMessage(msg: Message) {
-    if (msg.type === 'datastore-transaction') {
+    if (msg.type === "datastore-transaction") {
       this.broadcastTransactions([
-        (msg as Datastore.TransactionMessage).transaction
+        (msg as Datastore.TransactionMessage).transaction,
       ]);
       return;
     }
@@ -80,11 +81,11 @@ export class CollaborationClient extends WSConnection<
       this._pendingTransactions[b.id] = b;
     }
     this._resetIdleTimer();
-    const msg = Collaboration.createMessage('transaction-broadcast', {
-      transactions: branded
+    const msg = Collaboration.createMessage("transaction-broadcast", {
+      transactions: branded,
     });
     this._requestMessageReply(msg).then(
-      reply => {
+      (reply) => {
         const { serials, transactionIds } = reply.content;
         for (let i = 0; i < serials.length; ++i) {
           const serial = serials[i];
@@ -95,7 +96,7 @@ export class CollaborationClient extends WSConnection<
             // Something has gone wrong somewhere.
             // TODO: Trigger recovery?
             throw new Error(
-              'Critical! Out of order transactions in datastore.'
+              "Critical! Out of order transactions in datastore."
             );
           }
           this._serverSerial = serial;
@@ -114,8 +115,8 @@ export class CollaborationClient extends WSConnection<
    * The transactions of the history will be sent to the set handler.
    */
   async replayHistory(checkpointId?: number): Promise<boolean> {
-    const msg = Collaboration.createMessage('history-request', {
-      checkpointId: checkpointId === undefined ? null : checkpointId
+    const msg = Collaboration.createMessage("history-request", {
+      checkpointId: checkpointId === undefined ? null : checkpointId,
     });
     const response = await this._requestMessageReply(msg);
     if (!response.content.transactions.length) {
@@ -163,7 +164,7 @@ export class CollaborationClient extends WSConnection<
       queryParams.push(`token=${encodeURIComponent(token)}`);
     }
     if (queryParams) {
-      wsUrl = wsUrl + `?${queryParams.join('&')}`;
+      wsUrl = wsUrl + `?${queryParams.join("&")}`;
     }
 
     return new settings.WebSocket(wsUrl);
@@ -189,8 +190,8 @@ export class CollaborationClient extends WSConnection<
     if (Collaboration.isReply(msg)) {
       let delegate = this._delegates && this._delegates.get(msg.parentId!);
       if (delegate) {
-        if (msg.msgType === 'error-reply') {
-          console.warn('Received datastore error from server', msg.content);
+        if (msg.msgType === "error-reply") {
+          console.warn("Received datastore error from server", msg.content);
           delegate.reject(msg.content.reason);
         } else {
           delegate.resolve(msg);
@@ -198,9 +199,9 @@ export class CollaborationClient extends WSConnection<
         return true;
       }
     }
-    if (msg.msgType === 'transaction-broadcast') {
+    if (msg.msgType === "transaction-broadcast") {
       this._handleTransactions(msg.content.transactions);
-    } else if (msg.msgType === 'state-stable') {
+    } else if (msg.msgType === "state-stable") {
       // TODO: Possibly signal a chance for garbage collection.
     } else {
       return false;
@@ -222,7 +223,7 @@ export class CollaborationClient extends WSConnection<
         // Out of order serials!
         // Something has gone wrong somewhere.
         // TODO: Trigger recovery?
-        throw new Error('Critical! Out of order transactions in datastore.');
+        throw new Error("Critical! Out of order transactions in datastore.");
       }
       this._serverSerial = t.serial;
       MessageLoop.sendMessage(
@@ -239,19 +240,19 @@ export class CollaborationClient extends WSConnection<
   private _requestMessageReply<T extends Collaboration.Request>(
     msg: T,
     timeout = 0
-  ): Promise<Collaboration.IReplyMap[T['msgType']]> {
+  ): Promise<Collaboration.IReplyMap[T["msgType"]]> {
     const delegate = new PromiseDelegate<
-      Collaboration.IReplyMap[T['msgType']]
+      Collaboration.IReplyMap[T["msgType"]]
     >();
     this._delegates.set(msg.msgId, delegate);
 
     // .finally(), delete from delegate map
     const promise = delegate.promise.then(
-      reply => {
+      (reply) => {
         this._delegates.delete(msg.msgId);
         return reply;
       },
-      reason => {
+      (reason) => {
         this._delegates.delete(msg.msgId);
         throw reason;
       }
@@ -259,7 +260,7 @@ export class CollaborationClient extends WSConnection<
 
     if (timeout > 0) {
       setTimeout(() => {
-        delegate.reject('Timed out waiting for reply');
+        delegate.reject("Timed out waiting for reply");
       }, timeout);
     }
 
@@ -272,8 +273,8 @@ export class CollaborationClient extends WSConnection<
    * Callback called when idle after activity.
    */
   private _onIdle() {
-    const msg = Collaboration.createMessage('serial-update', {
-      serial: this._serverSerial
+    const msg = Collaboration.createMessage("serial-update", {
+      serial: this._serverSerial,
     });
     this.sendMessage(msg);
     this._idleTimer = null;
@@ -296,7 +297,7 @@ export class CollaborationClient extends WSConnection<
   private _pendingTransactions: Collaboration.SerialTransactionMap = {};
 
   private _idleTreshold: number;
-  private _idleTimer: number | null = null;
+  private _idleTimer: NodeJS.Timeout | null = null;
 }
 
 /**
@@ -330,7 +331,7 @@ export namespace CollaborationClient {
      * @param transaction - The transaction object
      */
     constructor(transaction: Datastore.Transaction) {
-      super('remote-transactions');
+      super("remote-transactions");
       this.transaction = transaction;
     }
 
@@ -350,7 +351,7 @@ export namespace CollaborationClient {
      * @param state - he serialized state
      */
     constructor(state: string | null) {
-      super('initial-state');
+      super("initial-state");
       this.state = state;
     }
 

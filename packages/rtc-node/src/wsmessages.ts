@@ -1,9 +1,9 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { ReadonlyJSONObject, UUID } from '@lumino/coreutils';
+import { ReadonlyJSONObject, UUID } from "@lumino/coreutils";
 
-import { Datastore } from '@lumino/datastore';
+import { Datastore } from "@lumino/datastore";
 
 /**
  * Namespace for datastore collaboration statics.
@@ -38,30 +38,30 @@ export namespace Collaboration {
    * Maps a msgType to the corresponding type.
    */
   export interface ITypeMap {
-    'transaction-broadcast': TransactionBroadcast;
-    'transaction-ack': TransactionAck;
-    'history-request': HistoryRequest;
-    'history-reply': HistoryReply;
-    'transaction-request': TransactionRequest;
-    'transaction-reply': TransactionReply;
-    'serial-request': SerialRequest;
-    'serial-reply': SerialReply;
-    'permissions-request': PermissionsRequest;
-    'permissions-reply': PermissionsReply;
-    'serial-update': SerialNotice;
-    'state-stable': StableStateNotice;
-    'error-reply': ErrorReply;
+    "transaction-broadcast": TransactionBroadcast;
+    "transaction-ack": TransactionAck;
+    "history-request": HistoryRequest;
+    "history-reply": HistoryReply;
+    "transaction-request": TransactionRequest;
+    "transaction-reply": TransactionReply;
+    "serial-request": SerialRequest;
+    "serial-reply": SerialReply;
+    "permissions-request": PermissionsRequest;
+    "permissions-reply": PermissionsReply;
+    "serial-update": SerialNotice;
+    "state-stable": StableStateNotice;
+    "error-reply": ErrorReply;
   }
 
   /**
    * Maps a request msgType to the corresponding reply type.
    */
   export interface IReplyMap {
-    'transaction-broadcast': TransactionAck;
-    'history-request': HistoryReply;
-    'transaction-request': TransactionReply;
-    'serial-request': SerialReply;
-    'permissions-request': PermissionsReply;
+    "transaction-broadcast": TransactionAck;
+    "history-request": HistoryReply;
+    "transaction-request": TransactionReply;
+    "serial-request": SerialReply;
+    "permissions-request": PermissionsReply;
   }
 
   export type BaseReply = Base & {
@@ -75,7 +75,7 @@ export namespace Collaboration {
    * A message broadcasting some transactions to peers.
    */
   export type TransactionBroadcast = Base & {
-    readonly msgType: 'transaction-broadcast';
+    readonly msgType: "transaction-broadcast";
     readonly content: {
       /**
        * The transactions being broadcast.
@@ -88,7 +88,7 @@ export namespace Collaboration {
    * An ackowledgment of received transactions.
    */
   export type TransactionAck = BaseReply & {
-    readonly msgType: 'transaction-ack';
+    readonly msgType: "transaction-ack";
     readonly content: {
       /**
        * The transaction ids that were received.
@@ -106,7 +106,7 @@ export namespace Collaboration {
    * A message requesting specific transactions from the server.
    */
   export type TransactionRequest = Base & {
-    readonly msgType: 'transaction-request';
+    readonly msgType: "transaction-request";
     readonly content: {
       /**
        * The ids of the transactions that are requested.
@@ -119,7 +119,7 @@ export namespace Collaboration {
    * A reply to a 'transaction-request'.
    */
   export type TransactionReply = BaseReply & {
-    readonly msgType: 'transaction-reply';
+    readonly msgType: "transaction-reply";
     readonly content: {
       /**
        * The transactions that were requested.
@@ -132,7 +132,7 @@ export namespace Collaboration {
    * A message requesting the full transaction history from the server.
    */
   export type HistoryRequest = Base & {
-    readonly msgType: 'history-request';
+    readonly msgType: "history-request";
     readonly content: {
       /**
        * The checkpoint to start from.
@@ -145,7 +145,7 @@ export namespace Collaboration {
    * A reply to a 'history-request'.
    */
   export type HistoryReply = BaseReply & {
-    readonly msgType: 'history-reply';
+    readonly msgType: "history-reply";
     readonly content: {
       /**
        * The state at the checkpoint, if given.
@@ -163,7 +163,7 @@ export namespace Collaboration {
    * A message requesting specific transactions by serial number.
    */
   export type SerialRequest = Base & {
-    readonly msgType: 'serial-request';
+    readonly msgType: "serial-request";
     readonly content: {
       /**
        * The serial numbers that are requested.
@@ -176,7 +176,7 @@ export namespace Collaboration {
    * A reply to a 'serial-request'.
    */
   export type SerialReply = BaseReply & {
-    readonly msgType: 'serial-reply';
+    readonly msgType: "serial-reply";
     readonly content: {
       /**
        * The transactions that were requested.
@@ -189,7 +189,7 @@ export namespace Collaboration {
    * A message requesting which permission we have on the central store.
    */
   export type PermissionsRequest = Base & {
-    readonly msgType: 'permissions-request';
+    readonly msgType: "permissions-request";
     readonly content: {};
   };
 
@@ -197,7 +197,7 @@ export namespace Collaboration {
    * A reply to a `permission-request`.
    */
   export type PermissionsReply = BaseReply & {
-    readonly msgType: 'permissions-reply';
+    readonly msgType: "permissions-reply";
     readonly content: {
       /**
        * Whether we can read transactions from the store.
@@ -215,7 +215,7 @@ export namespace Collaboration {
    * An update to the server of the last applied server serial.
    */
   export type SerialNotice = Base & {
-    readonly msgType: 'serial-update';
+    readonly msgType: "serial-update";
     readonly content: {
       /**
        * The server-side serial of last transaction applied.
@@ -231,7 +231,7 @@ export namespace Collaboration {
    * to have been applied.
    */
   export type StableStateNotice = Base & {
-    readonly msgType: 'state-stable';
+    readonly msgType: "state-stable";
     readonly content: {
       /**
        * The server-side serial of the stable state.
@@ -244,7 +244,7 @@ export namespace Collaboration {
    * An error reply message.
    */
   export type ErrorReply = BaseReply & {
-    readonly msgType: 'error-reply';
+    readonly msgType: "error-reply";
     readonly content: {
       /**
        * The reason for the error.
@@ -302,17 +302,17 @@ export namespace Collaboration {
    * @param {string} parentId An optional id of the parent of this message.
    * @returns {TransactionBroadcast} The created message.
    */
-  export function createMessage<K extends Message['msgType']>(
-    msgType: K,
-    content: ITypeMap[K]['content'],
-    parentId?: ITypeMap[K]['parentId']
+  export function createMessage<K extends Message["msgType"]>(
+    msgType: ITypeMap[K]["msgType"],
+    content: ITypeMap[K]["content"],
+    parentId?: ITypeMap[K]["parentId"]
   ): ITypeMap[K] {
     const msgId = UUID.uuid4();
     return {
       msgId,
       msgType,
       parentId,
-      content
+      content,
     } as ITypeMap[K];
   }
 
@@ -325,8 +325,8 @@ export namespace Collaboration {
    * @returns {TransactionBroadcast} The created message.
    */
   export function createReply<T extends BaseReply>(
-    msgType: T['msgType'],
-    content: T['content'],
+    msgType: T["msgType"],
+    content: T["content"],
     parentId: string
   ): T {
     const msgId = UUID.uuid4();
@@ -334,7 +334,7 @@ export namespace Collaboration {
       msgId,
       msgType,
       parentId,
-      content
+      content,
     } as unknown) as T;
   }
 
