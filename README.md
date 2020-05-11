@@ -9,7 +9,8 @@ It is currently in the planning stage, but eventually we see it containing a num
 * `packages/jupyter-rtc`: Holds schema for Jupyter RTC tables that are used in server and client.
 * `packages/jupyter-rtc-supernode`: Server to keep datastore in sync with jupyter server.
 * `packages/jupyter-rtc-node`: Client to access Jupyter data.
-* `src/rtc_relay_jupyter`: Jupyter Server Extension for `src/rtc_relay`
+* `src/jupyter_rtc_supernode_jupyter_extension`: Jupyter Server extension for running `packages/jupyter-rtc-supernode`.
+* `src/rtc_relay_jupyter_extesion`: Jupyter Server Extension for `src/rtc_relay`
 * `packages/jupyterlab-rtc-client`: `packages/rtc-client` that connets over `src/rtc_relay_jupyter`.
 
 Most of the work currently is living in [a PR to JupyterLab](https://github.com/jupyterlab/jupyterlab/pull/6871) and documented on [an issue](https://github.com/jupyterlab/jupyterlab/issues/5382) there.
