@@ -4,11 +4,13 @@ This monorepo contains current work on Real Time collaboration for use in Jupyte
 
 It is currently in the planning stage, but eventually we see it containing a number of seperate projects like:
 
-* `js/rtc-client`: Real time collaboration client in Javascript, builds on `@lumino/datastore`
-* `py/rtc_relay`: Python patch relay server to syncrhonize patches for `js/rtc-client`
-* `js/jupyter-rtc`: Holds schema for Jupyter RTC tables that are used in server and client.
-* `js/jupyter-rtc-server`: Server to keep datastore in sync with jupyter server.
-* `js/jupyter-rtc-client`: Client to access Jupyter data, uses `py/rtc_relay
+* `src/rtc_relay`: Python patch relay server to synchronize patches for `packages/rtc-client`
+* `packages/rtc-node`: Real time collaboration client in Javascript, builds on `@lumino/datastore`
+* `packages/jupyter-rtc`: Holds schema for Jupyter RTC tables that are used in server and client.
+* `packages/jupyter-rtc-supernode`: Server to keep datastore in sync with jupyter server.
+* `packages/jupyter-rtc-node`: Client to access Jupyter data.
+* `src/rtc_relay_jupyter`: Jupyter Server Extension for `src/rtc_relay`
+* `packages/jupyterlab-rtc-client`: `packages/rtc-client` that connets over `src/rtc_relay_jupyter`.
 
 Most of the work currently is living in [a PR to JupyterLab](https://github.com/jupyterlab/jupyterlab/pull/6871) and documented on [an issue](https://github.com/jupyterlab/jupyterlab/issues/5382) there.
 
