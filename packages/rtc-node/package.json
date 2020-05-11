@@ -1,5 +1,5 @@
 {
-  "name": "@jupyterlab/datastore",
+  "name": "rtc-node",
   "version": "1.0.0",
   "description": "JupyterLab - Datastore",
   "homepage": "https://github.com/jupyterlab/jupyterlab",
@@ -17,9 +17,6 @@
     "schema/*.json",
     "style/**/*.{css,eot,gif,html,jpg,json,png,svg,woff2,ttf}"
   ],
-  "sideEffects": [
-    "style/**/*"
-  ],
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "directories": {
@@ -34,11 +31,11 @@
   "dependencies": {
     "@jupyterlab/coreutils": "^3.0.0",
     "@jupyterlab/services": "^4.0.1",
-    "@phosphor/algorithm": "^1.1.3",
-    "@phosphor/coreutils": "^1.3.1",
-    "@phosphor/datastore": "0.7.2",
-    "@phosphor/disposable": "^1.2.0",
-    "@phosphor/messaging": "^1.2.3"
+    "@lumino/algorithm": "^1.1.3",
+    "@lumino/coreutils": "^1.3.1",
+    "@lumino/datastore": "^0.9.1",
+    "@lumino/disposable": "^1.2.0",
+    "@lumino/messaging": "^1.2.3"
   },
   "devDependencies": {
     "rimraf": "~2.6.2",
