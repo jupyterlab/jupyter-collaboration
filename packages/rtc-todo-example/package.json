@@ -18,7 +18,11 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "start:relay": "fkill -s :8888 && python -m rtc_relay",
+    "wait:relay": "wait-on tcp:8888",
+    "wait-then-start": "npm-run-all wait:relay start",
+    "start:all": "npm-run-all --parallel --race start:relay wait-then-start"
   },
   "eslintConfig": {
     "extends": "react-app"

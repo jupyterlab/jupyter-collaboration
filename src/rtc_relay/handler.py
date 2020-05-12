@@ -31,21 +31,6 @@ class DatastoreHandler:
 class WSBaseHandler(WebSocketHandler, DatastoreHandler):
     """Base class for websockets reusing jupyter code"""
 
-    def set_default_headers(self):
-        """
-        Undo the set_default_headers in IPythonHandler which doesn't make
-        sense for websockets
-        """
-        pass
-
-    @gen.coroutine
-    def get(self, *args, **kwargs):
-        # pre_get can be a coroutine in subclasses
-        # assign and yield in two step to avoid tornado 3 issues
-        res = self.pre_get()
-        yield gen.maybe_future(res)
-        yield super(WSBaseHandler, self).get(*args, **kwargs)
-
     def get_compression_options(self):
         return self.settings.get("websocket_compression_options", None)
 
@@ -59,6 +44,9 @@ class CollaborationHandler(WSBaseHandler):
         self.collaboration = Collaboration("_", self.datastore_file)
         self.store_transaction_serial = -1
         self.history_inited = False
+
+    def check_origin(self, origin):
+        return True
 
     @property
     def datastore_file(self):
@@ -88,7 +76,6 @@ class CollaborationHandler(WSBaseHandler):
         if self.datastore_file != ":memory:" and not self.collaboration.has_clients:
             self.collaboration.close()
 
-
     def on_close(self) -> None:
         assert self.collaboration
         clean_close = self.close_code in (1000, 1001)
@@ -109,11 +96,6 @@ class CollaborationHandler(WSBaseHandler):
         logger.error(reason)
         self.write_message(json.dumps(msg))
 
-    def check_permissions(self, action):
-        return self.auth.check_permissions(
-            self.current_user, self.collaboration_id, action
-        )
-
     def on_message(self, message) -> None:
         msg = json.loads(message)
         msg_type = msg.pop("msgType", None)
@@ -127,11 +109,6 @@ class CollaborationHandler(WSBaseHandler):
         )
 
         if msg_type == "transaction-broadcast":
-            if not self.check_permissions("w"):
-                return self.send_error_reply(
-                    msg_id,
-                    "Permisson error: Cannot write transactions to current collaboration.",
-                )
 
             # Get the transactions:
             content = msg.pop("content", None)
@@ -171,11 +148,7 @@ class CollaborationHandler(WSBaseHandler):
             self.collaboration.broadcast_transactions(self, filtered, serials)
 
         elif msg_type == "history-request":
-            if not self.check_permissions("r"):
-                return self.send_error_reply(
-                    msg_id,
-                    "Permisson error: Cannot access collaboration"
-                )
+
             content = msg.pop("content", {})
             checkpoint_id = content.pop("checkpointId", None)
             history = self.collaboration.db.history(checkpoint_id)
@@ -186,11 +159,6 @@ class CollaborationHandler(WSBaseHandler):
             self.history_inited = True
 
         elif msg_type == "transaction-request":
-            if not self.check_permissions("r"):
-                return self.send_error_reply(
-                    msg_id,
-                    "Permisson error: Cannot access collaboration"
-                )
             content = msg.pop("content", None)
             if content is None:
                 return
@@ -200,11 +168,6 @@ class CollaborationHandler(WSBaseHandler):
             self.write_message(json.dumps(reply))
 
         elif msg_type == "serial-request":
-            if not self.check_permissions("r"):
-                return self.send_error_reply(
-                    msg_id,
-                    "Permisson error: Cannot access collaboration"
-                )
             content = msg.pop("content", None)
             if content is None:
                 return
@@ -214,9 +177,6 @@ class CollaborationHandler(WSBaseHandler):
             self.write_message(json.dumps(reply))
 
         elif msg_type == "permissions-request":
-            reply = create_permissions_reply(
-                msg_id, self.check_permissions("r"), self.check_permissions("w")
-            )
             self.write_message(json.dumps(reply))
 
         elif msg_type == "serial-update":

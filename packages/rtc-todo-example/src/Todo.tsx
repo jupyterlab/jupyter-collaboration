@@ -14,7 +14,7 @@ type TODOState = {
 
 // Unique ID for client
 const ID = Math.random();
-const URL = "ws://localhost:8080";
+const URL = "ws://localhost:8888";
 
 const TODOSchema = {
   id: "todo",
