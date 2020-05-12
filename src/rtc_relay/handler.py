@@ -1,9 +1,7 @@
 import json
 import uuid
 import typing
-
-from notebook.base.handlers import IPythonHandler
-from notebook.base.zmqhandlers import WebSocketMixin
+import logging
 from tornado import gen, web
 from tornado.websocket import WebSocketHandler
 
@@ -17,6 +15,8 @@ from .messages import (
 )
 from .collaboration import Collaboration
 
+logger = logging.Logger(__name__)
+
 
 def filter_duplicates(transactions, is_duplicate):
     for (t, d) in zip(transactions, is_duplicate):
@@ -24,38 +24,11 @@ def filter_duplicates(transactions, is_duplicate):
             yield t
 
 
-class DefaultDatastoreAuth:
-    """Default implementation of a datastore authenticator."""
-
-    def check_permissions(self, user, collaboration_id, action) -> bool:
-        """Whether a specific user can perform an action for a given collaboration.
-
-        This default implementation always returns True.
-        """
-        return True
-
-
-class DatastoreHandler(IPythonHandler):
-    @property
-    def auth(self) -> DefaultDatastoreAuth:
-        return self.settings.setdefault("auth", DefaultDatastoreAuth())
-
+class DatastoreHandler:
     collaborations: "typing.Dict[int, Collaboration]" = {}
 
 
-class CollaborationsManagerHandler(DatastoreHandler):
-    @web.authenticated
-    def get(self, *args, **kwargs) -> None:
-        # For unqualified GET, list current sessions we have read access to
-        collaborations = dict({
-            key: dict(id=key, friendlyName=c.friendly_name)
-            for key, c in self.collaborations.items()
-            if self.auth.check_permissions(self.current_user, key, "r")
-        })
-        self.finish(json.dumps(dict(collaborations=collaborations)))
-
-
-class WSBaseHandler(WebSocketMixin, WebSocketHandler, DatastoreHandler):
+class WSBaseHandler(WebSocketHandler, DatastoreHandler):
     """Base class for websockets reusing jupyter code"""
 
     def set_default_headers(self):
@@ -64,17 +37,6 @@ class WSBaseHandler(WebSocketMixin, WebSocketHandler, DatastoreHandler):
         sense for websockets
         """
         pass
-
-    def pre_get(self) -> None:
-        """Run before finishing the GET request
-
-        Extend this method to add logic that should fire before
-        the websocket finishes completing.
-        """
-        # authenticate the request before opening the websocket
-        if self.get_current_user() is None:
-            self.log.warning("Couldn't authenticate WebSocket connection")
-            raise web.HTTPError(403)
 
     @gen.coroutine
     def get(self, *args, **kwargs):
@@ -92,9 +54,9 @@ class CollaborationHandler(WSBaseHandler):
     """Request handler for the datastore API"""
 
     def initialize(self) -> None:
-        self.log.info("Initializing datastore connection %s", self.request.path)
-        self.collaboration: typing.Optional[Collaboration] = None
-        self.collaboration_id = None
+        logger.info("Initializing datastore connection %s", self.request.path)
+        # Hard code static for now
+        self.collaboration = Collaboration("_", self.datastore_file)
         self.store_transaction_serial = -1
         self.history_inited = False
 
@@ -106,25 +68,12 @@ class CollaborationHandler(WSBaseHandler):
     def rtc_recovery_timeout(self):
         return self.settings.get("rtc_recovery_timeout", 120)
 
-    def open(self, collaboration_id=None) -> None:
-        self.log.info("Datastore open called...")
-
-        if collaboration_id is None:
-            self.log.warning("No collaboration id specified")
-            collaboration_id = uuid.uuid4()
-        self.collaboration_id = collaboration_id
-
-        if self.collaborations.get(collaboration_id, None) is None:
-            self.log.info("Created new collaboration %s" % collaboration_id)
-            self.collaborations[collaboration_id] = Collaboration(
-                collaboration_id, self.datastore_file
-            )
-        self.collaboration = self.collaborations[collaboration_id]
-
+    def open(self):
+        logger.info("Datastore open called...")
         self.collaboration.add_client(self)
 
         super(CollaborationHandler, self).open()
-        self.log.info("Opened datastore websocket")
+        logger.info("Opened datastore websocket")
 
     def cleanup_closed(self) -> None:
         """Cleanup after clean close, or after recovery timeout on unclean close.
@@ -138,9 +87,7 @@ class CollaborationHandler(WSBaseHandler):
 
         if self.datastore_file != ":memory:" and not self.collaboration.has_clients:
             self.collaboration.close()
-            self.collaboration = None
-            assert self.collaboration_id
-            del self.collaborations[self.collaboration_id]
+
 
     def on_close(self) -> None:
         assert self.collaboration
@@ -155,11 +102,11 @@ class CollaborationHandler(WSBaseHandler):
             )
 
         super(CollaborationHandler, self).on_close()
-        self.log.info("Closed datastore websocket")
+        logger.info("Closed datastore websocket")
 
     def send_error_reply(self, parent_msg_id, reason) -> None:
         msg = create_error_reply(parent_msg_id, reason)
-        self.log.error(reason)
+        logger.error(reason)
         self.write_message(json.dumps(msg))
 
     def check_permissions(self, action):
@@ -174,7 +121,7 @@ class CollaborationHandler(WSBaseHandler):
         reply = None
         assert self.collaboration
 
-        self.log.info(
+        logger.info(
             "Received datastore message %s: \n%s"
             % (msg_type, json.dumps(msg, indent=2))
         )
@@ -189,11 +136,11 @@ class CollaborationHandler(WSBaseHandler):
             # Get the transactions:
             content = msg.pop("content", None)
             if content is None:
-                self.log.warning("Malformed transaction broadcast message received")
+                logger.warning("Malformed transaction broadcast message received")
                 return
             transactions = content.pop("transactions", None)
             if transactions is None:
-                self.log.warning("Malformed transaction broadcast message received")
+                logger.warning("Malformed transaction broadcast message received")
                 return
 
             # Ensure that transaction serials increment as expected:
@@ -227,8 +174,7 @@ class CollaborationHandler(WSBaseHandler):
             if not self.check_permissions("r"):
                 return self.send_error_reply(
                     msg_id,
-                    "Permisson error: Cannot access collaboration: %s"
-                    % (self.collaboration_id,),
+                    "Permisson error: Cannot access collaboration"
                 )
             content = msg.pop("content", {})
             checkpoint_id = content.pop("checkpointId", None)
@@ -243,8 +189,7 @@ class CollaborationHandler(WSBaseHandler):
             if not self.check_permissions("r"):
                 return self.send_error_reply(
                     msg_id,
-                    "Permisson error: Cannot access collaboration: %s"
-                    % (self.collaboration_id,),
+                    "Permisson error: Cannot access collaboration"
                 )
             content = msg.pop("content", None)
             if content is None:
@@ -258,8 +203,7 @@ class CollaborationHandler(WSBaseHandler):
             if not self.check_permissions("r"):
                 return self.send_error_reply(
                     msg_id,
-                    "Permisson error: Cannot access collaboration: %s"
-                    % (self.collaboration_id,),
+                    "Permisson error: Cannot access collaboration"
                 )
             content = msg.pop("content", None)
             if content is None:
@@ -282,9 +226,3 @@ class CollaborationHandler(WSBaseHandler):
             serial = content.pop("serial", None)
             if serial is not None:
                 self.collaboration.update_serial(self, serial)
-
-
-# The path for lab build.
-# TODO: Is this a reasonable path?
-collaboration_path = r"/lab/api/datastore/(?P<collaboration_id>.+)(?:[^/])/?"
-datastore_rest_path = r"/lab/api/datastore/?"

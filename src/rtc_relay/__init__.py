@@ -1,5 +1,5 @@
+"""
+RTC Relay server
+"""
 
-from .handler import (
-    CollaborationHandler, collaboration_path,
-    CollaborationsManagerHandler, datastore_rest_path
-)
+__version__ = "0.0.0"
