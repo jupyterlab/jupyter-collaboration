@@ -23,6 +23,7 @@
   "dependencies": {},
   "devDependencies": {
     "@jupyterlab/buildutils": "^2.0.0-rc.0",
+    "create-react-app": "3.4.1",
     "lerna": "^3.19.0"
   }
 }

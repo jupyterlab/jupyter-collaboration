@@ -10,7 +10,6 @@ import { Message } from "@lumino/messaging";
 import { Collaboration } from "./wsmessages";
 import { WSConnection } from "./wsconnection";
 
-
 /**
  * The default treshold for idle time, in seconds.
  */
@@ -131,7 +130,7 @@ export class CollaborationClient
   /**
    * Factory method for creating the web socket object.
    */
-  protected wsFactory() {
+  protected wsFactory(): WebSocket {
     return new WebSocket(this.url);
   }
 
