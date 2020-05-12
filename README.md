@@ -33,7 +33,7 @@ of the kernel websocket methods as REST calls.
 - Single source of truth datastore on the server.
 - Similar REST API to existing Jupyter Server REST API — less work for clients to switch to RTC.
 
-![](./diagram.png)
+![](./scratch/diagram.png)
 
 - [ ] `jupyterlab/jupyter-datastore` API spec
   - [x] kernelspecs
