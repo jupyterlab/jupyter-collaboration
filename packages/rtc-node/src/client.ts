@@ -1,23 +1,15 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { URLExt } from "@jupyterlab/coreutils";
-
 import { PromiseDelegate } from "@lumino/coreutils";
 
-import { Datastore } from "@lumino/datastore";
+import { Datastore, IServerAdapter } from "@lumino/datastore";
 
-import { IMessageHandler, Message, MessageLoop } from "@lumino/messaging";
-
-import { ServerConnection } from "@jupyterlab/services";
+import { Message } from "@lumino/messaging";
 
 import { Collaboration } from "./wsmessages";
 import { WSConnection } from "./wsconnection";
 
-/**
- * The url for the datastore service.
- */
-const DATASTORE_SERVICE_URL = "lab/api/datastore";
 
 /**
  * The default treshold for idle time, in seconds.
@@ -27,62 +19,25 @@ const DEFAULT_IDLE_TIME = 3;
 /**
  * A class that manages exchange of transactions with the collaboration server.
  */
-export class CollaborationClient extends WSConnection<
-  Collaboration.Message,
-  Collaboration.Message
-> {
+export class CollaborationClient
+  extends WSConnection<Collaboration.Message, Collaboration.Message>
+  implements IServerAdapter {
   /**
    * Create a new collaboration client connection.
    */
-  constructor(options: CollaborationClient.IOptions = {}) {
+  constructor(options: CollaborationClient.IOptions) {
     super();
-    this.collaborationId = options.collaborationId;
     this._idleTreshold = 1000 * (options.idleTreshold || DEFAULT_IDLE_TIME);
-    this.serverSettings =
-      options.serverSettings || ServerConnection.makeSettings();
+    this.url = options.url;
     this._createSocket();
   }
-
-  /**
-   * The permissions for the current use on the datastore session.
-   */
-  // get permissions(): Promise<CollaborationClient.Permissions> {
-  //   return Promise.resolve().then(async () => {
-  //     await this.ready;
-  //     const msg = Collaboration.createMessage('permissions-request', {});
-  //     const reply = await this._requestMessageReply(msg);
-  //     return reply.content;
-  //   });
-  // }
-
-  processMessage(msg: Message) {
-    if (msg.type === "datastore-transaction") {
-      this.broadcastTransactions([
-        (msg as Datastore.TransactionMessage).transaction,
-      ]);
-      return;
-    }
-    throw new Error(
-      `CollaborationClient cannot process message type ${msg.type}`
-    );
-  }
-  /**
-   * Broadcast transactions to all datastores.
-   *
-   * @param transactions - The transactions to broadcast.
-   * @returns An array of acknowledged transactionIds from the server.
-   */
-  broadcastTransactions(transactions: Datastore.Transaction[]): void {
+  broadcast(transaction: Datastore.Transaction): void {
     // Brand outgoing transactions with our serial
-    const branded = [];
-    for (let t of transactions) {
-      const b = { ...t, serial: this._ourSerial++ };
-      branded.push(b);
-      this._pendingTransactions[b.id] = b;
-    }
+    const branded = { ...transaction, serial: this._ourSerial++ };
+    this._pendingTransactions[branded.id] = branded;
     this._resetIdleTimer();
     const msg = Collaboration.createMessage("transaction-broadcast", {
-      transactions: branded,
+      transactions: [branded],
     });
     this._requestMessageReply(msg).then(
       (reply) => {
@@ -108,6 +63,46 @@ export class CollaborationClient extends WSConnection<
       }
     );
   }
+  undo(id: string): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  redo(id: string): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  onRemoteTransaction!: ((transaction: Datastore.Transaction) => void) | null;
+  onUndo!: ((transaction: Datastore.Transaction) => void) | null;
+  onRedo!: ((transaction: Datastore.Transaction) => void) | null;
+
+  /**
+   * The permissions for the current use on the datastore session.
+   */
+  // get permissions(): Promise<CollaborationClient.Permissions> {
+  //   return Promise.resolve().then(async () => {
+  //     await this.ready;
+  //     const msg = Collaboration.createMessage('permissions-request', {});
+  //     const reply = await this._requestMessageReply(msg);
+  //     return reply.content;
+  //   });
+  // }
+
+  processMessage(msg: Message) {
+    if (msg.type === "datastore-transaction") {
+      this.broadcast(
+        (msg as CollaborationClient.RemoteTransactionMessage).transaction
+      );
+      return;
+    }
+    throw new Error(
+      `CollaborationClient cannot process message type ${msg.type}`
+    );
+  }
+  /**
+   * Broadcast transactions to all datastores.
+   *
+   * @param transactions - The transactions to broadcast.
+   * @returns An array of acknowledged transactionIds from the server.
+   */
+  broadcastTransactions(transactions: Datastore.Transaction[]): void {}
 
   /**
    * Request the complete history of the datastore.
@@ -126,10 +121,7 @@ export class CollaborationClient extends WSConnection<
     return true;
   }
 
-  /**
-   * The server settings for the session.
-   */
-  readonly serverSettings: ServerConnection.ISettings;
+  readonly url: string;
 
   /**
    * The id of the collaboration.
@@ -137,37 +129,10 @@ export class CollaborationClient extends WSConnection<
   readonly collaborationId: string | undefined;
 
   /**
-   * The message handler of any data messages.
-   */
-  public handler: IMessageHandler | null;
-
-  /**
    * Factory method for creating the web socket object.
    */
   protected wsFactory() {
-    const settings = this.serverSettings;
-    const token = this.serverSettings.token;
-    const queryParams = [];
-
-    let wsUrl;
-    if (this.collaborationId) {
-      wsUrl = URLExt.join(
-        settings.wsUrl,
-        DATASTORE_SERVICE_URL,
-        this.collaborationId
-      );
-    } else {
-      wsUrl = URLExt.join(settings.wsUrl, DATASTORE_SERVICE_URL);
-    }
-
-    if (token) {
-      queryParams.push(`token=${encodeURIComponent(token)}`);
-    }
-    if (queryParams) {
-      wsUrl = wsUrl + `?${queryParams.join("&")}`;
-    }
-
-    return new settings.WebSocket(wsUrl);
+    return new WebSocket(this.url);
   }
 
   /**
@@ -215,9 +180,6 @@ export class CollaborationClient extends WSConnection<
   private _handleTransactions(
     transactions: ReadonlyArray<Collaboration.SerialTransaction>
   ) {
-    if (!this.handler) {
-      return;
-    }
     for (let t of transactions) {
       if (t.serial !== this._serverSerial + 1) {
         // Out of order serials!
@@ -226,10 +188,7 @@ export class CollaborationClient extends WSConnection<
         throw new Error("Critical! Out of order transactions in datastore.");
       }
       this._serverSerial = t.serial;
-      MessageLoop.sendMessage(
-        this.handler,
-        new Datastore.TransactionMessage(t)
-      );
+      this.onRemoteTransaction!(t);
     }
     this._resetIdleTimer();
   }
@@ -305,15 +264,7 @@ export class CollaborationClient extends WSConnection<
  */
 export namespace CollaborationClient {
   export interface IOptions {
-    /**
-     * The id of the collaboration to connect to.
-     */
-    collaborationId?: string;
-
-    /**
-     * The server settings for the session.
-     */
-    serverSettings?: ServerConnection.ISettings;
+    url: string;
 
     /**
      * How long to wait before the session is considered idle, in seconds.

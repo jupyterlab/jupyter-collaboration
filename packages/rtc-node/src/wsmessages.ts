@@ -303,14 +303,14 @@ export namespace Collaboration {
    * @returns {TransactionBroadcast} The created message.
    */
   export function createMessage<K extends Message["msgType"]>(
-    msgType: ITypeMap[K]["msgType"],
+    msgType: K,
     content: ITypeMap[K]["content"],
     parentId?: ITypeMap[K]["parentId"]
   ): ITypeMap[K] {
     const msgId = UUID.uuid4();
     return {
       msgId,
-      msgType,
+      msgType: msgType as ITypeMap[K]["msgType"],
       parentId,
       content,
     } as ITypeMap[K];

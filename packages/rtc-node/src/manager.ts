@@ -1,25 +1,22 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { Schema, Datastore } from '@lumino/datastore';
+import { Schema, Datastore } from "@lumino/datastore";
 
-import { CollaborationClient } from './client';
-import { PageConfig } from '@jupyterlab/coreutils';
+import { CollaborationClient } from "./client";
 
 export async function createDatastore(
-  collaborationId: string,
+  url: string,
+  id: number,
   schemas: ReadonlyArray<Schema>
 ): Promise<Datastore> {
-  const client = new CollaborationClient({
-    collaborationId: collaborationId
-  });
+  const client = new CollaborationClient({ url });
   const datastore = Datastore.create({
-    id: PageConfig.getStoreID(),
+    id,
     schemas: schemas,
+    adapter: client,
     // Pass in client as handler, so it can recieve local changes
-    broadcastHandler: client
   });
-  client.handler = datastore;
   // Wait for websocket connection to be ready
   await client.ready;
   await client.replayHistory();

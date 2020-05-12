@@ -317,7 +317,7 @@ export namespace DatastoreExt {
       }
       // Otherwise, call the slot.
       const tc = args.change[loc.schema.id]! as Table.Change<S>;
-      slot.bind(thisArg)(source, tc[loc.record][loc.field]);
+      slot.bind(thisArg)(source, tc[loc.record][loc.field]!);
     };
     datastore.changed.connect(wrapper);
     return new DisposableDelegate(() => {

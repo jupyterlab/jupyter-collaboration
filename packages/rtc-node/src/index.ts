@@ -3,5 +3,4 @@
 
 export * from './client';
 export * from './manager';
-export * from './rest';
 export * from './util';
