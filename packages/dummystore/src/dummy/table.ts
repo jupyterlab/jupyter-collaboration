@@ -17,7 +17,7 @@ import {
 
 import {
   ITable
-} from './interface';
+} from '../interface';
 
 
 /**
@@ -40,10 +40,22 @@ export class Table<S extends Schema> implements ITable<S> {
   }
 
   /**
-   * The schema for the table.
+   * @internal
    *
-   * #### Complexity
-   * `O(1)`
+   * Create a new datastore table with a previously exported state.
+   *
+   * @param schema - The schema for the table.
+   *
+   * @param context - The datastore context.
+   *
+   * @returns A new datastore table.
+   */
+  static recreate<U extends Schema>(schema: U, context: Datastore.Context, records: IterableOrArrayLike<Record<U>>): Table<U> {
+    return new Table<U>(schema, context, records);
+  }
+
+  /**
+   * The schema for the table.
    */
   readonly schema: S;
 
@@ -65,9 +77,6 @@ export class Table<S extends Schema> implements ITable<S> {
    * Create an iterator over the records in the table.
    *
    * @returns A new iterator over the table records.
-   *
-   * #### Complexity
-   * `O(log32 n)`
    */
   iter(): IIterator<Record<S>> {
     return map(Object.keys(this._records), key => this._records[key]);
@@ -264,6 +273,7 @@ namespace Private {
             // Compute the new value.
             value = value.slice(0, index) + text + value.slice(index + count);
           }
+          break;
         case 'list':
           // Create a clone of the previous value.
           let listClone = [...previous[name] as any[]];
@@ -335,7 +345,7 @@ namespace Private {
           break;
         case 'register':
           value = update[name]!;
-          change = {previous, current: value};
+          change = {previous: previous[name], current: value};
           break;
         default:
           throw new Error(`Dummystore cannot handle field type: ${field.type}`);

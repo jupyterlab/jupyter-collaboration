@@ -30,7 +30,7 @@ import {
 
 import {
   IDatastore
-} from './interface';
+} from '../interface';
 
 import {
   Table
@@ -38,7 +38,7 @@ import {
 
 
 export class Dummystore implements IDatastore, IMessageHandler {
-  static create(options: IDatastore.IOptions): Dummystore {
+  static create(options: Dummystore.IOptions): Dummystore {
     let {schemas} = options;
     // Throws an error for invalid schemas:
     Private.validateSchemas(schemas);
@@ -47,16 +47,25 @@ export class Dummystore implements IDatastore, IMessageHandler {
       inTransaction: false,
       transactionId: '',
       version: 0,
-      storeId: options.id,
+      storeId: 0,
       change: {},
       patch: {},
     };
 
     let tables = {} as {[key: string]: Table<Schema>};
-    // Otherwise, simply create a new, empty table
-    each(schemas, s => {
-      tables[s.id] = Table.create(s, context);
-    });
+    if (options.restoreState) {
+      // If passed state to restore, pass the intital state to recreate each
+      // table
+      let state = JSON.parse(options.restoreState);
+      each(schemas, s => {
+        tables[s.id] = Table.recreate(s, context, state[s.id] || []);
+      });
+    } else {
+      // Otherwise, simply create a new, empty table
+      each(schemas, s => {
+        tables[s.id] = Table.create(s, context);
+      });
+    }
 
     return new Dummystore(context, tables);
   }
@@ -91,9 +100,6 @@ export class Dummystore implements IDatastore, IMessageHandler {
    *
    * The payload represents the set of local changes that were made
    * to bring the store to its current state.
-   *
-   * #### Complexity
-   * `O(1)`
    */
   get changed(): ISignal<IDatastore, Datastore.IChangedArgs> {
     return this._changed;
@@ -104,9 +110,6 @@ export class Dummystore implements IDatastore, IMessageHandler {
    *
    * #### Notes
    * The id is unique among all other collaborating peers.
-   *
-   * #### Complexity
-   * `O(1)`
    */
   get id(): number {
     return this._context.storeId;
@@ -114,9 +117,6 @@ export class Dummystore implements IDatastore, IMessageHandler {
 
   /**
    * Whether a transaction is currently in progress.
-   *
-   * #### Complexity
-   * `O(1)`
    */
   get inTransaction(): boolean {
     return this._context.inTransaction;
@@ -129,9 +129,6 @@ export class Dummystore implements IDatastore, IMessageHandler {
    * This version is automatically increased for each transaction
    * to the store. However, it might not increase linearly (i.e.
    * it might make jumps).
-   *
-   * #### Complexity
-   * `O(1)`
    */
   get version(): number {
     return this._context.version;
@@ -154,9 +151,6 @@ export class Dummystore implements IDatastore, IMessageHandler {
    * @returns The table for the specified schema.
    *
    * @throws An exception if no table exists for the given schema.
-   *
-   * #### Complexity
-   * `O(log32 n)`
    */
   get<S extends Schema>(schema: S): Table<S> {
     let t = this._tables[schema.id];
@@ -329,6 +323,21 @@ export class Dummystore implements IDatastore, IMessageHandler {
   private _tables: {[key: string]: Table<Schema>};
   private _context: Datastore.Context;
   private _changed = new Signal<IDatastore, Datastore.IChangedArgs>(this);
+}
+
+
+export namespace Dummystore {
+  export interface IOptions {
+    /**
+     * The table schemas of the datastore.
+     */
+    schemas: ReadonlyArray<Schema>;
+
+    /**
+     * Initialize the state to a previously serialized one.
+     */
+    restoreState?: string;
+  }
 }
 
 

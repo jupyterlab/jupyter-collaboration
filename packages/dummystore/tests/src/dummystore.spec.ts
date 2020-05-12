@@ -87,27 +87,13 @@ let state = {
   ]
 };
 
-/**
- * Return a shuffled copy of an array
- */
-function shuffle<T>(array: ReadonlyArray<T>): T[] {
-  let ret = array.slice();
-  for (let i = ret.length - 1; i > 0; i--) {
-    let j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
-    [ret[i], ret[j]] = [ret[j], ret[i]]; // swap elements
-  }
-  return ret;
-}
-
 describe('dummystore', () => {
 
   describe('Datastore', () => {
 
     let datastore: Dummystore;
-    const DATASTORE_ID = 1234;
     beforeEach(() => {
       datastore = Dummystore.create({
-        id: DATASTORE_ID,
         schemas: [schema1, schema2],
       });
     });
@@ -119,7 +105,7 @@ describe('dummystore', () => {
     describe('create()', () => {
 
       it('should create a new datastore', () => {
-        let datastore = Dummystore.create({ id: 1, schemas: [schema1] });
+        let datastore = Dummystore.create({ schemas: [schema1] });
         expect(datastore).to.be.instanceof(Dummystore);
       });
 
@@ -131,7 +117,7 @@ describe('dummystore', () => {
           }
         };
         expect(() => {
-          Dummystore.create({ id: 1, schemas: [invalid1] });
+          Dummystore.create({ schemas: [invalid1] });
         }).to.throw(/validation failed/);
         let invalid2 = {
           id: 'invalid-schema',
@@ -140,7 +126,7 @@ describe('dummystore', () => {
           }
         };
         expect(() => {
-          Dummystore.create({ id: 1, schemas: [invalid2] });
+          Dummystore.create({ schemas: [invalid2] });
         }).to.throw(/validation failed/);
       });
 
@@ -174,7 +160,7 @@ describe('dummystore', () => {
           called = true;
           expect(change.type).to.equal('transaction');
           expect(change.transactionId).to.equal(id);
-          expect(change.storeId).to.equal(DATASTORE_ID);
+          expect(change.storeId).to.equal(0);
           expect(change.change['test-schema-1']).to.not.be.undefined;
           expect(change.change['test-schema-2']).to.be.undefined;
         });
@@ -189,8 +175,8 @@ describe('dummystore', () => {
 
     describe('id', () => {
 
-      it('should return the unique store id', () => {
-        expect(datastore.id).to.equal(DATASTORE_ID);
+      it('should return the default value', () => {
+        expect(datastore.id).to.equal(0);
       });
 
     });
@@ -304,7 +290,7 @@ describe('dummystore', () => {
           called = true;
           expect(change.type).to.equal('transaction');
           expect(change.transactionId).to.equal(id);
-          expect(change.storeId).to.equal(DATASTORE_ID);
+          expect(change.storeId).to.equal(0);
           expect(change.change['test-schema-2']).to.not.be.undefined;
           expect(change.change['test-schema-1']).to.be.undefined;
         });
