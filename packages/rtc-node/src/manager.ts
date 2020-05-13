@@ -19,10 +19,7 @@ export async function createDatastore({
     id,
     schemas: schemas,
     adapter: client,
-    // Pass in client as handler, so it can recieve local changes
   });
-  // Wait for websocket connection to be ready
   await client.ready;
-  await client.replayHistory();
   return datastore;
 }

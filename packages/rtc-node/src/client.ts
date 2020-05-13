@@ -1,66 +1,28 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { PromiseDelegate } from "@lumino/coreutils";
+import { IServerAdapter, Datastore } from "@lumino/datastore";
+import io, { Socket } from "socket.io-client";
 
-import { Datastore, IServerAdapter } from "@lumino/datastore";
-
-import { Message } from "@lumino/messaging";
-
-import { Collaboration } from "./wsmessages";
-import { WSConnection } from "./wsconnection";
-
-/**
- * The default treshold for idle time, in seconds.
- */
-const DEFAULT_IDLE_TIME = 3;
+type TransactionHandler = ((transaction: Datastore.Transaction) => void) | null;
 
 /**
  * A class that manages exchange of transactions with the collaboration server.
  */
-export class CollaborationClient
-  extends WSConnection<Collaboration.Message, Collaboration.Message>
-  implements IServerAdapter {
-  /**
-   * Create a new collaboration client connection.
-   */
-  constructor(options: CollaborationClient.IOptions) {
-    super();
-    this._idleTreshold = 1000 * (options.idleTreshold || DEFAULT_IDLE_TIME);
-    this.url = options.url;
-    this._createSocket();
+export class CollaborationClient implements IServerAdapter {
+  private socket: typeof Socket;
+  private _onRemoteTransaction: TransactionHandler = null;
+  isDisposed: boolean = false;
+  onUndo!: ((transaction: Datastore.Transaction) => void) | null;
+  onRedo!: ((transaction: Datastore.Transaction) => void) | null;
+  private resolveReady!: () => void;
+  ready: Promise<void>;
+  constructor({ url }: { url: string }) {
+    this.socket = io(url);
+    this.ready = new Promise((resolve) => (this.resolveReady = resolve));
   }
   broadcast(transaction: Datastore.Transaction): void {
-    // Brand outgoing transactions with our serial
-    const branded = { ...transaction, serial: this._ourSerial++ };
-    this._pendingTransactions[branded.id] = branded;
-    this._resetIdleTimer();
-    const msg = Collaboration.createMessage("transaction-broadcast", {
-      transactions: [branded],
-    });
-    this._requestMessageReply(msg).then(
-      (reply) => {
-        const { serials, transactionIds } = reply.content;
-        for (let i = 0; i < serials.length; ++i) {
-          const serial = serials[i];
-          const id = transactionIds[i];
-          delete this._pendingTransactions[id];
-          if (serial !== this._serverSerial + 1) {
-            // Out of order serials!
-            // Something has gone wrong somewhere.
-            // TODO: Trigger recovery?
-            throw new Error(
-              "Critical! Out of order transactions in datastore."
-            );
-          }
-          this._serverSerial = serial;
-        }
-        this._resetIdleTimer();
-      },
-      () => {
-        // TODO: Resend transactions
-      }
-    );
+    this.socket.emit("transaction", transaction);
   }
   undo(id: string): Promise<void> {
     throw new Error("Method not implemented.");
@@ -68,261 +30,31 @@ export class CollaborationClient
   redo(id: string): Promise<void> {
     throw new Error("Method not implemented.");
   }
-  onRemoteTransaction!: ((transaction: Datastore.Transaction) => void) | null;
-  onUndo!: ((transaction: Datastore.Transaction) => void) | null;
-  onRedo!: ((transaction: Datastore.Transaction) => void) | null;
 
-  /**
-   * The permissions for the current use on the datastore session.
-   */
-  // get permissions(): Promise<CollaborationClient.Permissions> {
-  //   return Promise.resolve().then(async () => {
-  //     await this.ready;
-  //     const msg = Collaboration.createMessage('permissions-request', {});
-  //     const reply = await this._requestMessageReply(msg);
-  //     return reply.content;
-  //   });
-  // }
+  get onRemoteTransaction(): TransactionHandler {
+    return this._onRemoteTransaction;
+  }
 
-  processMessage(msg: Message) {
-    if (msg.type === "datastore-transaction") {
-      this.broadcast(
-        (msg as CollaborationClient.RemoteTransactionMessage).transaction
+  // Set by datastore when it's created.
+  set onRemoteTransaction(fn: TransactionHandler) {
+    this._onRemoteTransaction = fn;
+    if (fn) {
+      this.socket.on(
+        "transactions",
+        (transactions: Array<Datastore.Transaction>) => {
+          transactions.map(fn);
+          this.resolveReady();
+        }
       );
+      this.socket.on("transaction", fn);
+    }
+  }
+
+  dispose(): void {
+    if (this.isDisposed) {
       return;
     }
-    throw new Error(
-      `CollaborationClient cannot process message type ${msg.type}`
-    );
+    this.isDisposed = true;
+    this.socket.close();
   }
-  /**
-   * Broadcast transactions to all datastores.
-   *
-   * @param transactions - The transactions to broadcast.
-   * @returns An array of acknowledged transactionIds from the server.
-   */
-  broadcastTransactions(transactions: Datastore.Transaction[]): void {}
-
-  /**
-   * Request the complete history of the datastore.
-   *
-   * The transactions of the history will be sent to the set handler.
-   */
-  async replayHistory(checkpointId?: number): Promise<boolean> {
-    const msg = Collaboration.createMessage("history-request", {
-      checkpointId: checkpointId === undefined ? null : checkpointId,
-    });
-    const response = await this._requestMessageReply(msg);
-    if (!response.content.transactions.length) {
-      return false;
-    }
-    this._handleTransactions(response.content.transactions);
-    return true;
-  }
-
-  readonly url: string;
-
-  /**
-   * The id of the collaboration.
-   */
-  readonly collaborationId: string | undefined;
-
-  /**
-   * Factory method for creating the web socket object.
-   */
-  protected wsFactory(): WebSocket {
-    return new WebSocket(this.url);
-  }
-
-  /**
-   * Handler for deserialized websocket messages.
-   */
-  protected handleMessage(
-    msg:
-      | Collaboration.RawReply
-      | Collaboration.TransactionBroadcast
-      | Collaboration.StableStateNotice
-  ): boolean {
-    try {
-      // TODO: Write a validator?
-      // validate.validateMessage(msg);
-    } catch (error) {
-      console.error(`Invalid message: ${error.message}`);
-      return false;
-    }
-
-    if (Collaboration.isReply(msg)) {
-      let delegate = this._delegates && this._delegates.get(msg.parentId!);
-      if (delegate) {
-        if (msg.msgType === "error-reply") {
-          console.warn("Received datastore error from server", msg.content);
-          delegate.reject(msg.content.reason);
-        } else {
-          delegate.resolve(msg);
-        }
-        return true;
-      }
-    }
-    if (msg.msgType === "transaction-broadcast") {
-      this._handleTransactions(msg.content.transactions);
-    } else if (msg.msgType === "state-stable") {
-      // TODO: Possibly signal a chance for garbage collection.
-    } else {
-      return false;
-    }
-    return true;
-  }
-
-  /**
-   * Process transactions received over the websocket.
-   */
-  private _handleTransactions(
-    transactions: ReadonlyArray<Collaboration.SerialTransaction>
-  ) {
-    for (let t of transactions) {
-      if (t.serial !== this._serverSerial + 1) {
-        // Out of order serials!
-        // Something has gone wrong somewhere.
-        // TODO: Trigger recovery?
-        throw new Error("Critical! Out of order transactions in datastore.");
-      }
-      this._serverSerial = t.serial;
-      this.onRemoteTransaction!(t);
-    }
-    this._resetIdleTimer();
-  }
-
-  /**
-   * Send a message to the server and resolve the reply message.
-   */
-  private _requestMessageReply<T extends Collaboration.Request>(
-    msg: T,
-    timeout = 0
-  ): Promise<Collaboration.IReplyMap[T["msgType"]]> {
-    const delegate = new PromiseDelegate<
-      Collaboration.IReplyMap[T["msgType"]]
-    >();
-    this._delegates.set(msg.msgId, delegate);
-
-    // .finally(), delete from delegate map
-    const promise = delegate.promise.then(
-      (reply) => {
-        this._delegates.delete(msg.msgId);
-        return reply;
-      },
-      (reason) => {
-        this._delegates.delete(msg.msgId);
-        throw reason;
-      }
-    );
-
-    if (timeout > 0) {
-      setTimeout(() => {
-        delegate.reject("Timed out waiting for reply");
-      }, timeout);
-    }
-
-    this.sendMessage(msg);
-
-    return promise;
-  }
-
-  /**
-   * Callback called when idle after activity.
-   */
-  private _onIdle() {
-    const msg = Collaboration.createMessage("serial-update", {
-      serial: this._serverSerial,
-    });
-    this.sendMessage(msg);
-    this._idleTimer = null;
-  }
-
-  /**
-   * Reset the idle timer.
-   */
-  private _resetIdleTimer() {
-    if (this._idleTimer !== null) {
-      clearTimeout(this._idleTimer);
-    }
-    this._idleTimer = setTimeout(this._onIdle.bind(this), this._idleTreshold);
-  }
-
-  private _delegates = new Map<string, PromiseDelegate<Collaboration.Reply>>();
-
-  private _ourSerial = 0;
-  private _serverSerial = 0;
-  private _pendingTransactions: Collaboration.SerialTransactionMap = {};
-
-  private _idleTreshold: number;
-  private _idleTimer: NodeJS.Timeout | null = null;
-}
-
-/**
- *
- */
-export namespace CollaborationClient {
-  export interface IOptions {
-    url: string;
-
-    /**
-     * How long to wait before the session is considered idle, in seconds.
-     */
-    idleTreshold?: number;
-  }
-
-  /**
-   * A message class for `'remote-transactions'` messages.
-   */
-  export class RemoteTransactionMessage extends Message {
-    /**
-     * Construct a new remote transactions message.
-     *
-     * @param transaction - The transaction object
-     */
-    constructor(transaction: Datastore.Transaction) {
-      super("remote-transactions");
-      this.transaction = transaction;
-    }
-
-    /**
-     * The patch object.
-     */
-    readonly transaction: Datastore.Transaction;
-  }
-
-  /**
-   * A message class for initial state messages.
-   */
-  export class InitialStateMessage extends Message {
-    /**
-     * Construct a new initial state message.
-     *
-     * @param state - he serialized state
-     */
-    constructor(state: string | null) {
-      super("initial-state");
-      this.state = state;
-    }
-
-    /**
-     * The serialized state.
-     */
-    readonly state: string | null;
-  }
-
-  /**
-   * Datastore permissions object.
-   */
-  export type Permissions = {
-    /**
-     * Whether the current user can read from the datastore session.
-     */
-    read: boolean;
-
-    /**
-     * Whether the current user can write to the datastore session.
-     */
-    write: boolean;
-  };
 }

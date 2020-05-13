@@ -18,7 +18,9 @@
     "test:firefox:headless": "lerna run test:firefox:headless",
     "test:ie": "lerna run test:ie --concurrency 1",
     "update:dependency": "update-dependency --lerna",
-    "version": "lerna version"
+    "version": "lerna version",
+    "todo:pre": "npx tsc --build packages/rtc-node/ packages/rtc-todo-example/ packages/rtc-relay/",
+    "todo": "cd packages/rtc-todo-example && yarn run start:all"
   },
   "dependencies": {},
   "devDependencies": {
