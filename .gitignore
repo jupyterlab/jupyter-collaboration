@@ -7,3 +7,6 @@ yarn-error.log
 
 packages/**/lib
 packages/**/build
+**/__pycache__
+*.profraw
+*.tsbuildinfo
