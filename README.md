@@ -16,6 +16,12 @@ It is currently in the planning stage, but eventually we see it containing a num
 
 Most of the work currently is living in [a PR to JupyterLab](https://github.com/jupyterlab/jupyterlab/pull/6871) and documented on [an issue](https://github.com/jupyterlab/jupyterlab/issues/5382) there.
 
+## Contribution
+
+We welcome any and all contributions and ideas here! This is a big task and we will need as much help as we can get.
+
+We have a bi-weekly meeting call. Please come and join! All are welcome to come and just listen or discuss any work relatd to this project. They are also recorded and available here (TODO: create youtube channel). For the time, place, and notes, see [this hackmd](https://hackmd.io/@_4xc7QhhSHKODRQn1uiulw/BkV24I3qL/edit).
+
 ## Development
 
 Start todo example:
