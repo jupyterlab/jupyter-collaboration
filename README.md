@@ -20,7 +20,7 @@ Most of the work currently is living in [a PR to JupyterLab](https://github.com/
 
 We welcome any and all contributions and ideas here! This is a big task and we will need as much help as we can get.
 
-We have a bi-weekly meeting call. Please come and join! All are welcome to come and just listen or discuss any work relatd to this project. They are also recorded and available here (TODO: create youtube channel). For the time, place, and notes, see [this hackmd](https://hackmd.io/@_4xc7QhhSHKODRQn1uiulw/BkV24I3qL/edit).
+We have a bi-weekly meeting call. Please come and join! All are welcome to come and just listen or discuss any work related to this project. They are also recorded and available here (TODO: create youtube channel). For the time, place, and notes, see [this hackmd](https://hackmd.io/@_4xc7QhhSHKODRQn1uiulw/BkV24I3qL/edit).
 
 ## Development
 
