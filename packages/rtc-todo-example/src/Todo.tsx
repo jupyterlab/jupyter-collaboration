@@ -1,107 +1,103 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { createDatastore } from "rtc-node";
-import { UseSignal } from "@jupyterlab/apputils";
-import { Fields, Datastore } from "@lumino/datastore";
+import { Datastore, useDatastoreLoaded, useIds, useRecord } from "rtc-node";
 import * as React from "react";
-import { toArray } from "@lumino/algorithm";
 import { UUID } from "@lumino/coreutils";
+import { Fields } from "@lumino/datastore";
 
-type TODOState = {
-  datastore: Datastore | undefined;
-};
+const datastore = new Datastore({
+  url: "ws://localhost:8888",
+  id: Math.random(),
+});
 
-// Unique ID for client
-const ID = Math.random();
-const URL = "ws://localhost:8888";
-
-const TODOSchema = {
+const table = datastore.register({
   id: "todo",
   fields: {
     description: Fields.Text(),
     show: Fields.Boolean({ value: true }),
   },
+});
+
+const Todo: React.FC = () => {
+  const loaded = useDatastoreLoaded(datastore);
+  if (!loaded) {
+    return <div>Loading...</div>;
+  }
+  return (
+    <div>
+      <h1>TODO</h1>
+      <List />
+      <Add />
+    </div>
+  );
+};
+export default Todo;
+
+const Add: React.FC = () => {
+  const inputEl = React.useRef<HTMLInputElement | null>(null);
+
+  const onSubmit = React.useCallback(
+    (e: React.FormEvent<unknown>) => {
+      datastore.withTransaction(() => {
+        table.update({
+          [UUID.uuid4()]: {
+            description: {
+              index: 0,
+              remove: 0,
+              text: inputEl.current?.value || "",
+            },
+          },
+        });
+      });
+      e.preventDefault();
+    },
+    [inputEl]
+  );
+
+  return (
+    <form onSubmit={onSubmit}>
+      <label>
+        Task:
+        <input type="text" ref={inputEl} />
+      </label>
+      <input type="submit" value="Add" />
+    </form>
+  );
 };
 
-export default class TODO extends React.Component<{}, TODOState> {
-  readonly state: TODOState = {
-    datastore: undefined,
-  };
+const List: React.FC = () => {
+  const ids = useIds(table);
+  return (
+    <ol>
+      {ids.map((id) => (
+        <Row key={id} id={id} />
+      ))}
+    </ol>
+  );
+};
 
-  input = React.createRef<HTMLInputElement>();
+const Row: React.FC<{ id: string }> = ({ id }) => {
+  const { show, description } = useRecord(table, id);
+  const onClick = React.useCallback(
+    (event: React.MouseEvent<unknown, unknown>) => {
+      datastore.withTransaction(() =>
+        table.update({
+          [id]: { show: false },
+        })
+      );
+      event.preventDefault();
+    },
+    [id]
+  );
 
-  async componentDidMount() {
-    const datastore = await createDatastore({
-      url: URL,
-      id: ID,
-      schemas: [TODOSchema],
-    });
-    this.setState({ datastore });
+  if (!show) {
+    return <></>;
   }
-  render() {
-    const { datastore } = this.state;
-    if (!datastore) {
-      return <div>Loading...</div>;
-    }
-    const table = datastore.get(TODOSchema);
-    return (
-      <div>
-        <h1>TODO</h1>
-        <ol>
-          <UseSignal signal={datastore.changed}>
-            {() =>
-              toArray(table.iter()).map((row) =>
-                row.show ? (
-                  <li id={row.$id}>
-                    {row.description}
-                    <button
-                      onClick={(event) => {
-                        datastore.beginTransaction();
-                        table.update({
-                          [row.$id]: { show: false },
-                        });
-                        datastore.endTransaction();
-                        event.preventDefault();
-                      }}
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ) : (
-                  <></>
-                )
-              )
-            }
-          </UseSignal>
-        </ol>
-        <form
-          onSubmit={(e) => {
-            datastore.beginTransaction();
-            table.update({
-              [UUID.uuid4()]: {
-                description: {
-                  index: 0,
-                  remove: 0,
-                  text: this.input.current?.value || "",
-                },
-              },
-            });
-            datastore.endTransaction();
-            e.preventDefault();
-          }}
-        >
-          <label>
-            Task:
-            <input type="text" ref={this.input} />
-          </label>
-          <input type="submit" value="Add" />
-        </form>
-      </div>
-    );
-  }
-
-  componentWillUnmount() {
-    this.state.datastore && this.state.datastore.dispose();
-  }
-}
+  return (
+    <li id={id}>
+      {description}
+      <button onClick={onClick}>Remove</button>
+    </li>
+  );
+};
