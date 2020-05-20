@@ -29,7 +29,7 @@ Start todo example:
 ![](./scratch/todo.gif)
 
 ```bash
-yarn run todo:pro
+yarn run todo:pre
 yarn run todo
 ```
 
