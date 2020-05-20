@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@jupyterlab/apputils": "2.1.1",
     "@lumino/datastore": "^0.9.1",
     "@types/node": "^12.0.0",
     "@types/react": "^16.9.0",
     "@types/react-dom": "^16.9.0",
     "fkill-cli": "6.0.1",
     "npm-run-all": "4.1.5",
+    "observable-hooks": "2.3.5",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.1",
@@ -28,8 +28,6 @@
     "wait-then-start": "npm-run-all wait:relay start",
     "start:all": "npm-run-all --parallel --race start:relay wait-then-start"
   },
-  "eslintConfig": {
-    "extends": "react-app"
   },
   "browserslist": {
     "production": [

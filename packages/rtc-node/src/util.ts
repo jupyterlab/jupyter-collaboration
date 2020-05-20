@@ -1,9 +1,33 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
+// Disable a bunch of rules till we clean up these helper functions
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-namespace */
+
 import { Datastore, Record, Schema, Table } from "@lumino/datastore";
 
 import { DisposableDelegate, IDisposable } from "@lumino/disposable";
+
+import { ISignal } from "@lumino/signaling";
+
+import { Observable } from "rxjs";
+
+export function signalToObservable<T>(
+  signal: ISignal<unknown, T>
+): Observable<T> {
+  return new Observable((subscriber) => {
+    function slot(_: unknown, args: T): void {
+      subscriber.next(args);
+    }
+    signal.connect(slot);
+    return (): void => {
+      signal.disconnect(slot);
+    };
+  });
+}
 
 /**
  * A namespace for Datastore helper functions.
@@ -162,7 +186,7 @@ export namespace DatastoreExt {
     loc: TableLocation<S>,
     update: Table.Update<S>
   ): void {
-    let table = datastore.get(loc.schema);
+    const table = datastore.get(loc.schema);
     table.update(update);
   }
 
@@ -184,7 +208,7 @@ export namespace DatastoreExt {
     loc: RecordLocation<S>,
     update: Record.Update<S>
   ): void {
-    let table = datastore.get(loc.schema);
+    const table = datastore.get(loc.schema);
     table.update({
       [loc.record]: update,
     });
@@ -208,7 +232,7 @@ export namespace DatastoreExt {
     loc: FieldLocation<S, F>,
     update: S["fields"][F]["UpdateType"]
   ): void {
-    let table = datastore.get(loc.schema);
+    const table = datastore.get(loc.schema);
     // TODO: this cast may be made unnecessary once microsoft/TypeScript#13573
     // is fixed, possibly by microsoft/TypeScript#26797 lands.
     table.update({
