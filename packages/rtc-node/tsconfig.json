@@ -8,6 +8,7 @@
     "declaration": true,
     "esModuleInterop": true,
     "sourceMap": true,
+    "jsx": "react",
     "forceConsistentCasingInFileNames": true,
     "composite": true
   },
