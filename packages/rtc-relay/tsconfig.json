@@ -1,15 +1,8 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "target": "es6",
-    "module": "commonjs",
     "outDir": "lib",
-    "rootDir": "src",
-    "strict": true,
-    "declaration": true,
-    "esModuleInterop": true,
-    "sourceMap": true,
-    "forceConsistentCasingInFileNames": true,
-    "composite": true
+    "rootDir": "src"
   },
-  "include": ["src/*"]
+  "include": ["src"]
 }

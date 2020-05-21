@@ -1,33 +1,14 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "target": "es6",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "outDir": "lib",
-    "rootDir": "src",
-    "jsx": "react",
     "noEmit": true,
-    "sourceMap": true
+    "outDir": "lib",
+    "rootDir": "src"
   },
   "references": [
     {
       "path": "../rtc-node"
     }
   ],
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }
