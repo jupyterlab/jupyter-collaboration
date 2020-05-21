@@ -19,13 +19,22 @@
     "test:ie": "lerna run test:ie --concurrency 1",
     "update:dependency": "update-dependency --lerna",
     "version": "lerna version",
-    "todo:pre": "npx tsc --build packages/rtc-node/ packages/rtc-todo-example/ packages/rtc-relay/",
-    "todo": "cd packages/rtc-todo-example && yarn run start:all"
+    "todo:pre": "tsc --build packages/rtc-node/ packages/rtc-todo-example/ packages/rtc-relay/",
+    "todo": "cd packages/rtc-todo-example && yarn run start:all",
+    "lint": "yarn run lint:typescript",
+    "lint:typescript": "yarn run lint:typescript:check --fix",
+    "lint:typescript:check": "eslint . --ext 'ts,tsx' --ignore-path .gitignore"
   },
   "dependencies": {},
   "devDependencies": {
     "@jupyterlab/buildutils": "^2.0.0-rc.0",
+    "@typescript-eslint/eslint-plugin": "2.34.0",
+    "@typescript-eslint/parser": "2.34.0",
     "create-react-app": "3.4.1",
+    "eslint": "7.0.0",
+    "eslint-config-prettier": "6.11.0",
+    "eslint-plugin-react": "7.20.0",
+    "eslint-plugin-react-hooks": "4.0.2",
     "lerna": "^3.19.0"
   }
 }
