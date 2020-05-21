@@ -28,7 +28,6 @@
     "wait-then-start": "npm-run-all wait:relay start",
     "start:all": "npm-run-all --parallel --race start:relay wait-then-start"
   },
-  },
   "browserslist": {
     "production": [
       ">0.2%",
