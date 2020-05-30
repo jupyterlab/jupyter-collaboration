@@ -24,13 +24,13 @@ We have a bi-weekly meeting call. Please come and join! All are welcome to come 
 
 ## Development
 
-Start todo example:
+First install yarn. Then you can start todo example app and the debugger:
 
 ![](./scratch/todo.gif)
 
 ```bash
-yarn run todo:pre
-yarn run todo
+yarn run build:tsc
+yarn run start
 ```
 
 ## Background

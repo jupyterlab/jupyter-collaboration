@@ -5,6 +5,7 @@ import { Datastore, useDatastoreLoaded, useIds, useRecord } from "rtc-node";
 import * as React from "react";
 import { UUID } from "@lumino/coreutils";
 import { Fields } from "@lumino/datastore";
+import Debugger from "rtc-debugger";
 
 const datastore = new Datastore({
   url: "ws://localhost:8888",
@@ -29,6 +30,8 @@ const Todo: React.FC = () => {
       <h1>TODO</h1>
       <List />
       <Add />
+      <hr />
+      <Debugger datastore={datastore} />
     </div>
   );
 };
