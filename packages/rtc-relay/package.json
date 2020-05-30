@@ -6,6 +6,7 @@
   "bugs": {
     "url": "https://github.com/jupyterlab/jupyterlab/issues"
   },
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/jupyterlab/jupyterlab.git"
@@ -26,7 +27,9 @@
     "build": "tsc",
     "clean": "rimraf lib",
     "prepublishOnly": "npm run build",
-    "watch": "tsc -w --listEmittedFiles"
+    "watch": "tsc -w --listEmittedFiles",
+    "start": "fkill -s :8888 && rtc-relay",
+    "wait": "wait-on tcp:8888"
   },
   "dependencies": {
     "socket.io": "2.3.0",
@@ -35,7 +38,9 @@
   "devDependencies": {
     "@types/socket.io": "2.1.4",
     "rimraf": "~3.0.2",
-    "typescript": "~3.8.3"
+    "typescript": "~3.8.3",
+    "wait-on": "5.0.0",
+    "fkill-cli": "6.0.1"
   },
   "publishConfig": {
     "access": "public"
