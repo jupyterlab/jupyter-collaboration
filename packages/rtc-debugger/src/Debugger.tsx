@@ -49,6 +49,7 @@ const TableView: React.FC<{ table: Table<Schema>; datastore: Datastore }> = ({
   useObservableState(datastore.stateDatastore.changed);
   return (
     <MaterialTable
+      title='Datastore Debugger'
       columns={[
         { title: "ID", field: "$id" },
         ...Object.keys(table.schema.fields).map((field) => ({
