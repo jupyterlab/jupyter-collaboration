@@ -38,7 +38,7 @@ yarn run todo
 ### Comparison
 
 Our current approach is to handle all communication on the clients. Alternatively,
-here we propse having a server side datastore peer that handles keeping the models
+here we propose having a server side datastore peer that handles keeping the models
 up to date from the Jupyter server. It expose REST API endpoints to trigger
 actions on the server, that are similar to the existing kernel endpoints, except
 instead of returning the state they update the RTC models. They also expose many
