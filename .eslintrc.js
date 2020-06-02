@@ -21,6 +21,7 @@ const config = {
       "./packages/rtc-node/tsconfig.json",
       "./packages/rtc-relay/tsconfig.json",
       "./packages/rtc-todo-example/tsconfig.json",
+      "./packages/rtc-debugger/tsconfig.json",
     ],
     ecmaFeatures: {
       jsx: true,
