@@ -34,7 +34,7 @@ running on multiple machines.
 
 It doesn't overlap with JupyterHub in that JupyterHub is about spawning multiple instances and this is about providing one instance for collaborative purposes.
 
-It also isn't about providing concepts of Teams, Projects, Groups, etc. These are definitely useful to have in a collaborative environment but for the initial work here we are assuming the same permisionless structure of a regular Jupyter server.
+It also isn't about providing concepts of Teams, Projects, Groups, etc. These are definitely useful to have in a collaborative environment but for the initial work here we are assuming the same permission-less structure of a regular Jupyter server.
 
 It's also often useful to share what environment you are in with your notebook, to make it more reproducible. This isn't about that kind of collaboration either.
 
@@ -62,6 +62,6 @@ There is also a recent paper on this subject we should look at<sup id="a2">[1](#
 - https://github.com/jupyter/jupyter/wiki/Jupyter-Notebook-Server-API
 
 
-<span id="f2">[2]: ["How Data Scientists Use Computational Notebooks for Real-Time Collaboration"](https://dl.acm.org/doi/10.1145/3359141) [presentation](https://ipitweb.files.wordpress.com/2019/06/wang_ipit-1.pdf)</span> [↩](#a2)
+<span id="f2">[2]: [“How Data Scientists Use Computational Notebooks for Real-Time Collaboration"](https://dl.acm.org/doi/10.1145/3359141) [presentation](https://ipitweb.files.wordpress.com/2019/06/wang_ipit-1.pdf)</span> [↩](#a2)
 
 
