@@ -17,7 +17,6 @@ which would also help address some other long-running issues with Jupyter, aroun
 preserving outputs even after you close your browser and dealing with race conditions
 around kernel management.
 
-
 This will happen in a number of different layers, added to this monorepo:
 
 1. Base: CRDT implementation, lumino and/or other JS implementations
@@ -38,10 +37,9 @@ It also isn't about providing concepts of Teams, Projects, Groups, etc. These ar
 
 It's also often useful to share what environment you are in with your notebook, to make it more reproducible. This isn't about that kind of collaboration either.
 
-
 ## User Stories
 
-*During our first meeting we collected a few different user stories around this. Feel free to add to this if there are other points that should be considered.*
+_During our first meeting we collected a few different user stories around this. Feel free to add to this if there are other points that should be considered._
 
 Once you have multiple users editing the same notebook, one fundamental question is if each user has their own kernel or not. In some ways, it's more intuitive if they have the same because as you can re-use state between kernels easily and the normal model is to have one kernel per notebook. However, it is also then easy to clobber each other's work. The simpler model to implement is one kernel per notebook, but it might be worth thinking about how to support the other as well.
 
@@ -60,8 +58,6 @@ There is also a recent paper on this subject we should look at<sup id="a2">[1](#
 - https://jupyter-client.readthedocs.io/en/stable/messaging.html
 - http://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/notebook/master/notebook/services/api/api.yaml#/contents/post_api_contents__path_
 - https://github.com/jupyter/jupyter/wiki/Jupyter-Notebook-Server-API
-
+- https://jupyter-client.readthedocs.io/en/stable/messaging.html
 
 <span id="f2">[2]: [“How Data Scientists Use Computational Notebooks for Real-Time Collaboration"](https://dl.acm.org/doi/10.1145/3359141) [presentation](https://ipitweb.files.wordpress.com/2019/06/wang_ipit-1.pdf)</span> [↩](#a2)
-
-
