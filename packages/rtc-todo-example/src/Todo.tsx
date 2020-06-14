@@ -10,18 +10,18 @@ import {
   useCreateRecord,
   useIds,
   useRecord,
+  createSchemas,
 } from "rtc-node";
 
-const todoSchema = {
-  id: "todo",
-  fields: {
+const schemas = createSchemas({
+  todo: {
     description: Fields.String(),
     show: Fields.Boolean({ value: true }),
   },
-};
+});
 
 const datastore = connect({
-  schemas: [todoSchema],
+  schemas: Object.values(schemas),
   id: Math.random(),
   url: "ws://localhost:8888",
 });
@@ -43,7 +43,7 @@ export default Todo;
 
 const Add: React.FC = () => {
   const inputEl = React.useRef<HTMLInputElement | null>(null);
-  const createTodo = useCreateRecord(todoSchema);
+  const createTodo = useCreateRecord(schemas.todo);
   const onSubmit = React.useCallback(
     (e: React.FormEvent<unknown>) => {
       createTodo({
@@ -66,7 +66,7 @@ const Add: React.FC = () => {
 };
 
 const List: React.FC = () => {
-  const ids = useIds(todoSchema);
+  const ids = useIds(schemas.todo);
   return (
     <ol>
       {ids.map((id) => (
@@ -77,7 +77,7 @@ const List: React.FC = () => {
 };
 
 const Row: React.FC<{ id: string }> = ({ id }) => {
-  const [{ show, description }, setRecord] = useRecord(todoSchema, id);
+  const [{ show, description }, setRecord] = useRecord(schemas.todo, id);
   const onClick = React.useCallback(
     (event: React.MouseEvent<unknown, unknown>) => {
       setRecord({ show: false });

@@ -8,11 +8,38 @@
  */
 import { toArray } from "@lumino/algorithm";
 import { UUID } from "@lumino/coreutils";
-import { Datastore, Record, Schema, Table } from "@lumino/datastore";
+import { Datastore, Record, Schema, Table, AnyField } from "@lumino/datastore";
 import { concat, defer, Observable, of, ReplaySubject } from "rxjs";
 import { distinctUntilChanged, filter, map } from "rxjs/operators";
 import { CollaborationClient } from "./client";
 import { signalToObservable } from "./util";
+
+type SchemasObjectType = {
+  [name: string]: {
+    readonly [name: string]: AnyField;
+  };
+};
+
+type SchemasListType<SCHEMAS extends SchemasObjectType> = {
+  [ID in keyof SCHEMAS]: {
+    readonly id: ID;
+    readonly fields: SCHEMAS[ID];
+  };
+};
+/**
+ * Given a mapping of ids to fields, returns a mapping of those ids to schemas.
+ *
+ * Useful when creating a number of schemas and exporting them.
+ */
+export function createSchemas<SCHEMAS extends SchemasObjectType>(
+  schemas: SCHEMAS
+): Readonly<SchemasListType<SCHEMAS>> {
+  const result = {} as SchemasListType<SCHEMAS>;
+  for (const id in schemas) {
+    result[id] = { id, fields: schemas[id] };
+  }
+  return result;
+}
 
 /**
  * Creates a new datastrore with a number of schemas and connects to the backend at the URL.
