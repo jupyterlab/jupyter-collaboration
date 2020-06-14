@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import { Fields } from "@lumino/datastore";
 import { createSchemas } from "rtc-node";
 import { ReadonlyJSONObject, ReadonlyJSONValue } from "@lumino/coreutils";
