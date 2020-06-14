@@ -1,61 +1,57 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { Datastore, useDatastoreLoaded, useIds, useRecord } from "rtc-node";
-import * as React from "react";
-import { UUID } from "@lumino/coreutils";
 import { Fields } from "@lumino/datastore";
+import * as React from "react";
 import Debugger from "rtc-debugger";
+import {
+  connect,
+  DatastoreRoot,
+  useCreateRecord,
+  useIds,
+  useRecord,
+} from "rtc-node";
 
-const datastore = new Datastore({
-  url: "ws://localhost:8888",
-  id: Math.random(),
-});
-
-const table = datastore.register({
+const todoSchema = {
   id: "todo",
   fields: {
-    description: Fields.Text(),
+    description: Fields.String(),
     show: Fields.Boolean({ value: true }),
   },
+};
+
+const datastore = connect({
+  schemas: [todoSchema],
+  id: Math.random(),
+  url: "ws://localhost:8888",
 });
 
 const Todo: React.FC = () => {
-  const loaded = useDatastoreLoaded(datastore);
-  if (!loaded) {
-    return <div>Loading...</div>;
-  }
   return (
-    <div>
-      <h1>TODO</h1>
-      <List />
-      <Add />
-      <hr />
-      <Debugger datastore={datastore} />
-    </div>
+    <DatastoreRoot datastore={datastore}>
+      <div>
+        <h1>TODO</h1>
+        <List />
+        <Add />
+        <hr />
+        <Debugger />
+      </div>
+    </DatastoreRoot>
   );
 };
 export default Todo;
 
 const Add: React.FC = () => {
   const inputEl = React.useRef<HTMLInputElement | null>(null);
-
+  const createTodo = useCreateRecord(todoSchema);
   const onSubmit = React.useCallback(
     (e: React.FormEvent<unknown>) => {
-      datastore.withTransaction(() => {
-        table.update({
-          [UUID.uuid4()]: {
-            description: {
-              index: 0,
-              remove: 0,
-              text: inputEl.current?.value || "",
-            },
-          },
-        });
+      createTodo({
+        description: inputEl.current?.value || "",
       });
       e.preventDefault();
     },
-    [inputEl]
+    [createTodo, inputEl]
   );
 
   return (
@@ -70,7 +66,7 @@ const Add: React.FC = () => {
 };
 
 const List: React.FC = () => {
-  const ids = useIds(table);
+  const ids = useIds(todoSchema);
   return (
     <ol>
       {ids.map((id) => (
@@ -81,17 +77,13 @@ const List: React.FC = () => {
 };
 
 const Row: React.FC<{ id: string }> = ({ id }) => {
-  const { show, description } = useRecord(table, id);
+  const [{ show, description }, setRecord] = useRecord(todoSchema, id);
   const onClick = React.useCallback(
     (event: React.MouseEvent<unknown, unknown>) => {
-      datastore.withTransaction(() =>
-        table.update({
-          [id]: { show: false },
-        })
-      );
+      setRecord({ show: false });
       event.preventDefault();
     },
-    [id]
+    [setRecord]
   );
 
   if (!show) {

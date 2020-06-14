@@ -8,7 +8,6 @@
     "observable-hooks": "2.3.5",
     "react": "^16.13.1",
     "rtc-node": "*",
-    "material-table": "*",
     "@material-ui/core": "*"
   },
   "devDependencies": {
