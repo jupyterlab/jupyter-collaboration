@@ -193,13 +193,18 @@ export function getOrCreateRecord<SCHEMA extends Schema>(
   datastore: Datastore,
   schema: SCHEMA,
   isValid: (record: Record<SCHEMA>) => boolean,
-  newRecord: Record.Update<SCHEMA>
+  newRecord: Record.Update<SCHEMA>,
+  oldRecordUpdate?: Record.Update<SCHEMA>
 ): string {
   const results = toArray(datastore.get(schema)).filter(isValid);
   if (results.length == 0) {
     return createRecord(datastore, schema, newRecord);
   }
-  return results[0].$id;
+  const { $id } = results[0];
+  if (oldRecordUpdate) {
+    updateRecord(datastore, schema, $id, oldRecordUpdate);
+  }
+  return $id;
 }
 
 /**

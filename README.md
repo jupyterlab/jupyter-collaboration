@@ -2,7 +2,7 @@
 
 This monorepo contains current work on Real Time collaboration for use in JupyterLab and other web applications.
 
-It is currently in the planning stage, but eventually we see it containing a number of seperate projects like:
+It is currently in the planning stage, but eventually we see it containing a number of separate projects like:
 
 - `packages/rtc-relay`: Patch relay server to synchronize patches for `packages/rtc-client`.
 - `packages/rtc-node`: Real time collaboration client, builds on `@lumino/datastore`.
@@ -12,7 +12,7 @@ It is currently in the planning stage, but eventually we see it containing a num
 - `packages/jupyter-rtc-node`: Client to access Jupyter data.
 - `src/jupyter_rtc_supernode_jupyter_extension`: Jupyter Server extension for running `packages/jupyter-rtc-supernode`.
 - `src/rtc_relay_jupyter_extesion`: Jupyter Server Extension for `src/rtc_relay`
-- `packages/jupyterlab-rtc-client`: `packages/rtc-client` that connets over `src/rtc_relay_jupyter`.
+- `packages/jupyterlab-rtc-client`: `packages/rtc-client` that connects over `src/rtc_relay_jupyter`.
 
 Most of the work currently is living in [a PR to JupyterLab](https://github.com/jupyterlab/jupyterlab/pull/6871) and documented on [an issue](https://github.com/jupyterlab/jupyterlab/issues/5382) there.
 
@@ -24,7 +24,7 @@ We have a bi-weekly meeting call. Please come and join! All are welcome to come 
 
 ## Development
 
-First install yarn. Then you can start todo example app and the debugger:
+First install Yarn and Node v14. Then you can start todo example app and the debugger:
 
 ![](./scratch/todo.gif)
 

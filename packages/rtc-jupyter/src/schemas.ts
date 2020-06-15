@@ -76,11 +76,9 @@ export const schemas = createSchemas({
     mimetype: Fields.Register<null | string>({
       value: null,
     }),
-    format: Fields.Register<null | "text" | "base64" | "notebook">({
-      value: null,
-    }),
-    // Whether to fetch the content from the server. 
-    fetch: Fields.Boolean()
+    format: Fields.String(),
+    // Whether to fetch the content from the server.
+    fetch: Fields.Boolean(),
   },
   text_content: {
     // Should relation be to content or from this one?
@@ -144,15 +142,7 @@ export const schemas = createSchemas({
           traceback: Array<string>;
         }
     >({ value: { status: "ok", execution_count: null, result: null } }),
-    displays: Fields.List<
-      | { type: "stream"; name: "stdout" | "stderr"; text: string }
-      | {
-          type: "data";
-          data: ReadonlyJSONObject;
-          metadata: ReadonlyJSONObject;
-          display_id: null | string;
-        }
-    >(),
+    displays: Fields.List<DisplayType>(),
   },
   // TODO: Introspection
   // TODO: Completion
@@ -162,3 +152,11 @@ export const schemas = createSchemas({
   // TODO: input
   // TODO: Comms
 });
+export type DisplayType =
+  | { type: "stream"; name: "stdout" | "stderr"; text: string }
+  | {
+      type: "data";
+      data: ReadonlyJSONObject;
+      metadata: ReadonlyJSONObject;
+      display_id: null | string;
+    };

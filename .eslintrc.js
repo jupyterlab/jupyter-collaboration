@@ -24,6 +24,7 @@ const config = {
       "./packages/rtc-jupyter/tsconfig.json",
       "./packages/rtc-jupyter-example/tsconfig.json",
       "./packages/rtc-debugger/tsconfig.json",
+      "./packages/rtc-jupyter-supernode/tsconfig.json",
     ],
     ecmaFeatures: {
       jsx: true,
