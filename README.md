@@ -33,4 +33,12 @@ yarn run build:tsc
 yarn run todo:start-all
 ```
 
+To try the Jupyter app:
+
+```bash
+pip install jupyterlab
+yarn run build:tsc
+yarn run jupyter:start-all
+```
+
 ## [Design](./DESIGN.md)

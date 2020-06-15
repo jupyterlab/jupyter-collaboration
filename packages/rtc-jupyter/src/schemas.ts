@@ -67,6 +67,8 @@ export const schemas = createSchemas({
     type: Fields.Register<null | "directory" | "file" | "notebook">({
       value: null,
     }),
+    // Pointer to content, based on type.
+    content: Fields.String(),
     writeable: Fields.Boolean(),
     created: Fields.String(),
     last_modified: Fields.String(),
@@ -81,20 +83,15 @@ export const schemas = createSchemas({
     fetch: Fields.Boolean(),
   },
   text_content: {
-    // Should relation be to content or from this one?
-    content_id: Fields.String(),
     content: Fields.Text(),
   },
   base64_content: {
-    content_id: Fields.String(),
     content: Fields.String(),
   },
   folders: {
-    content_id: Fields.String(),
     content: Fields.List<string>(),
   },
   notebooks: {
-    content_id: Fields.String(),
     nbformat: Fields.Number(),
     nbformatMinor: Fields.Number(),
     cells: Fields.List<string>(),

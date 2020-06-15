@@ -15,7 +15,6 @@ import { Record } from "@lumino/datastore";
 // so we can use rx-jupyter in node
 // https://github.com/ReactiveX/rxjs/issues/2099#issuecomment-258033058
 
-console.log(schemas);
 global.XMLHttpRequest = require("xhr2");
 const config = {
   endpoint: "http://127.0.0.1:8889/",
@@ -26,12 +25,14 @@ const config = {
 const fetchingContent = new Map<string, Subscription>();
 
 async function main(): Promise<void> {
+  const url = process.env["RTC_RELAY_URL"] || "ws://localhost:8888";
+  console.log(`Connecting to ${url}`);
   const datastore = await connect({
     schemas: Object.values(schemas),
-    url: process.env["RTC_RELAY_URL"] || "ws://localhost:8888",
+    url,
     id: 0,
   }).toPromise();
-  console.log(getSchemas(datastore));
+  console.log(`Fetched initial transactions`);
 
   records(datastore, schemas.contents).subscribe({
     next: (contents) =>
@@ -62,16 +63,20 @@ async function main(): Promise<void> {
                   fetch: false,
                 });
                 if (response.type === "file") {
-                  createRecord(datastore, schemas.text_content, {
-                    content_id: content.$id,
-                    // TODO: remove initial text
-                    // TODO: Or make a new one?
-                    content: {
-                      index: 0,
-                      remove: 0,
-                      text: response.content as string,
-                    },
-                  });
+                  updateRecord(
+                    datastore,
+                    schemas.text_content,
+                    content.content,
+                    {
+                      // TODO: remove initial text
+                      // TODO: Or make a new one?
+                      content: {
+                        index: 0,
+                        remove: 0,
+                        text: response.content as string,
+                      },
+                    }
+                  );
                 }
                 if (response.type === "notebook") {
                   const notebookResponse = response.content as commutable.Notebook;
@@ -108,9 +113,7 @@ async function main(): Promise<void> {
                               type: "data",
                               data: output.data as commutable.JSONObject,
                               metadata: output.metadata,
-                              display_id:
-                                (output.transient?.display_id as string) ??
-                                null,
+                              display_id: null,
                             });
                           } else if (output.output_type == "error") {
                             error = {
@@ -159,22 +162,20 @@ async function main(): Promise<void> {
                       }
                     );
                     // TODO: remove cells  and existing metadata
-                    const notebookUpdate: Record.Update<typeof schemas.notebooks> = {
-                      nbformat: notebookResponse.nbformat,
-                      nbformatMinor: notebookResponse.nbformat_minor,
-                      metadata: notebookResponse.metadata,
-                      cells: {
-                        index: 0,
-                        remove: 0,
-                        values: cellIDs,
-                      },
-                    };
-                    getOrCreateRecord(
+                    updateRecord(
                       datastore,
                       schemas.notebooks,
-                      (notebook) => notebook.content_id == content.$id,
-                      notebookUpdate,
-                      notebookUpdate
+                      content.content,
+                      {
+                        nbformat: notebookResponse.nbformat,
+                        nbformatMinor: notebookResponse.nbformat_minor,
+                        metadata: notebookResponse.metadata,
+                        cells: {
+                          index: 0,
+                          remove: 0,
+                          values: cellIDs,
+                        },
+                      }
                     );
                   }
                 }
@@ -186,8 +187,6 @@ async function main(): Promise<void> {
 }
 
 main();
-
-// fetch contents
 
 function joinMultiline(s: string | Array<string>): string {
   if (typeof s == "string") {

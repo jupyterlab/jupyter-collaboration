@@ -9,6 +9,7 @@ import {
   DatastoreRoot,
   useRecordValue,
   useGetOrCreateRecord,
+  useCreateRecord,
 } from "rtc-node";
 
 const datastore = connect({
@@ -55,10 +56,11 @@ const SelectNotebook: React.FC<{ onSelect: (path: string) => void }> = ({
 };
 
 const Notebook: React.FC<{ path: string }> = ({ path }) => {
+  const createNotebookRecord = useCreateRecord(schemas.notebooks);
   const contentID = useGetOrCreateRecord(
     schemas.contents,
     (record) => record.path === path,
-    { path, fetch: true }
+    () => ({ path, fetch: true, content: createNotebookRecord({}) })
   );
   return (
     <div>
@@ -94,10 +96,10 @@ const NotebookSessions: React.FC<{ contentID: string }> = ({ contentID }) => {
   const { state } = useRecordValue(schemas.sessions, sessionID);
   return (
     <dl>
-      <dd>Kernel</dd>
-      <dt>
+      <dt>Kernel</dt>
+      <dd>
         {state.label === "pending" ? "Pending..." : <Kernel id={state.label} />}
-      </dt>
+      </dd>
     </dl>
   );
 };
@@ -106,26 +108,67 @@ const Kernel: React.FC<{ id: string }> = ({ id }) => {
   const { status, name } = useRecordValue(schemas.kernels, id);
   return (
     <dt>
-      <dd>Name</dd>
-      <dt>{name}</dt>
-      <dd>Status</dd>
-      <dt>{status}</dt>
+      <dt>Name</dt>
+      <dd>{name}</dd>
+      <dt>Status</dt>
+      <dd>{status}</dd>
     </dt>
   );
 };
 
 const NotebookContent: React.FC<{ contentID: string }> = ({ contentID }) => {
-  const notebookID = useGetOrCreateRecord(
-    schemas.notebooks,
-    (notebook) => notebook.content_id === contentID,
-    // eslint-disable-next-line @typescript-eslint/camelcase
-    { content_id: contentID }
-  );
-  const notebook = useRecordValue(schemas.notebooks, notebookID);
+  const content = useRecordValue(schemas.contents, contentID);
+  const notebook = useRecordValue(schemas.notebooks, content.content);
   return (
     <dl>
-      <dd>Cells</dd>
-      <dt>{notebook.cells.length}</dt>
+      <dt>Cells</dt>
+      <dd>
+        <ol>
+          {notebook.cells.map((id) => (
+            <li key={id}>
+              <Cell id={id} />
+            </li>
+          ))}
+        </ol>
+      </dd>
+    </dl>
+  );
+};
+
+const Cell: React.FC<{ id: string }> = ({ id }) => {
+  const cell = useRecordValue(schemas.cells, id);
+  return (
+    <dl>
+      <dt>Type</dt>
+      <dd>{cell.type}</dd>
+      <dt>Text</dt>
+      <dd>{cell.text}</dd>
+      {cell.execution ? (
+        <>
+          <dt>Execution</dt>
+          <dd>
+            <Execution id={cell.execution} />
+          </dd>
+        </>
+      ) : null}
+    </dl>
+  );
+};
+
+const Execution: React.FC<{ id: string }> = ({ id }) => {
+  const execution = useRecordValue(schemas.executions, id);
+  return (
+    <dl>
+      <dt>Status</dt>
+      <dd>{JSON.stringify(execution.status)}</dd>
+      <dt>Displays</dt>
+      <dd>
+        <ol>
+          {execution.displays.map((display, i) => (
+            <li key={i}>{JSON.stringify(display)}</li>
+          ))}
+        </ol>
+      </dd>
     </dl>
   );
 };

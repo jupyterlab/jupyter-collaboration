@@ -127,7 +127,7 @@ export function useRecordValue<SCHEMA extends Schema>(
 export function useGetOrCreateRecord<SCHEMA extends Schema>(
   schema: SCHEMA,
   isValid: (record: Record<SCHEMA>) => boolean,
-  newRecord: Record.Update<SCHEMA>
+  newRecord: Record.Update<SCHEMA> | (() => Record.Update<SCHEMA>)
 ): string {
   return getOrCreateRecord(useDatastore(), schema, isValid, newRecord);
 }
