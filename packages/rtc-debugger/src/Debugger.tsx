@@ -1,18 +1,22 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { Datastore } from "rtc-node";
-import { toArray } from "@lumino/algorithm";
-import MaterialTable from "material-table";
-import * as React from "react";
-import { Schema, Table } from "@lumino/datastore";
+import { Schema } from "@lumino/datastore";
 import AppBar from "@material-ui/core/AppBar";
-import Tabs from "@material-ui/core/Tabs";
+import Paper from "@material-ui/core/Paper";
 import Tab from "@material-ui/core/Tab";
-import { useObservableState } from "observable-hooks";
+import Table from "@material-ui/core/Table";
+import TableBody from "@material-ui/core/TableBody";
+import TableCell from "@material-ui/core/TableCell";
+import TableContainer from "@material-ui/core/TableContainer";
+import TableHead from "@material-ui/core/TableHead";
+import TableRow from "@material-ui/core/TableRow";
+import Tabs from "@material-ui/core/Tabs";
+import * as React from "react";
+import { useIds, useRecordValue, useSchemas } from "rtc-node";
 
-const Debugger: React.FC<{ datastore: Datastore }> = ({ datastore }) => {
-  const tables = toArray(datastore.stateDatastore.datastore);
+const Debugger: React.FC = () => {
+  const schemas = useSchemas();
 
   const [value, setValue] = React.useState(0);
   const handleChange = (
@@ -25,39 +29,50 @@ const Debugger: React.FC<{ datastore: Datastore }> = ({ datastore }) => {
     <div>
       <AppBar position="static">
         <Tabs value={value} onChange={handleChange}>
-          {tables.map(({ schema: { id } }) => (
+          {schemas.map(({ id }) => (
             <Tab key={id} label={id} />
           ))}
         </Tabs>
       </AppBar>
-      {tables.map((table, index) =>
-        value === index ? (
-          <TableView table={table} key={index} datastore={datastore} />
-        ) : (
-          <></>
-        )
+      {schemas.map((schema, index) =>
+        value === index ? <TableView schema={schema} key={index} /> : <></>
       )}
     </div>
   );
 };
 export default Debugger;
 
-const TableView: React.FC<{ table: Table<Schema>; datastore: Datastore }> = ({
-  table,
-  datastore,
-}) => {
-  useObservableState(datastore.stateDatastore.changed);
+const TableView: React.FC<{ schema: Schema }> = ({ schema }) => {
+  const columns = ["ID", ...Object.keys(schema.fields)];
+  const ids = useIds(schema);
   return (
-    <MaterialTable
-      title='Datastore Debugger'
-      columns={[
-        { title: "ID", field: "$id" },
-        ...Object.keys(table.schema.fields).map((field) => ({
-          title: field,
-          field,
-        })),
-      ]}
-      data={toArray(table.iter())}
-    />
+    <TableContainer component={Paper}>
+      <Table>
+        <TableHead>
+          <TableRow>
+            {columns.map((title) => (
+              <TableCell key={title}>{title}</TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {ids.map((id) => (
+            <Row key={id} schema={schema} id={id} />
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+};
+
+const Row: React.FC<{ schema: Schema; id: string }> = ({ schema, id }) => {
+  const value = useRecordValue(schema, id);
+  const fields = ["$id", ...Object.keys(schema.fields)];
+  return (
+    <TableRow>
+      {fields.map((field) => (
+        <TableCell key={field}>{JSON.stringify(value[field])}</TableCell>
+      ))}
+    </TableRow>
   );
 };

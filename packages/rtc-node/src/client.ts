@@ -1,7 +1,7 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { IServerAdapter, Datastore } from "@lumino/datastore";
+import { Datastore, IServerAdapter } from "@lumino/datastore";
 import io, { Socket } from "socket.io-client";
 
 type TransactionHandler = (transaction: Datastore.Transaction) => void;
@@ -18,7 +18,6 @@ export class CollaborationClient implements IServerAdapter {
     | {
         label: "connected";
         socket: typeof Socket;
-        loaded: Promise<void>;
       }
     | { label: "disposed" } = {
     label: "initial",
@@ -27,20 +26,13 @@ export class CollaborationClient implements IServerAdapter {
     return this.state.label === "disposed";
   }
 
-  get loaded(): Promise<void> {
-    if (this.state.label != "connected") {
-      throw new Error("Can only get loading status once connected");
-    }
-    return this.state.loaded;
-  }
-
   /**
    * Set by datastore when passed to it
    */
   onUndo!: ((transaction: Datastore.Transaction) => void) | null;
   onRedo!: ((transaction: Datastore.Transaction) => void) | null;
 
-  constructor(private options: { url: string }) {}
+  constructor(private options: { url: string; onLoad: () => void }) {}
 
   broadcast(transaction: Datastore.Transaction): void {
     if (this.state.label !== "connected") {
@@ -65,22 +57,16 @@ export class CollaborationClient implements IServerAdapter {
     }
     const socket = io(this.options.url);
 
-    const loaded = new Promise<void>((resolve) =>
-      socket.on(
-        "transactions",
-        (transactions: Array<Datastore.Transaction>) => {
-          transactions.map((t) => onRemoteTransaction(t));
-          resolve();
-        }
-      )
-    );
+    socket.on("transactions", (transactions: Array<Datastore.Transaction>) => {
+      transactions.map((t) => onRemoteTransaction(t));
+      this.options.onLoad();
+    });
     socket.on("transaction", (t: Datastore.Transaction) =>
       onRemoteTransaction(t)
     );
     this.state = {
       label: "connected",
       socket,
-      loaded,
     };
   }
 
