@@ -4,14 +4,12 @@ import {
   records,
   updateRecord,
   createRecord,
-  getOrCreateRecord,
-  getSchemas,
 } from "rtc-node";
 import { schemas, DisplayType } from "rtc-jupyter";
 import * as jupyter from "rx-jupyter";
 import { Subscription } from "rxjs";
 import * as commutable from "@nteract/commutable";
-import { Record } from "@lumino/datastore";
+
 // so we can use rx-jupyter in node
 // https://github.com/ReactiveX/rxjs/issues/2099#issuecomment-258033058
 
