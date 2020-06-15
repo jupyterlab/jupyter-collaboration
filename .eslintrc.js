@@ -22,6 +22,7 @@ const config = {
       "./packages/rtc-relay/tsconfig.json",
       "./packages/rtc-todo-example/tsconfig.json",
       "./packages/rtc-jupyter/tsconfig.json",
+      "./packages/rtc-jupyter-example/tsconfig.json",
       "./packages/rtc-debugger/tsconfig.json",
     ],
     ecmaFeatures: {

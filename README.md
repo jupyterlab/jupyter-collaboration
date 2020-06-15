@@ -30,7 +30,7 @@ First install yarn. Then you can start todo example app and the debugger:
 
 ```bash
 yarn run build:tsc
-yarn run start
+yarn run todo:start-all
 ```
 
 ## [Design](./DESIGN.md)

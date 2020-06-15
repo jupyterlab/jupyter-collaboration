@@ -58,6 +58,5 @@ There is also a recent paper on this subject we should look at<sup id="a2">[1](#
 - https://jupyter-client.readthedocs.io/en/stable/messaging.html
 - http://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/notebook/master/notebook/services/api/api.yaml#/contents/post_api_contents__path_
 - https://github.com/jupyter/jupyter/wiki/Jupyter-Notebook-Server-API
-- https://jupyter-client.readthedocs.io/en/stable/messaging.html
 
 <span id="f2">[2]: [“How Data Scientists Use Computational Notebooks for Real-Time Collaboration"](https://dl.acm.org/doi/10.1145/3359141) [presentation](https://ipitweb.files.wordpress.com/2019/06/wang_ipit-1.pdf)</span> [↩](#a2)
