@@ -28,7 +28,12 @@ const Debugger: React.FC = () => {
   return (
     <div>
       <AppBar position="static">
-        <Tabs value={value} onChange={handleChange}>
+        <Tabs
+          value={value}
+          onChange={handleChange}
+          variant="scrollable"
+          scrollButtons="auto"
+        >
           {schemas.map(({ id }) => (
             <Tab key={id} label={id} />
           ))}
