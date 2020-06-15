@@ -27,9 +27,10 @@
     "todo:start-all": "npm-run-all --parallel --race relay:start todo:wait-then-start",
     "jupyter-supernode:start": "yarn workspace rtc-jupyter-supernode run start",
     "jupyter-supernode:wait-then-start": "npm-run-all relay:wait jupyter-supernode:start",
+    "jupyter-server:start": "yarn workspace rtc-jupyter-supernode run start:server",
     "jupyter:start": "yarn workspace rtc-jupyter-example run start",
     "jupyter:wait-then-start": "npm-run-all relay:wait jupyter:start",
-    "jupyter:start-all": "npm-run-all --parallel --race relay:start jupyter:wait-then-start jupyter-supernode:wait-then-start",
+    "jupyter:start-all": "npm-run-all --parallel --race relay:start jupyter-server:start jupyter:wait-then-start jupyter-supernode:wait-then-start",
     "lint": "yarn run lint:typescript",
     "lint:typescript": "yarn run lint:typescript:check --fix",
     "lint:typescript:check": "eslint . --ext 'ts,tsx' --ignore-path .gitignore"
