@@ -83,7 +83,13 @@ const NotebookSessions: React.FC<{ contentID: string }> = ({ contentID }) => {
   const sessionID = useGetOrCreateRecord(
     schemas.sessions,
     (session) => session.path === path,
-    { path, name: path, type: "notebook" }
+    // TODO: Get kernel from content
+    {
+      path,
+      name: path,
+      type: "notebook",
+      state: { label: "pending", kernel: { name: "python" } },
+    }
   );
   const { state } = useRecordValue(schemas.sessions, sessionID);
   return (
