@@ -10,3 +10,5 @@ packages/**/build
 **/__pycache__
 *.profraw
 *.tsbuildinfo
+.ipynb_checkpoints
+*.ipynb
