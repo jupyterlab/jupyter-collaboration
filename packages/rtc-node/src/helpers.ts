@@ -8,11 +8,38 @@
  */
 import { toArray } from "@lumino/algorithm";
 import { UUID } from "@lumino/coreutils";
-import { Datastore, Record, Schema, Table } from "@lumino/datastore";
+import { Datastore, Record, Schema, Table, AnyField } from "@lumino/datastore";
 import { concat, defer, Observable, of, ReplaySubject } from "rxjs";
 import { distinctUntilChanged, filter, map } from "rxjs/operators";
 import { CollaborationClient } from "./client";
 import { signalToObservable } from "./util";
+
+type SchemasObjectType = {
+  [name: string]: {
+    readonly [name: string]: AnyField;
+  };
+};
+
+type SchemasListType<SCHEMAS extends SchemasObjectType> = {
+  [ID in keyof SCHEMAS]: {
+    readonly id: ID;
+    readonly fields: SCHEMAS[ID];
+  };
+};
+/**
+ * Given a mapping of ids to fields, returns a mapping of those ids to schemas.
+ *
+ * Useful when creating a number of schemas and exporting them.
+ */
+export function createSchemas<SCHEMAS extends SchemasObjectType>(
+  schemas: SCHEMAS
+): Readonly<SchemasListType<SCHEMAS>> {
+  const result = {} as SchemasListType<SCHEMAS>;
+  for (const id in schemas) {
+    result[id] = { id, fields: schemas[id] };
+  }
+  return result;
+}
 
 /**
  * Creates a new datastrore with a number of schemas and connects to the backend at the URL.
@@ -46,7 +73,7 @@ export function connect({
 /**
  * Returns an array of all schemas registed in the datastore.
  */
-export function schemas(datastore: Datastore): Array<Schema> {
+export function getSchemas(datastore: Datastore): Array<Schema> {
   return toArray(datastore).map((table) => table.schema);
 }
 
@@ -65,6 +92,21 @@ export function ids(
       // Since id lists are monotocially increasing, we just need to compare length for equality
       distinctUntilChanged((x, y) => x.length == y.length)
     )
+  );
+}
+
+/**
+ * Returns an observables of all the records for the schema in the datastore
+ */
+export function records<SCHEMA extends Schema>(
+  datastore: Datastore,
+  schema: SCHEMA
+): Observable<Array<Record<SCHEMA>>> {
+  const getRecords = (): Array<Record<SCHEMA>> =>
+    toArray(datastore.get(schema));
+  return concat(
+    defer(() => of(getRecords())),
+    changes(datastore, schema).pipe(map(getRecords))
   );
 }
 
@@ -141,6 +183,39 @@ export function createRecord<SCHEMA extends Schema>(
   const id = options.id ?? UUID.uuid4();
   updateRecords(datastore, schema, { [id]: update });
   return id;
+}
+
+/**
+ * Returns the first record that matches the isValid function or
+ * creates a row otherwise
+ */
+export function getOrCreateRecord<SCHEMA extends Schema>(
+  datastore: Datastore,
+  schema: SCHEMA,
+  isValid: (record: Record<SCHEMA>) => boolean,
+  newRecord: Record.Update<SCHEMA> | (() => Record.Update<SCHEMA>),
+  oldRecordUpdate?: Record.Update<SCHEMA> | (() => Record.Update<SCHEMA>)
+): string {
+  const results = toArray(datastore.get(schema)).filter(isValid);
+  if (results.length == 0) {
+    return createRecord(
+      datastore,
+      schema,
+      typeof newRecord === "function" ? newRecord() : newRecord
+    );
+  }
+  const { $id } = results[0];
+  if (oldRecordUpdate) {
+    updateRecord(
+      datastore,
+      schema,
+      $id,
+      typeof oldRecordUpdate === "function"
+        ? oldRecordUpdate()
+        : oldRecordUpdate
+    );
+  }
+  return $id;
 }
 
 /**

@@ -4,7 +4,7 @@ const config = {
     browser: true,
     es6: true,
   },
-  ignorePatterns: ["packages/dummystore", "packages/jupyterschemas"],
+  ignorePatterns: ["packages/dummystore"],
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
@@ -21,7 +21,10 @@ const config = {
       "./packages/rtc-node/tsconfig.json",
       "./packages/rtc-relay/tsconfig.json",
       "./packages/rtc-todo-example/tsconfig.json",
+      "./packages/rtc-jupyter/tsconfig.json",
+      "./packages/rtc-jupyter-example/tsconfig.json",
       "./packages/rtc-debugger/tsconfig.json",
+      "./packages/rtc-jupyter-supernode/tsconfig.json",
     ],
     ecmaFeatures: {
       jsx: true,
@@ -37,11 +40,11 @@ const config = {
   plugins: ["@typescript-eslint"],
   rules: {
     // Disable because warns incorrectly when we use React.FC<Props>
-    'react/prop-types': 'off',
+    "react/prop-types": "off",
     // Sometimes it's clearer to define functions after they are used
-    '@typescript-eslint/no-use-before-define': 'off'
-  }
-}
+    "@typescript-eslint/no-use-before-define": "off",
+  },
+};
 
 /**
  * Exports.

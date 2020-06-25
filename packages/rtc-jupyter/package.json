@@ -1,5 +1,5 @@
 {
-  "name": "rtc-relay",
+  "name": "rtc-jupyter",
   "version": "1.0.0",
   "description": "JupyterLab - Datastore",
   "homepage": "https://github.com/jupyterlab/jupyterlab",
@@ -26,25 +26,18 @@
     "build": "tsc",
     "clean": "rimraf lib",
     "prepublishOnly": "npm run build",
-    "watch": "tsc -w --listEmittedFiles",
-    "start": "fkill -s :8888 && rtc-relay",
-    "wait": "wait-on tcp:8888"
+    "watch": "tsc -w --listEmittedFiles"
   },
   "dependencies": {
-    "socket.io": "2.3.0",
-    "@lumino/datastore": "^0.9.1"
+    "rtc-jupyter": "*",
+    "observable-hooks": "2.3.5",
+    "rxjs": "6.5.5"
   },
   "devDependencies": {
-    "@types/socket.io": "2.1.4",
     "rimraf": "~3.0.2",
-    "typescript": "~3.8.3",
-    "wait-on": "5.0.0",
-    "fkill-cli": "6.0.1"
+    "typescript": "~3.8.3"
   },
   "publishConfig": {
     "access": "public"
-  },
-  "bin": {
-    "rtc-relay": "bin/index.js"
   }
 }

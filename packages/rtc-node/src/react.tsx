@@ -20,15 +20,17 @@ import { Datastore, Record, Schema, Table } from "@lumino/datastore";
 import { useObservable, useObservableState } from "observable-hooks";
 import React from "react";
 import { Observable } from "rxjs";
-import { switchMap } from "rxjs/operators";
+import { switchMap, map } from "rxjs/operators";
 import {
   createRecord,
   ids,
   record,
-  schemas,
+  getSchemas,
   updateRecord,
   updateRecords,
   withTransaction,
+  records,
+  getOrCreateRecord,
 } from "./helpers";
 
 const DatastoreContext = React.createContext<null | Datastore>(null);
@@ -75,7 +77,7 @@ function useDatastoreObservable<T>(
 }
 
 export function useSchemas(): Array<Schema> {
-  return schemas(useDatastore());
+  return getSchemas(useDatastore());
 }
 
 export function useIds(schema: Schema): Array<string> {
@@ -84,6 +86,25 @@ export function useIds(schema: Schema): Array<string> {
   );
 }
 
+export function useIdsFiltered<SCHEMA extends Schema>(
+  schema: SCHEMA,
+  filterFn: (record: Record<SCHEMA>) => boolean
+): Array<string> {
+  return useDatastoreObservable(
+    React.useCallback(
+      (datastore) =>
+        records(datastore, schema).pipe(
+          map((records) =>
+            records
+              .filter((record) => filterFn(record))
+              .map((record) => record.$id)
+          )
+        ),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [schema, filterFn]
+    )
+  );
+}
 export function useWithTransaction(): (callback: () => void) => void {
   const datastore = useDatastore();
   return React.useCallback((callback) => withTransaction(datastore, callback), [
@@ -101,6 +122,14 @@ export function useRecordValue<SCHEMA extends Schema>(
       id,
     ])
   );
+}
+
+export function useGetOrCreateRecord<SCHEMA extends Schema>(
+  schema: SCHEMA,
+  isValid: (record: Record<SCHEMA>) => boolean,
+  newRecord: Record.Update<SCHEMA> | (() => Record.Update<SCHEMA>)
+): string {
+  return getOrCreateRecord(useDatastore(), schema, isValid, newRecord);
 }
 
 export function useSetRecords<SCHEMA extends Schema>(
