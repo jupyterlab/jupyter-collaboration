@@ -16,6 +16,8 @@ It is currently in the planning stage, but eventually we see it containing a num
 
 Most of the work currently is living in [a PR to JupyterLab](https://github.com/jupyterlab/jupyterlab/pull/6871) and documented on [an issue](https://github.com/jupyterlab/jupyterlab/issues/5382) there.
 
+We are working on creating a living specification for the protocol(s) created here, in the [`SPEC.md`](./SPEC.md) file. It may not always be totally in sync with explorations in the repo, until they are settled on.
+
 ## Contribution
 
 We welcome any and all contributions and ideas here! This is a big task and we will need as much help as we can get.
