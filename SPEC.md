@@ -114,5 +114,35 @@ TODO:
 
 This layer provides a way for a client and a server to send each other messages. We currently use [socket.io](https://github.com/socketio/socket.io) for this.
 
-## Open cross cutting concerns:
+## Open cross-cutting concerns:
+
+### [Sharding](https://en.wikipedia.org/wiki/Shard_(database_architecture)) / horizontal partitioning
+
+If many notebooks are being worked on at once, it might be not feasible to push changes for all of them to all clients.
+
+### Permissions
+
+There are many situations where not all clients should be able to do all things.
+
+The simplest way to implement this is a binary write permission, where some clients can send transactions back to the central server and some can only read existing clients.
+
+However, if we want to support more nuanced and granular loads then it is helpful to think about the permissions on two levels:
+
+1. What records can clients create or edit in the data store (at the RTC level, i.e. editing a text cell)
+2. What actions can clients cause the supernode to take on the server (at the Jupyter RTC level, i.e. executing a cell)
+
+It may be useful to have security at both levels.
+
+For level one, we could add a "token" field to each transaction that gets sent to the central relay server. The relay could then be configurable to reject transactions based on their tokens, by allowing an extension to provide this behavior (either through some kind of FFI or microservice architecture)
+
+For level two, we could add a "signed token" to the value of certain actions, by putting it in the state of records, like in the executions schema we could add a `token` property to the `"requested"` state. That way the client could pass that token to the server, the relay node would be unaware of it, but then the RTC jupyter supernode would grab out the token, and pass that on to the Jupyter Server where any custom authentication logic could be used for that request. It would probably have to be signed, maybe through some public/private key encryption, so only the supernode can read the token, not other clients. 
+
+### Multiple Kernel Executors
+
+There have been a couple of points raised by folks that make me think we might wanna support some idea of the current server that an entity is relevant for. The use cases:
+
+* Local instances of kernels in your browser, ala Jyve
+* Having one jupyter client talking to many jupyter servers, if you have work in multiple places
+
+We could add a `host` field to the `kernelspecs` schemas with a uniqiue ID so that each each server would only execute kernels that come from kernelspecs that it owns.
 
