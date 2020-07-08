@@ -31,21 +31,26 @@
     "jupyter:start": "yarn workspace rtc-jupyter-example run start",
     "jupyter:wait-then-start": "npm-run-all relay:wait jupyter:start",
     "jupyter:start-all": "npm-run-all --parallel --race relay:start jupyter-server:start jupyter:wait-then-start jupyter-supernode:wait-then-start",
-    "lint": "yarn run lint:typescript",
+    "lint": "npm-run-all lint:typescript lint:duplicates",
+    "lint:duplicates": "yarn run yarn-deduplicate --list --fail",
     "lint:typescript": "yarn run lint:typescript:check --fix",
     "lint:typescript:check": "eslint . --ext 'ts,tsx' --ignore-path .gitignore"
   },
   "dependencies": {},
+  "resolutions": {
+    "lodash": "4.17.15"
+  },
   "devDependencies": {
-    "npm-run-all": "4.1.5",
     "@jupyterlab/buildutils": "^2.0.0-rc.0",
-    "@typescript-eslint/eslint-plugin": "2.34.0",
-    "@typescript-eslint/parser": "2.34.0",
+    "@typescript-eslint/eslint-plugin": "3.6.0",
+    "@typescript-eslint/parser": "3.6.0",
     "create-react-app": "3.4.1",
-    "eslint": "7.0.0",
+    "eslint": "^6.6.0",
     "eslint-config-prettier": "6.11.0",
-    "eslint-plugin-react": "7.20.0",
-    "eslint-plugin-react-hooks": "4.0.2",
-    "lerna": "^3.19.0"
+    "eslint-plugin-react": "7.20.3",
+    "eslint-plugin-react-hooks": "4.0.6",
+    "lerna": "^3.19.0",
+    "npm-run-all": "4.1.5",
+    "yarn-deduplicate": "2.0.0"
   }
 }

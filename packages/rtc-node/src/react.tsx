@@ -17,10 +17,10 @@
  * Also somewhat inspired by Recoil (https://recoiljs.org/) for best practices and naming.
  */
 import { Datastore, Record, Schema, Table } from "@lumino/datastore";
-import { useObservable, useObservableState } from "observable-hooks";
+import { useObservableState } from "observable-hooks";
 import React from "react";
 import { Observable } from "rxjs";
-import { switchMap, map } from "rxjs/operators";
+
 import {
   createRecord,
   ids,
@@ -32,6 +32,7 @@ import {
   records,
   getOrCreateRecord,
 } from "./helpers";
+import { ObservableWithInitial } from "./ObservableWithInitial";
 
 const DatastoreContext = React.createContext<null | Datastore>(null);
 /**
@@ -66,14 +67,11 @@ function useDatastore(): Datastore {
 }
 
 function useDatastoreObservable<T>(
-  fn: (datastore: Datastore) => Observable<T>
+  fn: (datastore: Datastore) => ObservableWithInitial<T>
 ): T {
-  return useObservableState<T, true>(
-    useObservable(
-      (input$) => input$.pipe(switchMap(([datastore]) => fn(datastore))),
-      [useDatastore()]
-    )
-  );
+  const datastore = useDatastore();
+  const [initial, changes] = fn(datastore);
+  return useObservableState(changes, initial);
 }
 
 export function useSchemas(): Array<Schema> {
@@ -90,20 +88,16 @@ export function useIdsFiltered<SCHEMA extends Schema>(
   schema: SCHEMA,
   filterFn: (record: Record<SCHEMA>) => boolean
 ): Array<string> {
-  return useDatastoreObservable(
+  const records_ = useDatastoreObservable(
     React.useCallback(
-      (datastore) =>
-        records(datastore, schema).pipe(
-          map((records) =>
-            records
-              .filter((record) => filterFn(record))
-              .map((record) => record.$id)
-          )
-        ),
+      (datastore) => records(datastore, schema),
       // eslint-disable-next-line react-hooks/exhaustive-deps
       [schema, filterFn]
     )
   );
+  return records_
+    .filter((record) => filterFn(record))
+    .map((record) => record.$id);
 }
 export function useWithTransaction(): (callback: () => void) => void {
   const datastore = useDatastore();

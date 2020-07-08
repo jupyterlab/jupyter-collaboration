@@ -4,14 +4,14 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "dependencies": {
-    "@lumino/datastore": "^0.9.1",
+    "@lumino/datastore": "0.10.2",
+    "@material-ui/core": "*",
     "observable-hooks": "3.0.0",
     "react": "^16.13.1",
-    "rtc-node": "*",
-    "@material-ui/core": "*"
+    "rtc-node": "*"
   },
   "devDependencies": {
     "@types/react": "^16.9.0",
-    "typescript": "~3.7.2"
+    "typescript": "3.9.6"
   }
 }
