@@ -1,0 +1,17 @@
+{
+  "name": "rtc-debugger",
+  "version": "0.1.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "dependencies": {
+    "@lumino/datastore": "^0.9.1",
+    "observable-hooks": "2.3.5",
+    "react": "^16.13.1",
+    "rtc-node": "*",
+    "@material-ui/core": "*"
+  },
+  "devDependencies": {
+    "@types/react": "^16.9.0",
+    "typescript": "~3.7.2"
+  }
+}

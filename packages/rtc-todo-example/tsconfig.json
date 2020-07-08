@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "outDir": "lib",
+    "rootDir": "src"
+  },
+  "references": [
+    {
+      "path": "../rtc-node"
+    },
+    {
+      "path": "../rtc-debugger"
+    }
+  ],
+  "include": ["src"]
+}

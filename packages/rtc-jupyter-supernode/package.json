@@ -1,0 +1,53 @@
+{
+  "name": "rtc-jupyter-supernode",
+  "version": "1.0.0",
+  "description": "JupyterLab - Datastore",
+  "homepage": "https://github.com/jupyterlab/jupyterlab",
+  "bugs": {
+    "url": "https://github.com/jupyterlab/jupyterlab/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jupyterlab/jupyterlab.git"
+  },
+  "license": "BSD-3-Clause",
+  "author": "Project Jupyter",
+  "files": [
+    "lib/**/*.{d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
+    "schema/*.json",
+    "style/**/*.{css,eot,gif,html,jpg,json,png,svg,woff2,ttf}"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "directories": {
+    "lib": "lib/"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rimraf lib",
+    "prepublishOnly": "npm run build",
+    "watch": "tsc -w --listEmittedFiles",
+    "start:server": "fkill -s :8889 && jupyter lab --port 8889 --LabApp.token= --LabApp.password=",
+    "start": "wait-on tcp:8889 && rtc-jupyter-supernode"
+  },
+  "dependencies": {
+    "@lumino/datastore": "^0.9.1",
+    "rtc-node": "*",
+    "rtc-jupyter": "*",
+    "rx-jupyter": "*",
+    "rxjs": "6.5.5",
+    "xhr2": "*"
+  },
+  "devDependencies": {
+    "rimraf": "~3.0.2",
+    "typescript": "~3.8.3",
+    "wait-on": "5.0.0",
+    "fkill-cli": "6.0.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "rtc-jupyter-supernode": "bin/index.js"
+  }
+}

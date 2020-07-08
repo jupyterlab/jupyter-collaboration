@@ -18,11 +18,34 @@
     "test:firefox:headless": "lerna run test:firefox:headless",
     "test:ie": "lerna run test:ie --concurrency 1",
     "update:dependency": "update-dependency --lerna",
-    "version": "lerna version"
+    "version": "lerna version",
+    "build:tsc": "tsc --build packages/rtc-node/ packages/rtc-todo-example/ packages/rtc-relay/ packages/rtc-debugger/ packages/rtc-jupyter/ packages/rtc-jupyter-example/ packages/rtc-jupyter-supernode/",
+    "relay:start": "yarn workspace rtc-relay run start",
+    "relay:wait": "yarn workspace rtc-relay run wait",
+    "todo:start": "yarn workspace rtc-todo-example run start",
+    "todo:wait-then-start": "npm-run-all relay:wait todo:start",
+    "todo:start-all": "npm-run-all --parallel --race relay:start todo:wait-then-start",
+    "jupyter-supernode:start": "yarn workspace rtc-jupyter-supernode run start",
+    "jupyter-supernode:wait-then-start": "npm-run-all relay:wait jupyter-supernode:start",
+    "jupyter-server:start": "yarn workspace rtc-jupyter-supernode run start:server",
+    "jupyter:start": "yarn workspace rtc-jupyter-example run start",
+    "jupyter:wait-then-start": "npm-run-all relay:wait jupyter:start",
+    "jupyter:start-all": "npm-run-all --parallel --race relay:start jupyter-server:start jupyter:wait-then-start jupyter-supernode:wait-then-start",
+    "lint": "yarn run lint:typescript",
+    "lint:typescript": "yarn run lint:typescript:check --fix",
+    "lint:typescript:check": "eslint . --ext 'ts,tsx' --ignore-path .gitignore"
   },
   "dependencies": {},
   "devDependencies": {
+    "npm-run-all": "4.1.5",
     "@jupyterlab/buildutils": "^2.0.0-rc.0",
+    "@typescript-eslint/eslint-plugin": "2.34.0",
+    "@typescript-eslint/parser": "2.34.0",
+    "create-react-app": "3.4.1",
+    "eslint": "7.0.0",
+    "eslint-config-prettier": "6.11.0",
+    "eslint-plugin-react": "7.20.0",
+    "eslint-plugin-react-hooks": "4.0.2",
     "lerna": "^3.19.0"
   }
 }

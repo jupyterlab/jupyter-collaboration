@@ -8,3 +8,8 @@ yarn-error.log
 packages/**/lib
 packages/**/build
 **/coverage
+**/__pycache__
+*.profraw
+*.tsbuildinfo
+.ipynb_checkpoints
+*.ipynb
