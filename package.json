@@ -31,7 +31,8 @@
     "jupyter:start": "yarn workspace rtc-jupyter-example run start",
     "jupyter:wait-then-start": "npm-run-all relay:wait jupyter:start",
     "jupyter:start-all": "npm-run-all --parallel --race relay:start jupyter-server:start jupyter:wait-then-start jupyter-supernode:wait-then-start",
-    "lint": "yarn run lint:typescript",
+    "lint": "npm-run-all lint:typescript lint:duplicates",
+    "lint:duplicates": "yarn run yarn-deduplicate --list --fail",
     "lint:typescript": "yarn run lint:typescript:check --fix",
     "lint:typescript:check": "eslint . --ext 'ts,tsx' --ignore-path .gitignore"
   },
@@ -46,6 +47,7 @@
     "eslint-plugin-react": "7.20.3",
     "eslint-plugin-react-hooks": "4.0.6",
     "lerna": "^3.19.0",
-    "npm-run-all": "4.1.5"
+    "npm-run-all": "4.1.5",
+    "yarn-deduplicate": "2.0.0"
   }
 }
