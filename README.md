@@ -26,11 +26,19 @@ We have a bi-weekly meeting call. Please come and join! All are welcome to come 
 
 ## Development
 
-First install Yarn and Node v14. Then you can start todo example app and the debugger:
+First install Yarn and Node v14. With conda this could be:
+
+```bash
+conda create -n rtc -c conda-forge jupyterlab nodejs=14 yarn
+conda activate rtc
+```
+
+Then you can start todo example app and the debugger:
 
 ![](./scratch/todo.gif)
 
 ```bash
+yarn
 yarn run build:tsc
 yarn run todo:start-all
 ```
@@ -38,7 +46,9 @@ yarn run todo:start-all
 To try the Jupyter app:
 
 ```bash
+# Install jupyterlab if you haven't already
 pip install jupyterlab
+
 yarn run build:tsc
 yarn run jupyter:start-all
 ```
