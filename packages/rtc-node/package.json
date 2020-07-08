@@ -31,8 +31,8 @@
   "dependencies": {
     "@lumino/datastore": "^0.9.1",
     "@lumino/disposable": "^1.2.0",
-    "observable-hooks": "2.3.5",
-    "rxjs": "6.5.5",
+    "observable-hooks": "3.0.0",
+    "rxjs": "6.6.0",
     "react": "^16.13.1",
     "socket.io-client": "2.3.0"
   },

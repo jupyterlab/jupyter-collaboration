@@ -5,7 +5,7 @@
   "types": "lib/index.d.ts",
   "dependencies": {
     "@lumino/datastore": "^0.9.1",
-    "observable-hooks": "2.3.5",
+    "observable-hooks": "3.0.0",
     "react": "^16.13.1",
     "rtc-node": "*",
     "@material-ui/core": "*"

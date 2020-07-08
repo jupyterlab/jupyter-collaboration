@@ -35,7 +35,7 @@
     "rtc-node": "*",
     "rtc-jupyter": "*",
     "rx-jupyter": "*",
-    "rxjs": "6.5.5",
+    "rxjs": "6.6.0",
     "xhr2": "*"
   },
   "devDependencies": {
