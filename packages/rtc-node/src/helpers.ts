@@ -13,6 +13,7 @@ import { concat, defer, Observable, of, ReplaySubject } from "rxjs";
 import { distinctUntilChanged, filter, map } from "rxjs/operators";
 import { CollaborationClient } from "./client";
 import { signalToObservable } from "./util";
+import { ObservableWithInitial } from "./ObservableWithInitial";
 
 type SchemasObjectType = {
   [name: string]: {
@@ -83,16 +84,17 @@ export function getSchemas(datastore: Datastore): Array<Schema> {
 export function ids(
   datastore: Datastore,
   schema: Schema
-): Observable<Array<string>> {
+): ObservableWithInitial<Array<string>> {
   const getIds = (): Array<string> => [...getIdsGenerator(datastore, schema)];
-  return concat(
-    defer(() => of(getIds())),
+
+  return [
+    getIds,
     changes(datastore, schema).pipe(
       map(getIds),
       // Since id lists are monotocially increasing, we just need to compare length for equality
       distinctUntilChanged((x, y) => x.length == y.length)
-    )
-  );
+    ),
+  ];
 }
 
 /**
@@ -101,13 +103,11 @@ export function ids(
 export function records<SCHEMA extends Schema>(
   datastore: Datastore,
   schema: SCHEMA
-): Observable<Array<Record<SCHEMA>>> {
+): ObservableWithInitial<Array<Record<SCHEMA>>> {
   const getRecords = (): Array<Record<SCHEMA>> =>
     toArray(datastore.get(schema));
-  return concat(
-    defer(() => of(getRecords())),
-    changes(datastore, schema).pipe(map(getRecords))
-  );
+
+  return [getRecords, changes(datastore, schema).pipe(map(getRecords))];
 }
 
 /**
@@ -117,7 +117,7 @@ export function record<SCHEMA extends Schema>(
   datastore: Datastore,
   schema: SCHEMA,
   id: string
-): Observable<Record<SCHEMA>> {
+): ObservableWithInitial<Record<SCHEMA>> {
   const table = datastore.get(schema);
   const getSingle = (): Record<SCHEMA> => {
     const record = table.get(id);
@@ -127,13 +127,13 @@ export function record<SCHEMA extends Schema>(
     return record;
   };
   // emit initial value then re-get whenever this record has changed
-  return concat(
-    defer(() => of(getSingle())),
+  return [
+    getSingle,
     changes(datastore, schema).pipe(
       filter((change) => id in change),
       map(() => getSingle())
-    )
-  );
+    ),
+  ];
 }
 
 /**
