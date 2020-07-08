@@ -12,12 +12,17 @@ import {
 } from '@lumino/algorithm';
 
 import {
-  Datastore, Record, Schema, Table as LTable
+  Record, Schema, Table as LTable,
+  MapField, TextField, ListField, RegisterField,
 } from '@lumino/datastore';
 
 import {
+  HistoryStore
+} from './datastore';
+
+import {
   ITable
-} from './interface';
+} from '../interface';
 
 
 /**
@@ -35,15 +40,97 @@ export class Table<S extends Schema> implements ITable<S> {
    *
    * @returns A new datastore table.
    */
-  static create<U extends Schema>(schema: U, context: Datastore.Context): Table<U> {
+  static create<U extends Schema>(schema: U, context: HistoryStore.Context): Table<U> {
     return new Table<U>(schema, context);
   }
 
   /**
-   * The schema for the table.
+   * @internal
    *
-   * #### Complexity
-   * `O(1)`
+   * Create a new datastore table with a previously exported state.
+   *
+   * @param schema - The schema for the table.
+   *
+   * @param context - The datastore context.
+   *
+   * @returns A new datastore table.
+   */
+  static recreate<U extends Schema>(schema: U, context: HistoryStore.Context, records: IterableOrArrayLike<Record<U>>): Table<U> {
+    return new Table<U>(schema, context, records);
+  }
+
+  /**
+   * @internal
+   *
+   * Apply a patch to a datastore table.
+   *
+   * @param table - The table of interest.
+   *
+   * @param data - The patch to apply to the table.
+   *
+   * @returns The user-facing change to the table.
+   */
+  static patch<U extends Schema>(table: Table<U>, data: ITable.Change<U>): ITable.Change<U> {
+    // Fetch common variables.
+    let schema = table.schema;
+    let records = table._records;
+
+    // Iterate over the dataset.
+    for (let id in data) {
+      // Get or create the old record.
+      let old = records[id] || Private.createRecord(schema, id);
+
+      // Apply the patch and create the new record.
+      let record = Private.applyPatch(schema, old, data[id]);
+
+      // Replace the old record in the table.
+      records[id] = record;
+    }
+
+    // Return the change object.
+    return data;
+  }
+
+  /**
+   * @internal
+   *
+   * Unapply a patch to a datastore table, thereby undoing that patch.
+   *
+   * @param table - The table of interest.
+   *
+   * @param data - The patch to apply to the table.
+   *
+   * @returns The user-facing change to the table.
+   */
+  static unpatch<U extends Schema>(table: Table<U>, data: ITable.Change<U>): ITable.Change<U> {
+    // Create the change object.
+    let tc: LTable.MutableChange<U> = {};
+
+    // Fetch common variables.
+    let schema = table.schema;
+    let records = table._records;
+
+    // Iterate over the dataset.
+    for (let id in data) {
+      // Get or create the old record.
+      let old = records[id] || Private.createRecord(schema, id);
+
+      // Apply the patch and create the new record.
+      let { record, change } = Private.unapplyPatch(schema, old, data[id]);
+
+      // Replace the old record in the table.
+      records[id] = record;
+
+      // Update the change object.
+      tc[id] = change;
+    }
+
+    // Return the change object.
+    return tc;
+  }
+
+  /**
+   * The schema for the table.
    */
   readonly schema: S;
 
@@ -65,9 +152,6 @@ export class Table<S extends Schema> implements ITable<S> {
    * Create an iterator over the records in the table.
    *
    * @returns A new iterator over the table records.
-   *
-   * #### Complexity
-   * `O(log32 n)`
    */
   iter(): IIterator<Record<S>> {
     return map(Object.keys(this._records), key => this._records[key]);
@@ -139,7 +223,7 @@ export class Table<S extends Schema> implements ITable<S> {
    *
    * @param context - The datastore context.
    */
-  private constructor(schema: S, context: Datastore.Context, records?: IterableOrArrayLike<Record<S>>) {
+  private constructor(schema: S, context: HistoryStore.Context, records?: IterableOrArrayLike<Record<S>>) {
     this.schema = schema;
     this._context = context;
     if (records) {
@@ -149,10 +233,9 @@ export class Table<S extends Schema> implements ITable<S> {
     }
   }
 
-  private _context: Datastore.Context;
+  private _context: HistoryStore.Context;
   private _records: {[key: string]: Record<S>} = {};
 }
-
 
 /**
  * The namespace for the module implementation details.
@@ -201,11 +284,7 @@ namespace Private {
    * @returns A new record with the update applied.
    */
   export
-  function applyUpdate<S extends Schema>(schema: S, record: Record<S>, update: Record.Update<S>, context: Datastore.Context): Record<S> {
-    // Fetch the version and store id.
-    let version = context.version;
-    let storeId = context.storeId;
-
+  function applyUpdate<S extends Schema>(schema: S, record: Record<S>, update: Record.Update<S>, context: HistoryStore.Context): Record<S> {
     // Fetch or create the table change.
     let tc = context.change[schema.id] || (context.change[schema.id] = {});
 
@@ -234,10 +313,12 @@ namespace Private {
           // Set up the change array.
           change = [];
 
-          let upd = update[name] as any[];
+          let upd: ReadonlyArray<TextField.Splice>;
           // Coerce the update into an array of splices.
-          if (!Array.isArray(upd)) {
-            upd = [upd];
+          if (!Array.isArray(update[name])) {
+            upd = [update[name] as any];
+          } else {
+            upd = update[name] as ReadonlyArray<TextField.Splice>;
           }
 
           // Iterate over the update.
@@ -264,17 +345,20 @@ namespace Private {
             // Compute the new value.
             value = value.slice(0, index) + text + value.slice(index + count);
           }
+          break;
         case 'list':
           // Create a clone of the previous value.
           let listClone = [...previous[name] as any[]];
-          let up = update[name] as any[];
 
           // Set up the change array.
           change = [];
 
+          let up: ReadonlyArray<ListField.Splice<any>>;
           // Coerce the update into an array of splices.
-          if (!Array.isArray(up)) {
-            up = [up];
+          if (!Array.isArray(update[name])) {
+            up = [update[name] as any];
+          } else {
+            up = update[name] as ReadonlyArray<ListField.Splice<any>>;
           }
 
           // Iterate over the update.
@@ -335,7 +419,7 @@ namespace Private {
           break;
         case 'register':
           value = update[name]!;
-          change = {previous, current: value};
+          change = {previous: previous[name], current: value};
           break;
         default:
           throw new Error(`Dummystore cannot handle field type: ${field.type}`);
@@ -392,4 +476,207 @@ namespace Private {
     arr.splice(idx, 0, ...items.slice(idx));
     return deleted;
   }
+
+
+  
+  /**
+   * Apply a patch to a record.
+   *
+   * @param schema - The schema for the record.
+   *
+   * @param record - The record of interest.
+   *
+   * @param change - The patch to apply to the record.
+   *
+   * @returns A new record with the patch applied.
+   */
+  export
+  function applyPatch<S extends Schema>(schema: S, record: Record<S>, patch: Record.Change<S>): Record<S> {
+    // Cast the record to a value object.
+    let previous = record as Record.Value<S>;
+
+    // Create a clone of the record.
+    let clone = { ...(record as any) };
+
+    // Iterate over the patch.
+    for (let name in patch) {
+      // Fetch the relevant field.
+      let field = schema.fields[name];
+
+      // Apply the patch for the field.
+      let value;
+      switch (field.type) {
+        case 'text':
+          // Set up a variable to hold the current value.
+          value = previous[name] as string;
+
+          let upd = patch[name] as TextField.Change;
+
+          // Iterate over the patch.
+          for (let splice of upd) {
+            // Unpack the splice.
+            let { index, removed, inserted } = splice;
+
+            // Clamp the index to the string bounds.
+            if (index < 0) {
+              index = Math.max(0, index + value.length);
+            } else {
+              index = Math.min(index, value.length);
+            }
+
+            // Clamp the remove count to the string bounds.
+            let count = Math.min(removed.length, value.length - index);
+
+            // Compute the new value.
+            value = value.slice(0, index) + inserted + value.slice(index + count);
+          }
+          break;
+        case 'list':
+          // Create a clone of the previous value.
+          let listClone = [...previous[name] as any[]];
+          let up = patch[name] as ListField.Change<any>;
+
+          // Iterate over the patch.
+          for (let splice of up) {
+            // Unpack the splice.
+            let { index, removed, inserted } = splice;
+
+            // Clamp the index to the array bounds.
+            if (index < 0) {
+              index = Math.max(0, index + listClone.length);
+            } else {
+              index = Math.min(index, listClone.length);
+            }
+
+            // Clamp the remove count to the array bounds.
+            let count = Math.min(removed.length, listClone.length - index);
+
+            // Apply the splice
+            spliceArray(listClone, index, count, inserted);
+          }
+
+          // Return the patch result.
+          value = listClone;
+          break;
+        case 'map':
+          // Create a clone of the previous value.
+          let mapClone = { ...(previous[name] as any) };
+
+          let upm = patch[name] as MapField.Change<any>;
+
+          // Iterate over the patch.
+          for (let key in upm) {
+            // Insert the patch value into the metadata.
+            let v = upm.current[key];
+
+            // Update the map clone with the new value.
+            if (v === null) {
+              delete mapClone[key];
+            } else {
+              mapClone[key] = v;
+            }
+          }
+          value = mapClone;
+          break;
+        case 'register':
+          value = (patch[name] as RegisterField.Change<any>).current;
+          break;
+        default:
+          throw new Error(`Dummystore cannot handle field type: ${field.type}`);
+      }
+
+      // Assign the new value to the clone.
+      clone[name] = value;
+    }
+
+    // Return the new record.
+    return clone;
+  }
+
+  
+  
+  /**
+   * Apply a patch to a record.
+   *
+   * @param schema - The schema for the record.
+   *
+   * @param record - The record of interest.
+   *
+   * @param change - The patch to apply to the record.
+   *
+   * @returns A new record with the patch applied.
+   */
+  export
+  function unapplyPatch<S extends Schema>(schema: S, record: Record<S>, patch: Record.Change<S>):
+  {
+    record: Record<S>;
+    change: Record.Change<S>
+  } {
+    // Revert the patch as the new patch/change.
+    let rc: Record.MutableChange<S> = {};
+
+    // Iterate over the update.
+    for (let name in patch) {
+      // Fetch the relevant field.
+      let field = schema.fields[name];
+
+      // Reverse the patch for the field.
+      let change;
+      switch (field.type) {
+        case 'text':
+          // Set up the change array.
+          change = [];
+
+          let upd = patch[name] as TextField.Change;
+
+          // Iterate over the update.
+          for (let splice of upd) {
+            // Unpack the splice.
+            let { index, removed, inserted } = splice;
+
+            // Reverse the change array.
+            change.push({ index, removed: inserted, inserted: removed });
+          }
+          break;
+        case 'list':
+          // Set up the change array.
+          change = [];
+
+          let up = patch[name] as ListField.Change<any>;
+
+          // Iterate over the update.
+          for (let splice of up) {
+            // Unpack the splice.
+            let { index, removed, inserted } = splice;
+
+            // Reverse the change array.
+            change.push({index, removed: inserted, inserted: removed});
+          }
+          break;
+        case 'map':
+          let upm = patch[name] as MapField.Change<any>;
+
+          // Reverse the change object.
+          change = { previous: upm.current, current: upm.previous };
+          break;
+        case 'register':
+          let upr = patch[name] as RegisterField.Change<any>;
+          // Reverse the change object.
+          change = {previous: upr.current, current: upr.previous};
+          break;
+        default:
+          throw new Error(`Dummystore cannot handle field type: ${field.type}`);
+      }
+
+      // Update the record change for the field.
+      rc[name] = change;
+    }
+
+    // Return the results of applying the reversed patch.
+    return {
+      record: applyPatch(schema, record, rc),
+      change: rc
+    };
+  }
+
 }

@@ -20,7 +20,7 @@ import {
 } from '@lumino/datastore';
 
 import {
-  Dummystore
+  HistoryStore
 } from '../../src';
 
 import {
@@ -89,11 +89,11 @@ let state = {
 
 describe('dummystore', () => {
 
-  describe('Datastore', () => {
+  describe('HistoryStore', () => {
 
-    let datastore: Dummystore;
+    let datastore: HistoryStore;
     beforeEach(() => {
-      datastore = Dummystore.create({
+      datastore = HistoryStore.create({
         schemas: [schema1, schema2],
       });
     });
@@ -105,8 +105,8 @@ describe('dummystore', () => {
     describe('create()', () => {
 
       it('should create a new datastore', () => {
-        let datastore = Dummystore.create({ schemas: [schema1] });
-        expect(datastore).to.be.instanceof(Dummystore);
+        let datastore = HistoryStore.create({ schemas: [schema1] });
+        expect(datastore).to.be.instanceof(HistoryStore);
       });
 
       it('should throw an error for an invalid schema', () => {
@@ -117,7 +117,7 @@ describe('dummystore', () => {
           }
         };
         expect(() => {
-          Dummystore.create({ schemas: [invalid1] });
+          HistoryStore.create({ schemas: [invalid1] });
         }).to.throw(/validation failed/);
         let invalid2 = {
           id: 'invalid-schema',
@@ -126,7 +126,7 @@ describe('dummystore', () => {
           }
         };
         expect(() => {
-          Dummystore.create({ schemas: [invalid2] });
+          HistoryStore.create({ schemas: [invalid2] });
         }).to.throw(/validation failed/);
       });
 
@@ -306,6 +306,144 @@ describe('dummystore', () => {
       });
 
     });
+
+
+    describe('undo()', () => {
+
+      it('should throw without anything to undo', async () => {
+        let datastore = HistoryStore.create({
+          schemas: [schema1, schema2]
+        });
+        let thrown = false;
+        try {
+          await datastore.undo('');
+        } catch {
+          thrown = true;
+        } finally {
+          expect(thrown).to.be.true;
+          datastore.dispose();
+        }
+      });
+
+      it('should throw if invoked during a transaction',  async () => {
+        let thrown = false;
+        try {
+          datastore.beginTransaction();
+          await datastore.undo('');
+        } catch {
+          thrown = true;
+        } finally {
+          datastore.endTransaction();
+          expect(thrown).to.be.true;
+        }
+      });
+
+      it('should unapply a transaction by id', async () => {
+        let t2 = datastore.get(schema2);
+        let id = datastore.beginTransaction();
+        t2.update({ 'my-record': { enabled: true } });
+        datastore.endTransaction();
+        let record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+        await datastore.undo(id);
+        record = t2.get('my-record')!;
+        expect(record.enabled).to.be.false;
+      });
+
+      it('should emit a changed signal when undoing a change', async () => {
+        let t2 = datastore.get(schema2);
+        let id = datastore.beginTransaction();
+        t2.update({ 'my-record': { enabled: true } });
+        datastore.endTransaction();
+        let record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+
+        let called = false;
+        datastore.changed.connect((sender, args) => {
+          expect(args.type).to.equal('undo');
+          expect(args.transactionId).to.equal(id);
+          called = true;
+        });
+        await datastore.undo(id);
+        expect(called).to.be.true;
+      });
+
+    });
+
+    describe('redo()', () => {
+
+      it('should throw without anything to redo', async () => {
+        let datastore = HistoryStore.create({
+          schemas: [schema1, schema2]
+        });
+        let thrown = false;
+        try {
+          await datastore.redo('');
+        } catch {
+          thrown = true;
+        } finally {
+          expect(thrown).to.be.true;
+          datastore.dispose();
+        }
+      });
+
+      it('should throw if invoked during a transaction',  async () => {
+        let thrown = false;
+        try {
+          datastore.beginTransaction();
+          await datastore.redo('');
+        } catch {
+          thrown = true;
+        } finally {
+          datastore.endTransaction();
+          expect(thrown).to.be.true;
+        }
+      });
+
+      it('should reapply a transaction by id', async () => {
+        let t2 = datastore.get(schema2);
+        let id = datastore.beginTransaction();
+        t2.update({
+          'my-record': {
+            enabled: true,
+            content: { index: 0, remove: 0, text: 'hello, world' }
+          }
+        });
+        datastore.endTransaction();
+        let record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+        expect(record.content).to.equal('hello, world');
+        await datastore.undo(id);
+        record = t2.get('my-record')!;
+        expect(record.enabled).to.be.false;
+        expect(record.content).to.equal('');
+        await datastore.redo(id);
+        record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+        expect(record.content).to.equal('hello, world');
+      });
+
+      it('should emit a changed signal when redoing a change', async () => {
+        let t2 = datastore.get(schema2);
+        let id = datastore.beginTransaction();
+        t2.update({ 'my-record': { enabled: true } });
+        datastore.endTransaction();
+        let record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+        await datastore.undo(id);
+
+        let called = false;
+        datastore.changed.connect((sender, args) => {
+          expect(args.type).to.equal('redo');
+          expect(args.transactionId).to.equal(id);
+          called = true;
+        });
+        await datastore.redo(id);
+        expect(called).to.be.true;
+      });
+
+    });
+
 
   });
 
