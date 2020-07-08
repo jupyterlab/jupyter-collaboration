@@ -37,6 +37,9 @@
     "lint:typescript:check": "eslint . --ext 'ts,tsx' --ignore-path .gitignore"
   },
   "dependencies": {},
+  "resolutions": {
+    "lodash": "4.17.15"
+  },
   "devDependencies": {
     "@jupyterlab/buildutils": "^2.0.0-rc.0",
     "@typescript-eslint/eslint-plugin": "3.6.0",
