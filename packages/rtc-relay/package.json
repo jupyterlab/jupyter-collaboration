@@ -31,15 +31,15 @@
     "wait": "wait-on tcp:8888"
   },
   "dependencies": {
-    "socket.io": "2.3.0",
-    "@lumino/datastore": "^0.9.1"
+    "@lumino/datastore": "0.10.2",
+    "socket.io": "2.3.0"
   },
   "devDependencies": {
-    "@types/socket.io": "2.1.4",
+    "@types/socket.io": "2.1.8",
+    "fkill-cli": "6.0.1",
     "rimraf": "~3.0.2",
-    "typescript": "~3.8.3",
-    "wait-on": "5.0.0",
-    "fkill-cli": "6.0.1"
+    "typescript": "3.9.6",
+    "wait-on": "5.0.1"
   },
   "publishConfig": {
     "access": "public"
