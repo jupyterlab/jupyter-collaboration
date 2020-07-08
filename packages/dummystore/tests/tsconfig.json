@@ -1,13 +1,18 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "ES6",
     "module": "commonjs",
+    "moduleResolution": "node",
     "outDir": "build",
-    "rootDir": "src",
     "strict": true,
     "declaration": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "sourceMap": true,
+    "lib": ["dom", "es5", "es2015.promise", "es2015.iterable"],
   },
-  "include": ["src/*"]
+  "include": [
+    "src/*.ts",
+    "../src/**/*.ts"
+  ]
 }
