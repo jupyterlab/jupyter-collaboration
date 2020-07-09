@@ -29,13 +29,13 @@
     "watch": "tsc -w --listEmittedFiles"
   },
   "dependencies": {
+    "observable-hooks": "3.0.0",
     "rtc-jupyter": "*",
-    "observable-hooks": "2.3.5",
-    "rxjs": "6.5.5"
+    "rxjs": "6.6.0"
   },
   "devDependencies": {
     "rimraf": "~3.0.2",
-    "typescript": "~3.8.3"
+    "typescript": "3.9.6"
   },
   "publishConfig": {
     "access": "public"

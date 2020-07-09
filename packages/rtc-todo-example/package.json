@@ -3,18 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@lumino/datastore": "^0.9.1",
-    "@types/node": "^12.0.0",
+    "@lumino/datastore": "0.10.2",
+    "@types/node": "14.0.19",
     "@types/react": "^16.9.0",
     "@types/react-dom": "^16.9.0",
-    "observable-hooks": "2.3.5",
+    "observable-hooks": "3.0.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.1",
+    "rtc-debugger": "*",
     "rtc-node": "*",
     "rtc-relay": "*",
-    "typescript": "~3.7.2",
-    "rtc-debugger": "*"
+    "typescript": "3.9.6"
   },
   "scripts": {
     "start": "react-scripts start",

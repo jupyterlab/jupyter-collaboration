@@ -3,7 +3,8 @@
   "compilerOptions": {
     "noEmit": true,
     "outDir": "lib",
-    "rootDir": "src"
+    "rootDir": "src",
+    "module": "esnext"
   },
   "references": [
     {
@@ -13,5 +14,7 @@
       "path": "../rtc-debugger"
     }
   ],
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }

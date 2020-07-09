@@ -31,18 +31,18 @@
     "start": "wait-on tcp:8889 && rtc-jupyter-supernode"
   },
   "dependencies": {
-    "@lumino/datastore": "^0.9.1",
-    "rtc-node": "*",
+    "@lumino/datastore": "0.10.2",
     "rtc-jupyter": "*",
+    "rtc-node": "*",
     "rx-jupyter": "*",
-    "rxjs": "6.5.5",
+    "rxjs": "6.6.0",
     "xhr2": "*"
   },
   "devDependencies": {
+    "fkill-cli": "6.0.1",
     "rimraf": "~3.0.2",
-    "typescript": "~3.8.3",
-    "wait-on": "5.0.0",
-    "fkill-cli": "6.0.1"
+    "typescript": "3.9.6",
+    "wait-on": "5.0.1"
   },
   "publishConfig": {
     "access": "public"
