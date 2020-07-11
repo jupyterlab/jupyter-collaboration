@@ -1,5 +1,5 @@
 {
-  "name": "dummystore",
+  "name": "rtc-store-dummy",
   "version": "0.1.0",
   "description": "An in-memory, no collaboration implementation of the lumino datastore interface",
   "main": "lib/index.js",
