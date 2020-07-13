@@ -4,7 +4,7 @@ const config = {
     browser: true,
     es6: true,
   },
-  ignorePatterns: ["packages/dummystore"],
+  ignorePatterns: ["packages/rtc-store-dummy"],
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
