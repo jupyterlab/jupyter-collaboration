@@ -19,19 +19,19 @@ us for the first time or need a refresher about the project's scope, we
 recommend reading the following documents:
 
 - This `README.md`.
-- The [Specification](https://jupyter-rtc.readthedocs.io/developer/spec.html): We are working on creating a living specification for the protocol(s) created here. We're doing our best but it may not always be totally in sync with explorations in the repo, until they are settled on.
-- The [Design](https://jupyter-rtc.readthedocs.io/developer/design.html) document.
-- The [Architecture](https://jupyter-rtc.readthedocs.io/developer/architecture.html) document.
-- Current vision in [grant proposal for CZI](https://jupyter-rtc.readthedocs.io/organisation/czi-2020.html).
+- The [Specification](https://jupyter-rtc.readthedocs.io/en/latest/developer/spec.html): We are working on creating a living specification for the protocol(s) created here. We're doing our best but it may not always be totally in sync with explorations in the repo, until they are settled on.
+- The [Design](https://jupyter-rtc.readthedocs.io/en/latest/developer/design.html) document.
+- The [Architecture](https://jupyter-rtc.readthedocs.io/en/latest/developer/architecture.html) document.
+- Current vision in [grant proposal for CZI](https://jupyter-rtc.readthedocs.io/en/latest/organisation/czi-2020.html).
 
 ## Develop
 
-Follow the instructions documented on the [examples](https://jupyter-rtc.readthedocs.io/developer/example.html).
+Follow the instructions documented on the [examples](https://jupyter-rtc.readthedocs.io/en/latest/developer/examples.html).
 
 ## Contribute
 
 We welcome any and all contributions and ideas here! This is a big task and we
-will need as much help as we can get. The [contribute](https://jupyter-rtc.readthedocs.io/organisation/contribute.html)
+will need as much help as we can get. The [contribute](https://jupyter-rtc.readthedocs.io/en/latest/organisation/contribute.html)
 page contains more specific information.
 
 ### Current work on JupyterLab
