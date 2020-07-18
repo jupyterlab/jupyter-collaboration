@@ -2,7 +2,7 @@
 
 First install Yarn and Node v14. Using conda, enter:
 
-```
+```bash
 conda create -n rtc -c conda-forge jupyterlab nodejs=14 yarn
 conda activate rtc
 ```
@@ -25,6 +25,5 @@ yarn todo:start-all
 You can also start the Jupyter example.
 
 ```bash
-pip install jupyterlab
 yarn jupyter:start-all
 ```

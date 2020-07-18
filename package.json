@@ -1,9 +1,11 @@
 {
   "version": "0.0.0",
   "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ]
+  },
   "scripts": {
     "build": "lerna run build",
     "build:test": "lerna run build:test",
@@ -19,7 +21,7 @@
     "test:ie": "lerna run test:ie --concurrency 1",
     "update:dependency": "update-dependency --lerna",
     "version": "lerna version",
-    "build:tsc": "tsc --build packages/rtc-node/ packages/rtc-todo-example/ packages/rtc-relay/ packages/rtc-debugger/ packages/rtc-jupyter/ packages/rtc-jupyter-example/ packages/rtc-jupyter-supernode/",
+    "build:tsc": "tsc --build packages/*",
     "relay:start": "yarn workspace rtc-relay run start",
     "relay:wait": "yarn workspace rtc-relay run wait",
     "todo:start": "yarn workspace rtc-todo-example run start",

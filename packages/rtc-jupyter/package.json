@@ -30,7 +30,6 @@
   },
   "dependencies": {
     "observable-hooks": "3.0.0",
-    "rtc-jupyter": "*",
     "rxjs": "6.6.0"
   },
   "devDependencies": {

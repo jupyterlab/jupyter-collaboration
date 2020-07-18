@@ -53,6 +53,8 @@
   },
   "scripts": {
     "build": "tsc --build",
+    "build:test": "tsc --build tests && cd tests && webpack",
+    "build:tsc": "tsc --build",
     "clean": "rimraf lib && rimraf *.tsbuildinfo",
     "test": "npm run test:firefox",
     "test:debug": "cd tests && karma start --browsers=Chrome --debug=true",
@@ -60,7 +62,6 @@
     "test:firefox": "cd tests && karma start --browsers=Firefox",
     "test:firefox:headless": "cd tests && karma start --browsers=FirefoxHeadless",
     "test:ie": "cd tests && karma start --browsers=IE",
-    "build:test": "tsc --build tests && cd tests && webpack",
     "watch": "tsc --build --watch"
   }
 }
