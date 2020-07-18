@@ -1,4 +1,4 @@
-# Jupyter Real Time Data Model Specification
+# Specification
 
 This document is meant to serve as a way to specify the behavior of the protocols being developed in the `jupyterlab/rtc` repo. The hope for it would be start here, very much in flux, and then at some point, once it is settled down a bit, move into a JEP form.
 
@@ -6,16 +6,16 @@ The goal of these protocols is to provide a shared higher level base for Jupyter
 
 This is really a family of specifications. They exist in levels, like the [OSI IP stack](https://en.wikipedia.org/wiki/OSI_model#Layer_architecture) (in terms of that stack, they all exist at the Application layer). Each level depends only on the interface provided by the level directly below it and provides an interface to the level above it. They are, from highest to lowest:
 
-1. Jupyter RTC: Specification of the schemas that correspond to the entities in the Jupyter Server and a specification of how the supernode interacts with these records. There are other protocols at this level as well, for things like chat, commenting, Jupyter Widgets and other extensions.
-2. RTC: Specification of how to represent schemas and how updates to the data in those schemas can be serialized as transactions.
-3. Synchronized append only log: Provides a way to share between all clients a shared append only log of transactions.
-4. Bidirectional asynchronous communucation: Allows clients to send and recieve messages to one another.
+1. `Jupyter RTC`: Specification of the schemas that correspond to the entities in the Jupyter Server and a specification of how the supernode interacts with these records. There are other protocols at this level as well, for things like chat, commenting, Jupyter Widgets and other extensions.
+2. `RTC`: Specification of how to represent schemas and how updates to the data in those schemas can be serialized as transactions.
+3. `Synchronized Append-only Log`: Provides a way to share between all clients a shared append only log of transactions.
+4. `Bidirectional Asynchronous Communication`: Allows clients to send and recieve messages to one another.
 
 ## Layers
 
 ### 1. Jupyter RTC
 
-_The shared schemas are in[`packages/rtc-jupyter`](https://github.com/jupyterlab/rtc/tree/master/packages/rtc-jupyter/src/schemas.ts) and the supernode is in [`packages/rtc-jupyter-supernode`](packages/rtc-jupyter-supernode/src/index.ts)_
+_The shared schemas are in[`packages/rtc-jupyter`](https://github.com/jupyterlab/rtc/tree/master/packages/rtc-jupyter/src/schemas.ts) and the supernode is in [`packages/rtc-jupyter-supernode`](https://github.com/jupyterlab/rtc/tree/master/packages/rtc-jupyter-supernode/src/index.ts)_
 
 The Jupyter RTC layer is meant to normalize data provided by the Jupyter Server into the RTC data model.
 
@@ -25,8 +25,7 @@ It specifies the schemas this relies on in the data model and it the behavior of
 
 This is a list of schemas, with types written as TS types that can be mapped to JSON schema:
 
-
-##### `executions`
+**`executions`**
 
 All the executions that happened on this server:
 
@@ -35,7 +34,7 @@ All the executions that happened on this server:
 * `status` `{status: "requested"} | {status: "in progress"} | {status: "ok:, execution_count: number | null, result: null | {data: Object, metadata: Object}} | {status: "abort"} | {status: "error", ename: sting, evalue: string, traceback: string[]}`: The state of the execution... etc
 * `displays` List of `{type: "stream", name: "stdout" | "stderr", text: string} | {type: "data", data: Object, metadata: Object, display_id: null | string}`: The sequence of displays from this execution, in the order in which they were recieved.
 
-##### `cells`:
+**`cells`**
 
 All the cells in all notebooks:
 
@@ -43,17 +42,19 @@ All the cells in all notebooks:
 * `execution` `string | null`: the most recent execution of the cell or null if it has no execution.
 * etc...
 
-##### ...etc
+**`...`**
+
+etc...
 
 #### Supernode
 
 Any record from the `executions` table that has a state of `"requested"` will be run agains the kernel specified in the `kernel` attribute. While it is being run, it will be set to `in progress`. As it is running the `displays` will be added according the messages received back on the XXX channels. Once it has finished, the `status` will be changed to one of the `ok`, `abort` or `error` responses.
 
-TODO: Specify this more precisely based on Jupyter messaging spec.
+TODO
 
+Specify this more precisely based on Jupyter messaging spec.
 
 etc...
-
 
 ### 2. RTC
 
@@ -80,19 +81,19 @@ All transactions that are applied end up on the append only log, defined in the 
 
 Each transaction is a mapping of schema names to a list of updates for those records. An update for a schema is a mapping of field names to a list of updates for that record.
 
-If it is a primitive value, the update is simply the new value.
-
-If it is a list, it consists of an index, the number of entries to delete, and a list of entries to add.
-
-If it is a mapping, it consists of a mapping of keys to their new values.
-
-If it is a text field, it consists of an index, the number of characters to delete, and a string to add.
+- If it is a primitive value, the update is simply the new value.
+- If it is a list, it consists of an index, the number of entries to delete, and a list of entries to add.
+- If it is a mapping, it consists of a mapping of keys to their new values.
+- If it is a text field, it consists of an index, the number of characters to delete, and a string to add.
 
 Any transaction that refers to a non exist record ID will create that record when recieved. If the ID exists, that record will be updated with the changes. Records can not be deleted.
 
-TODO: Specify how these transactions are serialized to bytes. Possibly either support just a CRDT spec, just a diff based spec, or some default of the diff based spec with the ability to opt into a CRDT logic if both clients agree. Sort of like HTTP vs HTTP v2.0 protocol upgrade.
+TODO
 
-### 3. Append only log
+- Specify how these transactions are serialized to bytes. Possibly either support just a CRDT spec, just a diff based spec, or some default of the diff based spec with the ability to opt into a CRDT logic if both clients agree. Sort of like HTTP vs HTTP v2.0 protocol upgrade.
+- At some point, we may need higher level abstraction, a bit like [primus](https://github.com/primus/primus).
+
+### 3. Append-only Log
 
 _This is currently implemented in [`packages/rtc-relay`](https://github.com/jupyterlab/rtc/blob/master/packages/rtc-relay/src/index.ts)_
 
@@ -100,23 +101,27 @@ The goal of this layer it to provide all clients with a shared append only log t
 
 This is achieved through a central server that stores the logs which all clients connect to.
 
-When a new client connects, the server sends a message of type `transactions` that has as its body a list of transactions. A client starts its log with this list of transactions.
+- When a new client connects, the server sends a message of type `transactions` that has as its body a list of transactions. A client starts its log with this list of transactions.
+- When a client has changes, it sends a `transaction` message to the server and adds it to its local log. This message is forwarded to all other clients.
+- When a client receives a transaction message, it adds this to its log.
 
-When a client has changes, it sends a `transaction` message to the server and adds it to its local log. This message is forwarded to all other clients.
-
-When a client receives a transaction message, it adds this to its log.
-
-TODO:
+TODO
 
 - Retries/confirmation
 
-### 4. Bidirectional asyncronous communication
+### 4. Bidirectional Asynchronous Communication
 
-This layer provides a way for a client and a server to send each other messages. We currently use [socket.io](https://github.com/socketio/socket.io) for this.
+This layer provides a way for a client and a server to send each other messages.
 
-## Open cross-cutting concerns:
+We currently use [socket.io](https://github.com/socketio/socket.io) for this. Other options would be e.g.:
 
-### [Sharding](https://en.wikipedia.org/wiki/Shard_(database_architecture)) / horizontal partitioning
+- <https://www.cncf.io/blog/2018/10/24/grpc-web-is-going-ga>
+- <https://wamp-proto.org>
+- <https://web.dev/quictransport>
+
+## Cross-cutting Concerns
+
+### [Sharding](https://en.wikipedia.org/wiki/Shard_(database_architecture)) / Horizontal Partitioning
 
 If many notebooks are being worked on at once, it might be not feasible to push changes for all of them to all clients.
 
@@ -133,16 +138,14 @@ However, if we want to support more nuanced and granular loads then it is helpfu
 
 It may be useful to have security at both levels.
 
-For level one, we could add a "token" field to each transaction that gets sent to the central relay server. The relay could then be configurable to reject transactions based on their tokens, by allowing an extension to provide this behavior (either through some kind of FFI or microservice architecture)
-
-For level two, we could add a "signed token" to the value of certain actions, by putting it in the state of records, like in the executions schema we could add a `token` property to the `"requested"` state. That way the client could pass that token to the server, the relay node would be unaware of it, but then the RTC jupyter supernode would grab out the token, and pass that on to the Jupyter Server where any custom authentication logic could be used for that request. It would probably have to be signed, maybe through some public/private key encryption, so only the supernode can read the token, not other clients. 
+1. For level one, we could add a "token" field to each transaction that gets sent to the central relay server. The relay could then be configurable to reject transactions based on their tokens, by allowing an extension to provide this behavior (either through some kind of FFI or microservice architecture)
+2. For level two, we could add a "signed token" to the value of certain actions, by putting it in the state of records, like in the executions schema we could add a `token` property to the `"requested"` state. That way the client could pass that token to the server, the relay node would be unaware of it, but then the RTC jupyter supernode would grab out the token, and pass that on to the Jupyter Server where any custom authentication logic could be used for that request. It would probably have to be signed, maybe through some public/private key encryption, so only the supernode can read the token, not other clients. 
 
 ### Multiple Kernel Executors
 
 There have been a couple of points raised by folks that make me think we might wanna support some idea of the current server that an entity is relevant for. The use cases:
 
-* Local instances of kernels in your browser, ala Jyve
-* Having one jupyter client talking to many jupyter servers, if you have work in multiple places
+* Local instances of kernels in your browser, ala Jyve.
+* Having one jupyter client talking to many jupyter servers, if you have work in multiple places.
 
 We could add a `host` field to the `kernelspecs` schemas with a uniqiue ID so that each each server would only execute kernels that come from kernelspecs that it owns.
-

@@ -1,3 +1,0 @@
-# Contributing
-
-*Document under development*

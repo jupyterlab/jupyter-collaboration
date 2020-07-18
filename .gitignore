@@ -1,15 +1,25 @@
+# Exclude.
+.*
+_vendor*/*
 node_modules
 yarn.lock
-.vscode
-.mypy_cache
-*.code-workspace
 yarn-error.log
-
-packages/**/lib
-packages/**/build
-**/coverage
-**/__pycache__
+build
+coverage
+dist
+lib
+__pycache__
+*.code-workspace
+*.ipynb
 *.profraw
 *.tsbuildinfo
-.ipynb_checkpoints
-*.ipynb
+*.egg-info
+
+# Include.
+!**/.*ignore
+!**/.*rc
+!**/.*rc.js
+!**/.*config
+!**/.github
+!**/.readthedocs.yml
+!**/.storybook
