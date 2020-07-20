@@ -3,6 +3,8 @@ Jupyter RTC Documentation
 
 **Real Time Collaboration for Jupyter and beyond**
 
+Think to a `Google Docs` or `HackMD` for Jupyter.
+
 Jupyter RTC is the realtime collaboration foundation for Project Jupyter and follows the Jupyter [Community Guides](https://jupyter.readthedocs.io/en/latest/community/content-community.html).
 
 ```{note}
@@ -21,10 +23,10 @@ maxdepth: 2
 caption: About RTC
 ---
 about/user-stories
-about/applications
 about/algorithms
 about/libraries
-about/distributed-storage
+about/implementations
+about/persistence
 ```
 
 ```{toctree}

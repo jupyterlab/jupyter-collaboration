@@ -1,9 +1,13 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
 # Exclude.
 .*
 _vendor*/*
 node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 yarn.lock
-yarn-error.log
 build
 coverage
 dist
@@ -20,6 +24,7 @@ __pycache__
 !**/.*rc
 !**/.*rc.js
 !**/.*config
+!**/.env
 !**/.github
 !**/.readthedocs.yml
 !**/.storybook

@@ -2,15 +2,23 @@
 
 _During our first meeting we collected a few different user stories. We are looking to more elaborated and structured stories that should be considered._
 
+There is a recent paper published by acm.org on Data Scientist RTC needs we should look at[^f1].
+
+## Shared Kernel
+
 Once you have multiple users editing the same notebook, one fundamental question is if each user has their own kernel or not. In some ways, it's more intuitive if they have the same because as you can re-use state between kernels easily and the normal model is to have one kernel per notebook. However, it is also then easy to clobber each other's work. The simpler model to implement is one kernel per notebook, but it might be worth thinking about how to support the other as well.
+
+## Remote Resources
 
 So far, we have been focusing on the multiple users, single server issue, but there is also the inverse, multiple servers, single user problem. In this context, you might have a variety of computational resources available to you in different platforms and have to switch between them. So it might be worth thinking about how real time data model could enable connecting to multiple servers at once or easily switching between them.
 
+## Permissions
+
 Once you start sharing notebooks, you often don't want everyone to have all the same access. At the most fine grained, you could want POSIX style permissions for each cell in a notebook.
 
-Also, once you are collaborating you will need other side channels, like a chat, to keep in sync and coordinate outside the document.
+## Chat
 
-There is also a recent paper on this subject we should look at[^f1].
+Also, once you are collaborating you will need other side channels, like a chat, to keep in sync and coordinate outside the document.
 
 [^f1]: How Data Scientists Use Computational Notebooks for Real-Time Collaboration
 

@@ -13,12 +13,12 @@
     "react-scripts": "3.4.1",
     "rtc-debugger": "*",
     "rtc-node": "*",
-    "rtc-relay": "*",
     "typescript": "3.9.6"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build:tsc": "tsc --build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

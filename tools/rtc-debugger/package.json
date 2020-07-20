@@ -13,5 +13,8 @@
   "devDependencies": {
     "@types/react": "^16.9.0",
     "typescript": "3.9.6"
+  },
+  "scripts": {
+    "build:tsc": "tsc --build"
   }
 }

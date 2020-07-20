@@ -1,6 +1,6 @@
 # Architecture
 
-*Document under development*
+## Packages
 
 We have today the following packages available:
 
@@ -11,23 +11,28 @@ We have today the following packages available:
 
 You can use those packages with examples:
 
-- `packages/rtc-todo-example`: Example of simple todo app using relay server and node.
-- `packages/rtc-jupyter-example`: Client to access Jupyter data.
+- `examples/rtc-todo-example`: Example of simple todo app using relay server and node.
+- `examples/rtc-jupyter-example`: Client to access Jupyter Server data.
 
-It is currently in the planning stage, but eventually we see the repo containing
-a number of additional separate projects like:
+We also provide useful tooling packages to accompany the main packages.
 
-- `src/jupyter_rtc_supernode_jupyter_extension`: Jupyter Server extension for running `packages/jupyter-rtc-supernode`.
-- `src/rtc_relay_jupyter_extension`: Jupyter Server Extension for `src/rtc_relay`
-- `packages/jupyterlab-rtc-client`: `packages/rtc-client` that connects over `src/rtc_relay_jupyter`.
-
-## Packages Architecture
+- `tools/rtc-debugger`
+- `tools/rtc-store-dummy`
 
 ![The development architecture](images/dev-architecture.svg "The development architecture")
 
-## Redux
+## Jupyter Extensions
 
-We may need to introduce a global state management `a-la-redux`. See the following repositories for inspiration.
+It is currently in the planning stage, but eventually we see this repo containing a number of jupyter extensions like:
+
+- `src/rtc_supernode_jupyter_extension`: Jupyter Server extension for running `packages/rtc-jupyter-supernode`.
+- `src/rtc_relay_jupyter_extension`: Jupyter Server Extension for `packages/rtc-relay`
+- `packages/jupyterlab-rtc-client`: `packages/rtc-client` that connects over `src/rtc_relay_jupyter_extension`.
+
+## State
+
+We may need to introduce a global distributed state management `a-la-redux`. See the following repositories for inspiration:
 
 - <https://github.com/devresults/cevitxe>
 - <https://github.com/redux-orm/redux-orm>
+- <https://github.com/logux/redux>

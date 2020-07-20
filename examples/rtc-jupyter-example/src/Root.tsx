@@ -124,7 +124,7 @@ const NotebookContent: React.FC<{ contentID: string }> = ({ contentID }) => {
       <dt>Cells</dt>
       <dd>
         <ol>
-          {notebook.cells.map((id) => (
+          {notebook.cells.map((id: any) => (
             <li key={id}>
               <Cell id={id} />
             </li>
@@ -164,7 +164,7 @@ const Execution: React.FC<{ id: string }> = ({ id }) => {
       <dt>Displays</dt>
       <dd>
         <ol>
-          {execution.displays.map((display, i) => (
+          {execution.displays.map((display: any, i: any) => (
             <li key={i}>{JSON.stringify(display)}</li>
           ))}
         </ol>

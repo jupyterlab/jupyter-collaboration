@@ -1,7 +1,5 @@
 # Benchmark
 
-*Document under development*
-
 We may integrate current benchmarks located in Lumino:
 
 - <https://github.com/jupyterlab/lumino/pull/78>

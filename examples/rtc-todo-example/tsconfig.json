@@ -6,18 +6,15 @@
     "rootDir": "src",
     "module": "esnext"
   },
-  "references": [
-    {
-      "path": "../rtc-node"
-    },
-    {
-      "path": "../rtc-jupyter"
-    },
-    {
-      "path": "../rtc-debugger"
-    }
-  ],
   "include": [
     "src"
+  ],
+  "references": [
+    {
+      "path": "../../packages/rtc-node"
+    },
+    {
+      "path": "../../tools/rtc-debugger"
+    }
   ]
 }
