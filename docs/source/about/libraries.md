@@ -8,6 +8,10 @@ CRDT Implementation by JupyterLab.
 
 - <https://github.com/jupyterlab/lumino/tree/master/packages/datastore>
 
+Used by.
+
+- [interactive-dashboard-editor](https://github.com/jupytercalpoly/jupyterlab-interactive-dashboard-editor)
+
 ## Y.js
 
 CRDT Implementation.

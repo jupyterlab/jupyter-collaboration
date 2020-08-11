@@ -5,7 +5,7 @@
 The goal of this repo is to prototype a data model to support simultaneous distributed
 editing in Jupyter.
 
-Fundamentally, it's about taking the **existing** concepts[^f1] provided by Jupyter server and creating a real time data model on top of them.
+Fundamentally, it's about taking the **existing** concepts[^f1] provided by Jupyter Server and creating a real time data model on top of them.
 
 This would help provide a Google Docs like editing experience in Jupyter editors by
 allowing multiple simultaneous users to edit a document at once.
@@ -21,6 +21,8 @@ This will happen in a number of different layers, added to this monorepo:
 2. Middle: Friendly real time datastore using this with React integration
 3. Higher level/Jupyter: Support for editing all data in Jupyter server
 4. Jupyter clients: JupyterLab integration, Spyder integration, nteract integration (examples)
+
+The definition of those layers is still in progress. You can discuss this on [jupyterlab/rtc#61](https://github.com/jupyterlab/rtc/issues/61).
 
 ## Non Goals
 
