@@ -2,7 +2,12 @@
 
 _During our first meeting we collected a few different user stories. We are looking to more elaborated and structured stories that should be considered._
 
-There is a recent paper published by acm.org on Data Scientist RTC needs we should look at[^f1].
+We list here source for inspiration and discussion:
+
+- [Reddit discussion on multi user collaborative notebook](https://www.reddit.com/r/datascience/comments/i5hj2o/multi_user_collaborative_notebook)
+- Paper published by acm.org in November 2019 on Data Scientist RTC [^f1].
+
+The following sections surface topics we have discussed.
 
 ## Shared Kernel
 
