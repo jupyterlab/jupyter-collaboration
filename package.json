@@ -40,7 +40,8 @@
   },
   "dependencies": {},
   "resolutions": {
-    "lodash": "4.17.15"
+    "lodash": "4.17.15",
+    "rxjs": "6.6.0"
   },
   "devDependencies": {
     "@jupyterlab/buildutils": "^2.0.0-rc.0",
