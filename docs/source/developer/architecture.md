@@ -29,22 +29,6 @@ It is currently in the planning stage, but eventually we see this repo containin
 - `src/rtc_relay_jupyter_extension`: Jupyter Server Extension for `packages/rtc-relay`
 - `packages/jupyterlab-rtc-client`: `packages/rtc-client` that connects over `src/rtc_relay_jupyter_extension`.
 
-## Integration in JupyterLab
-
-This work is tracked in [jupyterlab/rtc#27](https://github.com/jupyterlab/rtc/issues/27).
-
-We had two branches for JupyterLab 1.0.3 and Phosphor:
-
-- https://github.com/vidartf/jupyterlab/tree/rtc
-- https://github.com/vidartf/phosphor/commits/feature-tables3-extras
-
-You can try them with `docker run -p 8888:8888 ellisonbg/jupyterlab-rtc start.sh jupyter lab --dev-mode --no-browser` (Dockerfile for this lives in https://github.com/ellisonbg/jupyterlab-rtc)
-
-We are now porting those changes to latest JupyterLab and Lumino master.
-
-- https://github.com/datalayer-contrib/jupyterlab/tree/rtc
-- https://github.com/datalayer-contrib/jupyterlab-lumino/tree/rtc
-
 ## Distributed State
 
 We may need to introduce a global distributed state management `a-la-redux`. See the following repositories for inspiration:
