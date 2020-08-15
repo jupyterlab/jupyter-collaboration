@@ -38,6 +38,7 @@ developer/design
 developer/architecture
 developer/spec
 developer/examples
+developer/integrations
 developer/benchmark
 developer/visualization
 GitHub repo <https://github.com/jupyterlab/rtc>
