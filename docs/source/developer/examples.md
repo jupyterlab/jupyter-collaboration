@@ -28,9 +28,9 @@ yarn && \
   yarn start
 ```
 
-Open in browser 1 (e.g. Chrome) http://localhost:8000.
+Open in browser 1 (e.g. Chrome) <http://localhost:8000>.
 
-Then open that same link http://localhost:8000 in browser 2 (e.g. Firefox).
+Then open that same link <http://localhost:8000> in browser 2 (e.g. Firefox).
 
 Every character you input in one of the 2 browsers should be reflected in realtime in the other browser.
 
