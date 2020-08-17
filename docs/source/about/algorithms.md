@@ -54,7 +54,7 @@ RGA Split
 
 - <https://pages.lip6.fr/Marc.Shapiro/papers/rgasplit-group2016-11.pdf>
 
-Some post-mortem stories can also be instructive
+Some post-mortem stories can also be instructive.
 
 - <https://github.com/xi-editor/xi-editor/issues/1187#issuecomment-491473599>
 - <https://news.ycombinator.com/item?id=19886883>
@@ -62,6 +62,10 @@ Some post-mortem stories can also be instructive
 Apache Cassandra
 
 - <https://cassandra.apache.org/doc/latest/architecture/dynamo.html#dataset-partitioning-consistent-hashing>
+
+Other discussions
+
+- [Are CRDTs suitable for shared editing? on Hacker News](https://news.ycombinator.com/item?id=24176455)
 
 ## OT (Operational Transformation)
 
