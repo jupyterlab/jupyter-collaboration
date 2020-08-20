@@ -11,7 +11,7 @@ setup(
     ),
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    url="https://github.com/jupyterlb/rct",
+    url="https://github.com/jupyterlab/rtc",
     project_urls={"Documentation": "https://jupyter-rtc.readthedocs.io"},
     license="MIT",
     packages=find_packages(),
