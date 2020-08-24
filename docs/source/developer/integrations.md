@@ -31,7 +31,7 @@ A continuation of this work had been done in the second half of 2019. Most of th
 - A Pull Request <https://github.com/jupyterlab/jupyterlab/pull/6871>
 - An Issue <https://github.com/jupyterlab/jupyterlab/issues/5382>
 
-## Iteratiom 3
+### Iteration 3
 
 We have updated Iteration 2 to August 2020 `JupyterLab` and `Lumino` master branches in the following 2 branches.
 
@@ -44,6 +44,6 @@ Current status for that:
 - TODO the cell split and movement does not work.
 - TODO The recently added shadow DOM seems to break the caret collaborator css.
 
-## Next Iteration
+### Next Iteration
 
 The next step is to define how to integrate the components developed in this repository at the light of these learnings.
