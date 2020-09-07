@@ -33,17 +33,17 @@ We have ported `Iteration 1` to begin-August 2020 `JupyterLab` and `Lumino` mast
 - <https://github.com/datalayer-contrib/jupyterlab/tree/rtc-2019-master>
 - <https://github.com/datalayer-contrib/jupyterlab-lumino/tree/rtc-2019-master>
 
-However, this 2 above branches should not be considered and the 2 next ones. Ineedm we have also ported `Iteration 2` to end-August 2020 `JupyterLab` and `Lumino` master branches in the following 2 branches which consitutes the best implementation so far.
+We have also ported `Iteration 2` to end-August 2020 `JupyterLab` and `Lumino` master branches.
 
 - <https://github.com/datalayer-contrib/jupyterlab/tree/rtc-2019-2-master>
 - <https://github.com/datalayer-contrib/jupyterlab-lumino/tree/rtc-2019-2-master>
 
-Current status compared to the original branches.
+A few comments on those branches.
 
 - The `toc`, `logconsole`, `celltags` and `debugger` extensions have been disabled as they have been recently added to JupyterLab code base. If it makes sense, we could update them also.
-- The collaborative caret CSS does not always show up in Chrome, but works well in Firefox (maybe due to the recently added shadow DOM?).
+- The collaborative caret CSS does not always show up in Chrome, but seems to work well in Firefox (maybe due to the recently added shadow DOM?).
 
-### Iteration 4
+### WIP Iteration 4
 
 The next step is to define how to integrate the components developed in this repository at the light of these learnings.
 
