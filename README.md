@@ -4,11 +4,7 @@ This **Real Time Collaboration** monorepo contains current work on Real Time col
 
 ## Project Meetings
 
-*Note: 8/24 meeting cancelled*
-
 We have a `bi-weekly` meeting call. Please come and join [on Zoom](https://zoom.us/j/94702599683)! All are welcome to come and just listen or discuss any work related to this project.
-
-
 
 For the time, place and notes, see [this HackMD](https://hackmd.io/@_4xc7QhhSHKODRQn1uiulw/BkV24I3qL/edit).
 
