@@ -122,7 +122,14 @@ OT.js is not maintained anymore.
 
 ## Microsoft Fluid
 
-Microsoft Fluid is just announced and not yet released.
+Microsoft Fluid has been announced.
 
 - <https://techcommunity.microsoft.com/t5/microsoft-365-blog/introducing-the-first-microsoft-fluid-framework-experiences-in/ba-p/1345543>
 - <https://support.microsoft.com/en-us/office/get-started-with-fluid-framework-preview-d05278db-b82b-4d1f-8523-cf0c9c2fb2df>
+
+It is released.
+
+- <https://github.com/microsoft/FluidFramework>
+- <https://fluidframework.com/>
+
+TODO Look if this can be used outside of [Microsoft Office 365](https://www.office.com).
