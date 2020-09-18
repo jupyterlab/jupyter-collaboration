@@ -13,7 +13,7 @@ This is really a family of specifications. They exist in levels, like the [OSI I
 
 ## 1. Jupyter RTC Layer
 
-_The shared schemas are in[`packages/rtc-jupyter`](https://github.com/jupyterlab/rtc/tree/master/packages/rtc-jupyter/src/schemas.ts) and the supernode is in [`packages/rtc-jupyter-supernode`](https://github.com/jupyterlab/rtc/tree/master/packages/rtc-jupyter-supernode/src/index.ts)_
+_The shared schemas are in[`packages/jupyter`](https://github.com/jupyterlab/rtc/tree/master/packages/jupyter/src/schemas.ts) and the supernode is in [`packages/supernode`](https://github.com/jupyterlab/rtc/tree/master/packages/supernode/src/index.ts)_
 
 The Jupyter RTC layer is meant to normalize data provided by the Jupyter Server into the RTC data model.
 
@@ -56,7 +56,7 @@ TODO
 
 ## 2. RTC Layer
 
-_This is currently implemented in [`packages/rtc-node`](https://github.com/jupyterlab/rtc/tree/master/packages/rtc-node) and by [`@lumino/datastore`](https://github.com/jupyterlab/lumino/tree/master/packages/datastore)_
+_This is currently implemented in [`packages/node`](https://github.com/jupyterlab/rtc/tree/master/packages/node) and by [`@lumino/datastore`](https://github.com/jupyterlab/lumino/tree/master/packages/datastore)_
 
 The goal of this layer is to allow you to specify data models, and then to execute updates on them, and have these updates translated to serializable transactions that can be shared using the layer below.
 
@@ -84,7 +84,7 @@ Each transaction is a mapping of schema names to a list of updates for those rec
 - If it is a mapping, it consists of a mapping of keys to their new values.
 - If it is a text field, it consists of an index, the number of characters to delete, and a string to add.
 
-Any transaction that refers to a non exist record ID will create that record when recieved. If the ID exists, that record will be updated with the changes. Records can not be deleted.
+Any transaction that refers to a non exist record ID will create that record when received. If the ID exists, that record will be updated with the changes. Records can not be deleted.
 
 TODO
 
@@ -93,7 +93,7 @@ TODO
 
 ## 3. Append-only Log Layer
 
-_This is currently implemented in [`packages/rtc-relay`](https://github.com/jupyterlab/rtc/blob/master/packages/rtc-relay/src/index.ts)_
+_This is currently implemented in [`packages/relay`](https://github.com/jupyterlab/rtc/blob/master/packages/relay/src/index.ts)_
 
 The goal of this layer it to provide all clients with a shared append only log they can add transactions to and read transactions from.
 
