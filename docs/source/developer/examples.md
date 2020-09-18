@@ -16,7 +16,7 @@ yarn
 yarn build:tsc
 ```
 
-## Lumino Datastore Example
+## Lumino Example
 
 This [simple lumino datastore example](https://github.com/jupyterlab/rtc/tree/main/examples/lumino-datastore) is useful to demonstrate and understand the basics of the [Lumino Datastore](https://github.com/jupyterlab/lumino/tree/master/packages/datastore) system.
 
@@ -36,7 +36,7 @@ Every character you input in one of the 2 browsers should be reflected in realti
 
 PS: The content of this example has been taken from the [Lumino example-datastore folder](https://github.com/jupyterlab/lumino/tree/master/examples/example-datastore).
 
-## Todo Example
+## To Do Example
 
 You can start [todo example app](https://github.com/jupyterlab/rtc/tree/main/examples/rtc-todo-example) and the [debugger](https://github.com/jupyterlab/rtc/tree/main/tools/rtc-debugger).
 

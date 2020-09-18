@@ -2,7 +2,7 @@
 
 ## Goals
 
-The goal of this repo is to prototype a data model to support simultaneous distributed
+The goal of the [RTC](https://github.com/jupyterlab/rtc) repository is to prototype a data model to support simultaneous distributed
 editing in Jupyter.
 
 Fundamentally, it's about taking the **existing** concepts[^f1] provided by Jupyter Server and creating a real time data model on top of them.
@@ -17,25 +17,21 @@ around kernel management.
 
 This will happen in a number of different layers, added to this monorepo:
 
-1. Base: CRDT implementation, lumino and/or other JS implementations
-2. Middle: Friendly real time datastore using this with React integration
-3. Higher level/Jupyter: Support for editing all data in Jupyter server
-4. Jupyter clients: JupyterLab integration, Spyder integration, nteract integration (examples)
+1. Top level with the applications: [JupyterLab](https://github.com/jupyterlab/jupyterlab), [Spyder](https://www.spyder-ide.org/), [Nteract](https://github.com/nteract/nteract)...
+1. Higher level a.k.a `Jupyter`: Support for editing all data in Jupyter server.
+1. Middle: Friendly real time datastore using React integration.
+1. Base: CRDT implementation, [Lumino](https://github.com/jupyterlab/lumino) and/or [other library](/about/libraries) implementations.
 
 The definition of those layers is still in progress. You can discuss this on [jupyterlab/rtc#61](https://github.com/jupyterlab/rtc/issues/61).
 
 ## Non Goals
 
-There are also a number of other ways to improve collaboration in Jupyter which this repo is not meant to address, at least initially.
+There are also a number of other ways to improve collaboration in Jupyter which the [RTC](https://github.com/jupyterlab/rtc) repository is not meant to address, at least initially.
 
-It is not meant to be able to synchronize notebooks or work between Jupyter servers
-running on multiple machines.
-
-It doesn't overlap with JupyterHub in that JupyterHub is about spawning multiple instances and this is about providing one instance for collaborative purposes.
-
-It also isn't about providing concepts of Teams, Projects, Groups, etc. These are definitely useful to have in a collaborative environment but for the initial work here we are assuming the same permission-less structure of a regular Jupyter server.
-
-It's also often useful to share what environment you are in with your notebook, to make it more reproducible. This isn't about that kind of collaboration either.
+- It is not meant to be able to synchronize notebooks or work between Jupyter servers running on multiple machines.
+- It doesn't overlap with JupyterHub in that JupyterHub is about spawning multiple instances and this is about providing one instance for collaborative purposes.
+- It also isn't about providing concepts of Teams, Projects, Groups, etc. These are definitely useful to have in a collaborative environment but for the initial work here we are assuming the same permission-less structure of a regular Jupyter server.
+- It's also often useful to share what environment you are in with your notebook, to make it more reproducible. This isn't about that kind of collaboration either.
 
 [^f1]: Jupyter Server specifications
 
