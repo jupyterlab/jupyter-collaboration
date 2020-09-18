@@ -11,13 +11,14 @@ We have today the following packages available:
 
 You can use those packages with examples:
 
-- `examples/rtc-todo-example`: Example of simple todo app using relay server and node.
-- `examples/rtc-jupyter-example`: Client to access Jupyter Server data.
+- `examples/jupyter`: Client to access Jupyter Server data.
+- `examples/lumino`: Example of Lumino Datastore app.
+- `examples/todo`: Example of simple todo app using relay server and node.
 
 We also provide useful tooling packages to accompany the main packages.
 
-- `tools/rtc-debugger`
-- `tools/rtc-store-dummy`
+- `tools/debugger`
+- `tools/store-dummy`
 
 ![The development architecture](images/dev-architecture.svg "The development architecture")
 

@@ -1,0 +1,25 @@
+{
+  "name": "@jupyter-rtc/debugger",
+  "version": "0.1.0",
+  "description": "Jupyter RTC - Debugger",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "dependencies": {
+    "observable-hooks": "3.0.0",
+    "react": "^16.13.1",
+    "@jupyter-rtc/node": "*"
+  },
+  "devDependencies": {
+    "@lumino/datastore": "0.10.2",
+    "@material-ui/core": "*",
+    "@types/react": "^16.9.0",
+    "rimraf": "3.0.2",
+    "typescript": "3.9.6"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "build:tsc": "tsc --build",
+    "clean": "rimraf lib tsconfig.tsbuildinfo",
+    "clean:all": "rimraf node_modules lib tsconfig.tsbuildinfo"
+  }
+}

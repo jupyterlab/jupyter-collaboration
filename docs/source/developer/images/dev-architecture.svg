@@ -698,7 +698,7 @@
          y="216.56644"
          x="114.82918"
          id="tspan5573"
-         sodipodi:role="line">rtc-debugger</tspan></text>
+         sodipodi:role="line">@jupyter-rtc/debugger</tspan></text>
     <path
        sodipodi:nodetypes="cc"
        inkscape:connector-curvature="0"

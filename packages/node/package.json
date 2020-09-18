@@ -1,0 +1,49 @@
+{
+  "name": "@jupyter-rtc/node",
+  "version": "1.0.0",
+  "description": "Jupyter RTC - Node",
+  "homepage": "https://github.com/jupyterlab/rtc",
+  "bugs": {
+    "url": "https://github.com/jupyterlab/rtc/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jupyterlab/rtc.git"
+  },
+  "license": "BSD-3-Clause",
+  "author": "Project Jupyter",
+  "files": [
+    "lib/**/*.{d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
+    "schema/*.json",
+    "style/**/*.{css,eot,gif,html,jpg,json,png,svg,woff2,ttf}"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "directories": {
+    "lib": "lib/"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:tsc": "tsc --build",
+    "clean": "rimraf lib tsconfig.tsbuildinfo",
+    "clean:all": "rimraf node_modules lib tsconfig.tsbuildinfo",
+    "prepublishOnly": "npm run build",
+    "watch": "tsc -w --listEmittedFiles"
+  },
+  "dependencies": {
+    "@lumino/datastore": "0.10.2",
+    "@lumino/disposable": "^1.2.0",
+    "observable-hooks": "3.0.0",
+    "react": "^16.13.1",
+    "rxjs": "6.6.0",
+    "socket.io-client": "2.3.0"
+  },
+  "devDependencies": {
+    "@types/socket.io-client": "1.4.33",
+    "rimraf": "~3.0.2",
+    "typescript": "3.9.6"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

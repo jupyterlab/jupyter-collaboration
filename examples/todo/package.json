@@ -1,0 +1,43 @@
+{
+  "name": "@jupyter-rct/todo-example",
+  "version": "0.1.0",
+  "description": "Jupyter RTC - ToDo Example",
+  "private": true,
+  "dependencies": {
+    "observable-hooks": "3.0.0",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-scripts": "3.4.1",
+    "@jupyter-rtc/debugger": "*",
+    "@jupyter-rtc/node": "*",
+    "typescript": "3.9.6"
+  },
+  "devDependencies": {
+    "@lumino/datastore": "0.10.2",
+    "@types/node": "14.0.19",
+    "@types/react": "^16.9.0",
+    "@types/react-dom": "^16.9.0",
+    "rimraf": "3.0.2"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "build:tsc": "tsc --build",
+    "clean": "rimraf build lib tsconfig.tsbuildinfo",
+    "clean:all": "rimraf node_modules build lib tsconfig.tsbuildinfo",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
