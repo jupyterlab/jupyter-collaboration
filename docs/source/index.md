@@ -36,7 +36,7 @@ caption: Developer Guide
 ---
 developer/design
 developer/architecture
-developer/spec
+developer/specs
 developer/examples
 developer/integrations
 developer/benchmark

@@ -11,17 +11,15 @@ This is really a family of specifications. They exist in levels, like the [OSI I
 3. `Synchronized Append-only Log`: Provides a way to share between all clients a shared append only log of transactions.
 4. `Bidirectional Asynchronous Communication`: Allows clients to send and recieve messages to one another.
 
-## 1. Jupyter RTC Layer
+## Layers
+
+### Jupyter RTC Layer
 
 _The shared schemas are in[`packages/jupyter`](https://github.com/jupyterlab/rtc/tree/master/packages/jupyter/src/schemas.ts) and the supernode is in [`packages/supernode`](https://github.com/jupyterlab/rtc/tree/master/packages/supernode/src/index.ts)_
 
 The Jupyter RTC layer is meant to normalize data provided by the Jupyter Server into the RTC data model.
 
-It specifies the `schemas` this relies on a **data model** and on the behavior of a `supernode`, which connects to the **data model** and interacts with a running Jupyter server.
-
-### Schemas
-
-This is a list of schemas, with types written as TS types that can be mapped to JSON schema.
+It specifies the `schemas` this relies on a **data model** and on the behavior of a `supernode`, which connects to the **data model** and interacts with a running Jupyter server. This is a list of schemas, with types written as TS types that can be mapped to JSON schema.
 
 **`executions`**
 
@@ -36,25 +34,17 @@ All the executions that happened on this server:
 
 All the cells in all notebooks:
 
-* `text` text field: the contents of the cell
-* `execution` `string | null`: the most recent execution of the cell or null if it has no execution.
-* etc...
+- `text` text field: the contents of the cell
+- `execution` `string | null`: the most recent execution of the cell or null if it has no execution.
+- etc...
 
-**`...`**
-
-etc...
-
-### Supernode
-
-Any record from the `executions` table that has a state of `"requested"` will be run agains the kernel specified in the `kernel` attribute. While it is being run, it will be set to `in progress`.
-
-As it is running the `displays` will be added according the messages received back on the XXX channels. Once it has finished, the `status` will be changed to one of the `ok`, `abort` or `error` responses.
+Supernode:  Any record from the `executions` table that has a state of `"requested"` will be run agains the kernel specified in the `kernel` attribute. While it is being run, it will be set to `in progress`. As it is running the `displays` will be added according the messages received back on the XXX channels. Once it has finished, the `status` will be changed to one of the `ok`, `abort` or `error` responses.
 
 TODO
 
 - Specify this more precisely based on Jupyter messaging spec.
 
-## 2. RTC Layer
+### RTC Layer
 
 _This is currently implemented in [`packages/node`](https://github.com/jupyterlab/rtc/tree/master/packages/node) and by [`@lumino/datastore`](https://github.com/jupyterlab/lumino/tree/master/packages/datastore)_
 
@@ -91,7 +81,7 @@ TODO
 - Specify how these transactions are serialized to bytes. Possibly either support just a CRDT spec, just a diff based spec, or some default of the diff based spec with the ability to opt into a CRDT logic if both clients agree. Sort of like HTTP vs HTTP v2.0 protocol upgrade.
 - At some point, we may need higher level abstraction, a bit like [primus](https://github.com/primus/primus).
 
-## 3. Append-only Log Layer
+### Synchronized Append-only Log Layer
 
 _This is currently implemented in [`packages/relay`](https://github.com/jupyterlab/rtc/blob/master/packages/relay/src/index.ts)_
 
@@ -107,7 +97,7 @@ TODO
 
 - Retries/confirmation
 
-## 4. Bidirectional Asynchronous Communication Layer
+### Bidirectional Asynchronous Communication Layer
 
 This layer provides a way for a client and a server to send each other messages.
 
