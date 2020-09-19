@@ -6,6 +6,9 @@ The overall roadmap for RTC in JupyterLab is defined in the [Real Time Collabora
 
 The discussions to integrate the RTC components into JupyterLab are tracked in [jupyterlab/rtc#27](https://github.com/jupyterlab/rtc/issues/27).
 
+
+![JupyterLab Integrattion](images/jupyterlab-2019.gif "JupyterLab Integrattion")
+
 ### Iteration 1
 
 At the beginning of 2019, we had two branches for `JupyterLab 1.0.3` and `Phosphor.js`.
@@ -47,28 +50,26 @@ A few comments on those branches.
 
 The next step is to define how to integrate the components developed in this repository at the light of these learnings.
 
-The behavior (features and limits) of Iteration 3 are the same as Iteration 3. For exmaple saving notebook does not persist the ipynb file. We have copied here the [latest status meeting on the JupyterLab PR](https://github.com/jupyterlab/jupyterlab/pull/6871#issuecomment-553495401).
+The behavior (features and limits) of Iteration 3 are the same as Iteration 3. For exmaple saving notebook does not persist the ipynb file. We have copied here the [latest public status meeting on the JupyterLab PR](https://github.com/jupyterlab/jupyterlab/pull/6871#issuecomment-553495401).
 
 ```
 2019.11.13 meeting
 
 Ian: Lifecycle is fragile for notebooks.
 
-Deciding whether to initialize a new document, whether to insert text from disk. It's working now but a little hacky.
-Ian's idea: The server should be in charge of saying whether a document is initialized. For example, if two people connect at the same time it should only be initialized once.
+- Deciding whether to initialize a new document, whether to insert text from disk. It's working now but a little hacky. 
+- Ian's idea: The server should be in charge of saying whether a document is initialized. For example, if two people connect at the same time it should only be initialized once.
 
 Why are there two paths?
 
-* to support fully client side Lab.
-* a text editor expects text editor schema, which has cursor position, etc. A cell supports text editor schema + other things like outputs, execution count. So the cell creates it's own datastore and passes in the model.
+- to support fully client side Lab.
+- a text editor expects text editor schema, which has cursor position, etc. A cell supports text editor schema + other things like outputs, execution count. So the cell creates it's own datastore and passes in the model.
 
-What about an ORM like redux-orm to
+What about an ORM like redux-orm? Worth exploring having helpers to explore ORM references.
 
-Worth exploring having helpers to explore ORM references.
+- this does it currently https://github.com/jupyterlab/jupyterlab/blob/55fbac91507ea5119665244ce3b136b71d4e7c62/packages/cells/src/data.ts#L238-L250
 
-* this does it currently https://github.com/jupyterlab/jupyterlab/blob/55fbac91507ea5119665244ce3b136b71d4e7c62/packages/cells/src/data.ts#L238-L250
-
-* We are doing this currently with record locaters: https://github.com/jupyterlab/jupyterlab/blob/55fbac91507ea5119665244ce3b136b71d4e7c62/packages/notebook/src/data.ts#L36
+- We are doing this currently with record locaters: https://github.com/jupyterlab/jupyterlab/blob/55fbac91507ea5119665244ce3b136b71d4e7c62/packages/notebook/src/data.ts#L36
 
 It works currently for text documents and notebooks.
 
@@ -76,7 +77,7 @@ We should have per document datastore, because that's where undo/redo makes sens
 
 Blockers on phosphor side?
 
-unpaired surrogate issue. Library generates a byte string. Each patch gets an ID. IDs can be absolutely ordered, so this is how we resolve conflicts. Generate these IDs involves a lot of bitwise logic. And there is a problem with the scheme, because it can generate invalid UTF strings, because it can generate unpaired surrogates. Then it doesn't serialize properly.
+- unpaired surrogate issue. Library generates a byte string. Each patch gets an ID. IDs can be absolutely ordered, so this is how we resolve conflicts. Generate these IDs involves a lot of bitwise logic. And there is a problem with the scheme, because it can generate invalid UTF strings, because it can generate unpaired surrogates. Then it doesn't serialize properly.
 
 How do we support this package?
 
@@ -101,6 +102,7 @@ Phosphor
 - It might be possible to allocate ID range space more efficiently when pasting
 
 JupyterLab
+
 - "Lifecycle events" if two open a notebook a notebook at once
 - What to handle server side
 Options

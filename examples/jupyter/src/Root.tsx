@@ -39,7 +39,7 @@ const SelectNotebook: React.FC<{ onSelect: (path: string) => void }> = ({
   const inputEl = React.useRef<HTMLInputElement | null>(null);
   const onSubmit = React.useCallback(
     (e: React.FormEvent<unknown>) => {
-      onSelect(inputEl.current?.value || "");
+      onSelect(inputEl.current!.value || "");
       e.preventDefault();
     },
     [onSelect]

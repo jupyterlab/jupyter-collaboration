@@ -180,7 +180,7 @@ export function createRecord<SCHEMA extends Schema>(
   update: Record.Update<SCHEMA>,
   options: { id: string | null } = { id: null }
 ): string {
-  const id = options.id ?? UUID.uuid4();
+  const id = options.id || UUID.uuid4();
   updateRecords(datastore, schema, { [id]: update });
   return id;
 }

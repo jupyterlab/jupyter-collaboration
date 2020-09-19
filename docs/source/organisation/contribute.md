@@ -6,7 +6,7 @@ For these, or anything else, please open an issue on the [Issue Board](https://g
 
 ## User Stories
 
-Tell us your [story](/about/user-stories).
+Tell us your [story](/about-rtc/user-stories).
 
 ## Develop
 

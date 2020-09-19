@@ -30,7 +30,7 @@
     "prepublishOnly": "npm run build",
     "watch": "tsc -w --listEmittedFiles",
     "start:server": "fkill -s :8889 && jupyter lab --port 8889 --LabApp.token= --LabApp.password=",
-    "start": "wait-on tcp:8889 && rtc-jupyter-supernode"
+    "start": "wait-on tcp:8889 && rtc-supernode"
   },
   "dependencies": {
     "@lumino/datastore": "0.10.2",
@@ -50,6 +50,6 @@
     "access": "public"
   },
   "bin": {
-    "@jupyter-rtc/jupyter-supernode": "bin/index.js"
+    "rtc-supernode": "bin/index.js"
   }
 }
