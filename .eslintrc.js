@@ -18,13 +18,15 @@ const config = {
   parserOptions: {
     tsconfigRootDir: __dirname,
     project: [
-      "./packages/rtc-node/tsconfig.json",
-      "./packages/rtc-relay/tsconfig.json",
-      "./packages/rtc-todo-example/tsconfig.json",
-      "./packages/rtc-jupyter/tsconfig.json",
-      "./packages/rtc-jupyter-example/tsconfig.json",
-      "./packages/rtc-debugger/tsconfig.json",
-      "./packages/rtc-jupyter-supernode/tsconfig.json",
+      "./examples/jupyter/tsconfig.json",
+      "./examples/lumino/tsconfig.json",
+      "./examples/todo/tsconfig.json",
+      "./packages/jupyter/tsconfig.json",
+      "./packages/node/tsconfig.json",
+      "./packages/relay/tsconfig.json",
+      "./packages/supernode/tsconfig.json",
+      "./tools/debugger/tsconfig.json",
+      "./tools/dummy-store/tsconfig.json",
     ],
     ecmaFeatures: {
       jsx: true,

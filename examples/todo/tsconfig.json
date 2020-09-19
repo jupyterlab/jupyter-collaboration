@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "outDir": "lib",
+    "rootDir": "src",
+    "module": "esnext"
+  },
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "../../packages/node"
+    },
+    {
+      "path": "../../tools/debugger"
+    }
+  ]
+}

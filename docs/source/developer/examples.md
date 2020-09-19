@@ -38,7 +38,7 @@ PS: The content of this example has been taken from the [Lumino example-datastor
 
 ## To Do Example
 
-You can start [todo example app](https://github.com/jupyterlab/rtc/tree/main/examples/rtc-todo-example) and the [debugger](https://github.com/jupyterlab/rtc/tree/main/tools/rtc-debugger).
+You can start [todo example app](https://github.com/jupyterlab/rtc/tree/main/examples/todo) and the [debugger](https://github.com/jupyterlab/rtc/tree/main/tools/debugger).
 
 ```bash
 yarn todo:start-all

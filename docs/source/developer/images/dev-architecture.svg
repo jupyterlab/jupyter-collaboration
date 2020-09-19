@@ -15,7 +15,7 @@
    version="1.1"
    id="svg8"
    inkscape:version="0.92.2 5c3e80d, 2017-08-06"
-   sodipodi:docname="dev.svg">
+   sodipodi:docname="dev-architecture.svg">
   <defs
      id="defs2">
     <marker
@@ -290,13 +290,13 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="309.62187"
+     inkscape:cx="368.62187"
      inkscape:cy="461.84005"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1680"
-     inkscape:window-height="971"
+     inkscape:window-height="972"
      inkscape:window-x="0"
      inkscape:window-y="1"
      inkscape:window-maximized="1"
@@ -336,7 +336,7 @@
          id="tspan846"
          x="38.364597"
          y="179.26004"
-         style="stroke-width:0.26458332">rtc-jupyter-example</tspan></text>
+         style="stroke-width:0.26458332">@jupyter-rtc/jupyter-example</tspan></text>
     <rect
        ry="2.5051377"
        rx="3.2755544"
@@ -356,7 +356,7 @@
          y="184.81631"
          x="44.450016"
          id="tspan852"
-         sodipodi:role="line">rtc-jupyter (schemas)</tspan></text>
+         sodipodi:role="line">@jupyter-rtc/jupyter (schemas)</tspan></text>
     <rect
        style="opacity:0.82399998;fill:none;fill-opacity:1;stroke:#00000e;stroke-width:0.35277778;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="rect856"
@@ -376,7 +376,7 @@
          id="tspan858"
          x="50.800022"
          y="190.90175"
-         style="stroke-width:0.26458332">rtc-node</tspan></text>
+         style="stroke-width:0.26458332">@jupyter-rtc/node</tspan></text>
     <rect
        ry="1.3476721"
        rx="1.7929806"
@@ -386,29 +386,8 @@
        width="29.941837"
        id="rect862"
        style="opacity:0.82399998;fill:none;fill-opacity:1;stroke:#00000e;stroke-width:0.35277778;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
-    <text
-       id="text866"
-       y="203.33719"
-       x="69.623329"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.52777767px;line-height:1.25;font-family:arial;-inkscape-font-specification:'arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       xml:space="preserve"><tspan
-         style="text-align:center;text-anchor:middle;stroke-width:0.26458332"
-         y="203.33719"
-         x="69.623329"
-         id="tspan864"
-         sodipodi:role="line">lumino-datastore</tspan><tspan
-         style="text-align:center;text-anchor:middle;stroke-width:0.26458332"
-         y="207.74692"
-         x="69.623329"
-         sodipodi:role="line"
-         id="tspan16600">or</tspan><tspan
-         style="text-align:center;text-anchor:middle;stroke-width:0.26458332"
-         y="212.15663"
-         x="69.623329"
-         sodipodi:role="line"
-         id="tspan16602">rtc-store-dummy</tspan></text>
     <rect
-       style="opacity:0.82399998;fill:none;fill-opacity:1;stroke:#00000e;stroke-width:0.35277778;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       style="opacity:0.82399998;fill:none;fill-opacity:1;stroke:#00000e;stroke-width:0.35295417;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="rect874"
        width="54.700047"
        height="51.254124"
@@ -426,7 +405,7 @@
          id="tspan876"
          x="149.48936"
          y="182.96425"
-         style="stroke-width:0.26458332">rtc-todo-example</tspan></text>
+         style="stroke-width:0.26458332">@jupyter-rtc/todo-example</tspan></text>
     <rect
        ry="1.9516909"
        rx="2.6168132"
@@ -446,7 +425,7 @@
          y="189.04968"
          x="155.83937"
          id="tspan882"
-         sodipodi:role="line">rtc-node</tspan></text>
+         sodipodi:role="line">@jupyter-rtc/node</tspan></text>
     <rect
        style="opacity:0.82399998;fill:none;fill-opacity:1;stroke:#00000e;stroke-width:0.35277778;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="rect886"
@@ -456,27 +435,6 @@
        y="190.96652"
        rx="1.7929806"
        ry="1.3476721" />
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.52777767px;line-height:1.25;font-family:arial;-inkscape-font-specification:'arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       x="174.66267"
-       y="200.95596"
-       id="text890"><tspan
-         sodipodi:role="line"
-         id="tspan888"
-         x="174.66267"
-         y="200.95596"
-         style="text-align:center;text-anchor:middle;stroke-width:0.26458332">lumino-datastore</tspan><tspan
-         sodipodi:role="line"
-         x="175.15187"
-         y="205.36569"
-         style="text-align:center;text-anchor:middle;stroke-width:0.26458332"
-         id="tspan16604">or </tspan><tspan
-         sodipodi:role="line"
-         x="174.66267"
-         y="209.77541"
-         style="text-align:center;text-anchor:middle;stroke-width:0.26458332"
-         id="tspan16606">rtc-store-dummy</tspan></text>
     <rect
        style="opacity:0.82399998;fill:none;fill-opacity:1;stroke:#00000e;stroke-width:0.35277778;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="rect911"
@@ -496,7 +454,7 @@
          id="tspan913"
          x="97.494186"
          y="117.08538"
-         style="text-align:center;text-anchor:middle;stroke-width:0.26458332">rtc-relay</tspan><tspan
+         style="text-align:center;text-anchor:middle;stroke-width:0.26458332">@jupyter-rtc/relay</tspan><tspan
          sodipodi:role="line"
          x="97.494186"
          y="121.4951"
@@ -564,7 +522,7 @@
          id="tspan2039"
          x="119.32708"
          y="48.027122"
-         style="stroke-width:0.26458332">rtc-jupyter-supernode</tspan></text>
+         style="stroke-width:0.26458332">@jupyter-rtc/supernode</tspan></text>
     <rect
        ry="1.9516909"
        rx="2.6168132"
@@ -584,7 +542,7 @@
          y="54.11256"
          x="125.67709"
          id="tspan2045"
-         sodipodi:role="line">rtc-node</tspan></text>
+         sodipodi:role="line">@jupyter-rtc/node</tspan></text>
     <rect
        style="opacity:0.82399998;fill:none;fill-opacity:1;stroke:#00000e;stroke-width:0.35277778;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="rect2049"
@@ -680,25 +638,30 @@
        style="fill:none;stroke:#000000;stroke-width:0.26458332;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker5215)"
        sodipodi:nodetypes="cc" />
     <rect
-       ry="0.42485744"
-       rx="1.5337903"
-       y="211.32881"
-       x="112.17078"
-       height="8.6924152"
-       width="25.613497"
+       ry="1.3275961"
+       rx="1.9585097"
+       y="211.48668"
+       x="109.15366"
+       height="27.16209"
+       width="32.706089"
        id="rect5571"
-       style="opacity:0.82399998;fill:none;fill-opacity:1;stroke:#00000e;stroke-width:0.35277778;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+       style="opacity:0.82399998;fill:none;fill-opacity:1;stroke:#00000e;stroke-width:0.35295417;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
     <text
        id="text5575"
        y="216.56644"
-       x="114.82918"
+       x="124.89833"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.52777767px;line-height:1.25;font-family:arial;-inkscape-font-specification:'arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
        xml:space="preserve"><tspan
-         style="stroke-width:0.26458332"
+         style="stroke-width:0.26458332;text-anchor:middle;text-align:center"
          y="216.56644"
          x="114.82918"
          id="tspan5573"
-         sodipodi:role="line">rtc-debugger</tspan></text>
+         sodipodi:role="line">@jupyter-rtc/</tspan><tspan
+         style="stroke-width:0.26458332;text-anchor:middle;text-align:center"
+         y="220.97617"
+         x="114.82918"
+         sodipodi:role="line"
+         id="tspan175">debugger</tspan></text>
     <path
        sodipodi:nodetypes="cc"
        inkscape:connector-curvature="0"
@@ -713,25 +676,25 @@
        sodipodi:nodetypes="cc" />
     <text
        id="text6801"
-       y="225.03369"
+       y="226.62117"
        x="125.0094"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.52777767px;line-height:1.25;font-family:arial;-inkscape-font-specification:'arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
        xml:space="preserve"><tspan
          style="text-align:center;text-anchor:middle;stroke-width:0.26458332"
-         y="225.03369"
+         y="226.62117"
          x="125.0094"
          id="tspan6799"
          sodipodi:role="line">Debugger can</tspan><tspan
          style="text-align:center;text-anchor:middle;stroke-width:0.26458332"
-         y="229.44342"
+         y="231.0309"
          x="125.0094"
          sodipodi:role="line"
          id="tspan6803">be used to display</tspan><tspan
          style="text-align:center;text-anchor:middle;stroke-width:0.26458332"
-         y="233.85313"
+         y="235.44061"
          x="125.0094"
          sodipodi:role="line"
-         id="tspan6805">store tables</tspan></text>
+         id="tspan6805">the store tables</tspan></text>
     <text
        id="text7635"
        y="103.83561"
@@ -854,22 +817,94 @@
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.52777767px;line-height:1.25;font-family:arial;-inkscape-font-specification:'arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
        x="144.50041"
-       y="65.489273"
+       y="62.31427"
        id="text1062"><tspan
          sodipodi:role="line"
          id="tspan1056"
          x="144.50041"
-         y="65.489273"
-         style="text-align:center;text-anchor:middle;stroke-width:0.26458332">lumino-datastore</tspan><tspan
+         y="62.31427"
+         style="text-align:center;text-anchor:middle;stroke-width:0.26458332">@lumino/</tspan><tspan
+         sodipodi:role="line"
+         x="144.50041"
+         y="66.723991"
+         style="text-align:center;text-anchor:middle;stroke-width:0.26458332"
+         id="tspan137">datastore</tspan><tspan
          id="tspan1058"
          sodipodi:role="line"
          x="144.50041"
-         y="69.899002"
+         y="71.133713"
          style="text-align:center;text-anchor:middle;stroke-width:0.26458332">or</tspan><tspan
          id="tspan1060"
          sodipodi:role="line"
          x="144.50041"
-         y="74.308716"
-         style="text-align:center;text-anchor:middle;stroke-width:0.26458332">rtc-store-dummy</tspan></text>
+         y="75.543434"
+         style="text-align:center;text-anchor:middle;stroke-width:0.26458332">@jupyter-rtc/</tspan><tspan
+         sodipodi:role="line"
+         x="144.50041"
+         y="79.953156"
+         style="text-align:center;text-anchor:middle;stroke-width:0.26458332"
+         id="tspan135">dummy-store</tspan></text>
+    <text
+       id="text161"
+       y="198.83928"
+       x="68.829582"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.52777767px;line-height:1.25;font-family:arial;-inkscape-font-specification:'arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       xml:space="preserve"><tspan
+         style="text-align:center;text-anchor:middle;stroke-width:0.26458332"
+         y="198.83928"
+         x="68.829582"
+         id="tspan151"
+         sodipodi:role="line">@lumino/</tspan><tspan
+         id="tspan153"
+         style="text-align:center;text-anchor:middle;stroke-width:0.26458332"
+         y="203.24901"
+         x="68.829582"
+         sodipodi:role="line">datastore</tspan><tspan
+         style="text-align:center;text-anchor:middle;stroke-width:0.26458332"
+         y="207.65872"
+         x="68.829582"
+         sodipodi:role="line"
+         id="tspan155">or</tspan><tspan
+         style="text-align:center;text-anchor:middle;stroke-width:0.26458332"
+         y="212.06845"
+         x="68.829582"
+         sodipodi:role="line"
+         id="tspan157">@jupyter-rtc/</tspan><tspan
+         id="tspan159"
+         style="text-align:center;text-anchor:middle;stroke-width:0.26458332"
+         y="216.47816"
+         x="68.829582"
+         sodipodi:role="line">dummy-store</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.52777767px;line-height:1.25;font-family:arial;-inkscape-font-specification:'arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="174.13376"
+       y="196.9872"
+       id="text173"><tspan
+         sodipodi:role="line"
+         id="tspan163"
+         x="174.13376"
+         y="196.9872"
+         style="text-align:center;text-anchor:middle;stroke-width:0.26458332">@lumino/</tspan><tspan
+         sodipodi:role="line"
+         x="174.13376"
+         y="201.39693"
+         style="text-align:center;text-anchor:middle;stroke-width:0.26458332"
+         id="tspan165">datastore</tspan><tspan
+         id="tspan167"
+         sodipodi:role="line"
+         x="174.13376"
+         y="205.80664"
+         style="text-align:center;text-anchor:middle;stroke-width:0.26458332">or</tspan><tspan
+         id="tspan169"
+         sodipodi:role="line"
+         x="174.13376"
+         y="210.21637"
+         style="text-align:center;text-anchor:middle;stroke-width:0.26458332">@jupyter-rtc/</tspan><tspan
+         sodipodi:role="line"
+         x="174.13376"
+         y="214.62608"
+         style="text-align:center;text-anchor:middle;stroke-width:0.26458332"
+         id="tspan171">dummy-store</tspan></text>
   </g>
 </svg>
