@@ -17,10 +17,10 @@ around kernel management.
 
 This will happen in a number of different layers, added to this monorepo:
 
-1. Top level with the applications: [JupyterLab](https://github.com/jupyterlab/jupyterlab), [Spyder](https://www.spyder-ide.org/), [Nteract](https://github.com/nteract/nteract)...
-1. Higher level a.k.a `Jupyter`: Support for editing all data in Jupyter server.
-1. Middle: Friendly real time datastore using React integration.
-1. Base: CRDT implementation, [Lumino](https://github.com/jupyterlab/lumino) and/or [other library](/about/libraries) implementations.
+1. Top-level composed of the `Applications`: [JupyterLab](https://github.com/jupyterlab/jupyterlab), [Spyder](https://www.spyder-ide.org/), [Nteract](https://github.com/nteract/nteract)...
+1. High-level a.k.a `Jupyter`: Support for editing all data in Jupyter server.
+1. Middle-level: Friendly Real Time datastore using `React.js` integration.
+1. Base-level: CRDT implementation: [Lumino](https://github.com/jupyterlab/lumino) and/or [other CRDT libraries](/about-rtc/libraries).
 
 The definition of those layers is still in progress. You can discuss this on [jupyterlab/rtc#61](https://github.com/jupyterlab/rtc/issues/61).
 

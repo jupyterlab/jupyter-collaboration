@@ -47,7 +47,7 @@ const Add: React.FC = () => {
   const onSubmit = React.useCallback(
     (e: React.FormEvent<unknown>) => {
       createTodo({
-        description: inputEl.current?.value || "",
+        description: inputEl.current!.value || "",
       });
       e.preventDefault();
     },

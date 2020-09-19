@@ -24,11 +24,11 @@ We also provide useful tooling packages to accompany the main packages.
 
 ## Jupyter Extensions
 
-It is currently in the planning stage, but eventually we see this repo containing a number of jupyter extensions like:
+It is currently in the planning stage, but eventually we see the `jupyterlab/rtc` repository containing a number of other server extensions and client packages like:
 
-- `src/rtc_supernode_jupyter_extension`: Jupyter Server extension for running `packages/supernode`.
-- `src/rtc_relay_jupyter_extension`: Jupyter Server Extension for `packages/relay`
-- `packages/jupyterlab-rtc-client`: `packages/client` that connects over `src/rtc_relay_jupyter_extension`.
+- `rtc_supernode_jupyter_extension`: Jupyter Server extension for running `packages/supernode`.
+- `rtc_relay_jupyter_extension`: Jupyter Server Extension for `packages/relay`
+- `jupyterlab-rtc-client`: `packages/client` that connects over `rtc_relay_jupyter_extension`.
 
 ## Distributed State
 

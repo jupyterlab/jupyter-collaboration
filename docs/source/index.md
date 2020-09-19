@@ -22,17 +22,17 @@ We welcome you to [contribute](organisation/contribute) to this project.
 maxdepth: 2
 caption: About RTC
 ---
-about/user-stories
-about/algorithms
-about/libraries
-about/implementations
-about/persistence
+about-rtc/user-stories
+about-rtc/algorithms
+about-rtc/libraries
+about-rtc/implementations
+about-rtc/persistence
 ```
 
 ```{toctree}
 ---
 maxdepth: 2
-caption: Technical Guide
+caption: Developer Guide
 ---
 developer/design
 developer/architecture
@@ -47,7 +47,7 @@ GitHub repo <https://github.com/jupyterlab/rtc>
 ```{toctree}
 ---
 maxdepth: 2
-caption: Organisation
+caption: Project Organisation
 ---
 organisation/contribute
 organisation/czi-2020
