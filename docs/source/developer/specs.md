@@ -1,4 +1,4 @@
-# Specification
+# Specifications
 
 This document is meant to serve as a way to specify the behavior of the protocols being developed in the `jupyterlab/rtc` repo. The hope for it would be start here, very much in flux, and then at some point, once it is settled down a bit, move into a JEP form.
 
@@ -21,18 +21,14 @@ The Jupyter RTC layer is meant to normalize data provided by the Jupyter Server 
 
 It specifies the `schemas` this relies on a **data model** and on the behavior of a `supernode`, which connects to the **data model** and interacts with a running Jupyter server. This is a list of schemas, with types written as TS types that can be mapped to JSON schema.
 
-**`executions`**
+**`executions`**: All the executions that happened on this server:
 
-All the executions that happened on this server:
+- `code` string: the code that was executed
+- `kernel` `null | {@id: string, session: number}`: Null if the kernel that executed this is unknown (say it was loaded from a serialized notebook), Otherwise the `@id` of the kernel that executed it and the "session" meaning the instance of the kernel in terms of number of restarts. For example, if this kernel has never been restarted before this execution this will be `0`. Otherwise, if it has just been restarted once, then this is executed, it will be `1`, etc.
+- `status` `{status: "requested"} | {status: "in progress"} | {status: "ok:, execution_count: number | null, result: null | {data: Object, metadata: Object}} | {status: "abort"} | {status: "error", ename: sting, evalue: string, traceback: string[]}`: The state of the execution... etc
+- `displays` List of `{type: "stream", name: "stdout" | "stderr", text: string} | {type: "data", data: Object, metadata: Object, display_id: null | string}`: The sequence of displays from this execution, in the order in which they were recieved.
 
-* `code` string: the code that was executed
-* `kernel` `null | {@id: string, session: number}`: Null if the kernel that executed this is unknown (say it was loaded from a serialized notebook), Otherwise the `@id` of the kernel that executed it and the "session" meaning the instance of the kernel in terms of number of restarts. For example, if this kernel has never been restarted before this execution this will be `0`. Otherwise, if it has just been restarted once, then this is executed, it will be `1`, etc.
-* `status` `{status: "requested"} | {status: "in progress"} | {status: "ok:, execution_count: number | null, result: null | {data: Object, metadata: Object}} | {status: "abort"} | {status: "error", ename: sting, evalue: string, traceback: string[]}`: The state of the execution... etc
-* `displays` List of `{type: "stream", name: "stdout" | "stderr", text: string} | {type: "data", data: Object, metadata: Object, display_id: null | string}`: The sequence of displays from this execution, in the order in which they were recieved.
-
-**`cells`**
-
-All the cells in all notebooks:
+**`cells`**: All the cells in all notebooks:
 
 - `text` text field: the contents of the cell
 - `execution` `string | null`: the most recent execution of the cell or null if it has no execution.
@@ -46,9 +42,7 @@ TODO
 
 ### RTC Layer
 
-_This is currently implemented in [`packages/node`](https://github.com/jupyterlab/rtc/tree/master/packages/node) and by [`@lumino/datastore`](https://github.com/jupyterlab/lumino/tree/master/packages/datastore)_
-
-The goal of this layer is to allow you to specify data models, and then to execute updates on them, and have these updates translated to serializable transactions that can be shared using the layer below.
+_This is currently implemented in [`packages/node`](https://github.com/jupyterlab/rtc/tree/master/packages/node) and by [`@lumino/datastore`](https://github.com/jupyterlab/lumino/tree/master/packages/datastore)_. The goal of this layer is to allow you to specify data models, and then to execute updates on them, and have these updates translated to serializable transactions that can be shared using the layer below.
 
 This is currently "specified" mostly by the `@lumino/datastore` schemas JS package, but we should work at making it implementation agnostic.
 
@@ -83,9 +77,7 @@ TODO
 
 ### Synchronized Append-only Log Layer
 
-_This is currently implemented in [`packages/relay`](https://github.com/jupyterlab/rtc/blob/master/packages/relay/src/index.ts)_
-
-The goal of this layer it to provide all clients with a shared append only log they can add transactions to and read transactions from.
+_This is currently implemented in [`packages/relay`](https://github.com/jupyterlab/rtc/blob/master/packages/relay/src/index.ts)_. The goal of this layer it to provide all clients with a shared append only log they can add transactions to and read transactions from.
 
 This is achieved through a central server that stores the logs which all clients connect to.
 
@@ -99,9 +91,7 @@ TODO
 
 ### Bidirectional Asynchronous Communication Layer
 
-This layer provides a way for a client and a server to send each other messages.
-
-We currently use [socket.io](https://github.com/socketio/socket.io) for this. Other options would be e.g.:
+This layer provides a way for a client and a server to send each other messages. We currently use [socket.io](https://github.com/socketio/socket.io) for this. Other options would be e.g.:
 
 - <https://www.cncf.io/blog/2018/10/24/grpc-web-is-going-ga>
 - <https://wamp-proto.org>
