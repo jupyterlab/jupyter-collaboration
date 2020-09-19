@@ -1,6 +1,6 @@
 {
   "name": "@jupyter-rtc/jupyter",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Jupyter RTC - Jupyter",
   "homepage": "https://github.com/jupyterlab/rtc",
   "bugs": {

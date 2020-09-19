@@ -1,6 +1,6 @@
 {
   "name": "@jupyter-rtc/supernode",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Jupyter RTC - Supernode",
   "homepage": "https://github.com/jupyterlab/rtc",
   "bugs": {
