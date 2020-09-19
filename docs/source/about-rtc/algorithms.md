@@ -10,21 +10,25 @@ Various `RTC Algorithms` exist and compete in a way.
 - <https://stackoverflow.com/questions/26694359/differences-between-ot-and-crdt>
 - <https://stackoverflow.com/questions/2043165/operational-transformation-library>
 
-We can class the RTC Algorithms into 3 families:
+We can class the RTC Algorithms into 3 main categories:
 
-1. CRDT (doesn't need a central server): Used by Riak, TomTom GPS, Teletype for Atom...
-2. OT (needs a central server): Used by Google Docs, Office365...
-3. Diffs: Used by Cocalc...
+1. [CRDT](#crdt) - CRDT doesn't need a central server. It is used by Riak, TomTom GPS, Teletype for Atom...
+2. [OT](#ot) - OT needs a central server. It is used by Google Docs, Office365...
+3. [Diffs](#diffs) - Used by Cocalc...
 
-## CRTD (Conflict-free Replicated Data Type)
+We also have an [others](#others) section for algorithm that don't fit into those categories.
 
-To discover CRTD (in relationship with OT), we invite you listening and reading:
+## CRDT
+
+CRTD is an ancronym for `Conflict-free Replicated Data Type`.
+
+The following links are useful to discover CRTD in relationship with OT.
 
 - <https://www.youtube.com/watch?v=yCcWpzY8dIA>
 - <https://www.youtube.com/watch?v=B5NULPSiOGw>
 - <https://www.youtube.com/watch?v=vBU70EjwGfw>
 
-Then jump into the following links.
+Then jump into the following links to get more details.
 
 - <https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type>
 - <https://crdt.tech>
@@ -59,15 +63,15 @@ Some post-mortem stories can also be instructive.
 - <https://github.com/xi-editor/xi-editor/issues/1187#issuecomment-491473599>
 - <https://news.ycombinator.com/item?id=19886883>
 
-Apache Cassandra
-
-- <https://cassandra.apache.org/doc/latest/architecture/dynamo.html#dataset-partitioning-consistent-hashing>
+CRDT [is used into Apache Cassandra](https://cassandra.apache.org/doc/latest/architecture/dynamo.html#dataset-partitioning-consistent-hashing).
 
 Other discussions
 
 - [Are CRDTs suitable for shared editing? on Hacker News](https://news.ycombinator.com/item?id=24176455)
 
-## OT (Operational Transformation)
+## OT
+
+OT is an acronym for `Operational Transformation`.
 
 - <https://en.wikipedia.org/wiki/Operational_transformation>
 - <https://medium.com/@srijancse/how-real-time-collaborative-editing-work-operational-transformation-ac4902d75682>
@@ -102,25 +106,27 @@ Libraries for OT
 
 - <https://stackoverflow.com/questions/2043165/operational-transformation-library>
 
-## Differential Synchronization
+## Diffs
+
+Differential Synchronization
 
 - <https://neil.fraser.name/writing/sync>
 - <https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/35605.pdf>
 
-## Diffs and Merge
+Diffs and Merge
 
 - <https://jneem.github.io/merging>
 
-## Other Algorithms
+## Others
 
-Other algorithms in the `distributed` area.
+We list here other algorithms in the `distributed` area.
 
-Paxos
+**Paxos**
 
 - <https://en.wikipedia.org/wiki/Paxos_(computer_science)>
 - <https://en.wikipedia.org/wiki/Gossip_protocol>
 
-Vector Clocks
+**Vector Clocks**
 
 - <https://en.wikipedia.org/wiki/Vector_clock>
 - <https://www.datastax.com/blog/2013/09/why-cassandra-doesnt-need-vector-clocks>

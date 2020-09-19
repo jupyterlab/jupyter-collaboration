@@ -1,5 +1,11 @@
 # Persistence
 
+If communications must be persisted, 3 options are available.
+
+1. [Distributed Databases](#distributed-databases)
+1. [Distributed Storage](#distributed-storage)
+1. [File Synchronisation](#file-synchronisation)
+
 ## Distributed Databases
 
 We list here some distributed databases with synchronisation capabilities.

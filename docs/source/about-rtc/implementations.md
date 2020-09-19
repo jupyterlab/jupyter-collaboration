@@ -1,10 +1,6 @@
 # Implementations
 
-Loosely list of links to existing implementations packages as a solution
-related in a way to RTC.
-
-If you want the lower level details, go to the [algorithms](algorithms.md)
-and [libraries](libraries.md) pages.
+Loosely list of links to implementations related in a way to RTC. If you want the lower level details, go to the [algorithms](algorithms.md) and [libraries](libraries.md) pages.
 
 **Cocalc**
 
@@ -13,9 +9,8 @@ and [libraries](libraries.md) pages.
 
 **Visual Studio Code**
 
-Live Share from Microsoft is closed-source.
+[Live Share](https://github.com/microsoftdocs/live-share) from Microsoft is closed-source.
 
-- <https://github.com/microsoftdocs/live-share>
 - <https://visualstudio.microsoft.com/services/live-share>
 
 **HackMD**
@@ -45,10 +40,10 @@ Live Share from Microsoft is closed-source.
 - <https://github.com/convergencelabs/convergence-client-javascript>
 - <https://examples.convergence.io/examples/froala/?id=5e9c16f7-7f67-4732-b5d1-87e495c30c39>
 
-Convergence Labs on Shared Cursor
+Shared Cursor in Convergence Labs
 
-- https://examples.convergence.io/examples/froala/?id=9b9d01d1-3767-4326-9dc9-057db3582a5e
-- https://www.youtube.com/watch?v=42KDvoFqzsI
+- <https://examples.convergence.io/examples/froala/?id=9b9d01d1-3767-4326-9dc9-057db3582a5e>
+- <https://www.youtube.com/watch?v=42KDvoFqzsI>
 
 **Video Chat**
 
@@ -65,17 +60,17 @@ Convergence Labs on Shared Cursor
 
 - <https://www.pierrehedkvist.com/posts/4-open-source-collaborative-editors>
 
-**Firepad**
+**Firepad Editor**
 
 - <https://github.com/FirebaseExtended/firepad>
 
-**Etherpad**
+**Etherpad Editor**
 
 - <https://en.wikipedia.org/wiki/Etherpad>
 - <https://etherpad.org>
 - <https://github.com/ether/etherpad-lite>
 
-**TinyMCE**
+**TinyMCE Editor**
 
 - <https://www.tiny.cloud/blog/real-time-collaborative-editing-slate-js>
 - <https://www.tiny.cloud/blog/real-time-collaboration-ot-vs-crdt>

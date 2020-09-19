@@ -1,6 +1,6 @@
 # User Stories
 
-_During our first meeting we collected a few different user stories. We are looking to more elaborated and structured stories that should be considered._
+_During our first meeting we have collected a few different user stories. We are looking to more elaborated and structured stories that should be considered._
 
 We list here source for inspiration and discussion:
 
