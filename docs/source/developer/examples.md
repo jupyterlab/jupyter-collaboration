@@ -24,16 +24,12 @@ git clone https://github.com/jupyterlab/rtc && \
 This [simple Lumino datastore example](https://github.com/jupyterlab/rtc/tree/main/examples/lumino) is useful to demonstrate and understand the basics of the [Lumino Datastore](https://github.com/jupyterlab/lumino/tree/master/packages/datastore) system.
 
 ```bash
-# Build and start the server.
-cd examples/lumino && \
-  yarn && \
-  yarn build && \
-  yarn start  
+yarn lumino-example:start
 ```
 
 Open in browser 1 (e.g. Chrome) <http://localhost:8000>. Then open that same link <http://localhost:8000> in browser 2 (e.g. Firefox).
 
-Every character you input in one of the 2 browsers should be reflected in realtime in the other browser.
+Every character you input in one of the 2 browsers should be reflected in realtime in the other browser. The selections are also shared.
 
 ![RTC Lumino Example](images/lumino-example.png "RTC Lumino Example")
 
@@ -54,14 +50,14 @@ Broadcasting transactions to: 1
 ...
 ```
 
-PS: The content of this example has been taken from the [Lumino example-datastore folder](https://github.com/jupyterlab/lumino/tree/master/examples/example-datastore).
+The content for this example has been taken from the [Lumino example-datastore folder](https://github.com/jupyterlab/lumino/tree/master/examples/example-datastore).
 
 ## To Do Example
 
 You can start [To Do example application](https://github.com/jupyterlab/rtc/tree/main/examples/todo) and the [Debugger](https://github.com/jupyterlab/rtc/tree/main/tools/debugger).
 
 ```bash
-yarn todo:start-all
+yarn todo-example:start-all
 ```
 
 The example application will be available on <http://localhost:3000>
@@ -73,7 +69,7 @@ The example application will be available on <http://localhost:3000>
 You can also start the [Jupyter example](https://github.com/jupyterlab/rtc/tree/main/examples/jupyter).
 
 ```bash
-yarn jupyter:start-all
+yarn jupyter-example:start-all
 ```
 
 The normal JupyterLab application will be launched on <http://localhost:8888>. The RTC datastore will be available on <http://localhost:3000>.
