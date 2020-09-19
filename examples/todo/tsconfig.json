@@ -5,6 +5,7 @@
     "outDir": "lib",
     "rootDir": "src",
     "module": "esnext",
+    "declaration": false,
     "isolatedModules": true
   },
   "include": [
