@@ -12,10 +12,10 @@ Meetings are recorded and available on [this YouTube playlist](https://www.youtu
 
 We are striving to keep meetings productive and on topic. If you are joining us for the first time or need a refresher about the project's scope, we recommend reading the following documents.
 
-- The [Specification](https://jupyter-rtc.readthedocs.io/en/latest/developer/spec.html): We are working on creating a living specification for the protocol(s) created here. We're doing our best but it may not always be totally in sync with explorations in the repo, until they are settled on.
+- The [Specifications](https://jupyter-rtc.readthedocs.io/en/latest/developer/specs.html): We are working on creating a living specification for the protocol(s) created here. We're doing our best but it may not always be totally in sync with explorations in the repo, until they are settled on.
 - The [Design](https://jupyter-rtc.readthedocs.io/en/latest/developer/design.html) document.
 - The [Architecture](https://jupyter-rtc.readthedocs.io/en/latest/developer/architecture.html) document.
-- Vision as explained in the [grant proposal for CZI](https://jupyter-rtc.readthedocs.io/en/latest/organisation/czi-2020.html).
+- Vision as explained in the [Grant Proposal for CZI](https://jupyter-rtc.readthedocs.io/en/latest/organisation/czi-2020.html).
 
 ## Contribute
 
