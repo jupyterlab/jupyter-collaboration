@@ -93,6 +93,10 @@ We currently use [socket.io](https://github.com/socketio/socket.io) for this. Ot
 
 ## Cross-cutting Concerns
 
+### Transactions
+
+Sometimes, you need to ensure that a group of actions make up a unique transactions.
+
 ### Sharding / Horizontal Partitioning
 
 If many notebooks are being worked on at once, it might be not feasible to push changes for all of them to all clients.
