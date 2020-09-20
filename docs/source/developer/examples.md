@@ -6,8 +6,8 @@ To build and try them all, you first need to install Yarn, Node.js and JupyterLa
 
 ```bash
 # Using conda, enter the following commands.
-conda create -n rtc -c conda-forge jupyterlab nodejs=14 yarn
-conda activate rtc
+conda create -n rtc -c conda-forge jupyterlab nodejs=14 yarn && \
+  conda activate rtc
 ```
 
 You can now clone the repository and build the sources.
@@ -33,7 +33,7 @@ Every character you input in one of the 2 browsers should be reflected in realti
 
 ![RTC Lumino Example](images/lumino-example.png "RTC Lumino Example")
 
-In the console, you will see logs showing the CRDT messageg flowing.
+In the console, you will see logs showing the CRDT messages flowing.
 
 ```
 ...
@@ -72,8 +72,6 @@ You can also start the [Jupyter example](https://github.com/jupyterlab/rtc/tree/
 yarn jupyter-example:start-all
 ```
 
-The normal JupyterLab application will be launched on <http://localhost:8888>. The RTC datastore will be available on <http://localhost:3000>.
-
-Enter `hello.ipynb` as Path and click on `Open Notebook` button. You will be shown with the details of the hello notebook located in `packages/supernode` folder.
+The normal JupyterLab application will be launched on <http://localhost:8888>. The RTC datastore will be available on <http://localhost:3000>. Enter `hello.ipynb` as Path and click on `Open Notebook` button. You will be shown with the details of the hello notebook located in `packages/supernode` folder.
 
 ![RTC Jupyter Example](images/jupyter-example.png "RTC Jupyter Example")

@@ -9,19 +9,32 @@ Loosely list of links to implementations related in a way to RTC. If you want th
 
 **Visual Studio Code**
 
-[Live Share](https://github.com/microsoftdocs/live-share) from Microsoft is closed-source.
-
-- <https://visualstudio.microsoft.com/services/live-share>
+[Microsoft Live Share](https://visualstudio.microsoft.com/services/live-share) is closed-source (see the [docs](https://github.com/microsoftdocs/live-share)).
 
 **HackMD**
 
 - <https://github.com/hackmdio/codimd>
 - <https://github.com/hackmdio/diff-match-patch>
-
 - <https://github.com/hackmdio/codimd/issues/3>
 - <https://github.com/hackmdio/codimd/tree/develop/lib/ot>
-
 - <https://github.com/hackmdio/codimd/issues/251>
+
+**Google / Apache Wave**
+
+- <https://www.youtube.com/watch?v=uOFzWZrsPV0>
+- <https://www.youtube.com/watch?v=3ykZYKCK7AM>
+- <https://en.wikipedia.org/wiki/Apache_Wave>
+- <https://en.wikipedia.org/wiki/Google_Wave_Federation_Protocol>
+
+**Google Drive**
+
+- <https://drive.googleblog.com/2010/09/whats-different-about-new-google-docs_22.html>
+
+**Google / Dropbox System Design**
+
+- <https://www.youtube.com/watch?v=2auwirNBvGg>
+- <https://www.youtube.com/watch?v=U2lVmSlDJhg>
+- <https://www.youtube.com/watch?v=U0xTu6E2CT8>
 
 **Crate**
 
@@ -39,22 +52,7 @@ Loosely list of links to implementations related in a way to RTC. If you want th
 - <https://github.com/convergencelabs/monaco-collab-ext>
 - <https://github.com/convergencelabs/convergence-client-javascript>
 - <https://examples.convergence.io/examples/froala/?id=5e9c16f7-7f67-4732-b5d1-87e495c30c39>
-
-Shared Cursor in Convergence Labs
-
-- <https://examples.convergence.io/examples/froala/?id=9b9d01d1-3767-4326-9dc9-057db3582a5e>
-- <https://www.youtube.com/watch?v=42KDvoFqzsI>
-
-**Video Chat**
-
-- <https://jitsi.org>
-- <https://whereby.com>
-- <https://github.com/yuvipanda/jupyter-videochat>
-- <https://github.com/deathbeds/_fam>
-
-**Google / Apache Wave**
-
-- <https://en.wikipedia.org/wiki/Apache_Wave>
+- [Shared Cursor](https://examples.convergence.io/examples/froala/?id=9b9d01d1-3767-4326-9dc9-057db3582a5e) in Convergence Labs ([vide](https://www.youtube.com/watch?v=42KDvoFqzsI))
 
 **Editors**
 
@@ -76,6 +74,11 @@ Shared Cursor in Convergence Labs
 - <https://www.tiny.cloud/blog/real-time-collaboration-ot-vs-crdt>
 - <https://www.tiny.cloud/blog/simple-and-intuitive-track-changes-for-any-content-workflow>
 - <https://www.tiny.cloud/blog/introducing-real-time-coediting-tinymce-codox>
+
+**Video Chat**
+
+- <https://jitsi.org>
+- <https://whereby.com>
 
 **Others**
 

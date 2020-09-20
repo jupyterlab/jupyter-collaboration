@@ -1,6 +1,6 @@
 # User Stories
 
-_During our first meeting we have collected a few different user stories. We are looking to more elaborated and structured stories that should be considered._
+_During our [first community meeting](https://github.com/jupyterlab/rtc/issues/3#issuecomment-637010910) we have collected a few different user stories. We are looking to more elaborated and structured stories that should be considered._
 
 We list here source for inspiration and discussion:
 
@@ -23,7 +23,7 @@ Once you start sharing notebooks, you often don't want everyone to have all the 
 
 ## Chat
 
-Also, once you are collaborating you will need other side channels, like a chat, to keep in sync and coordinate outside the document.
+Also, once you are collaborating you will need other side channels, like a chat, to keep in sync and coordinate outside the document. [jupyterlab/rtc#41](https://github.com/jupyterlab/rtc/issues/41) documents more ideas on this.
 
 [^f1]: How Data Scientists Use Computational Notebooks for Real-Time Collaboration
 

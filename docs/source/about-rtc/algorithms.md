@@ -1,6 +1,14 @@
 # Algorithms
 
-Various `RTC Algorithms` exist and compete in a way.
+We can class the `RTC Algorithms` into 3 main categories:
+
+1. [CRDT](#crdt) - CRDT doesn't need a central server and is used by Riak, TomTom GPS, Teletype for Atom...
+2. [OT](#ot) - OT needs a central server and is used by Google Docs, Office365...
+3. [Diffs](#diffs) - Used by [Cocalc](https://blog.cocalc.com/2018/10/11/collaborative-editing.html)...
+
+We also have an [others](#others) section for algorithm that don't fit into those categories.
+
+The following brings more perspect on how the categories position on each others.
 
 - <https://www.tiny.cloud/blog/real-time-collaboration-ot-vs-crdt> and its references
 - <https://blog.cocalc.com/2018/10/11/collaborative-editing.html>
@@ -10,17 +18,9 @@ Various `RTC Algorithms` exist and compete in a way.
 - <https://stackoverflow.com/questions/26694359/differences-between-ot-and-crdt>
 - <https://stackoverflow.com/questions/2043165/operational-transformation-library>
 
-We can class the RTC Algorithms into 3 main categories:
-
-1. [CRDT](#crdt) - CRDT doesn't need a central server. It is used by Riak, TomTom GPS, Teletype for Atom...
-2. [OT](#ot) - OT needs a central server. It is used by Google Docs, Office365...
-3. [Diffs](#diffs) - Used by Cocalc...
-
-We also have an [others](#others) section for algorithm that don't fit into those categories.
-
 ## CRDT
 
-CRTD is an ancronym for `Conflict-free Replicated Data Type`.
+CRTD is an ancronym for `Conflict-free Replicated Data Type`. CRDT doesn't need a central server and is used by Riak, TomTom GPS, Teletype for Atom.
 
 The following links are useful to discover CRTD in relationship with OT.
 
@@ -28,17 +28,18 @@ The following links are useful to discover CRTD in relationship with OT.
 - <https://www.youtube.com/watch?v=B5NULPSiOGw>
 - <https://www.youtube.com/watch?v=vBU70EjwGfw>
 
-Then jump into the following links to get more details.
+CRDT is about `shared data structures`.
 
+- <https://github.com/yjs/yjs/blob/main/README.md>
 - <https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type>
 - <https://crdt.tech>
 
+You can also jump into the following links to get more details.
+
 - <https://digitalfreepen.com/2017/10/06/simple-real-time-collaborative-text-editor.html>
 - <https://www.youtube.com/watch?v=jIR0Ngov7vo>
-
 - <https://arxiv.org/abs/1608.03960>
 - <https://dl.acm.org/doi/10.1145/3359141>
-
 - <https://medium.com/@amberovsky/crdt-conflict-free-replicated-data-types-b4bfc8459d26>
 - <https://github.com/yjs/yjs#Yjs-CRDT-Algorithm>
 - <https://www.researchgate.net/publication/310212186_Near_Real-Time_Peer-to-Peer_Shared_Editing_on_Extensible_Data_Types>
@@ -50,47 +51,27 @@ Then jump into the following links to get more details.
 - <https://news.ycombinator.com/item?id=23802208>
 - <https://github.com/alangibson/awesome-crdt>
 
-Edge Cases
+CRDT has some edge cases: [The Hard Parts](https://martin.kleppmann.com/2020/07/06/crdt-hard-parts-hydra.html) and its references ([slides](https://speakerdeck.com/ept/crdts-the-hard-parts) - [1h10m video](https://www.youtube.com/watch?v=x7drE24geUw))
 
-- [The Hard Parts](https://martin.kleppmann.com/2020/07/06/crdt-hard-parts-hydra.html) and its references ([slides](https://speakerdeck.com/ept/crdts-the-hard-parts) - [1h10m video](https://www.youtube.com/watch?v=x7drE24geUw))
+[RGA Split](https://pages.lip6.fr/Marc.Shapiro/papers/rgasplit-group2016-11.pdf) is a High Responsiveness for Group Editing CRDTs.
 
-RGA Split
-
-- <https://pages.lip6.fr/Marc.Shapiro/papers/rgasplit-group2016-11.pdf>
-
-Some post-mortem stories can also be instructive.
+Some post-mortem stories can be instructive.
 
 - <https://github.com/xi-editor/xi-editor/issues/1187#issuecomment-491473599>
 - <https://news.ycombinator.com/item?id=19886883>
 
-CRDT [is used into Apache Cassandra](https://cassandra.apache.org/doc/latest/architecture/dynamo.html#dataset-partitioning-consistent-hashing).
+Other information:
 
-Other discussions
-
+- CRDT [is used in Apache Cassandra](https://cassandra.apache.org/doc/latest/architecture/dynamo.html#dataset-partitioning-consistent-hashing).
 - [Are CRDTs suitable for shared editing? on Hacker News](https://news.ycombinator.com/item?id=24176455)
 
 ## OT
 
-OT is an acronym for `Operational Transformation`.
+OT is an acronym for `Operational Transformation`. OT needs a central server and is used by Google Docs, Office365.
 
 - <https://en.wikipedia.org/wiki/Operational_transformation>
 - <https://medium.com/@srijancse/how-real-time-collaborative-editing-work-operational-transformation-ac4902d75682>
 - <https://hackernoon.com/operational-transformation-the-real-time-collaborative-editing-algorithm-bf8756683f66>
-
-Google Wave
-
-- <https://www.youtube.com/watch?v=uOFzWZrsPV0>
-- <https://www.youtube.com/watch?v=3ykZYKCK7AM>
-
-Google Drive
-
-- <https://drive.googleblog.com/2010/09/whats-different-about-new-google-docs_22.html>
-
-Google / Dropbox System Design
-
-- <https://www.youtube.com/watch?v=2auwirNBvGg>
-- <https://www.youtube.com/watch?v=U2lVmSlDJhg>
-- <https://www.youtube.com/watch?v=U0xTu6E2CT8>
 
 TP2 Case
 
@@ -108,18 +89,14 @@ Libraries for OT
 
 ## Diffs
 
-Differential Synchronization
+Diffs is more a family of protocols that rely on exchange and merge of diffs. It is used by e.g. [Cocalc](https://blog.cocalc.com/2018/10/11/collaborative-editing.html).
 
-- <https://neil.fraser.name/writing/sync>
-- <https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/35605.pdf>
-
-Diffs and Merge
-
-- <https://jneem.github.io/merging>
+- [Differential Synchronization](https://neil.fraser.name/writing/sync) ([paper](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/35605.pdf).
+- [Diffs and Merge](https://jneem.github.io/merging).
 
 ## Others
 
-We list here other algorithms in the `distributed` area.
+We list here other algorithms in the broader `distributed computing` domain.
 
 **Paxos**
 

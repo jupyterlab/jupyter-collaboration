@@ -2,10 +2,7 @@
 
 ## JupyterLab
 
-The overall roadmap for RTC in JupyterLab is defined in the [Real Time Collaboration Plan](https://github.com/jupyterlab/team-compass/issues/30).
-
-The discussions to integrate the RTC components into JupyterLab are tracked in [jupyterlab/rtc#27](https://github.com/jupyterlab/rtc/issues/27).
-
+The overall roadmap for RTC in JupyterLab is defined in the [Real Time Collaboration Plan](https://github.com/jupyterlab/team-compass/issues/30). The discussions to integrate the RTC components into JupyterLab are tracked in [jupyterlab/rtc#27](https://github.com/jupyterlab/rtc/issues/27).
 
 ![JupyterLab Integrattion](images/jupyterlab-2019.gif "JupyterLab Integrattion")
 
@@ -36,23 +33,16 @@ We have ported `Iteration 1` to begin-August 2020 `JupyterLab` and `Lumino` mast
 - <https://github.com/datalayer-contrib/jupyterlab/tree/rtc-2019-master>
 - <https://github.com/datalayer-contrib/jupyterlab-lumino/tree/rtc-2019-master>
 
-We have also ported `Iteration 2` to end-August 2020 `JupyterLab` and `Lumino` master branches.
+We have also ported `Iteration 2` to end-August 2020 `JupyterLab` and `Lumino` master branches. The `toc`, `logconsole`, `celltags` and `debugger` extensions have been disabled as they have been recently added to JupyterLab code base. If it makes sense, we could update them also.
 
 - <https://github.com/datalayer-contrib/jupyterlab/tree/rtc-2019-2-master>
 - <https://github.com/datalayer-contrib/jupyterlab-lumino/tree/rtc-2019-2-master>
 
-A few comments on those branches.
-
-- The `toc`, `logconsole`, `celltags` and `debugger` extensions have been disabled as they have been recently added to JupyterLab code base. If it makes sense, we could update them also.
-- The collaborative caret CSS does not always show up in Chrome, but seems to work well in Firefox (maybe due to the recently added shadow DOM?).
-
 ### WIP Iteration 4
 
-The next step is to define how to integrate the components developed in this repository at the light of these learnings.
+The next step is to define how to integrate the components developed in this repository at the light of these learnings. The behavior (features and limits) of Iteration 3 are the same as Iteration 2. For example saving notebook does not persist the ipynb file. We have copied here the [latest public status meeting on the JupyterLab PR](https://github.com/jupyterlab/jupyterlab/pull/6871#issuecomment-553495401).
 
-The behavior (features and limits) of Iteration 3 are the same as Iteration 3. For exmaple saving notebook does not persist the ipynb file. We have copied here the [latest public status meeting on the JupyterLab PR](https://github.com/jupyterlab/jupyterlab/pull/6871#issuecomment-553495401).
-
-```
+``` 
 2019.11.13 meeting
 
 Ian: Lifecycle is fragile for notebooks.
