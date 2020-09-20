@@ -52,11 +52,7 @@ You can also jump into the following links to get more details.
 - <https://news.ycombinator.com/item?id=23802208>
 - <https://github.com/alangibson/awesome-crdt>
 
-CRDT has some edge cases: [The Hard Parts](https://martin.kleppmann.com/2020/07/06/crdt-hard-parts-hydra.html) and its references ([slides](https://speakerdeck.com/ept/crdts-the-hard-parts) - [1h10m video](https://www.youtube.com/watch?v=x7drE24geUw))
-
-[RGA Split](https://pages.lip6.fr/Marc.Shapiro/papers/rgasplit-group2016-11.pdf) is a High Responsiveness for Group Editing CRDTs.
-
-Some post-mortem stories can be instructive.
+CRDT has some edge cases: [The Hard Parts](https://martin.kleppmann.com/2020/07/06/crdt-hard-parts-hydra.html) and its references ([slides](https://speakerdeck.com/ept/crdts-the-hard-parts) - [1h10m video](https://www.youtube.com/watch?v=x7drE24geUw)). [RGA Split](https://pages.lip6.fr/Marc.Shapiro/papers/rgasplit-group2016-11.pdf) is a High Responsiveness for Group Editing CRDTs. Some post-mortem stories can be instructive.
 
 - <https://github.com/xi-editor/xi-editor/issues/1187#issuecomment-491473599>
 - <https://news.ycombinator.com/item?id=19886883>
@@ -80,13 +76,7 @@ TP2 Case
 - <http://www.thinkbottomup.com.au/site/blog/Google_Wave_Operational_Transform_and_Server_Acknowledgments>
 - <https://blog.cocalc.com/2018/10/11/collaborative-editing.html>
 
-Lessons Learned
-
-- <https://ckeditor.com/blog/Lessons-learned-from-creating-a-rich-text-editor-with-real-time-collaboration>
-
-Libraries for OT
-
-- <https://stackoverflow.com/questions/2043165/operational-transformation-library>
+Read more on [CKEditor lessons learned](https://ckeditor.com/blog/Lessons-learned-from-creating-a-rich-text-editor-with-real-time-collaboration) and other [Libraries for OT](https://stackoverflow.com/questions/2043165/operational-transformation-library).
 
 ## Diffs
 

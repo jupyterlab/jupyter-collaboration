@@ -13,10 +13,7 @@
 - <https://demos.yjs.dev>
 - <https://demos.yjs.dev/monaco/monaco.html>
 
-Read more on the [discussions site](https://discuss.yjs.dev) and the [blog](https://publishpress.com/blog/yjs) (backed by [tag1consulting](https://www.tag1consulting.com/blog/deep-dive-real-time-collaborative-editing-solutions-tagteamtalk-001-0_)). See also.
-
-- <https://github.com/dmonad/lib0/blob/master/encoding.js#L1>
-- <https://github.com/dmonad/lib0>
+Read more on the [discussions site](https://discuss.yjs.dev) and the [blog](https://publishpress.com/blog/yjs) (backed by [tag1consulting](https://www.tag1consulting.com/blog/deep-dive-real-time-collaborative-editing-solutions-tagteamtalk-001-0_)) and [lib0 encoding](https://github.com/dmonad/lib0/blob/master/encoding.js#L1) ([lib0 repo](https://github.com/dmonad/lib0).
 
 ## Automerge
 
