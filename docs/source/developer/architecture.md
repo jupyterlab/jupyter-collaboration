@@ -4,21 +4,21 @@
 
 We have today the following main packages available:
 
-- `packages/relay`: Patch relay server to synchronize patches for `@jupyter-rtc/node`.
-- `packages/node`: Real time collaboration client, builds on `@lumino/datastore`.
-- `packages/jupyter`: Holds schema for Jupyter RTC tables that are used in server and client.
-- `packages/supernode`: Server to keep datastore in sync with jupyter server.
+- [@jupyter-rtc/relay](https://github.com/jupyterlab/rtc/tree/main/packages/relay): Patch relay server to synchronize patches for `@jupyter-rtc/node`.
+- [@jupyter-rtc/node](https://github.com/jupyterlab/rtc/tree/main/packages/node): Real time collaboration client, builds on `@lumino/datastore`.
+- [@jupyter-rtc/jupyter](https://github.com/jupyterlab/rtc/tree/main/packages/jupyter): Holds schema for Jupyter RTC tables that are used in server and client.
+- [@jupyter-rtc/supernode](https://github.com/jupyterlab/rtc/tree/main/packages/supernode): Server to keep datastore in sync with jupyter server.
 
 You can use those packages with examples:
 
-- `examples/jupyter`: Client to access Jupyter Server data (notebook content, kernel...).
-- `examples/lumino`: Example of a standalone Lumino Datastore application.
-- `examples/todo`: Example of simple To Do application using `@jupyter-rtc/relat` server.
+- [@jupyter-rtc/jupyter-example](https://github.com/jupyterlab/rtc/tree/main/examples/jupyter): Client to access Jupyter Server data (notebook content, kernel...).
+- [@jupyter-rtc/lumino-example](https://github.com/jupyterlab/rtc/tree/main/examples/lumino): Example of a standalone Lumino Datastore application.
+- [@jupyter-rtc/todo-example](https://github.com/jupyterlab/rtc/tree/main/examples/todo): Example of simple To Do application using `@jupyter-rtc/relat` server.
 
 We also provide useful tooling packages to accompany the main packages.
 
-- `tools/debugger`
-- `tools/dummy-store`
+- [@jupyter-rtc/debugger](https://github.com/jupyterlab/rtc/tree/main/tools/debugger)
+- [@jupyter-rtc /dummy-store](https://github.com/jupyterlab/rtc/tree/main/tools/dummy-store)
 
 ![The development architecture](images/dev-architecture.svg "The development architecture")
 

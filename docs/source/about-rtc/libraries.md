@@ -27,18 +27,13 @@ Read more on the [discussions site](https://discuss.yjs.dev) and the [blog](http
 - [Automerge-rs](https://github.com/automerge/automerge-rs) is a Rust implementation.
 - Persistence with [mpl](https://github.com/automerge/mpl) or [hypermerge](https://github.com/automerge/hypermerge).
 
-Applications examples can be found.
-
-- <https://github.com/automerge/pushpin>
-- <https://automerge.github.io/pushpin>
-- <https://github.com/automerge/pixelpusher>
-- [DEPRECATED] <https://github.com/automerge/trellis>
+Applications examples are available: [pushpin](https://github.com/automerge/pushpin) ([live](https://automerge.github.io/pushpin)), [pixel pusher](https://github.com/automerge/pixelpusher) ([DEPRECATED] [trelli](https://github.com/automerge/trellis)).
 
 ## Microsoft Fluid
 
 [Microsoft Fluid](https://fluidframework.com) has been announced in [May 2020](https://techcommunity.microsoft.com/t5/microsoft-365-blog/introducing-the-first-microsoft-fluid-framework-experiences-in/ba-p/1345543) ([see also this doc](https://support.microsoft.com/en-us/office/get-started-with-fluid-framework-preview-d05278db-b82b-4d1f-8523-cf0c9c2fb2df)). It is now [released](https://github.com/microsoft/fluidframework).
 
-The offered functionalities and how it can be used outside of [Microsoft Office 365](https://www.office.com) are investigated in [jupyterlab/rtc#80](https://github.com/jupyterlab/rtc/issues/80).
+The offered functionalities and how it can be used outside of [Microsoft Office 365](https://www.office.com) are investigated in [jupyterlab/rtc#80](https://github.com/jupyterlab/rtc/issues/80). Some more information on the internals:
 
 - [Introducing distributed data structures](https://fluidframework.com/docs/concepts/dds).
 - On Hacker News: [Fluid framework, for building distributed, real-time collaborative web apps](https://news.ycombinator.com/item?id=24417482) - You can read there: *Adding more context: Fluid uses a mix of CRDT + OT to maintain state across multiple clients. I wrote a quick high level explanation of how Fluid uses eventual consistency and why it matters for real time collaboration* ([more details](https://matt.aimonetti.net/posts/2020-09-solving-real-time-collaboration-using-eventual-consistency))
