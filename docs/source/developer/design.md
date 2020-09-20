@@ -3,7 +3,7 @@
 ## Goals
 
 The goal of the [RTC](https://github.com/jupyterlab/rtc) repository is to prototype a data model to support simultaneous distributed
-editing in Jupyter. Fundamentally, it's about taking the **existing** concepts[^f1] provided by Jupyter Server and creating a real time data model on top of them.
+editing in Jupyter. Fundamentally, it's about taking the **existing** concepts [^f1] provided by Jupyter Server and creating a real time data model on top of them.
 
 This would help provide a Google Docs like editing experience in Jupyter editors by allowing multiple simultaneous users to edit a document at once.
 

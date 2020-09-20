@@ -4,8 +4,8 @@ Loosely list of links to implementations related in a way to RTC. If you want th
 
 **Cocalc**
 
-- <https://cocalc.com>
-- <https://blog.cocalc.com/2018/10/11/collaborative-editing.html>
+- [Cocalc](https://cocalc.com)
+- [Collaborative Editing in CoCalc: OT, CRDT, or something else?](https://blog.cocalc.com/2018/10/11/collaborative-editing.html)
 
 **Visual Studio Code**
 

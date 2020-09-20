@@ -2,21 +2,22 @@
 
 We can class the `RTC Algorithms` into 3 main categories:
 
-1. [CRDT](#crdt) - CRDT doesn't need a central server and is used by Riak, TomTom GPS, Teletype for Atom...
-2. [OT](#ot) - OT needs a central server and is used by Google Docs, Office365...
-3. [Diffs](#diffs) - Used by [Cocalc](https://blog.cocalc.com/2018/10/11/collaborative-editing.html)...
+1. [CRDT](#crdt) category doesn't need a central server and is used by Riak, TomTom GPS, Teletype for Atom...
+2. [OT](#ot) category needs a central server and is used by Google Docs, Office365...
+3. [Diffs](#diffs) category used by [Cocalc](https://blog.cocalc.com/2018/10/11/collaborative-editing.html)...
 
 We also have an [others](#others) section for algorithm that don't fit into those categories.
 
 The following brings more perspect on how the categories position on each others.
 
-- <https://www.tiny.cloud/blog/real-time-collaboration-ot-vs-crdt> and its references
-- <https://blog.cocalc.com/2018/10/11/collaborative-editing.html>
-- <https://medium.com/@raphlinus/towards-a-unified-theory-of-operational-transformation-and-crdt-70485876f72f>
-- <https://news.ycombinator.com/item?id=18191867>
-- <https://conclave-team.github.io/conclave-site>
-- <https://stackoverflow.com/questions/26694359/differences-between-ot-and-crdt>
-- <https://stackoverflow.com/questions/2043165/operational-transformation-library>
+- [To OT or CRDT, that is the question](https://www.tiny.cloud/blog/real-time-collaboration-ot-vs-crdt) and its references
+- [Collaborative Editing in CoCalc: OT, CRDT, or something else?](https://blog.cocalc.com/2018/10/11/collaborative-editing.html)
+- [Towards a unified theory of Operational Transformation and CRDT](https://medium.com/@raphlinus/towards-a-unified-theory-of-operational-transformation-and-crdt-70485876f72f)
+- [Differences between OT and CRDT](https://stackoverflow.com/questions/26694359/differences-between-ot-and-crdt)
+- [Operational Transformation library?](https://stackoverflow.com/questions/2043165/operational-transformation-library)
+- On Hacker News: [Real Differences Between OT and CRDT for Co-Editors](https://news.ycombinator.com/item?id=18191867)
+- On Hacker News: [Fluid framework, for building distributed, real-time collaborative web apps](https://news.ycombinator.com/item?id=24417482) - You can read there: *Adding more context: Fluid uses a mix of CRDT + OT to maintain state across multiple clients. I wrote a quick high level explanation of how Fluid uses eventual consistency and why it matters for real time collaboration* ([more details](https://matt.aimonetti.net/posts/2020-09-solving-real-time-collaboration-using-eventual-consistency))
+- [Conclave - A private and secure real-time collaborative text editor](https://conclave-team.github.io/conclave-site)
 
 ## CRDT
 
