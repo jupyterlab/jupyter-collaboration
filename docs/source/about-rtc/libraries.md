@@ -36,11 +36,13 @@ From the [Fluid FAQ](https://fluidframework.com/docs/faq/):
 - Does Fluid use operational transforms? Fluid does not use Operational Transforms (OT), but we learned a tremendous amount from the literature on OT. While OT uses operations that can be applied out of order by transforming operations to account for recent changes, Fluid relies on a Total Order Broadcast to guarantee that all operations are applied in a specific order.
 - Does Fluid use CRDT? Fluid does not use Conflict-Free Replicated Data Types (CRDTs), but our model is more similar to CRDT than OT. The Fluid Framework relies on update-based operations that are ordered using our Total Order Broadcast to prevent conflicts. This allows us to have non-commutative operations because there is an explicit ordering.
 
-On Twitter:
+On Twitter.
 
-- https://twitter.com/TSteveLuc/status/1304127430743924736
-- https://twitter.com/mattetti/status/1304233818576969729
-- https://twitter.com/martinkl/status/1304166170812190720
+- <https://twitter.com/TSteveLuc/status/1304127430743924736>
+- <https://twitter.com/mattetti/status/1304233818576969729>
+- <https://twitter.com/martinkl/status/1304166170812190720>
+
+Others.
 
 - [Introducing distributed data structures](https://fluidframework.com/docs/concepts/dds).
 - On Hacker News: [Fluid framework, for building distributed, real-time collaborative web apps](https://news.ycombinator.com/item?id=24417482) - You can read: "*Adding more context: Fluid uses a mix of CRDT + OT to maintain state across multiple clients. I wrote a quick high level explanation of how Fluid uses eventual consistency and why it matters for real time collaboration*" ([more details](https://matt.aimonetti.net/posts/2020-09-solving-real-time-collaboration-using-eventual-consistency))
