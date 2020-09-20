@@ -14,17 +14,6 @@
 
 Read more on the [discussions site](https://discuss.yjs.dev) and the [blog](https://publishpress.com/blog/yjs) (backed by [tag1consulting](https://www.tag1consulting.com/blog/deep-dive-real-time-collaborative-editing-solutions-tagteamtalk-001-0_)) and [lib0 encoding](https://github.com/dmonad/lib0/blob/master/encoding.js#L1) ([lib0 repo](https://github.com/dmonad/lib0)).
 
-## Automerge
-
-[Automerge](https://github.com/automerge/automerge) is a JSON-like data structure (a CRDT) that can be modified concurrently by different users, and merged again automatically.
-
-- [Performance Preview: Automerge binary data format](https://github.com/automerge/automerge/pull/253).
-- [Collaborative editing to CodeMirror](https://github.com/aslakhellesoy/automerge-codemirror) by linking it to an `Automerge.Text` object
-- [Automerge-rs](https://github.com/automerge/automerge-rs) is a Rust implementation.
-- Persistence with [mpl](https://github.com/automerge/mpl) or [hypermerge](https://github.com/automerge/hypermerge).
-
-Applications examples are available: [pushpin](https://github.com/automerge/pushpin) ([live](https://automerge.github.io/pushpin)), [pixel pusher](https://github.com/automerge/pixelpusher) ([DEPRECATED] [trelli](https://github.com/automerge/trellis)).
-
 ## Microsoft Fluid
 
 [Microsoft Fluid](https://fluidframework.com) has been announced in [May 2020](https://techcommunity.microsoft.com/t5/microsoft-365-blog/introducing-the-first-microsoft-fluid-framework-experiences-in/ba-p/1345543) ([see also this doc](https://support.microsoft.com/en-us/office/get-started-with-fluid-framework-preview-d05278db-b82b-4d1f-8523-cf0c9c2fb2df)). It is now [released](https://github.com/microsoft/fluidframework).
@@ -49,6 +38,17 @@ Others.
 - [Deploy and run your own Fluid Framework service](https://medium.com/@kurtberglund/deploy-and-run-your-own-fluid-framework-service-8c82294e74b7).
 - [Fluid framework, for building distributed, real-time collaborative web apps](https://news.ycombinator.com/item?id=24417482) (quote: "*Adding more context: Fluid uses a mix of CRDT + OT to maintain state across multiple clients. I wrote a quick high level explanation of how Fluid uses eventual consistency and why it matters for real time collaboration*").
 - [Solving Real Time Collaboration Using Eventual Consistency](https://matt.aimonetti.net/posts/2020-09-solving-real-time-collaboration-using-eventual-consistency).
+
+## Automerge
+
+[Automerge](https://github.com/automerge/automerge) is a JSON-like data structure (a CRDT) that can be modified concurrently by different users, and merged again automatically.
+
+- [Performance Preview: Automerge binary data format](https://github.com/automerge/automerge/pull/253).
+- [Collaborative editing to CodeMirror](https://github.com/aslakhellesoy/automerge-codemirror) by linking it to an `Automerge.Text` object.
+- [Automerge-rs](https://github.com/automerge/automerge-rs) is a Rust implementation.
+- Persistence with [mpl](https://github.com/automerge/mpl) or [hypermerge](https://github.com/automerge/hypermerge).
+
+Applications examples are available: [pushpin](https://github.com/automerge/pushpin) ([live](https://automerge.github.io/pushpin)), [pixel pusher](https://github.com/automerge/pixelpusher) ([DEPRECATED] [trelli](https://github.com/automerge/trellis)).
 
 ## Teletype
 
