@@ -45,7 +45,10 @@ On Twitter.
 Others.
 
 - [Introducing distributed data structures](https://fluidframework.com/docs/concepts/dds).
-- On Hacker News: [Fluid framework, for building distributed, real-time collaborative web apps](https://news.ycombinator.com/item?id=24417482) - You can read: "*Adding more context: Fluid uses a mix of CRDT + OT to maintain state across multiple clients. I wrote a quick high level explanation of how Fluid uses eventual consistency and why it matters for real time collaboration*" ([more details](https://matt.aimonetti.net/posts/2020-09-solving-real-time-collaboration-using-eventual-consistency))
+- [How a Fluid Framework service works](https://medium.com/@kurtberglund/how-a-fluid-framework-service-works-c82fe9f78ae9).
+- [Deploy and run your own Fluid Framework service](https://medium.com/@kurtberglund/deploy-and-run-your-own-fluid-framework-service-8c82294e74b7).
+- [Fluid framework, for building distributed, real-time collaborative web apps](https://news.ycombinator.com/item?id=24417482) - You can read: "*Adding more context: Fluid uses a mix of CRDT + OT to maintain state across multiple clients. I wrote a quick high level explanation of how Fluid uses eventual consistency and why it matters for real time collaboration*".
+- [Solving Real Time Collaboration Using Eventual Consistency](https://matt.aimonetti.net/posts/2020-09-solving-real-time-collaboration-using-eventual-consistency)).
 
 ## Teletype
 
