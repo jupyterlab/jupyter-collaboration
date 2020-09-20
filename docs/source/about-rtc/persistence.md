@@ -1,6 +1,6 @@
 # Persistence
 
-If communications must be persisted, 3 options are available.
+If communications must be persisted, options (non-exhaustive) are available.
 
 1. [Distributed Databases](#distributed-databases)
 1. [Distributed Storage](#distributed-storage)

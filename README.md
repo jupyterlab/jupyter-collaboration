@@ -4,7 +4,7 @@ This **Real Time Collaboration** monorepo contains current work on Real Time col
 
 ## Project Meetings
 
-We have a `bi-weekly` meeting call. Please come and join [on Zoom](https://zoom.us/j/94702599683)! All are welcome to come and just listen or discuss any work related to this project. For the time, place and notes, see [this HackMD](https://hackmd.io/@_4xc7QhhSHKODRQn1uiulw/BkV24I3qL/edit).
+We have a `bi-weekly` meeting call. Please come and join [on Zoom](https://zoom.us/j/94702599683). All are welcome to come and just listen or discuss any work related to this project. For the time, place and notes, see [this HackMD](https://hackmd.io/@_4xc7QhhSHKODRQn1uiulw/BkV24I3qL/edit).
 
 Meetings are recorded and available on [this YouTube playlist](https://www.youtube.com/playlist?list=PLUrHeD2K9Cmk5PpU7a3Pf5zEteJ-_kA81). We also use [the same HackMD](https://hackmd.io/@_4xc7QhhSHKODRQn1uiulw/BkV24I3qL/edit) to set an agenda and to capture notes for these meetings.
 
@@ -12,7 +12,7 @@ Meetings are recorded and available on [this YouTube playlist](https://www.youtu
 
 We are striving to keep meetings productive and on topic. If you are joining us for the first time or need a refresher about the project's scope, we recommend reading the following documents.
 
-- The [Specifications](https://jupyter-rtc.readthedocs.io/en/latest/developer/specs.html): We are working on creating a living specification for the protocol(s) created here. We're doing our best but it may not always be totally in sync with explorations in the repo, until they are settled on.
+- The [Specifications](https://jupyter-rtc.readthedocs.io/en/latest/developer/specs.html): We are working on creating living specifications for the protocol(s) created here. We're doing our best but it may not always be totally in sync with explorations in the repo, until they are settled on.
 - The [Design](https://jupyter-rtc.readthedocs.io/en/latest/developer/design.html) document.
 - The [Architecture](https://jupyter-rtc.readthedocs.io/en/latest/developer/architecture.html) document.
 - Vision as explained in the [Grant Proposal for CZI](https://jupyter-rtc.readthedocs.io/en/latest/organisation/czi-2020.html).

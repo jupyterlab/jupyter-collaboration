@@ -30,9 +30,9 @@ Loosely list of links to implementations related in a way to RTC. If you want th
 
 - <https://drive.googleblog.com/2010/09/whats-different-about-new-google-docs_22.html>
 
-**Google / Dropbox System Design**
+**System Design (Google, Dropbox)**
 
-- <https://www.youtube.com/watch?v=2auwirNBvGg>
+- <https://www.youtube.com/watch?v=2auwirNBvG   g>
 - <https://www.youtube.com/watch?v=U2lVmSlDJhg>
 - <https://www.youtube.com/watch?v=U0xTu6E2CT8>
 

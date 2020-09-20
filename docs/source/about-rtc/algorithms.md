@@ -64,7 +64,7 @@ Some post-mortem stories can be instructive.
 Other information:
 
 - CRDT [is used in Apache Cassandra](https://cassandra.apache.org/doc/latest/architecture/dynamo.html#dataset-partitioning-consistent-hashing).
-- [Are CRDTs suitable for shared editing? on Hacker News](https://news.ycombinator.com/item?id=24176455)
+- Hacker News [Are CRDTs suitable for shared editing?](https://news.ycombinator.com/item?id=24176455)
 
 ## OT
 
@@ -97,7 +97,7 @@ Diffs is more a family of protocols that rely on exchange and merge of diffs. It
 
 ## Others
 
-We list here other algorithms in the broader `distributed computing` domain.
+We list here other algorithms in the broader `Distributed Computing` domain.
 
 **Paxos**
 

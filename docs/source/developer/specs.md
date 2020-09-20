@@ -15,7 +15,7 @@ This is really a family of specifications. They exist in levels, like the [OSI m
 
 ### Jupyter RTC Specification
 
-_The shared schemas are in[`@jupyter-rtc/jupyter`](https://github.com/jupyterlab/rtc/blob/main/packages/jupyter/src/schemas.ts) and the supernode is in [`@jupyter-rtc/supernode`](https://github.com/jupyterlab/rtc/blob/main/packages/supernode/src/index.ts)_.
+_The shared schemas are in [`@jupyter-rtc/jupyter`](https://github.com/jupyterlab/rtc/blob/main/packages/jupyter/src/schemas.ts) and the supernode is in [`@jupyter-rtc/supernode`](https://github.com/jupyterlab/rtc/blob/main/packages/supernode/src/index.ts)_.
 
 The `Jupyter RTC` specification is meant to normalize data provided by the Jupyter Server into the `RTC` specification.
 
@@ -34,7 +34,7 @@ It specifies the `schemas` this relies on a **data model** and on the behavior o
 - `execution` `string | null`: the most recent execution of the cell or null if it has no execution.
 - etc...
 
-About the `supernode`: Any record from the `executions` table that has a state of `"requested"` will be run agains the kernel specified in the `kernel` attribute. While it is being run, it will be set to `in progress`. As it is running the `displays` will be added according the messages received back on the XXX channels. Once it has finished, the `status` will be changed to one of the `ok`, `abort` or `error` responses.
+About the `supernode`: Any record from the `executions` table that has a state of `"requested"` will be run against the kernel specified in the `kernel` attribute. While it is being run, it will be set to `in progress`. As it is running the `displays` will be added according the messages received back on the ... channels. Once it has finished, the `status` will be changed to one of the `ok`, `abort` or `error` responses.
 
 TODO: Specify this more precisely based on Jupyter messaging specifications [^f1].
 
@@ -64,8 +64,9 @@ Each transaction is a mapping of schema names to a list of updates for those rec
 
 Any transaction that refers to a non exist record ID will create that record when received. If the ID exists, that record will be updated with the changes. Records can not be deleted.
 
-- TODO: Specify how these transactions are serialized to bytes. Possibly either support just a CRDT spec, just a diff based spec, or some default of the diff based spec with the ability to opt into a CRDT logic if both clients agree. Sort of like HTTP vs HTTP v2.0 protocol upgrade.
-- TODO: At some point, we may need higher level abstraction, a bit like [primus](https://github.com/primus/primus).
+TODO: Specify how these transactions are serialized to bytes. Possibly either support just a CRDT spec, just a diff based spec, or some default of the diff based spec with the ability to opt into a CRDT logic if both clients agree. Sort of like HTTP vs HTTP v2.0 protocol upgrade.
+
+TODO: At some point, we may need higher level abstraction, a bit like [primus](https://github.com/primus/primus).
 
 ### Synchronized Append-only Log Specification
 
@@ -88,7 +89,7 @@ We currently use [socket.io](https://github.com/socketio/socket.io) for this. Ot
 - <https://www.cncf.io/blog/2018/10/24/grpc-web-is-going-ga>
 - <https://wamp-proto.org>
 - <https://web.dev/quictransport>
-- <https://webrtc.org/>
+- <https://webrtc.org>
 
 ## Cross-cutting Concerns
 

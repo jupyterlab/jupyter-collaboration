@@ -56,7 +56,7 @@ let server = http.createServer((request, response) => {
 
 // Start the server
 server.listen(8000, () => {
-  console.info(new Date() + ' Page server is listening on port 8000');
+  console.info(new Date() + ' Page server is listening on http://localhost:8000');
 });
 
 // Create a websocket server for communication of transactions.
