@@ -35,8 +35,8 @@ maxdepth: 2
 caption: Developer Guide
 ---
 developer/design
-developer/architecture
 developer/specs
+developer/architecture
 developer/examples
 developer/integrations
 developer/benchmark

@@ -92,7 +92,7 @@ Libraries for OT
 
 Diffs is more a family of protocols that rely on exchange and merge of diffs. It is used by e.g. [Cocalc](https://blog.cocalc.com/2018/10/11/collaborative-editing.html).
 
-- [Differential Synchronization](https://neil.fraser.name/writing/sync) ([paper](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/35605.pdf).
+- [Differential Synchronization](https://neil.fraser.name/writing/sync) ([paper](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/35605.pdf)).
 - [Diffs and Merge](https://jneem.github.io/merging).
 
 ## Others

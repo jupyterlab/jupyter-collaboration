@@ -12,7 +12,6 @@ This implementation is also used in e.g. the [interactive dashboard editor](http
 
 - <https://github.com/yjs/yjs-demos>
 - <https://yjs.dev>
-- <https://yjs.dev/#demos>
 - <https://demos.yjs.dev>
 - <https://demos.yjs.dev/monaco/monaco.html>
 

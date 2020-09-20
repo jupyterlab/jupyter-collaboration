@@ -80,6 +80,5 @@ RON (Replicated Object Notation), a distributed live data format
 
 ## File Synchronisation
 
-File Synchronisation is a way to share content, but not really RTC.
+[File Synchronisation](https://en.wikipedia.org/wiki/Comparison_of_file_synchronization_software) is a way to share content, but not really RTC.
 
-- <https://en.wikipedia.org/wiki/Comparison_of_file_synchronization_software>
