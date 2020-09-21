@@ -1,6 +1,6 @@
 # Implementations
 
-Loosely list of links to implementations related in a way to RTC. If you want the lower level details, go to the [algorithms](algorithms.md) and [libraries](libraries.md) pages.
+Links to implementation descriptions related in a way to RTC. Those solutions are not usable as library. For such library usage, please go to the [algorithms](algorithms.md) page.
 
 **Cocalc**
 
@@ -14,10 +14,10 @@ Loosely list of links to implementations related in a way to RTC. If you want th
 **HackMD**
 
 - <https://github.com/hackmdio/codimd>
-- <https://github.com/hackmdio/diff-match-patch>
 - <https://github.com/hackmdio/codimd/issues/3>
 - <https://github.com/hackmdio/codimd/tree/develop/lib/ot>
 - <https://github.com/hackmdio/codimd/issues/251>
+- <https://github.com/hackmdio/diff-match-patch>
 
 **Google / Apache Wave**
 
@@ -84,7 +84,6 @@ Loosely list of links to implementations related in a way to RTC. If you want th
 
 - <https://mattermost.com>
 - <https://www.matrix.org>
-- <https://teletype.atom.io>
 - <https://blog.bittorrent.com/tag/maelstrom>
 - <https://github.com/upspin/upspin>
 - <https://resgate.io>

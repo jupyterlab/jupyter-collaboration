@@ -24,7 +24,6 @@ caption: About RTC
 ---
 about-rtc/user-stories
 about-rtc/algorithms
-about-rtc/libraries
 about-rtc/implementations
 about-rtc/persistence
 ```
