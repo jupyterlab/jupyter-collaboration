@@ -12,7 +12,7 @@ It would do this by moving much of the state to be shared on the server as well,
 1. Top-level layer developed in the `Applications`: [JupyterLab](https://github.com/jupyterlab/jupyterlab), [Spyder](https://www.spyder-ide.org/), [Nteract](https://github.com/nteract/nteract)...
 1. High-level layer, a.k.a `Jupyter` components that support editing all data in Jupyter server.
 1. Middle-level layer that expose friendly Real Time data access using `React.js` integration.
-1. Base-level layer that support CRDT implementations ([Lumino](https://github.com/jupyterlab/lumino) and/or [other CRDT libraries](/about-rtc/algorithms#crdt)).
+1. Base-level layer that support CRDT implementations ([Lumino](https://github.com/jupyterlab/lumino) and/or [other CRDT libraries](/about-rtc/algorithms.html#crdt)).
 
 The definition of those layers is still in progress. You can discuss this on [jupyterlab/rtc#61](https://github.com/jupyterlab/rtc/issues/61).
 

@@ -10,7 +10,7 @@ Some implementations have a [Mixed](#mixed) approach combining techniques of the
 
 We also have an [Others](#others) section for algorithm that don't fit into those categories.
 
-The following brings more perspect on how the categories position on each others.
+The following brings more perspective on the category positions.
 
 - [To OT or CRDT, that is the question](https://www.tiny.cloud/blog/real-time-collaboration-ot-vs-crdt) and its references
 - [Collaborative Editing in CoCalc: OT, CRDT, or something else?](https://blog.cocalc.com/2018/10/11/collaborative-editing.html)
@@ -39,7 +39,7 @@ The following videos are useful to discover CRTD in relationship with OT.
 - [CRDTs and the Quest for Distributed Consistency](https://www.youtube.com/watch?v=B5NULPSiOGw)
 - [CRDTs for Non Academics](https://www.youtube.com/watch?v=vBU70EjwGfw)
 
-CRDT is `strongly eventual consistent`:
+CRDT is strongly eventual consistent:
 
 - <https://medium.com/@amberovsky/crdt-conflict-free-replicated-data-types-b4bfc8459d26>
 - <https://medium.com/@naveennegi/rendezvous-with-riak-crdts-part-1-e94cfc8fe091>
@@ -112,7 +112,7 @@ OT is an acronym for `Operational Transformation`. OT needs a central server and
 - [Building a real-time collaborative editor using Operational Transformation](https://medium.com/@srijancse/how-real-time-collaborative-editing-work-operational-transformation-ac4902d75682)
 - [Operational Transformation, the real time collaborative editing algorithm](https://hackernoon.com/operational-transformation-the-real-time-collaborative-editing-algorithm-bf8756683f66)
 
-Transformation Property (TP2) Case.
+Transformation Property TP2 Case.   
 
 - <http://www.thinkbottomup.com.au/site/blog/Google_Wave_Intention_Preservation_Branching_Merging_and_TP2>
 - <http://www.thinkbottomup.com.au/site/blog/Google_Wave_Operational_Transform_and_Server_Acknowledgments>
