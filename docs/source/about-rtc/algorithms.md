@@ -71,7 +71,7 @@ Other information:
 - [CRDT is used in Apache Cassandra](https://cassandra.apache.org/doc/latest/architecture/dynamo.html#dataset-partitioning-consistent-hashing).
 - [Are CRDTs suitable for shared editing?](https://news.ycombinator.com/item?id=24176455)
 
-## CRDT Libraries
+### CRDT Libraries
 
 [JupyterLab RTC integration](/developer/integrations) is relying on the CRDT Implementation provided by [Lumino Datastore](https://github.com/jupyterlab/lumino/tree/master/packages/datastore). The Lumino Datastore library is also used in e.g. the [interactive dashboard editor](https://github.com/jupytercalpoly/jupyterlab-interactive-dashboard-editor) for JupyterLab.
 
@@ -120,7 +120,7 @@ Transformation Property (TP2) Case.
 
 Read more on [CKEditor lessons learned](https://ckeditor.com/blog/Lessons-learned-from-creating-a-rich-text-editor-with-real-time-collaboration) and other [Libraries for OT](https://stackoverflow.com/questions/2043165/operational-transformation-library).
 
-## OT Libraries
+### OT Libraries
 
 [ShareDB](https://github.com/share/sharedb) is a realtime database backend based on Operational Transformation (OT) of JSON documents. It is the realtime backend for the DerbyJS web application framework.
 
@@ -142,7 +142,7 @@ Diffs is more a family of protocols that rely on exchange and merge of diffs. It
 
 [Diffs and Merge](https://jneem.github.io/merging).
 
-## Diffs Libraries
+### Diffs Libraries
 
 [Google Diff-Match-Patch](https://github.com/google/diff-match-patch) offers robust algorithms to perform the operations required for synchronizing plain text. See also [JackuB Diff-Match-Patch](https://github.com/JackuB/diff-match-patch).
 
@@ -177,14 +177,14 @@ Others.
 
 ## Others
 
-We list here other algorithms and techniques in the broader `Distributed Computing` domain that could be useful for RTC.
+We review here other algorithms and techniques in the broader `Distributed Computing` domain that could be useful for RTC.
 
-**Paxos**
+### Paxos
 
 - <https://en.wikipedia.org/wiki/Paxos_(computer_science)>
 - <https://en.wikipedia.org/wiki/Gossip_protocol>
 
-**Vector Clocks**
+### Vector Clocks
 
 - <https://en.wikipedia.org/wiki/Vector_clock>
 - <https://www.datastax.com/blog/2013/09/why-cassandra-doesnt-need-vector-clocks>
