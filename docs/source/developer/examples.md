@@ -1,11 +1,8 @@
 # Examples
 
-The examples reside in the [examples folder](https://github.com/jupyterlab/rtc/tree/main/examples)
-
-To build and try them all, you first need to install Yarn, Node.js and JupyterLab.
+The examples reside in the [examples folder](https://github.com/jupyterlab/rtc/tree/main/examples). To build and try them all, you first need to install Yarn, Node.js and JupyterLab. Using conda, enter the following commands.
 
 ```bash
-# Using conda, enter the following commands.
 conda create -n rtc -c conda-forge jupyterlab nodejs=14 yarn && \
   conda activate rtc
 ```

@@ -9,7 +9,7 @@ Links to implementation descriptions related in a way to RTC. Those solutions ar
 
 **Visual Studio Code**
 
-[Microsoft Live Share](https://visualstudio.microsoft.com/services/live-share) is closed-source (see the [docs](https://github.com/microsoftdocs/live-share)).
+- [Microsoft Live Share](https://visualstudio.microsoft.com/services/live-share) is closed-source (see the [docs](https://github.com/microsoftdocs/live-share)).
 
 **HackMD**
 

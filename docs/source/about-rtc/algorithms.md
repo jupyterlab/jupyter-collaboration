@@ -73,7 +73,7 @@ Other information:
 
 ### CRDT Libraries
 
-[JupyterLab RTC integration](/developer/integrations) is relying on the CRDT Implementation provided by [Lumino Datastore](https://github.com/jupyterlab/lumino/tree/master/packages/datastore). The Lumino Datastore library is also used in e.g. the [interactive dashboard editor](https://github.com/jupytercalpoly/jupyterlab-interactive-dashboard-editor) for JupyterLab.
+[JupyterLab RTC integration](/developer/integrations.html#jupyterlab) is relying on the CRDT Implementation provided by [Lumino Datastore](https://github.com/jupyterlab/lumino/tree/master/packages/datastore). The Lumino Datastore library is also used in e.g. the [interactive dashboard editor](https://github.com/jupytercalpoly/jupyterlab-interactive-dashboard-editor) for JupyterLab.
 
 [Y.js](https://github.com/yjs/yjs) is a CRDT implementation with online demos.
 
@@ -136,11 +136,10 @@ Read more on [CKEditor lessons learned](https://ckeditor.com/blog/Lessons-learne
 
 ### About Diffs
 
-Diffs is more a family of protocols that rely on exchange and merge of diffs. It is used by e.g. [Cocalc](https://blog.cocalc.com/2018/10/11/collaborative-editing.html).
+Diffs is more a family of protocols that rely on exchange and merge of diffs. It is used by e.g. [Cocalc](https://blog.cocalc.com/2018/10/11/collaborative-editing.html). Read more on this in the following.
 
-[Differential Synchronization](https://neil.fraser.name/writing/sync) ([research paper](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/35605.pdf)).
-
-[Diffs and Merge](https://jneem.github.io/merging).
+- [Differential Synchronization](https://neil.fraser.name/writing/sync) ([research paper](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/35605.pdf)).
+- [Diffs and Merge](https://jneem.github.io/merging).
 
 ### Diffs Libraries
 
@@ -154,7 +153,7 @@ Diffs is more a family of protocols that rely on exchange and merge of diffs. It
 
 [Microsoft Fluid](https://fluidframework.com) has been announced in [May 2020](https://techcommunity.microsoft.com/t5/microsoft-365-blog/introducing-the-first-microsoft-fluid-framework-experiences-in/ba-p/1345543) ([see also this doc](https://support.microsoft.com/en-us/office/get-started-with-fluid-framework-preview-d05278db-b82b-4d1f-8523-cf0c9c2fb2df)). It is now [released](https://github.com/microsoft/fluidframework).
 
-The offered functionalities and how it can be used outside of [Microsoft Office 365](https://www.office.com) are investigated in [jupyterlab/rtc#80](https://github.com/jupyterlab/rtc/issues/80). Some more information on the internals:
+The offered functionalities and how it can be used outside of [Microsoft Office 365](https://www.office.com) are investigated in [jupyterlab/rtc#80](https://github.com/jupyterlab/rtc/issues/80).
 
 From the [Fluid FAQ](https://fluidframework.com/docs/faq/):
 
@@ -167,7 +166,7 @@ On Twitter.
 - <https://twitter.com/mattetti/status/1304233818576969729>
 - <https://twitter.com/martinkl/status/1304166170812190720>
 
-Others.
+Other information.
 
 - [Introducing distributed data structures](https://fluidframework.com/docs/concepts/dds).
 - [How a Fluid Framework service works](https://medium.com/@kurtberglund/how-a-fluid-framework-service-works-c82fe9f78ae9).
