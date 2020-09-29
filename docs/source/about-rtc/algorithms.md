@@ -76,7 +76,7 @@ Other information:
 
 [JupyterLab RTC integration](/developer/integrations.html#jupyterlab) is relying on the CRDT Implementation provided by [Lumino Datastore](https://github.com/jupyterlab/lumino/tree/master/packages/datastore). The Lumino Datastore library is also used in e.g. the [interactive dashboard editor](https://github.com/jupytercalpoly/jupyterlab-interactive-dashboard-editor) for JupyterLab.
 
-[Y.js](https://github.com/yjs/yjs) is a CRDT implementation with online demos.
+[Y.js](https://github.com/yjs/yjs) is a CRDT implementation. Checkout out [How Yjs works from the inside out](https://www.youtube.com/watch?v=0l5XgnQ6rB4) video and the online demos:
 
 - <https://yjs.dev>
 - <https://demos.yjs.dev>
