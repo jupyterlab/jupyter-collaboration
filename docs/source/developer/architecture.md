@@ -41,7 +41,7 @@ Eventually we see the [jupyterlab/rtc](https://github.com/jupyterlab/rtc) reposi
 We define the following human and technical actors of the system:
 
 - User: The human user of the JupyterClient.
-- Jupyter_Client: The end-user application, e.g. JupyterLab.
+- Jupyter_Frontend: The end-user application, e.g. JupyterLab.
 - Jupyter_Rest: The existing Jupyter server REST endpoints (load/save notebooks...).
 - Jupyter_WS: The existing Jupyter server Kernel Websocket that allows running code cells code.
 - RTC_Client: The client library provided by jupyter-rtc for realtime update communications.
@@ -60,18 +60,18 @@ Create, Read, Update or Delete (CRUD) a Notebook.
 
    sequenceDiagram
       participant User
-      participant Jupyter_Client
+      participant Jupyter_Frontend
       participant RTC_Client
       participant RTC_Server
       participant Jupyter_Rest
-      User-->Jupyter_Client: Request CRUD Notebook
-      Jupyter_Client-->RTC_Client: Request CRUD Notebook
+      User-->Jupyter_Frontend: Request CRUD Notebook
+      Jupyter_Frontend-->RTC_Client: Request CRUD Notebook
       RTC_Client-->RTC_Server: Request CRUD Notebook
       RTC_Server-->Jupyter_Rest: Request CRUD Notebook
       Jupyter_Rest-->RTC_Server: Response CRUD Notebook
       RTC_Server-->RTC_Client: Response CRUD Notebook
-      RTC_Client-->Jupyter_Client: Response CRUD Notebook
-      Jupyter_Client-->User: Response CRUD Notebook
+      RTC_Client-->Jupyter_Frontend: Response CRUD Notebook
+      Jupyter_Frontend-->User: Response CRUD Notebook
 ```
 
 ### Run a Cell
@@ -81,18 +81,18 @@ Create, Read, Update or Delete (CRUD) a Notebook.
 
    sequenceDiagram
       participant User
-      participant Jupyter_Client
+      participant Jupyter_Frontend
       participant RTC_Client
       participant RTC_Server
       participant Jupyter_WS
-      User-->Jupyter_Client: Request Code Execution
-      Jupyter_Client-->RTC_Client: Request Code Execution
+      User-->Jupyter_Frontend: Request Code Execution
+      Jupyter_Frontend-->RTC_Client: Request Code Execution
       RTC_Client-->RTC_Server: Request Code Execution
       RTC_Server-->Jupyter_WS: Request Code Execution
       Jupyter_WS-->RTC_Server: Response Code Execution
       RTC_Server-->RTC_Client: Response Code Execution
-      RTC_Client-->Jupyter_Client: Response Code Execution
-      Jupyter_Client-->User: Response Code Execution
+      RTC_Client-->Jupyter_Frontend: Response Code Execution
+      Jupyter_Frontend-->User: Response Code Execution
 ```
 
 
