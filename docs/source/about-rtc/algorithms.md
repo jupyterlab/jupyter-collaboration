@@ -10,12 +10,13 @@ Some implementations have a [Mixed](#mixed) approach combining techniques of the
 
 We also have an [Others](#others) section for algorithm that don't fit into those categories.
 
-The following brings more perspective on the category positions.
+The following brings more perspective on how those categories compare.
 
 - [To OT or CRDT, that is the question](https://www.tiny.cloud/blog/real-time-collaboration-ot-vs-crdt) and its references
 - [Collaborative Editing in CoCalc: OT, CRDT, or something else?](https://blog.cocalc.com/2018/10/11/collaborative-editing.html)
 - [Towards a unified theory of Operational Transformation and CRDT](https://medium.com/@raphlinus/towards-a-unified-theory-of-operational-transformation-and-crdt-70485876f72f)
 - [Differences between OT and CRDT](https://stackoverflow.com/questions/26694359/differences-between-ot-and-crdt)
+- [I was wrong. CRDTs are the future](https://josephg.com/blog/crdts-are-the-future/) ([Hacker News discussion](https://news.ycombinator.com/item?id=24617542))
 - [Operational Transformation library?](https://stackoverflow.com/questions/2043165/operational-transformation-library)
 - [Real Differences Between OT and CRDT for Co-Editors](https://news.ycombinator.com/item?id=18191867)
 - [Fluid framework, for building distributed, real-time collaborative web apps](https://news.ycombinator.com/item?id=24417482) - You can read there: *Adding more context: Fluid uses a mix of CRDT + OT to maintain state across multiple clients. I wrote a quick high level explanation of how Fluid uses eventual consistency and why it matters for real time collaboration* ([more details](https://matt.aimonetti.net/posts/2020-09-solving-real-time-collaboration-using-eventual-consistency))
@@ -69,13 +70,13 @@ Some post-mortem stories can be instructive: [xi-editor link 1](https://github.c
 Other information:
 
 - [CRDT is used in Apache Cassandra](https://cassandra.apache.org/doc/latest/architecture/dynamo.html#dataset-partitioning-consistent-hashing).
-- [Are CRDTs suitable for shared editing?](https://news.ycombinator.com/item?id=24176455)
+- [Are CRDTs suitable for shared editing?](https://blog.kevinjahns.de/are-crdts-suitable-for-shared-editing) ([Hacker News Discussion](https://news.ycombinator.com/item?id=24176455)).
 
 ### CRDT Libraries
 
 [JupyterLab RTC integration](/developer/integrations.html#jupyterlab) is relying on the CRDT Implementation provided by [Lumino Datastore](https://github.com/jupyterlab/lumino/tree/master/packages/datastore). The Lumino Datastore library is also used in e.g. the [interactive dashboard editor](https://github.com/jupytercalpoly/jupyterlab-interactive-dashboard-editor) for JupyterLab.
 
-[Y.js](https://github.com/yjs/yjs) is a CRDT implementation with online demos.
+[Y.js](https://github.com/yjs/yjs) is a CRDT implementation. Checkout out [How Yjs works from the inside out](https://www.youtube.com/watch?v=0l5XgnQ6rB4) video and the online demos:
 
 - <https://yjs.dev>
 - <https://demos.yjs.dev>
