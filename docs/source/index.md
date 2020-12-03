@@ -48,6 +48,7 @@ GitHub repo <https://github.com/jupyterlab/rtc>
 maxdepth: 2
 caption: Project Organisation
 ---
+organisation/deliverables
 organisation/contribute
 organisation/czi-2020
 ```

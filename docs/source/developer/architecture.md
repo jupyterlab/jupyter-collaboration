@@ -94,18 +94,3 @@ Create, Read, Update or Delete (CRUD) a Notebook.
       RTC_Client-->Jupyter_Frontend: Response Code Execution
       Jupyter_Frontend-->User: Response Code Execution
 ```
-
-
-## Tasks Follow-up
-
-```{eval-rst}
-.. mermaid::
-
-    gantt
-    dateFormat  YYYY-MM-DD
-    title Architecture Definition
-
-    section Definition
-    Define Use Cases                       :active,  d1, 2020-10-05, 15d
-    Define Sequences Diagrams              :         d2, after d1, 15d
-```
