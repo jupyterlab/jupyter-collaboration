@@ -1,0 +1,1237 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="297mm"
+   height="210mm"
+   viewBox="0 0 297 210"
+   version="1.1"
+   id="svg8"
+   inkscape:version="1.0.1 (c497b03c, 2020-09-10)"
+   sodipodi:docname="jupyter-rtc-roadmap.svg">
+  <defs
+     id="defs2">
+    <marker
+       style="overflow:visible;"
+       id="marker1921"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path1919" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker6259"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path6257" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker6003"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path6001" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker5755"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path5753" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker5509"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path5507" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker5409"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path5407" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker4887"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path4885" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker4671"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path4669" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker4463"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path4461" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker4263"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path4261" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker4065"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path4063" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker3738"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path3736" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker3728"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lstart"
+       inkscape:isstock="true">
+      <path
+         transform="scale(0.8) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path3726" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker3233"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path3231" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker3223"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lstart"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path3221" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker3095"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path3093" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker3085"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path3083" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker3075"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lstart"
+       inkscape:isstock="true">
+      <path
+         transform="scale(0.8) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path3073" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker3065"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lstart"
+       inkscape:isstock="true">
+      <path
+         transform="scale(0.8) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path3063" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker2085"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path2083" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker2075"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lstart"
+       inkscape:isstock="true">
+      <path
+         transform="scale(0.8) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path2073" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker1939"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path1937" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker1929"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lstart"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path1927" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker1577"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path1575" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker1567"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lstart"
+       inkscape:isstock="true">
+      <path
+         transform="scale(0.8) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path1565" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker1471"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path1469" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker1461"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lstart"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path1459" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="marker1373"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path1371" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker1363"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lstart"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path1361" />
+    </marker>
+    <rect
+       x="151.40612"
+       y="-2.6949309"
+       width="144.54629"
+       height="67.373273"
+       id="rect1303" />
+    <marker
+       style="overflow:visible;"
+       id="Arrow1Lend"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path873" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Arrow1Lstart"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lstart"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.8) translate(12.5,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path870" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.1194755"
+     inkscape:cx="601.70339"
+     inkscape:cy="409.74528"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     inkscape:document-rotation="0"
+     showgrid="false"
+     inkscape:window-width="1792"
+     inkscape:window-height="1049"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
+     showguides="false" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="60.599457"
+       y="62.786293"
+       id="text34"><tspan
+         sodipodi:role="line"
+         id="tspan32"
+         x="60.599457"
+         y="62.786293"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778">lumino-datastore</tspan><tspan
+         sodipodi:role="line"
+         x="60.599457"
+         y="68.675179"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan45">jupyterlab</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="60.57185"
+       y="33.193111"
+       id="text38"><tspan
+         sodipodi:role="line"
+         id="tspan36"
+         x="60.57185"
+         y="33.193111"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778">jupyterlab-server</tspan><tspan
+         sodipodi:role="line"
+         x="60.57185"
+         y="39.082001"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan40">collaboration handler</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.061;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Arrow1Lstart);marker-end:url(#Arrow1Lend)"
+       d="m 61.004529,56.489304 0.0067,-15.124159"
+       id="path42"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="176.4894"
+       y="60.336246"
+       id="text50"><tspan
+         sodipodi:role="line"
+         id="tspan48"
+         x="176.4894"
+         y="60.336246"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778">automerge</tspan><tspan
+         sodipodi:role="line"
+         x="176.4894"
+         y="66.225136"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan1285">react-textarea</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="176.4917"
+       y="31.206289"
+       id="text50-2"><tspan
+         sodipodi:role="line"
+         x="176.4917"
+         y="31.206289"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan101">js-server</tspan><tspan
+         sodipodi:role="line"
+         x="176.4917"
+         y="37.095177"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan1246">automerge</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="222.30894"
+       y="136.22351"
+       id="text105"><tspan
+         sodipodi:role="line"
+         id="tspan103"
+         x="222.30894"
+         y="136.22351"
+         style="stroke-width:0.117778">OPTION 2</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="131.03935"
+       y="137.81099"
+       id="text105-9"><tspan
+         sodipodi:role="line"
+         id="tspan103-4"
+         x="131.03935"
+         y="137.81099"
+         style="stroke-width:0.117778">OPTION 1</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="233.93375"
+       y="141.29889"
+       id="text127"><tspan
+         sodipodi:role="line"
+         id="tspan125"
+         x="233.93375"
+         y="141.29889"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778">step A: extension proxy to js-server</tspan><tspan
+         sodipodi:role="line"
+         x="233.93375"
+         y="147.18777"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan129">step B: js-server as service (a-la-jupyterhub)</tspan><tspan
+         sodipodi:role="line"
+         x="233.93375"
+         y="153.07666"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan2611">Ideally we don't want node.js for the user</tspan><tspan
+         sodipodi:role="line"
+         x="233.93375"
+         y="158.96555"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan2613">Can be a temporary solution (rtc being optional)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="192.80255"
+       y="23.156235"
+       id="text1234"><tspan
+         sodipodi:role="line"
+         id="tspan1232"
+         x="192.80255"
+         y="23.156235"
+         style="stroke-width:0.117778">B. HELLO JS LIBRARIES</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="143.04953"
+       y="144.00031"
+       id="text1242"><tspan
+         sodipodi:role="line"
+         x="143.04953"
+         y="144.00031"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan1240">jupyter server</tspan><tspan
+         sodipodi:role="line"
+         x="143.04953"
+         y="149.88919"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan1283">integrated with </tspan><tspan
+         sodipodi:role="line"
+         x="143.04953"
+         y="155.77808"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan2615">python binding to rust</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="217.91969"
+       y="31.206289"
+       id="text1256"><tspan
+         sodipodi:role="line"
+         x="217.91969"
+         y="31.206289"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan1252">js-server</tspan><tspan
+         sodipodi:role="line"
+         x="217.91969"
+         y="37.095177"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan1254">y.js</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="258.18213"
+       y="31.657154"
+       id="text1279"><tspan
+         sodipodi:role="line"
+         x="258.18213"
+         y="31.657154"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan1275">js-server</tspan><tspan
+         sodipodi:role="line"
+         x="258.18213"
+         y="37.546043"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan1277">fluid</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="217.84839"
+       y="60.406406"
+       id="text1293"><tspan
+         sodipodi:role="line"
+         id="tspan1289"
+         x="217.84839"
+         y="60.406406"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778">y.js</tspan><tspan
+         sodipodi:role="line"
+         x="217.84839"
+         y="66.295296"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan1291">react-textarea</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="258.11081"
+       y="60.483471"
+       id="text1299"><tspan
+         sodipodi:role="line"
+         id="tspan1295"
+         x="258.11081"
+         y="60.483471"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778">fluid</tspan><tspan
+         sodipodi:role="line"
+         x="258.11081"
+         y="66.37236"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan1297">react-textarea</tspan></text>
+    <text
+       xml:space="preserve"
+       id="text1301"
+       style="font-style:normal;font-weight:normal;font-size:10.58329999999999949px;line-height:1.25;font-family:sans-serif;white-space:pre;shape-inside:url(#rect1303);fill:#000000;fill-opacity:1;stroke:none;"
+       transform="translate(-0.52916667,8.4666671)" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="8.983757"
+       y="21.627972"
+       id="text1333"><tspan
+         sodipodi:role="line"
+         id="tspan1331"
+         x="8.983757"
+         y="21.627972"
+         style="stroke-width:0.117778">A. JUPYTERLAB RTC 2019 PORTED TO 2020</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.0876183;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker1363);marker-end:url(#marker1373)"
+       d="m 176.48908,52.81316 0.0149,-14.326285"
+       id="path1359"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.0876183;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker1461);marker-end:url(#marker1471)"
+       d="m 217.84806,54.283122 0.0149,-14.326285"
+       id="path1457"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.0876183;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker1567);marker-end:url(#marker1577)"
+       d="m 258.11035,54.773109 0.0149,-14.326285"
+       id="path1563"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="220.47458"
+       y="96.231506"
+       id="text1787"><tspan
+         sodipodi:role="line"
+         id="tspan1785"
+         x="220.47458"
+         y="96.231506"
+         style="stroke-width:0.117778">D. BENCHMARK LIBRARIES</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="147.85873"
+       y="182.98407"
+       id="text1839"><tspan
+         sodipodi:role="line"
+         id="tspan1837"
+         x="147.85873"
+         y="182.98407"
+         style="stroke-width:0.117778">RTC CLIENT API</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="216.57272"
+       y="182.98407"
+       id="text1843"><tspan
+         sodipodi:role="line"
+         id="tspan1841"
+         x="216.57272"
+         y="182.98407"
+         style="stroke-width:0.117778">RTC SERVER API</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.118;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker1929);marker-end:url(#marker1939)"
+       d="m 189.28728,181.15715 24.26924,0.23023"
+       id="path1925"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:2.82222px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="9.2215672"
+       y="26.106222"
+       id="text2265"><tspan
+         sodipodi:role="line"
+         id="tspan2263"
+         x="9.2215672"
+         y="26.106222"
+         style="font-size:2.82222px;stroke-width:0.264583">https://jupyter-rtc.readthedocs.io/en/latest/developer/integrations.html</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.27868px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.136827"
+       x="176.56914"
+       y="45.397091"
+       id="text2353"><tspan
+         sodipodi:role="line"
+         x="176.56914"
+         y="45.397091"
+         style="font-size:3.27868px;text-align:center;text-anchor:middle;stroke-width:0.136827"
+         id="tspan2351">WIP (Ani)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.27868px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.136827"
+       x="217.38483"
+       y="45.887077"
+       id="text2395"><tspan
+         sodipodi:role="line"
+         x="217.38483"
+         y="45.887077"
+         style="font-size:3.27868px;text-align:center;text-anchor:middle;stroke-width:0.136827"
+         id="tspan2393">WIP (Pierre)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.27868px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.136827"
+       x="259.92554"
+       y="46.132072"
+       id="text2399"><tspan
+         sodipodi:role="line"
+         x="259.92554"
+         y="46.132072"
+         style="font-size:3.27868px;text-align:center;text-anchor:middle;stroke-width:0.136827"
+         id="tspan2397">WIP (Eric)</tspan></text>
+    <rect
+       style="opacity:0.115756;fill:#bcf3c9;fill-opacity:1;stroke:#000600;stroke-width:1.77270833;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.97480857"
+       id="rect2413"
+       width="89.498665"
+       height="28.429163"
+       x="114.80708"
+       y="88.500061"
+       ry="1.7594597"
+       rx="1.6334304" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:2.82222px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="219.68504"
+       y="100.99696"
+       id="text2453"><tspan
+         sodipodi:role="line"
+         id="tspan2451"
+         x="219.68504"
+         y="100.99696"
+         style="font-size:2.82222px;stroke-width:0.264583">https://github.com/jupyterlab/rtc/issues/57</tspan></text>
+    <rect
+       style="opacity:0.115756;fill:#bcf3c9;fill-opacity:1;stroke:#000600;stroke-width:1.77271;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.974809"
+       id="rect2493"
+       width="170.14215"
+       height="15.308223"
+       x="112.48824"
+       y="170.41057"
+       ry="4.0312333"
+       rx="3.1052461" />
+    <rect
+       style="opacity:0.115756;fill:#bcf3c9;fill-opacity:1;stroke:#000600;stroke-width:1.773;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.974809"
+       id="rect2495"
+       width="73.457344"
+       height="12.995131"
+       x="112.03409"
+       y="192.10257"
+       ry="3.0733576"
+       rx="1.3406622" />
+    <rect
+       style="opacity:0.115756;fill:#bcf3c9;fill-opacity:1;stroke:#000600;stroke-width:1.77271;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.974809"
+       id="rect2713"
+       width="148.02466"
+       height="59.729828"
+       x="143.68327"
+       y="15.656547"
+       ry="3.6966345"
+       rx="2.701582" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="135.50241"
+       y="96.61972"
+       id="text2753"><tspan
+         sodipodi:role="line"
+         id="tspan2751"
+         x="135.50241"
+         y="96.61972"
+         style="stroke-width:0.117778">C. RUST EXPERIMENT</tspan></text>
+    <g
+       id="g3622"
+       transform="translate(-0.37057561,8.4666671)">
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+         x="134.04582"
+         y="95.614937"
+         id="text3207"><tspan
+           sodipodi:role="line"
+           id="tspan3203"
+           x="134.04582"
+           y="95.614937"
+           style="text-align:center;text-anchor:middle;stroke-width:0.117778">automerge</tspan><tspan
+           sodipodi:role="line"
+           x="134.04582"
+           y="101.50382"
+           style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+           id="tspan3205">react-textarea</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+         x="185.60802"
+         y="95.299789"
+         id="text3213"><tspan
+           sodipodi:role="line"
+           x="185.60802"
+           y="95.299789"
+           style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+           id="tspan3209">python-server</tspan><tspan
+           sodipodi:role="line"
+           x="185.60802"
+           y="101.18867"
+           style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+           id="tspan3211">automerge-rs</tspan></text>
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.0876183;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker3223);marker-end:url(#marker3233)"
+         d="m 154.2239,97.020296 10.7638,-0.158424"
+         id="path3215"
+         sodipodi:nodetypes="cc" />
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="251.03493"
+       y="107.19901"
+       id="text3509"><tspan
+         sodipodi:role="line"
+         x="251.03493"
+         y="107.19901"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan3515">add fluid to y.js and automerge</tspan><tspan
+         sodipodi:role="line"
+         x="251.03493"
+         y="113.08789"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan3521">(prepare apis)</tspan></text>
+    <rect
+       style="opacity:0.115756;fill:#bcf3c9;fill-opacity:1;stroke:#000600;stroke-width:1.77270833;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.97480857"
+       id="rect3523"
+       width="82.887947"
+       height="28.433022"
+       x="209.59555"
+       y="88.498131"
+       ry="1.7596986"
+       rx="1.5127788" />
+    <rect
+       style="opacity:0.115756;fill:#bcf3c9;fill-opacity:1;stroke:#000600;stroke-width:1.77271;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.974809"
+       id="rect2491"
+       width="183.46962"
+       height="38.670578"
+       x="111.3316"
+       y="125.9192"
+       ry="2.3932934"
+       rx="3.3484843" />
+    <rect
+       style="opacity:0.115756;fill:#bcf3c9;fill-opacity:1;stroke:#000600;stroke-width:1.77270833;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.97480857"
+       id="rect3704"
+       width="38.57011"
+       height="23.93634"
+       x="61.181873"
+       y="128.64732"
+       ry="1.4814023"
+       rx="0.7039389" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="80.40712"
+       y="136.40349"
+       id="text3708"><tspan
+         sodipodi:role="line"
+         id="tspan3706"
+         x="80.40712"
+         y="136.40349"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778">E. JUPYTER</tspan><tspan
+         sodipodi:role="line"
+         x="80.40712"
+         y="142.29237"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan3990">SERVER</tspan><tspan
+         sodipodi:role="line"
+         x="80.40712"
+         y="148.18126"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan3988">AUTH</tspan></text>
+    <rect
+       style="opacity:0.115756;fill:#bcf3c9;fill-opacity:1;stroke:#000600;stroke-width:1.8463;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.974809"
+       id="rect3992"
+       width="41.839111"
+       height="23.93634"
+       x="12.892608"
+       y="128.86037"
+       ry="1.4814023"
+       rx="0.76360106" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="33.799351"
+       y="136.6165"
+       id="text4000"><tspan
+         sodipodi:role="line"
+         x="33.799351"
+         y="136.6165"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan3998">I. JUPYTERLAB</tspan><tspan
+         sodipodi:role="line"
+         x="33.799351"
+         y="142.50539"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan4007">DOCUMENT</tspan><tspan
+         sodipodi:role="line"
+         x="33.799351"
+         y="148.39427"
+         style="text-align:center;text-anchor:middle;stroke-width:0.117778"
+         id="tspan4009">MODEL</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.27869px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.136827"
+       x="34.788136"
+       y="103.77872"
+       id="text2319"><tspan
+         sodipodi:role="line"
+         x="34.788136"
+         y="103.77872"
+         style="font-size:3.27869px;text-align:center;text-anchor:middle;stroke-width:0.136827"
+         id="tspan2317" /><tspan
+         sodipodi:role="line"
+         x="34.788136"
+         y="107.87708"
+         style="font-size:3.27869px;text-align:center;text-anchor:middle;stroke-width:0.136827"
+         id="tspan3690">2. Revisit RTC</tspan><tspan
+         sodipodi:role="line"
+         x="34.788136"
+         y="111.97544"
+         style="font-size:3.27869px;text-align:center;text-anchor:middle;stroke-width:0.136827"
+         id="tspan6562">integration</tspan><tspan
+         sodipodi:role="line"
+         x="34.788136"
+         y="116.07381"
+         style="font-size:3.27869px;text-align:center;text-anchor:middle;stroke-width:0.136827"
+         id="tspan6547">in JupyterLab</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26499999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker3738)"
+       d="m 115.82625,43.564635 26.89784,-0.09859"
+       id="path4041"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.238576;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker4065)"
+       d="M 207.29695,76.3263 168.3357,87.891823"
+       id="path4061"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.238576;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker4263)"
+       d="M 207.29695,76.3263 243.4439,88.358309"
+       id="path4259"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker4463)"
+       d="m 167.58457,117.83018 40.07347,6.25143"
+       id="path4459"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker4671)"
+       d="m 247.29711,117.83018 -39.63907,6.25143"
+       id="path4667"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26499999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker4887)"
+       d="m 201.25377,163.32527 0.17558,7.07508"
+       id="path4883"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker5409)"
+       d="m 202.40485,185.19586 -27.87501,6.67375"
+       id="path5107"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26499999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker5509)"
+       d="M 58.271614,73.455615 36.505053,128.92969"
+       id="path5505"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26499999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker5755)"
+       d="M 58.271614,73.455615 81.678668,130.1506"
+       id="path5751"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26499999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker6003)"
+       d="m 32.842329,153.75483 78.038311,45.21219"
+       id="path5999"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker6259)"
+       d="m 100.86986,141.98358 10.1501,0.16206"
+       id="path6255"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.27869px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.136827"
+       x="76.169258"
+       y="110.26006"
+       id="text6531"><tspan
+         sodipodi:role="line"
+         x="76.169258"
+         y="110.26006"
+         style="font-size:3.27869px;text-align:center;text-anchor:middle;stroke-width:0.136827"
+         id="tspan6529">3. No Identity</tspan><tspan
+         sodipodi:role="line"
+         x="76.169258"
+         y="114.35843"
+         style="font-size:3.27869px;text-align:center;text-anchor:middle;stroke-width:0.136827"
+         id="tspan6554">No Permission</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.27869px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.136827"
+       x="129.45766"
+       y="49.192047"
+       id="text6539"><tspan
+         sodipodi:role="line"
+         x="129.45766"
+         y="49.192047"
+         style="font-size:3.27869px;text-align:center;text-anchor:middle;stroke-width:0.136827"
+         id="tspan6537">1. CRDT is hard</tspan><tspan
+         sodipodi:role="line"
+         x="129.45766"
+         y="53.290409"
+         style="font-size:3.27869px;text-align:center;text-anchor:middle;stroke-width:0.136827"
+         id="tspan1220">to develop</tspan><tspan
+         sodipodi:role="line"
+         x="129.45766"
+         y="57.388771"
+         style="font-size:3.27869px;text-align:center;text-anchor:middle;stroke-width:0.136827"
+         id="tspan1224">and has many</tspan><tspan
+         sodipodi:role="line"
+         x="129.45766"
+         y="61.487137"
+         style="font-size:3.27869px;text-align:center;text-anchor:middle;stroke-width:0.136827"
+         id="tspan1228">edge cases</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:7.68036px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.192009"
+       x="59.374603"
+       y="9.6497478"
+       id="text2118"><tspan
+         sodipodi:role="line"
+         id="tspan2116"
+         x="59.374603"
+         y="9.6497478"
+         style="stroke-width:0.192009">JUPYTER RTC TECHNICAL ROADMAP (2020-12-02)</tspan></text>
+    <rect
+       style="opacity:0.115756;fill:#bcf3c9;fill-opacity:1;stroke:#000600;stroke-width:1.64272;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.974809"
+       id="rect1853"
+       width="109.8215"
+       height="58.700199"
+       x="5.17805"
+       y="14.440075"
+       ry="3.6329114"
+       rx="4.2196593" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71111px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="174.74222"
+       y="131.68343"
+       id="text1793"><tspan
+         sodipodi:role="line"
+         id="tspan1791"
+         x="174.74222"
+         y="131.68343"
+         style="stroke-width:0.117778">F. JUPYTER SERVER SERVICE</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71112px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="189.61047"
+       y="176.85158"
+       id="text1793-8"><tspan
+         sodipodi:role="line"
+         id="tspan1791-0"
+         x="189.61047"
+         y="176.85158"
+         style="stroke-width:0.117778">G. RTC API</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71112px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="125.69714"
+       y="200.30815"
+       id="text1793-8-9"><tspan
+         sodipodi:role="line"
+         id="tspan1791-0-4"
+         x="125.69714"
+         y="200.30815"
+         style="stroke-width:0.117778">J. JUPYTERLAB RTC</tspan></text>
+    <rect
+       style="opacity:0.115756;fill:#bcf3c9;fill-opacity:1;stroke:#000600;stroke-width:1.773;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.974809"
+       id="rect1905"
+       width="73.457344"
+       height="12.995131"
+       x="208.96469"
+       y="192.2419"
+       ry="3.0733576"
+       rx="1.3406622" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.71112px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.117778"
+       x="233.46394"
+       y="200.44977"
+       id="text1909"><tspan
+         sodipodi:role="line"
+         id="tspan1907"
+         x="233.46394"
+         y="200.44977"
+         style="stroke-width:0.117778">H. CELL RTC</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker1921)"
+       d="m 202.40485,185.19586 23.59848,7.34224"
+       id="path1917"
+       sodipodi:nodetypes="cc" />
+  </g>
+</svg>
