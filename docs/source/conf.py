@@ -29,13 +29,25 @@ master_doc = "index"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "myst_parser",
+    "myst_nb",
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
+    "sphinx.ext.autosectionlabel",
     "sphinxcontrib.bibtex",
     "sphinx_tabs.tabs",
+    "sphinxcontrib.mermaid",
 ]
+
+source_suffix = {
+    ".rst": "restructuredtext",
+    ".ipynb": "myst-nb",
+    ".myst": "myst-nb",
+    ".md": "myst-nb",
+}
+
+# jupyter_execute_notebooks = "force"
+jupyter_execute_notebooks = "off"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -56,8 +68,7 @@ html_logo = "_static/logo.png"
 html_title = ""
 html_theme_options = {
     "github_url": "https://github.com/jupyterlab/rtc",
-    "repository_url": "https://github.com/jupyterlab/rtc",
-    "expand_sections": ["examples/index"],
+    "repository_url": "https://github.com/jupyterlab/rtc"
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

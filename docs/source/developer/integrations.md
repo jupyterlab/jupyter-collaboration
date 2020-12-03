@@ -38,11 +38,16 @@ We have also ported `Iteration 2` to end-August 2020 `JupyterLab` and `Lumino` m
 - <https://github.com/datalayer-contrib/jupyterlab/tree/rtc-2019-2-master>
 - <https://github.com/datalayer-contrib/jupyterlab-lumino/tree/rtc-2019-2-master>
 
+You can compare with the changes:
+
+- https://github.com/jupyterlab/jupyterlab/compare/f2ce97034efc69f9ad565d92ec8370ccca6eb160...datalayer-contrib:rtc-2019-2-master
+- https://github.com/jupyterlab/lumino/compare/1116776621689093766a6e992de5abd05cedaf8c...datalayer-contrib:rtc-2019-2-master
+
 ### WIP Iteration 4
 
 The next step is to define how to integrate the components developed in this repository at the light of these learnings. The behavior (features and limits) of Iteration 3 are the same as Iteration 2. For example saving notebook does not persist the ipynb file. We have copied here the [latest public status meeting on the JupyterLab PR](https://github.com/jupyterlab/jupyterlab/pull/6871#issuecomment-553495401).
 
-``` 
+```
 2019.11.13 meeting
 
 Ian: Lifecycle is fragile for notebooks.
