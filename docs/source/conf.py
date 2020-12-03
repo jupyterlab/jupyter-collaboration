@@ -68,8 +68,7 @@ html_logo = "_static/logo.png"
 html_title = ""
 html_theme_options = {
     "github_url": "https://github.com/jupyterlab/rtc",
-    "repository_url": "https://github.com/jupyterlab/rtc",
-    "expand_sections": ["examples/index"],
+    "repository_url": "https://github.com/jupyterlab/rtc"
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
