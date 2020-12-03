@@ -4,9 +4,7 @@ This **Real Time Collaboration** monorepo contains current work on real-time col
 
 ## Project Meetings
 
-We have a `bi-weekly` meeting call. Please come and join [on Zoom](https://zoom.us/j/98101649538?pwd=aW15K0gxTHZiQ2tOL21UK21MYmN4QT09). All are welcome to come and just listen or discuss any work related to this project. For the time, place and notes, see [this HackMD](https://hackmd.io/@_4xc7QhhSHKODRQn1uiulw/BkV24I3qL/edit).
-
-Meetings are recorded and available on [this YouTube playlist](https://www.youtube.com/playlist?list=PLUrHeD2K9Cmk5PpU7a3Pf5zEteJ-_kA81). We also use [the same HackMD](https://hackmd.io/@_4xc7QhhSHKODRQn1uiulw/BkV24I3qL/edit) to set an agenda and to capture notes for these meetings.
+We have a `bi-weekly` meeting call. Please come and join [on Zoom](https://zoom.us/j/98101649538?pwd=aW15K0gxTHZiQ2tOL21UK21MYmN4QT09). All are welcome to come and just listen or discuss any work related to this project. For the time, place and notes, see [this HackMD](https://hackmd.io/@_4xc7QhhSHKODRQn1uiulw/BkV24I3qL/edit). We also use [the same HackMD](https://hackmd.io/@_4xc7QhhSHKODRQn1uiulw/BkV24I3qL/edit) to set an agenda and to capture notes for these meetings (see [jupyterlab/rtc#3](https://github.com/jupyterlab/rtc/issues/3) for the historical notes). Some meetings have been recorded and are available on [this YouTube playlist](https://www.youtube.com/playlist?list=PLUrHeD2K9Cmk5PpU7a3Pf5zEteJ-_kA81).
 
 ## Learning Pathway
 
