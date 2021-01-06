@@ -1,6 +1,6 @@
 # Examples
 
-The examples reside in the [examples folder](https://github.com/jupyterlab/rtc/tree/main/examples). To build and try them all, you first need to install Yarn, Node.js and JupyterLab. Using conda, enter the following commands.
+The examples reside in the [examples folder](https://github.com/jupyterlab/rtc/tree/main/lumino/examples). To build and try them all, you first need to install Yarn, Node.js and JupyterLab. Using conda, enter the following commands.
 
 ```bash
 conda create -n rtc -c conda-forge jupyterlab nodejs=14 yarn && \
@@ -18,7 +18,7 @@ git clone https://github.com/jupyterlab/rtc && \
 
 ## Lumino Example
 
-This [simple Lumino datastore example](https://github.com/jupyterlab/rtc/tree/main/examples/lumino) is useful to demonstrate and understand the basics of the [Lumino Datastore](https://github.com/jupyterlab/lumino/tree/master/packages/datastore) system.
+This [simple Lumino datastore example](https://github.com/jupyterlab/rtc/tree/main/lumino/examples/lumino) is useful to demonstrate and understand the basics of the [Lumino Datastore](https://github.com/jupyterlab/lumino/tree/master/packages/datastore) system.
 
 ```bash
 yarn lumino-example:start
@@ -51,7 +51,7 @@ The content for this example has been taken from the [Lumino example-datastore f
 
 ## To Do Example
 
-You can start [To Do example application](https://github.com/jupyterlab/rtc/tree/main/examples/todo) and the [Debugger](https://github.com/jupyterlab/rtc/tree/main/tools/debugger).
+You can start [To Do example application](https://github.com/jupyterlab/rtc/tree/main/lumino/examples/todo) and the [Debugger](https://github.com/jupyterlab/rtc/tree/main/lumino/tools/debugger).
 
 ```bash
 yarn todo-example:start-all
@@ -63,7 +63,7 @@ The example application will be available on <http://localhost:3000>
 
 ## Jupyter Example
 
-You can also start the [Jupyter example](https://github.com/jupyterlab/rtc/tree/main/examples/jupyter).
+You can also start the [Jupyter example](https://github.com/jupyterlab/rtc/tree/main/lumino/examples/jupyter).
 
 ```bash
 yarn jupyter-example:start-all

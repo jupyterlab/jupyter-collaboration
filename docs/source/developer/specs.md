@@ -40,7 +40,7 @@ TODO: Specify this more precisely based on Jupyter messaging specifications [^f1
 
 ### RTC Specification
 
-_This is currently implemented in [`@jupyter-rtc/node`](https://github.com/jupyterlab/rtc/tree/main/packages/node/src) and by [`@lumino/datastore`](https://github.com/jupyterlab/lumino/tree/master/packages/datastore)_.
+_This is currently implemented in [`@jupyter-rtc/node`](https://github.com/jupyterlab/rtc/tree/main/lumino/packages/node/src) and by [`@lumino/datastore`](https://github.com/jupyterlab/lumino/tree/master/packages/datastore)_.
 
 The goal of this layer is to allow you to specify data models, and then to execute updates on them, and have these updates translated to serializable transactions that can be shared using the layer below. This is currently "specified" mostly by the `@lumino/datastore` schemas JS package, but we should work at making it implementation agnostic.
 
@@ -70,7 +70,7 @@ TODO: At some point, we may need higher level abstraction, a bit like [primus](h
 
 ### Synchronized Append-only Log Specification
 
-_This is currently implemented in [`@jupyter-rtc/relay`](https://github.com/jupyterlab/rtc/tree/main/packages/relay/src)_.
+_This is currently implemented in [`@jupyter-rtc/relay`](https://github.com/jupyterlab/rtc/tree/main/lumino/packages/relay/src)_.
 
 The goal of this specification it to provide all clients with a shared append only log they can add transactions to and read transactions from. This is achieved through a central server that stores the logs which all clients connect to.
 
