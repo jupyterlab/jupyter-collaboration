@@ -1,0 +1,55 @@
+{
+  "name": "@jupyterlab/experiments",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "externals/*"
+  ],
+  "scripts": {
+    "build": "lerna run build",
+    "build:test": "lerna run build:test",
+    "build:tsc": "tsc --build tools/* packages/* examples/*",
+    "clean": "lerna run clean",
+    "clean:node_modules": "find . -name node_modules | xargs rm -fr {}",
+    "clean:all": "lerna run clean:all && rimraf node_modules yarn.lock",
+    "clean:tests": "lerna run clean:tests",
+    "lint:duplicates": "yarn run yarn-deduplicate --list --fail",
+    "lint:typescript": "yarn run lint:typescript:check --fix",
+    "lint:typescript:check": "eslint . --ext 'ts,tsx' --ignore-path .gitignore",
+    "version": "lerna version",
+    "automerge:hello": "yarn workspace @jupyterlab/automerge-server run hello",
+    "automerge:start-server": "yarn workspace @jupyterlab/automerge-server run server:ws:start",
+    "automerge:wait": "yarn workspace @jupyterlab/automerge-server run server:ws:wait",
+    "jupyter-server:start": "fkill -s :8989 && jupyter server --port 8989 --ServerApp.jpserver_extensions=\"{'datalayer_rtc': True}\"  --ServerApp.token= --ServerApp.password='' --NotebookApp.allow_origin='*' --ServerApp.allow_origin='*' --ServerApp.tornado_settings=\"{ 'headers': { 'Access-Control-Allow-Origin': '*' } }\"",
+    "jupyter-server:wait-start": "npm-run-all --parallel jupyter-server:start jupyter-server:wait",
+    "jupyter-server:wait": "wait-on tcp:8989",
+    "textarea:automerge": "npm-run-all --parallel jupyter-server:start automerge:performance:start-server textarea:automerge:wait-start",
+    "textarea:automerge-rs": "npm-run-all --parallel jupyter-server:start textarea:automerge:start",
+    "textarea:automerge:start": "yarn workspace @jupyterlab/textarea-automerge run start",
+    "textarea:automerge:wait-start": "npm-run-all automerge:performance:wait textarea:automerge:start",
+    "textarea": "npm-run-all --parallel automerge:start-server textarea:wait-start",
+    "textarea:start": "yarn workspace @jupyterlab/automerge-textarea run start",
+    "textarea:wait-start": "npm-run-all automerge:wait textarea:start"
+  },
+  "dependencies": {
+  },
+  "resolutions": {
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "~4.2.0",
+    "@typescript-eslint/parser": "~4.2.0",
+    "create-react-app": "3.4.1",
+    "eslint": "^6.6.0",
+    "eslint-config-prettier": "6.11.0",
+    "eslint-plugin-react": "7.20.3",
+    "eslint-plugin-react-hooks": "4.0.6",
+    "fkill-cli": "6.0.1",
+    "lerna": "^3.19.0",
+    "npm-run-all": "4.1.5",
+    "rimraf": "3.0.2",
+    "wait-on": "5.0.1",
+    "yarn-deduplicate": "2.0.0"
+  }
+}

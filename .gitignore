@@ -19,6 +19,7 @@ __pycache__
 *.profraw
 *.tsbuildinfo
 *.egg-info
+**/externals/*
 
 # Include.
 !**/.*ignore
@@ -29,3 +30,4 @@ __pycache__
 !**/.github
 !**/.readthedocs.yml
 !**/.storybook
+!**/externals/README.md

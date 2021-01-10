@@ -1,0 +1,13 @@
+name: jupyter-rtc
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - jupyterlab=3.0.1
+  - jupyter-packaging
+  - nodejs=14.15.1
+  - rust
+  - setuptools-rust
+  - twine
+  - yarn=1.22.5
