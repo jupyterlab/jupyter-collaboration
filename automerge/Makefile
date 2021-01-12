@@ -13,6 +13,7 @@ install:
 	  cd automerge-wasm-nodejs && \
 	  git checkout wasm-nodejs && \
 	  cd ./../..
+	cp -R automerge-wasm-* externals/
 	yarn && \
 	  yarn build
 	pip install -e .
@@ -52,7 +53,7 @@ start-ta:
 	open http://localhost:3001
 
 clean:
-	rm -rf automerge-wasm-bundler
-	rm -rf automerge-wasm-nodejs
+	rm -rf automerge-wasm-*
+	rm -rf externals/automerge-wasm-*
 
 all-node: clean install build start-node start-lab
