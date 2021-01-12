@@ -1,7 +1,7 @@
 {
   "name": "@jupyterlab/automerge-server",
   "version": "0.1.0",
-  "license": "BSD-3",
+  "license": "BSD-3-Clause",
   "files": [
     "lib/**/*.{d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
     "schema/*.json",
@@ -23,7 +23,7 @@
     "test": "jest",
     "test:automerge": "jest src/automerge.test.js",
     "test:frontend": "jest src/frontend.test.js",
-    "server:ws:start": "ts-node src/ws-perf/AutomergeServer.ts",
+    "server:ws:start": "fkill -s :4321 && ts-node src/AutomergeServer.ts",
     "server:ws:wait": "wait-on tcp:4321"
   },
   "dependencies": {
@@ -39,6 +39,7 @@
     "@types/jest-environment-puppeteer": "^4.4.1",
     "@types/puppeteer": "^5.4.2",
     "babel-jest": "^26.6.3",
+    "fkill-cli": "6.0.1",
     "jest": "^26.6.3",
     "jest-puppeteer": "^4.4.0",
     "puppeteer": "^5.5.0",

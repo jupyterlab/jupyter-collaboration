@@ -31,6 +31,15 @@ jupyter labextension list
 ```
 
 ```bash
+# Start JupyterLab, Node.js Server and TextArea UI.
+conda activate jupyter-rtc
+yarn dev
+open http://localhost:8888/lab
+open http://localhost:3001
+open http://localhost:4321
+```
+
+```bash
 # Start JupyterLab.
 conda activate jupyter-rtc
 jupyter lab \

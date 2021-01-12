@@ -45,6 +45,7 @@
   "dependencies": {
     "@jupyterlab/application": "^3.0.0",
     "@jupyterlab/codeeditor": "^3.0.0",
+    "@jupyterlab/codemirror": "^3.0.0",
     "@jupyterlab/docregistry": "^3.0.0",
     "@jupyterlab/fileeditor": "^3.0.0",
     "@jupyterlab/mainmenu": "^3.0.0",

@@ -1,7 +1,7 @@
 {
   "name": "@jupyterlab/automerge-textarea",
   "version": "0.0.0",
-  "private": true,
+  "license": "BSD-3-Clause",
   "scripts": {
     "start": "webpack-dev-server",
     "watch": "webpack-dev-server --watch",
