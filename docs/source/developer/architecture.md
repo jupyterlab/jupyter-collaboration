@@ -22,7 +22,7 @@ We also provide useful tooling packages to accompany the main packages.
 
 ![The development architecture](images/dev-architecture.svg "The development architecture")
 
-## Other Protential Packages
+## Other Potential Packages
 
 Is it useful or needed to introduce a global distributed state management `a-la-redux`? See the following repositories for inspiration:
 
