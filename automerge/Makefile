@@ -4,7 +4,7 @@ CONDA_DEACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda dea
 
 install:
 	-conda env create -f environment.yml && \
-  	($(CONDA_ACTIVATE) jupyter-rtc)
+  	conda activate jupyter-rtc
 	cd rust && \
 	  make all && \
 	  pip list | grep glootalk && \

@@ -65,8 +65,8 @@ class Rtc {
       this.rtcCell = initDocument();
       this.cell = cell;
       this.cell.editor.model.value.changed.connect((value, change) => this._onCellValueChange(value, change));
-//      this.ws = new WebSocket(`ws://localhost:8888/jupyter_rtc/websocket?doc=${cell.id}`);
-      this.ws = new WebSocket(`ws://localhost:4321/${cell.id}`);
+      this.ws = new WebSocket(`ws://localhost:8888/jupyter_rtc/websocket?doc=${cell.id}`);
+      //this.ws = new WebSocket(`ws://localhost:4321/${cell.id}`);
       this.ws.binaryType = 'arraybuffer';
       this.ws.onmessage = (message: any) => {
         if (message.data) {
