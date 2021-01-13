@@ -2,25 +2,29 @@ SHELL=/bin/zsh
 CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
 CONDA_DEACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda deactivate ; conda deactivate
 
+.ONESHELL:
+SHELL=/bin/zsh
 install:
-	-conda env create -f environment.yml && \
-  	conda activate jupyter-rtc
+	-conda env create -f environment.yml 
+	
 	cd rust && \
 	  make all && \
-	  pip list | grep glootalk && \
-	  cd ./../externals
-	git clone https://github.com/datalayer-contrib/automerge automerge-wasm-bundler && \
-	  cd automerge-wasm-bundler && \
-	  git checkout wasm-bundler && \
-	  cd ./..
-	git clone https://github.com/datalayer-contrib/automerge automerge-wasm-nodejs && \
-	  cd automerge-wasm-nodejs && \
-	  git checkout wasm-nodejs && \
-	  cd ./../..
-	cp -R automerge-wasm-* externals/
-	yarn && \
-	  yarn build
-	pip install -e .
+	  pip list | grep glootalk
+
+	git clone https://github.com/datalayer-contrib/automerge externals/automerge-wasm-bundler && \
+	  cd externals/automerge-wasm-bundler && \
+	  git checkout wasm-bundler
+	  
+	git clone https://github.com/datalayer-contrib/automerge externals/automerge-wasm-nodejs && \
+	  cd externals/automerge-wasm-nodejs && \
+	  git checkout wasm-nodejs 
+  
+	($(CONDA_ACTIVATE) jupyter-rtc; conda info)
+
+	($(CONDA_ACTIVATE) jupyter-rtc; yarn && yarn build) 
+	  
+	($(CONDA_ACTIVATE) jupyter-rtc; pip install -e . ) 
+	
 
 build:
 	($(CONDA_ACTIVATE) jupyter-rtc)
