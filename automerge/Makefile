@@ -2,8 +2,6 @@ SHELL=/bin/zsh
 CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
 CONDA_DEACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda deactivate ; conda deactivate
 
-.ONESHELL:
-SHELL=/bin/zsh
 install:
 	-conda env create -f environment.yml 
 	
@@ -19,8 +17,6 @@ install:
 	  cd externals/automerge-wasm-nodejs && \
 	  git checkout wasm-nodejs 
   
-	($(CONDA_ACTIVATE) jupyter-rtc; conda info)
-
 	($(CONDA_ACTIVATE) jupyter-rtc; yarn && yarn build) 
 	  
 	($(CONDA_ACTIVATE) jupyter-rtc; pip install -e . ) 
