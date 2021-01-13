@@ -32,6 +32,7 @@ conda activate jupyter-rtc
 cd packages/jupyterlab-rtc
 jupyter labextension develop --overwrite
 jupyter labextension list
+cd ../..
 ```
 
 ```bash
