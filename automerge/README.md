@@ -1,5 +1,9 @@
 # Jupyter RTC with Automerge
 
+### makefile
+
+You can use the provided `Makefile` to simplify development.
+
 This folder contains (WIP) implementation for Jupyter Real Time Collaboration with [Automerge](https://github.com/automerge/automerge) CRDT Library.
 
 ```bash
