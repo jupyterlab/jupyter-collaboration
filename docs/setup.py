@@ -42,17 +42,16 @@ setup(
             "pytest-regressions",
             "beautifulsoup4",
         ],
-        # Note: This is only required for internal use
         "rtd": [
-            "myst_parser",
+            "myst_nb",
             "pyyaml",
             "docutils>=0.15",
             "sphinx",
             "sphinxcontrib-bibtex",
+            "sphinxcontrib-mermaid",
             "ipython",
             "sphinx-book-theme",
             "sphinx_tabs"
-        ],
     },
     zip_safe=True,
 )
