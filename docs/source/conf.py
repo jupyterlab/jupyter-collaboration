@@ -46,6 +46,8 @@ source_suffix = {
     ".md": "myst-nb",
 }
 
+bibtex_bibfiles = ['refs.bib']
+
 # jupyter_execute_notebooks = "force"
 jupyter_execute_notebooks = "off"
 
