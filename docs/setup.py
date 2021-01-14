@@ -52,6 +52,7 @@ setup(
             "ipython",
             "sphinx-book-theme",
             "sphinx_tabs"
+        ],
     },
     zip_safe=True,
 )
