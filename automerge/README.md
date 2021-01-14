@@ -1,11 +1,20 @@
 # Jupyter RTC with Automerge
 
+This folder contains (WIP) implementation for Jupyter Real Time Collaboration with [Automerge](https://github.com/automerge/automerge) CRDT Library.
+
 ### makefile
 
 You can use the provided `Makefile` to simplify development.
 
-This folder contains (WIP) implementation for Jupyter Real Time Collaboration with [Automerge](https://github.com/automerge/automerge) CRDT Library.
+```sh
+make install
+make build
+make start-node
+```
 
+### Run manually
+
+- install 
 ```bash
 conda env create -f environment.yml && \
   conda activate jupyter-rtc
@@ -26,6 +35,7 @@ yarn && \
 pip install -e .
 ```
 
+- build
 ```bash
 # Build JupyterLab Extension.
 conda activate jupyter-rtc
@@ -35,6 +45,7 @@ jupyter labextension list
 cd ../..
 ```
 
+- start all (equiv. of `make start-node`)
 ```bash
 # Start JupyterLab, Node.js Server and TextArea UI.
 conda activate jupyter-rtc
@@ -44,8 +55,9 @@ open http://localhost:3001
 open http://localhost:4321
 ```
 
+
+- Start JupyterLab only
 ```bash
-# Start JupyterLab.
 conda activate jupyter-rtc
 jupyter lab \
   --watch \
@@ -56,16 +68,16 @@ open http://localhost:8888/lab
 open http://localhost:8888/jupyter_rtc/default
 ```
 
+- If you don't need JupyterLab, start Jupyter Server.
 ```bash
-# If you don't need JupyterLab, start Jupyter Server.
 conda activate jupyter-rtc
 jupyter server \
   --ServerApp.jpserver_extensions="{'jupyter_rtc': True}" \
   --ServerApp.allow_origin="*"
 ```
 
+- start Start the TextArea application.
 ```bash
-# Start the TextArea application.
 conda activate jupyter-rtc
 yarn textarea:start
 open http://localhost:3001
