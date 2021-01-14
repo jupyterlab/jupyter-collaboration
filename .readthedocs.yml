@@ -4,7 +4,7 @@ python:
   version: 3
   install:
       - method: pip
-        path: ./automerge
+        path: ./docs
         extra_requirements:
           - sphinx
           - rtd
