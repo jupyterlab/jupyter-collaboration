@@ -101,7 +101,7 @@ fn apply_change(
 #[pyfunction]
 fn consume_notebook(nb: &PyDict) {
     info!("the notebook model has been sent, {}", nb);
-    let v: HashMap = nb.extract()?;
+    // let v: HashMap = nb.extract()?;
 }
 
 #[pyfunction]
