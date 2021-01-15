@@ -20,7 +20,7 @@ conda env create -f environment.yml && \
   conda activate jupyter-rtc
 cd rust && \
   make all && \
-  pip list | grep glootalk && \
+  pip list | grep jupyter_rtc_automerge && \
   cd ./../externals
 git clone https://github.com/datalayer-contrib/automerge automerge-wasm-bundler && \
   cd automerge-wasm-bundler && \

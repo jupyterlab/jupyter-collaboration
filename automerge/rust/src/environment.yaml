@@ -1,4 +1,4 @@
-name: glootalk
+name: jupyter_rtc_automerge
 channels:
   - conda-forge
   - defaults

@@ -1,6 +1,6 @@
 build/
 target/
 dist/
-glootalk/__pycache__
+jupyter_rtc_automerge/__pycache__
 *.egg-info
 Cargo.lock

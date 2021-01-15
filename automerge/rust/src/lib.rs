@@ -13,15 +13,15 @@ use simplelog::*;
 mod ambackend;
 
 
-// The main python module - glootalk
+// The main python module - jupyter_rtc_automerge
 #[pymodule]
-fn glootalk(py: Python, module: &PyModule) -> PyResult<()> {
+fn jupyter_rtc_automerge(py: Python, module: &PyModule) -> PyResult<()> {
     CombinedLogger::init(vec![
         TermLogger::new(LevelFilter::Warn, Config::default(), TerminalMode::Mixed),
         WriteLogger::new(
             LevelFilter::Info,
             Config::default(),
-            File::create("./gt_msg.log").unwrap(),
+            File::create("./jupyter_rtc_automerge.log").unwrap(),
         ),
     ])
     .unwrap();

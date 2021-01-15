@@ -1,5 +1,5 @@
 [package]
-name = "glootalk"
+name = "jupyter_rtc_automerge"
 version = "0.0.1"
 edition = "2018"
 
@@ -15,7 +15,7 @@ log = "0.4.11"
 simplelog = "*"
 
 [lib]
-name = "glootalk"
+name = "jupyter_rtc_automerge"
 crate-type = ["cdylib"]
 
 [dependencies.pyo3]
