@@ -53,7 +53,7 @@ start-ta:
 	open http://localhost:3001
 
 clean:
-	# -rm -rf automerge-wasm-*
 	-rm -rf externals/automerge-wasm-*
+	conda env remove --name jupyter-rtc
 
 all-node: clean install build start-node start-lab
