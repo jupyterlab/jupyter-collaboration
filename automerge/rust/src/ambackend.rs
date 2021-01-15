@@ -1,7 +1,7 @@
 // Python Wrappers
 use pyo3::conversion::FromPyObject;
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
+use pyo3::types::{PyBytes, PyDict};
 use pyo3::wrap_pyfunction;
 // Automerge Libraries
 use automerge_backend;
@@ -11,6 +11,13 @@ use log::{debug, info, LevelFilter};
 use simplelog::*;
 use std::any::Any;
 use std::collections::HashMap;
+use std::convert::From;
+use std::boxed::Box;
+
+struct automergeObj {
+    backend: automerge_backend::Backend,
+    doc: automerge_frontend::Frontend,
+}
 
 fn default_backend() -> automerge_backend::Backend {
     let mut backend = automerge_backend::Backend::init();
@@ -65,9 +72,20 @@ fn default_backend() -> automerge_backend::Backend {
 //    info!("vectorizing found changes...");
 //    return [0];
 //}
+#[pyfunction]
+fn init_backend(py: Python, backend_data: PyObject) -> Box<automergeObj> {
+    let mut backend = automerge_backend::Backend::init();
+    let mut doc = automerge_frontend::Frontend::new();
+    let a: = automergeObj {
+        backend: backend,
+        doc: doc,
+    };
+    return Box::new(a);
+}
 
 #[pyfunction]
-fn new_backend() -> std::vec::Vec<u8> {
+fn new_backend(pyby: PyObject, py: Python) -> std::vec::Vec<u8> {
+    let res = pyby.extract::<&PyBytes>(py).map(|b| b.as_bytes().to_vec());
     let backend = default_backend();
     let backend_data = backend.save().and_then(|data| Ok(data));
     return backend_data.unwrap();
