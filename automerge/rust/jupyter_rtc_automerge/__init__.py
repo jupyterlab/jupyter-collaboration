@@ -1,8 +1,7 @@
 from .jupyter_rtc_automerge import *
 from .nbmodel import *
 
-notebookState = {}
-
+nbState = {}
 
 def init_nb():
     notebookState.update(

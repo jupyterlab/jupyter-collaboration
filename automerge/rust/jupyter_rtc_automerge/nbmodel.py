@@ -1,4 +1,5 @@
 import nbformat
+import json
 import uuid
 
 def init_notebook():
@@ -23,4 +24,6 @@ def init_cell():
     cells = [nb]
     return cells
 
+def serialize_to_bytes(nb):
+    return json.dumps(nb).encode('utf-8')
 

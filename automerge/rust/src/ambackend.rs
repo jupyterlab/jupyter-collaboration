@@ -69,9 +69,7 @@ fn default_backend() -> automerge_backend::Backend {
 #[pyfunction]
 fn new_backend() -> std::vec::Vec<u8> {
     let backend = default_backend();
-
     let backend_data = backend.save().and_then(|data| Ok(data));
-
     return backend_data.unwrap();
 }
 
@@ -83,18 +81,14 @@ fn apply_change(
     let mut backend = automerge_backend::Backend::load(backend_data)
         .and_then(|back| Ok(back))
         .unwrap();
-
     let change = automerge_backend::Change::from_bytes(change_data)
         .and_then(|c| Ok(c))
         .unwrap();
-
     backend
         .apply_changes(vec![change])
         .and_then(|patch| Ok(patch))
         .unwrap();
-
     let backend_data = backend.save().and_then(|data| Ok(data));
-
     return backend_data.unwrap();
 }
 
