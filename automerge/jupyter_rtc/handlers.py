@@ -8,7 +8,7 @@ from tornado.ioloop import IOLoop
 
 import json
 
-import glootalk
+import jupyter_rtc_automerge as jrtcam
 
 
 class RouteHandler(APIHandler):
@@ -41,7 +41,7 @@ class AutomergeRoom:
 
         self.docname = doc
         self.websockets = []
-        self.automerge_backend = glootalk.automerge.new_backend()
+        self.automerge_backend = jrtcam.automerge.new_backend()
         print("Room init, document : ", self.automerge_backend)
 
     def add_websocket(self, ws):
@@ -51,12 +51,12 @@ class AutomergeRoom:
         self.websockets.remove(ws)
 
     def get_changes(self):
-        return glootalk.automerge.get_changes(self.automerge_backend)
+        return jrtcam.automerge.get_changes(self.automerge_backend)
 
     def dispatch_message(self, message, sender=None):
 
         # TODO : forward the message to the automerge document
-        self.automerge_backend = glootalk.automerge.apply_change(
+        self.automerge_backend = jrtcam.automerge.apply_change(
             self.automerge_backend, message)
 
         for ws in self.websockets:

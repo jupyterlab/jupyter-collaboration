@@ -5,9 +5,9 @@ CONDA_DEACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda dea
 install:
 	-conda env create -f environment.yml 
 	
-	cd rust && \
+	($(CONDA_ACTIVATE) jupyter-rtc; cd rust && \
 	  make all && \
-	  pip list | grep glootalk
+	  pip list | grep jupyter-rtc-automerge )
 
 	git clone https://github.com/datalayer-contrib/automerge externals/automerge-wasm-bundler && \
 	  cd externals/automerge-wasm-bundler && \
@@ -53,7 +53,7 @@ start-ta:
 	open http://localhost:3001
 
 clean:
-	# -rm -rf automerge-wasm-*
 	-rm -rf externals/automerge-wasm-*
+	conda env remove --name jupyter-rtc
 
 all-node: clean install build start-node start-lab

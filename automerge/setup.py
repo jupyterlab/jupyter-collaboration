@@ -11,7 +11,7 @@ setup_args = dict(
     python_requires='>=3.8',
     install_requires=[
         'jupyter_server',
-        'glootalk',
+        'jupyter-rtc-automerge',
     ],
     include_package_data=True,
 )

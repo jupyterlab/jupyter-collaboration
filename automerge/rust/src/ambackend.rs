@@ -1,11 +1,16 @@
 // Python Wrappers
+use pyo3::conversion::FromPyObject;
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 use pyo3::wrap_pyfunction;
-
 // Automerge Libraries
 use automerge_backend;
 use automerge_frontend;
 use automerge_protocol;
+use log::{debug, info, LevelFilter};
+use simplelog::*;
+use std::any::Any;
+use std::collections::HashMap;
 
 fn default_backend() -> automerge_backend::Backend {
     let mut backend = automerge_backend::Backend::init();
@@ -56,6 +61,11 @@ fn default_backend() -> automerge_backend::Backend {
     return backend;
 }
 
+//fn vectorize_changes(a: std::collections::HashMap<K, V>) -> std::vec::Vec<u8> {
+//    info!("vectorizing found changes...");
+//    return [0];
+//}
+
 #[pyfunction]
 fn new_backend() -> std::vec::Vec<u8> {
     let backend = default_backend();
@@ -89,6 +99,12 @@ fn apply_change(
 }
 
 #[pyfunction]
+fn consume_notebook(nb: &PyDict) {
+    info!("the notebook model has been sent, {}", nb);
+    // let v: HashMap = nb.extract()?;
+}
+
+#[pyfunction]
 fn get_changes(backend_data: std::vec::Vec<u8>) -> std::vec::Vec<std::vec::Vec<u8>> {
     let backend = automerge_backend::Backend::load(backend_data)
         .and_then(|back| Ok(back))
@@ -109,5 +125,6 @@ pub fn init_submodule(module: &PyModule) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(new_backend, module)?)?;
     module.add_function(wrap_pyfunction!(apply_change, module)?)?;
     module.add_function(wrap_pyfunction!(get_changes, module)?)?;
+    module.add_function(wrap_pyfunction!(consume_notebook, module)?)?;
     Ok(())
 }

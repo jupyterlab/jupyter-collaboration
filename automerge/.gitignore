@@ -1,5 +1,5 @@
 externals/automerge
-externals/glootalk
+externals/jupyter_rtc_automerge
 
 *.bundle.*
 lib/
