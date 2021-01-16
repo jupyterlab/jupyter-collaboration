@@ -59,9 +59,12 @@ class AutomergeRoom:
         self.automerge_backend = jrtcam.automerge.apply_change(
             self.automerge_backend, message)
 
+        payload = json.dumps([list(message)])
+        #print("DISPATCH PAYLOAD : ", payload)
+
         for ws in self.websockets:
             if ws != sender:
-                ws.write_message(message, binary=True)
+                ws.write_message(payload)
 
 
 class AutomergeWsHandler(WebSocketMixin, WebSocketHandler, ExtensionHandlerMixin, JupyterHandler):
@@ -82,9 +85,9 @@ class AutomergeWsHandler(WebSocketMixin, WebSocketHandler, ExtensionHandlerMixin
               shared_automerge_rooms[doc].automerge_backend)
 
         changes = shared_automerge_rooms[doc].get_changes()
-        for c in changes:
-            message = bytes(c)
-            self.write_message(message, binary=True)
+        payload = json.dumps(changes)
+        #print("OPEN PAYLOAD : ", payload)
+        self.write_message(payload)
 
     def on_message(self, message,  *args, **kwargs):
 
@@ -94,7 +97,7 @@ class AutomergeWsHandler(WebSocketMixin, WebSocketHandler, ExtensionHandlerMixin
                 f"WEIRD : on_message for {doc} not in shared_automerge_rooms")
             return
 
-        print(f"\nDEBUG message : {message}")
+        #print(f"\nDEBUG message : {message}")
 
         shared_automerge_rooms[doc].dispatch_message(message, sender=self)
 
