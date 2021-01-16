@@ -2,6 +2,8 @@
 /**
  * A SimpleDiff describes a change on a String.
  *
+ * Taken from https://github.com/yjs/yjs repository
+ * 
  * @example
  * console.log(a) // the old value
  * console.log(b) // the updated value

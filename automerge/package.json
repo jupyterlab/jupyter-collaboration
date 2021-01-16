@@ -28,7 +28,7 @@
     "jupyter-server:start": "fkill -s :8989 && jupyter server --port 8989 --ServerApp.jpserver_extensions=\"{'jupyter_rtc': True}\"  --ServerApp.token= --ServerApp.allow_origin='*'",
     "jupyter-server:wait-start": "npm-run-all --parallel jupyter-server:start jupyter-server:wait",
     "jupyter-server:wait": "wait-on tcp:8989",
-    "textarea:automerge": "npm-run-all --parallel jupyter-server:start automerge:performance:start-server textarea:automerge:wait-start",
+    "textarea:automerge": "npm-run-all --parallel jupyter-server:start automerge:start-server textarea:automerge:wait-start",
     "textarea:automerge-rs": "npm-run-all --parallel jupyter-server:start textarea:automerge:start",
     "textarea:automerge:start": "yarn workspace @jupyterlab/automerge-textarea run start",
     "textarea:automerge:wait-start": "npm-run-all automerge:wait textarea:automerge:start",
