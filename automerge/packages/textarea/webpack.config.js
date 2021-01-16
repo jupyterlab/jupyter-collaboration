@@ -11,7 +11,7 @@ module.exports = {
   output: {
     publicPath: "http://localhost:3001/",
 //    libraryTarget: 'umd',
-    filename: 'datalayer-exp-rtc.js',
+    filename: 'jupyter-rtc-texarea.js',
   },
   devtool: 'inline-source-map',
   resolve: {
