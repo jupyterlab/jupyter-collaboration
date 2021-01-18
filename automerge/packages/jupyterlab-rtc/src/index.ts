@@ -71,7 +71,6 @@ class Rtc {
       this.ws.onmessage = (message: any) => {
         if (message.data) {
 
-          // const data = new Uint8Array(message.data);
           const data = JSON.parse(message.data);
           const changedDoc = applyChanges(this.rtcCell, data);
           this.rtcCell = changedDoc;
@@ -113,7 +112,6 @@ class Rtc {
       this.ws.onmessage = (message: any) => {
         if (message.data) {
 
-          // const data = new Uint8Array(message.data);
           const data = JSON.parse(message.data);
           const changedDoc = applyChanges(this.rtcEditor, data);
           this.rtcEditor = changedDoc;
