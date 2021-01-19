@@ -1,0 +1,26 @@
+session_name: rtc
+windows:
+- layout: c380,167x45,0,0,3
+  options:
+    automatic-rename: 'off'
+  panes:
+  - focus: 'true'
+    shell_command: nvim
+  start_directory: /Users/anirrudhkrishnan/Workspace/rtc/automerge/rust
+  window_name: dev
+- focus: 'true'
+  layout: c37e,167x45,0,0,1
+  options:
+    automatic-rename: 'off'
+  panes:
+  - focus: 'true'
+    shell_command: zsh
+  start_directory: /Users/anirrudhkrishnan/Workspace/rtc/automerge/rust
+  window_name: compile
+- layout: c37f,167x45,0,0,2
+  options: {}
+  panes:
+  - focus: 'true'
+    shell_command: zsh
+  start_directory: /Users/anirrudhkrishnan/Workspace/rtc/automerge/rust
+  window_name: zsh

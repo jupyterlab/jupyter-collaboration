@@ -10,9 +10,9 @@ use automerge_protocol;
 use log::{debug, info, LevelFilter};
 use simplelog::*;
 use std::any::Any;
+use std::boxed::Box;
 use std::collections::HashMap;
 use std::convert::From;
-use std::boxed::Box;
 
 struct automergeObj {
     backend: automerge_backend::Backend,
@@ -73,20 +73,24 @@ fn default_backend() -> automerge_backend::Backend {
 //    return [0];
 //}
 #[pyfunction]
-fn init_backend(py: Python, backend_data: PyObject) -> Box<automergeObj> {
+fn init_backend(py: Python, backend_data: PyObject) {
     let mut backend = automerge_backend::Backend::init();
     let mut doc = automerge_frontend::Frontend::new();
-    let a: = automergeObj {
-        backend: backend,
-        doc: doc,
-    };
-    return Box::new(a);
+    return;
 }
 
 #[pyfunction]
 fn new_backend(pyby: PyObject, py: Python) -> std::vec::Vec<u8> {
     let res = pyby.extract::<&PyBytes>(py).map(|b| b.as_bytes().to_vec());
-    let backend = default_backend();
+    info!("The bytes extracted were, {:?}", res);
+    let a = vec![0u8, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    let change = automerge_backend::Change::from_bytes(a.clone()).unwrap();
+    //    let backend = default_backend();
+    let mut backend = automerge_backend::Backend::init();
+    backend
+        .apply_changes(vec![change])
+        .and_then(|patch| Ok(patch));
+
     let backend_data = backend.save().and_then(|data| Ok(data));
     return backend_data.unwrap();
 }
