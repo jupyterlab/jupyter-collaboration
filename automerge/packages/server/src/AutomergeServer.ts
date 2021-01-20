@@ -19,12 +19,14 @@ export type Doc = {
   textArea: Text;
 };
 
-const send = (conn, doc: WSSharedDoc, changes: any[]) => {
+const send = (conn, doc: WSSharedDoc, payload: any) => {
   if (conn.readyState !== wsReadyStateConnecting && conn.readyState !== wsReadyStateOpen) {
     onClose(doc, conn, null)
   }
   try {
-    changes.map(change => conn.send(change, err => { err != null && onClose(doc, conn, err) }))    
+
+    conn.send(payload, (err: any) => { err != null && onClose(doc, conn, err) })
+
   } catch (e) {
     onClose(doc, conn, e)
   }
@@ -41,9 +43,13 @@ class WSSharedDoc {
 }
 
 const onMessage = (conn, docName, sharedDoc: WSSharedDoc, message: any) => {
-  const change = new Uint8Array(message)
-  sharedDoc.doc = Automerge.applyChanges(sharedDoc.doc, [change])
-  sharedDoc.conns.forEach((_, conn) => send(conn, sharedDoc, [message]))
+
+  const data = JSON.parse(message);
+  data.forEach((chunk) => {
+    sharedDoc.doc = Automerge.applyChanges(sharedDoc.doc, [new Uint8Array(Object.values(chunk))])
+  });
+
+  sharedDoc.conns.forEach((_, cnx) => { if (cnx != conn) { send(cnx, sharedDoc, message) } })
 }
 
 export const getSharedDoc = (docName: string): WSSharedDoc => {
@@ -72,11 +78,13 @@ const onClose = (conn, doc: WSSharedDoc, err) => {
   conn.close()
 }
 
-const setupWSConnection = (conn, req, { docName = req.url.slice(1).split('?')[0] as string} = {}) => {
+const setupWSConnection = (conn, req, { docName = req.url.slice(1).split('?')[0] as string } = {}) => {
   conn.binaryType = 'arraybuffer'
   const sharedDoc = getSharedDoc(docName)
   const changes = Automerge.getChanges(Automerge.init<Doc>(), sharedDoc.doc)
-  send(conn, sharedDoc, changes)
+
+  var payload = JSON.stringify(changes);
+  send(conn, sharedDoc, payload)
   sharedDoc.conns.set(conn, new Set())
   conn.on('message', message => onMessage(conn, docName, sharedDoc, message))
   conn.on('close', err => onClose(conn, sharedDoc, err))

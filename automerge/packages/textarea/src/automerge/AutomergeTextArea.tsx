@@ -36,9 +36,15 @@ const AutomergeTextAreaPerf = (props: {docId: string}) => {
     // wsRef.current = new WebSocket('ws://localhost:8989/datalayer_rtc/proxy?port=4321&doc=automerge-room2');
     wsRef.current.binaryType = 'arraybuffer';
     wsRef.current.onmessage = (message: any) => {
+
       if (message.data) {
-        const data = new Uint8Array(message.data);
-        const changedDoc = applyChanges(docRef.current, [data]);
+
+        const data = JSON.parse(message.data);
+        var changedDoc = docRef.current;
+        data.forEach((chunk) => {
+          changedDoc = applyChanges(changedDoc, [new Uint8Array(Object.values(chunk))]);
+        });
+
         setDoc(changedDoc);
         console.log("changedDoc : ", changedDoc);
       }
@@ -53,7 +59,8 @@ const AutomergeTextAreaPerf = (props: {docId: string}) => {
     const newDoc = applyInput(doc, diff);
     setDoc(newDoc);
     const changes = getChanges(doc, newDoc);
-    wsRef.current.send((changes[0] as any));
+    var payload = JSON.stringify(changes);
+    wsRef.current.send((payload as any));
   }
 
   const handleShowHistory = () => {

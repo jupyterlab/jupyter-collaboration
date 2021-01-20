@@ -70,8 +70,9 @@ class Rtc {
       this.ws.binaryType = 'arraybuffer';
       this.ws.onmessage = (message: any) => {
         if (message.data) {
-          const data = new Uint8Array(message.data);
-          const changedDoc = applyChanges(this.rtcCell, [data]);
+
+          const data = JSON.parse(message.data);
+          const changedDoc = applyChanges(this.rtcCell, data);
           this.rtcCell = changedDoc;
           const text = this.rtcCell.textArea.toString()
           if (this.cell.model.value.text !== text) {
@@ -110,8 +111,9 @@ class Rtc {
       this.ws.binaryType = 'arraybuffer';
       this.ws.onmessage = (message: any) => {
         if (message.data) {
-          const data = new Uint8Array(message.data);
-          const changedDoc = applyChanges(this.rtcEditor, [data]);
+
+          const data = JSON.parse(message.data);
+          const changedDoc = applyChanges(this.rtcEditor, data);
           this.rtcEditor = changedDoc;
           const text = this.rtcEditor.textArea.toString()
           if (this.fileEditor.model.value.text !== text) {

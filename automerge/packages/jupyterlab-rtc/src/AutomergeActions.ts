@@ -16,8 +16,13 @@ export const initDocumentText = (): Doc => {
   )
 }
 
-export const applyChanges = (doc: Doc, changes: Uint8Array[]) => {
-  return Automerge.applyChanges(doc, changes);
+export const applyChanges = (doc: Doc, changes: Array<Array<number>>): Doc => {
+
+  changes.forEach((chunk) => {
+    doc = Automerge.applyChanges(doc, [new Uint8Array(chunk)]);
+  });
+
+  return doc;
 }
 
 export const getChanges = (oldDoc: Doc, newDoc: Doc) => {
