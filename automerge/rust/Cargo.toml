@@ -7,6 +7,7 @@ edition = "2018"
 tungstenite = "0.11.1"
 tokio-tungstenite = "*"
 tokio = "0.3.6"
+serde_json =  "*"
 automerge-backend = { git = "https://github.com/automerge/automerge-rs", branch = "immutable-frontend" }
 automerge-frontend = { git = "https://github.com/automerge/automerge-rs", branch = "immutable-frontend" }
 automerge-protocol = { git = "https://github.com/automerge/automerge-rs", branch = "immutable-frontend" }

@@ -8,6 +8,7 @@ use automerge_backend;
 use automerge_frontend;
 use automerge_protocol;
 use log::{debug, info, LevelFilter};
+use serde_json;
 use simplelog::*;
 use std::any::Any;
 use std::boxed::Box;
@@ -68,10 +69,6 @@ fn default_backend() -> automerge_backend::Backend {
     return backend;
 }
 
-//fn vectorize_changes(a: std::collections::HashMap<K, V>) -> std::vec::Vec<u8> {
-//    info!("vectorizing found changes...");
-//    return [0];
-//}
 #[pyfunction]
 fn init_backend(py: Python, backend_data: PyObject) {
     let mut backend = automerge_backend::Backend::init();
@@ -81,16 +78,7 @@ fn init_backend(py: Python, backend_data: PyObject) {
 
 #[pyfunction]
 fn new_backend(pyby: PyObject, py: Python) -> std::vec::Vec<u8> {
-    let res = pyby.extract::<&PyBytes>(py).map(|b| b.as_bytes().to_vec());
-    info!("The bytes extracted were, {:?}", res);
-    let a = vec![0u8, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    let change = automerge_backend::Change::from_bytes(a.clone()).unwrap();
-    //    let backend = default_backend();
-    let mut backend = automerge_backend::Backend::init();
-    backend
-        .apply_changes(vec![change])
-        .and_then(|patch| Ok(patch));
-
+    let backend = default_backend();
     let backend_data = backend.save().and_then(|data| Ok(data));
     return backend_data.unwrap();
 }
@@ -115,9 +103,12 @@ fn apply_change(
 }
 
 #[pyfunction]
-fn consume_notebook(nb: &PyDict) {
-    info!("the notebook model has been sent, {}", nb);
-    // let v: HashMap = nb.extract()?;
+fn consume_notebook(nb: PyObject, py: Python) {
+    let res = pyby.extract::<&PyDict>(py).unwrap();
+    let res_str = res.to_string();
+    let res_dict = res.into_iter();
+    info!("The dictionary extracted was: {:?}", res);
+    info!("The string extracted from nb: {:?}", res_str);
 }
 
 #[pyfunction]
