@@ -104,7 +104,7 @@ fn apply_change(
 
 #[pyfunction]
 fn consume_notebook(nb: PyObject, py: Python) {
-    let res = pyby.extract::<&PyDict>(py).unwrap();
+    let res = nb.extract::<&PyDict>(py).unwrap();
     let res_str = res.to_string();
     let res_dict = res.into_iter();
     info!("The dictionary extracted was: {:?}", res);
