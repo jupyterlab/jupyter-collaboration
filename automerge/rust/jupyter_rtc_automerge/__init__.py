@@ -6,7 +6,7 @@ notebookState = {}
 
 def init_nb():
     notebookState.update(
-        {'nb': init_notebook(), 'shared': automerge.new_backend()})
+        {'nb': init_notebook(), 'shared': automerge.new_document()})
     return
 
 

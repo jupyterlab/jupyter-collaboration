@@ -67,11 +67,9 @@ fn default_backend() -> automerge_backend::Backend {
 //}
 
 #[pyfunction]
-fn new_backend() -> std::vec::Vec<u8> {
+fn new_document() -> std::vec::Vec<u8> {
     let backend = default_backend();
-
     let backend_data = backend.save().and_then(|data| Ok(data));
-
     return backend_data.unwrap();
 }
 
@@ -122,7 +120,7 @@ fn get_changes(backend_data: std::vec::Vec<u8>) -> std::vec::Vec<std::vec::Vec<u
 }
 
 pub fn init_submodule(module: &PyModule) -> PyResult<()> {
-    module.add_function(wrap_pyfunction!(new_backend, module)?)?;
+    module.add_function(wrap_pyfunction!(new_document, module)?)?;
     module.add_function(wrap_pyfunction!(apply_change, module)?)?;
     module.add_function(wrap_pyfunction!(get_changes, module)?)?;
     module.add_function(wrap_pyfunction!(consume_notebook, module)?)?;
