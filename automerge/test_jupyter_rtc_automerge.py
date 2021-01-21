@@ -2,7 +2,7 @@ import jupyter_rtc_automerge as jrtcam
 
 
 # serialized backend
-backend = jrtcam.automerge.new_backend()
+backend = jrtcam.automerge.new_document()
 
 changes = jrtcam.automerge.get_changes(backend)
 

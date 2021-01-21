@@ -41,7 +41,7 @@ class AutomergeRoom:
 
         self.docname = doc
         self.websockets = []
-        self.automerge_backend = jrtcam.automerge.new_backend()
+        self.automerge_backend = jrtcam.automerge.new_document()
         print("Room init, document : ", self.automerge_backend)
 
     def add_websocket(self, ws):
