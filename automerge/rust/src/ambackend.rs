@@ -15,11 +15,6 @@ use std::boxed::Box;
 use std::collections::HashMap;
 use std::convert::From;
 
-struct automergeObj {
-    backend: automerge_backend::Backend,
-    doc: automerge_frontend::Frontend,
-}
-
 fn default_backend() -> automerge_backend::Backend {
     let mut backend = automerge_backend::Backend::init();
     let mut doc = automerge_frontend::Frontend::new();
