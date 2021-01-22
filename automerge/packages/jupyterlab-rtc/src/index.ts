@@ -13,7 +13,7 @@ import { IObservableString } from '@jupyterlab/observables';
 
 // import { CodeMirrorEditor } from '@jupyterlab/codemirror';
 
-import Automerge from "automerge-wasm-bundler";
+import Automerge from "automerge";
 
 import {
   Doc,

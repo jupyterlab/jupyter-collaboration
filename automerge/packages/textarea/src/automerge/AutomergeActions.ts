@@ -1,4 +1,4 @@
-import Automerge, { Text } from "automerge-wasm-bundler";
+import Automerge, { Text } from "automerge";
 
 // import CodecFunctions from 'automerge-wasm-bundler/backend/columnar'
 // import wasmBackend from 'automerge-backend-wasm-bundler';

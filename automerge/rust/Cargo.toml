@@ -7,9 +7,9 @@ edition = "2018"
 tungstenite = "0.11.1"
 tokio-tungstenite = "*"
 tokio = "0.3.6"
-automerge-backend = { git = "https://github.com/automerge/automerge-rs", branch = "immutable-frontend" }
-automerge-frontend = { git = "https://github.com/automerge/automerge-rs", branch = "immutable-frontend" }
-automerge-protocol = { git = "https://github.com/automerge/automerge-rs", branch = "immutable-frontend" }
+automerge-backend = { git = "https://github.com/datalayer-contrib/automerge-rs", branch = "immutable-frontend-72be2" }
+automerge-frontend = { git = "https://github.com/datalayer-contrib/automerge-rs", branch = "immutable-frontend-72be2" }
+automerge-protocol = { git = "https://github.com/datalayer-contrib/automerge-rs", branch = "immutable-frontend-72be2" }
 
 log = "0.4.11"
 simplelog = "*"

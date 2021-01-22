@@ -1,4 +1,4 @@
-import Automerge, { Text } from "automerge-wasm-bundler";
+import Automerge, { Text } from "automerge";
 
 export type Doc = {
   docId: string;

@@ -10,7 +10,7 @@
     "serve": "serve dist -p 3002"
   },
   "dependencies": {
-    "automerge-wasm-bundler": "file:./../../externals/automerge-wasm-bundler",
+    "automerge": "file:./../../externals/automerge",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
   },
