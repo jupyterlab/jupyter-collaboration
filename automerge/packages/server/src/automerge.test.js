@@ -1,7 +1,7 @@
 const assert = require('assert')
 
 const { assertEqualsOneOf } = require('./helpers')
-const { decodeChange } = require('automerge-wasm-node/backend/columnar')
+const { decodeChange } = require('automerge/backend/columnar')
 
 const ROOT_ID = '00000000-0000-0000-0000-000000000000'
 const UUID_PATTERN = /^[0-9a-f]{32}$/
@@ -9,9 +9,9 @@ const OPID_PATTERN = /^[0-9]+@[0-9a-f]{32}$/
 
 const path = require('path')
 
-import Automerge from 'automerge-wasm-node'
+import Automerge from 'automerge'
 
-const CodecFunctions = require('automerge-wasm-node/backend/columnar')
+const CodecFunctions = require('automerge/backend/columnar')
 
 beforeAll(() => {
   if (process.env.WASM_BACKEND_PATH) {

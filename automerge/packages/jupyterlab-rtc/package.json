@@ -51,7 +51,7 @@
     "@jupyterlab/mainmenu": "^3.0.0",
     "@jupyterlab/notebook": "^3.0.0",
     "@jupyterlab/services": "^6.0.0",
-    "automerge-wasm-bundler": "file:./../../externals/automerge-wasm-bundler"
+    "automerge": "file:./../../externals/automerge"
   },
   "devDependencies": {
     "@jupyterlab/builder": "^3.0.0",
