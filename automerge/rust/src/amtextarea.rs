@@ -42,7 +42,7 @@ fn default_document(doc_id: &str, default_text: &str) -> automerge_backend::Back
     // the textArea key contains the content of the client-side text area
     let change = automerge_frontend::LocalChange::set(
         automerge_frontend::Path::root().key("textArea"),
-        automerge_frontend::Value::Text("Hello".chars().collect()),
+        automerge_frontend::Value::Text(default_text.chars().collect()),
     );
 
     let change_request = doc_frontend
