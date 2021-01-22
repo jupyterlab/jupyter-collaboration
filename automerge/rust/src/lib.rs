@@ -10,7 +10,7 @@ use pyo3::prelude::*;
 use log::{ LevelFilter};
 use simplelog::*;
 
-mod ambackend;
+mod amtextarea;
 
 
 // The main python module - jupyter_rtc_automerge
@@ -27,7 +27,7 @@ fn jupyter_rtc_automerge(py: Python, module: &PyModule) -> PyResult<()> {
     .unwrap();
 
     let submod = PyModule::new(py, "automerge")?;
-    ambackend::init_submodule(submod)?;
+    amtextarea::init_submodule(submod)?;
     module.add_submodule(submod)?;
     Ok(())
 }

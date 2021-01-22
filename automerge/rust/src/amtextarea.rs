@@ -12,29 +12,29 @@ use simplelog::*;
 use std::any::Any;
 use std::collections::HashMap;
 
-fn default_backend() -> automerge_backend::Backend {
-    let mut backend = automerge_backend::Backend::init();
-    let mut doc = automerge_frontend::Frontend::new();
+fn default_document(doc_id: &str, default_text: &str) -> automerge_backend::Backend {
+    let mut doc_backend = automerge_backend::Backend::init();
+    let mut doc_frontend = automerge_frontend::Frontend::new();
 
     let change = automerge_frontend::LocalChange::set(
         automerge_frontend::Path::root().key("docId"),
         automerge_frontend::Value::Primitive(automerge_protocol::ScalarValue::Str(
-            "automerge-room".to_string(),
+            doc_id.to_string(),
         )),
     );
 
-    let change_request = doc
+    let change_request = doc_frontend
         .change::<_, automerge_frontend::InvalidChangeRequest>(
             Some("set root object".into()),
-            |doc| {
-                doc.add_change(change)?;
+            |doc_frontend| {
+                doc_frontend.add_change(change)?;
                 Ok(())
             },
         )
         .unwrap();
 
     // let patch =
-    backend
+    doc_backend
         .apply_local_change(change_request.unwrap())
         .unwrap()
         .0;
@@ -45,40 +45,32 @@ fn default_backend() -> automerge_backend::Backend {
         automerge_frontend::Value::Text("Hello".chars().collect()),
     );
 
-    let change_request = doc
-        .change::<_, automerge_frontend::InvalidChangeRequest>(Some("".into()), |doc| {
-            doc.add_change(change)?;
+    let change_request = doc_frontend
+        .change::<_, automerge_frontend::InvalidChangeRequest>(Some("".into()), |doc_frontend| {
+            doc_frontend.add_change(change)?;
             Ok(())
         })
         .unwrap();
 
     // let patch =
-    backend
+    doc_backend
         .apply_local_change(change_request.unwrap())
         .unwrap()
         .0;
 
-    return backend;
-}
-
-//fn vectorize_changes(a: std::collections::HashMap<K, V>) -> std::vec::Vec<u8> {
-//    info!("vectorizing found changes...");
-//    return [0];
-//}
-
-#[pyfunction]
-fn new_document() -> std::vec::Vec<u8> {
-    let backend = default_backend();
-    let backend_data = backend.save().and_then(|data| Ok(data));
-    return backend_data.unwrap();
+    return doc_backend;
 }
 
 #[pyfunction]
-fn apply_change(
-    backend_data: std::vec::Vec<u8>,
-    change_data: std::vec::Vec<u8>,
-) -> std::vec::Vec<u8> {
-    let mut backend = automerge_backend::Backend::load(backend_data)
+fn new_document(doc_id: &str, default_text: &str) -> std::vec::Vec<u8> {
+    let doc = default_document(doc_id, default_text);
+    let doc_data = doc.save().and_then(|data| Ok(data));
+    return doc_data.unwrap();
+}
+
+#[pyfunction]
+fn apply_change(doc: std::vec::Vec<u8>, change_data: std::vec::Vec<u8>) -> std::vec::Vec<u8> {
+    let mut backend = automerge_backend::Backend::load(doc)
         .and_then(|back| Ok(back))
         .unwrap();
 
@@ -91,9 +83,9 @@ fn apply_change(
         .and_then(|patch| Ok(patch))
         .unwrap();
 
-    let backend_data = backend.save().and_then(|data| Ok(data));
+    let doc = backend.save().and_then(|data| Ok(data));
 
-    return backend_data.unwrap();
+    return doc.unwrap();
 }
 
 #[pyfunction]
@@ -103,8 +95,8 @@ fn consume_notebook(nb: &PyDict) {
 }
 
 #[pyfunction]
-fn get_changes(backend_data: std::vec::Vec<u8>) -> std::vec::Vec<std::vec::Vec<u8>> {
-    let backend = automerge_backend::Backend::load(backend_data)
+fn get_changes(doc: std::vec::Vec<u8>) -> std::vec::Vec<std::vec::Vec<u8>> {
+    let backend = automerge_backend::Backend::load(doc)
         .and_then(|back| Ok(back))
         .unwrap();
 
