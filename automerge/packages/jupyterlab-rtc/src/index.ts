@@ -55,7 +55,8 @@ class Rtc {
         });
         const changes = getChanges(this.rtcCell, newDoc);
         this.rtcCell = newDoc;
-        this.ws.send((changes[0] as any));
+        var payload = JSON.stringify(changes);
+        this.ws.send((payload as any));
       }
     }
   }
