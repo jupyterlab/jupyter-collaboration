@@ -55,15 +55,16 @@ class AutomergeRoom:
 
     def dispatch_message(self, message, sender=None):
 
+        message_bytes = list(json.loads(message)[0].values())
+        
         # Forward the message to the automerge document
         self.automerge_backend = jrtcam.automerge.apply_change(
-            self.automerge_backend, message)
+            self.automerge_backend, message_bytes)
 
-        payload = json.dumps([list(message)])
-
+        # forward the message to other clients
         for ws in self.websockets:
             if ws != sender:
-                ws.write_message(payload)
+                ws.write_message(message)
 
 
 class AutomergeWsHandler(WebSocketMixin, WebSocketHandler, ExtensionHandlerMixin, JupyterHandler):
