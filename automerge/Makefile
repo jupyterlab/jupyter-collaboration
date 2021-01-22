@@ -30,17 +30,26 @@ install:
 		cd externals/jupyter-auth && \
 		pip install -e . && \
 		jupyter labextension develop --overwrite)
-  
+
 	($(CONDA_ACTIVATE) jupyter-rtc; cd externals/automerge && yarn && yarn build)
+
 	($(CONDA_ACTIVATE) jupyter-rtc; yarn && yarn build)
 	# automerge should only be present in the top node_modules.
 	-rm -fr packages/jupyterlab-rtc/node_modules/automerge*
 	-rm -fr packages/server/node_modules/automerge*
 	-rm -fr packages/textarea/node_modules/automerge*
+
 	($(CONDA_ACTIVATE) jupyter-rtc; pip install -e .)
-	# uninstall jupyter-server present in the environment.
+
+	# uninstall jupyter-server from the environment.
 	($(CONDA_ACTIVATE) jupyter-rtc; pip uninstall -y jupyter-server)
 	($(CONDA_ACTIVATE) jupyter-rtc; pip install git+https://github.com/datalayer-contrib/jupyter-server.git@sessions)
+#	($(CONDA_ACTIVATE) jupyter-rtc; \
+		git clone https://github.com/datalayer-contrib/jupyter-server externals/jupyter-server && \
+		cd externals/jupyter-server && \
+		git checkout sessions && \
+		pip install -e .)
+
 	($(CONDA_ACTIVATE) jupyter-rtc; cd packages/jupyterlab-rtc && jupyter labextension develop --overwrite)
 	($(CONDA_ACTIVATE) jupyter-rtc; cd packages/jupyterlab-rtc && jupyter labextension list)
 
