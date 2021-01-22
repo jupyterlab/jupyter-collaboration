@@ -19,7 +19,7 @@ export const initDocumentText = (): Doc => {
 export const applyChanges = (doc: Doc, changes: Array<Array<number>>): Doc => {
 
   changes.forEach((chunk) => {
-    doc = Automerge.applyChanges(doc, [new Uint8Array(chunk)]);
+    doc = Automerge.applyChanges(doc, [new Uint8Array(Object.values(chunk))]);
   });
 
   return doc;
