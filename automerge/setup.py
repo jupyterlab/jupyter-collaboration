@@ -10,7 +10,6 @@ setup_args = dict(
     description='Jupyter Server Extension for Realtime Collaboration',
     python_requires='>=3.8',
     install_requires=[
-        'jupyter_server',
         'jupyter-rtc-automerge',
     ],
     include_package_data=True,

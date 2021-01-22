@@ -5,9 +5,8 @@ This folder contains (WIP) implementation for Jupyter Real Time Collaboration wi
 You can use the provided `Makefile` to simplify development.
 
 ```bash
-# Install and build the jupyter-rtc development environment.
+# Install the jupyter-rtc development environment.
 make install
-make build
 ```
 
 You are now ready to develop. For this, launch the servers.
