@@ -4,9 +4,10 @@ channels:
   - defaults
 dependencies:
   - python=3.9
-  - jupyterlab=3.0.1
+  - jupyterlab=3.0.4
   - jupyter-packaging
   - nodejs=14.15.1
+  - pycurl
   - rust
   - setuptools-rust
   - twine
