@@ -22,10 +22,13 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+__pycache__
+Cargo.lock
 .Python
 build/
 develop-eggs/
 dist/
+target
 downloads/
 eggs/
 .eggs/
@@ -39,6 +42,7 @@ pip-wheel-metadata/
 share/python-wheels/
 .installed.cfg
 *.egg
+*.egg-info
 MANIFEST
 
 # PyInstaller
