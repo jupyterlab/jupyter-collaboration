@@ -1,10 +1,10 @@
-// Python Wrappers
-use pyo3::prelude::*;
-use pyo3::wrap_pyfunction;
 // Automerge Libraries
 use automerge_backend;
 use automerge_frontend;
 use automerge_protocol;
+// Python Wrappers
+use pyo3::prelude::*;
+use pyo3::wrap_pyfunction;
 
 fn default_document(doc_id: &str, default_text: &str) -> automerge_backend::Backend {
     let mut doc_backend = automerge_backend::Backend::init();
