@@ -15,11 +15,11 @@ def _jupyter_labextension_paths():
         'dest': data['name']
     }]
 
-from .app import JupyterRTCServer
+from .app import JupyterRTCApp
 
 
 def _jupyter_server_extension_paths():
     return [{
         "module": "jupyter_rtc.app",
-        "app": JupyterRTCServer
+        "app": JupyterRTCApp
     }]

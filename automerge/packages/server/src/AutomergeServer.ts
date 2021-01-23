@@ -24,9 +24,7 @@ const send = (conn, doc: WSSharedDoc, payload: any) => {
     onClose(doc, conn, null)
   }
   try {
-
     conn.send(payload, (err: any) => { err != null && onClose(doc, conn, err) })
-
   } catch (e) {
     onClose(doc, conn, e)
   }
@@ -43,12 +41,10 @@ class WSSharedDoc {
 }
 
 const onMessage = (conn, docName, sharedDoc: WSSharedDoc, message: any) => {
-
   const data = JSON.parse(message);
   data.forEach((chunk) => {
     sharedDoc.doc = Automerge.applyChanges(sharedDoc.doc, [new Uint8Array(Object.values(chunk))])
   });
-
   sharedDoc.conns.forEach((_, cnx) => { if (cnx != conn) { send(cnx, sharedDoc, message) } })
 }
 
@@ -61,7 +57,7 @@ export const getSharedDoc = (docName: string): WSSharedDoc => {
   const d1 = Automerge.change(d, doc => {
     doc.docId = docName;
     doc.textArea = new Automerge.Text();
-    doc.textArea.insertAt(0, 'h', 'e', 'l', 'l', 'o')
+    doc.textArea.insertAt(0, ...'hello from Node.js!')
     doc.textArea.deleteAt(0)
     doc.textArea.insertAt(0, 'H')
   })

@@ -1,5 +1,6 @@
 __all__ = ['__version__']
 
+
 def _fetchVersion():
     import json
     import os
@@ -15,5 +16,5 @@ def _fetchVersion():
 
     raise FileNotFoundError('Could not find package.json under dir {}'.format(HERE))
 
-__version__ = _fetchVersion()
 
+__version__ = _fetchVersion()

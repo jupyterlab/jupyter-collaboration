@@ -14,7 +14,7 @@ import {
   getHistory
 } from "./AutomergeActions";
 
-import simpleDiff from '../utils/simpleDiff'
+import simpleDiff from './simpleDiff'
 
 const AutomergeTextAreaPerf = (props: {docId: string}) => {
 
@@ -32,7 +32,7 @@ const AutomergeTextAreaPerf = (props: {docId: string}) => {
     wsRef.current = new WebSocket('ws://localhost:8888/jupyter_rtc/websocket?doc=automerge-room');
     // wsRef.current = new WebSocket('ws://localhost:4321/automerge-room');
     // wsRef.current = new WebSocket('ws://localhost:8989/proxy/4321/automerge-room');
-    // wsRef.current = new WebSocket('ws://localhost:8989/datalayer_rtc/proxy?port=4321&doc=automerge-room2');
+    // wsRef.current = new WebSocket('ws://localhost:8989/jupyter_rtc/proxy?port=4321&doc=automerge-room');
     wsRef.current.binaryType = 'arraybuffer';
     wsRef.current.onmessage = (message: any) => {
 

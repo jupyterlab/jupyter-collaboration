@@ -12,23 +12,27 @@ make install
 You are now ready to develop. For this, launch the servers.
 
 ```bash
-# Start the needed servers (jupyter and node)
+# Start the jupyter server on http://localhost:8888
+# (with jupyterlab, jupyter-auth and jupyter-rtc)
+# as a node.js server on http://localhost:4321
 make start-dev
 ```
 
 You can also start the servers separately.
 
 ```bash
-# Start only jupyterlab.
+# Start the jupyter server on http://localhost:8888
+# (with jupyterlab, jupyter-auth and jupyter-rtc)
 make start-jlab
 ```
 
 ```bash
-# Start only jupyter server.
+# Start jupyter server on http://localhost:8888
 make start-jserver
 ```
 
 ```bash
-# Start only the textarea server.
+# Start only the node.js server on http://localhost:4321
+# for textarea UI on http://localhost:3001
 make start-textarea
 ```

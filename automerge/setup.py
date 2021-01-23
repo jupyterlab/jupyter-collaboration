@@ -7,9 +7,10 @@ VERSION = '0.0.1'
 setup_args = dict(
     name='jupyter_rtc',
     version=VERSION,
-    description='Jupyter Server Extension for Realtime Collaboration',
+    description='Jupyter Extension for Realtime Collaboration',
     python_requires='>=3.8',
     install_requires=[
+        'sqlite3',
         'jupyter-rtc-automerge',
     ],
     include_package_data=True,

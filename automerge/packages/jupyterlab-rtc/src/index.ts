@@ -11,8 +11,6 @@ import { Cell, ICellModel } from "@jupyterlab/cells";
 
 import { IObservableString } from '@jupyterlab/observables';
 
-// import { CodeMirrorEditor } from '@jupyterlab/codemirror';
-
 import Automerge from "automerge";
 
 import {
@@ -23,13 +21,15 @@ import {
 } from "./AutomergeActions";
 
 class Rtc {
+  private notebookWs: WebSocket;
   private notebookTracker: INotebookTracker;
-  private editorTracker: IEditorTracker;
-  private ws: WebSocket;
-  private rtcCell: Doc;
   private cell: Cell<ICellModel>;
-  private rtcEditor: Doc;
+  private cellDoc: Doc;
+
+  private editorWs: WebSocket;
+  private editorTracker: IEditorTracker;
   private fileEditor: FileEditor;
+  private fileEditorDoc: Doc;
 
   constructor(
     notebookTracker: INotebookTracker, 
@@ -43,9 +43,9 @@ class Rtc {
   }
 
   private _onCellValueChange(value: IObservableString, change: IObservableString.IChangedArgs) {
-    if (this.rtcCell.textArea) {
-      if (this.cell.model.value.text !== this.rtcCell.textArea.toString()) {
-        const newDoc = Automerge.change(this.rtcCell, (d: Doc) => {
+    if (this.cellDoc.textArea) {
+      if (this.cell.model.value.text !== this.cellDoc.textArea.toString()) {
+        const newDoc = Automerge.change(this.cellDoc, (d: Doc) => {
           if (change.type === 'insert') {
             d.textArea.insertAt(change.start, change.value);
           }
@@ -53,30 +53,31 @@ class Rtc {
             d.textArea.deleteAt(change.start, (change.end - change.start));
           }
         });
-        const changes = getChanges(this.rtcCell, newDoc);
-        this.rtcCell = newDoc;
+        const changes = getChanges(this.cellDoc, newDoc);
+        this.cellDoc = newDoc;
+        console.log('Sending', changes);
         var payload = JSON.stringify(changes);
-        this.ws.send((payload as any));
+        this.notebookWs.send((payload as any));
       }
     }
   }
 
   private _activeCellChanged(cell: Cell<ICellModel>): void {
     if (cell != null) {
-      this.rtcCell = initDocument();
+      this.cellDoc = initDocument();
       this.cell = cell;
       this.cell.editor.model.value.changed.connect((value, change) => this._onCellValueChange(value, change));
-      this.ws = new WebSocket(`ws://localhost:8888/jupyter_rtc/websocket?doc=${cell.id}`);
-      //this.ws = new WebSocket(`ws://localhost:4321/${cell.id}`);
-      this.ws.binaryType = 'arraybuffer';
-      this.ws.onmessage = (message: any) => {
+      // this.notebookWs = new WebSocket(`ws://localhost:4321/notebook-${cell.id}`);
+      this.notebookWs = new WebSocket(`ws://localhost:8888/jupyter_rtc/websocket?doc=notebook-${cell.id}`);
+      this.notebookWs.binaryType = 'arraybuffer';
+      this.notebookWs.onmessage = (message: any) => {
         if (message.data) {
-
           const data = JSON.parse(message.data);
-          const changedDoc = applyChanges(this.rtcCell, data);
-          this.rtcCell = changedDoc;
-          const text = this.rtcCell.textArea.toString()
-          if (this.cell.model.value.text !== text) {
+          console.log('Receiving', data);
+          const changedDoc = applyChanges(this.cellDoc, data);
+          this.cellDoc = changedDoc;
+          const text = this.cellDoc.textArea.toString()
+          if (this.cell && this.cell.model.value.text !== text) {
             this.cell.model.value.text = text;
           }
         }
@@ -85,9 +86,9 @@ class Rtc {
   }
 
   private _onFileEditorValueChange(value: IObservableString, change: IObservableString.IChangedArgs) {
-    if (this.rtcEditor.textArea) {
-      if (this.fileEditor.model.value.text !== this.rtcEditor.textArea.toString()) {
-        const newDoc = Automerge.change(this.rtcEditor, (d: Doc) => {
+    if (this.fileEditorDoc.textArea) {
+      if (this.fileEditor.model.value.text !== this.fileEditorDoc.textArea.toString()) {
+        const newDoc = Automerge.change(this.fileEditorDoc, (d: Doc) => {
           if (change.type === 'insert') {
             d.textArea.insertAt(change.start, change.value);
           }
@@ -95,29 +96,32 @@ class Rtc {
             d.textArea.deleteAt(change.start, (change.end - change.start));
           }
         });
-        const changes = getChanges(this.rtcEditor, newDoc);
-        this.rtcEditor = newDoc;
-        this.ws.send((changes[0] as any));
+        const changes = getChanges(this.fileEditorDoc, newDoc);
+        this.fileEditorDoc = newDoc;
+        console.log('Sending', changes);
+        var payload = JSON.stringify(changes);
+        this.editorWs.send((payload as any));
       }
     }
   }
 
   private _setupFileEditor(fileEditor: FileEditor): void {
     if (fileEditor != null) {
-      this.rtcEditor = initDocument();
+      this.fileEditorDoc = initDocument();
       this.fileEditor = fileEditor;
       this.fileEditor.editor.model.value.changed.connect((value, change) => this._onFileEditorValueChange(value, change));
-//      this.ws = new WebSocket(`ws://localhost:8888/jupyter_rtc/websocket?doc=${cell.id}`);
-      this.ws = new WebSocket(`ws://localhost:4321/${fileEditor.id}`);
-      this.ws.binaryType = 'arraybuffer';
-      this.ws.onmessage = (message: any) => {
+//      this.editorWs = new WebSocket(`ws://localhost:4321/editor-fileEditor.id`);
+      this.editorWs = new WebSocket(`ws://localhost:8888/jupyter_rtc/websocket?doc=editor-`);
+      this.editorWs.binaryType = 'arraybuffer';
+      this.editorWs.onmessage = (message: any) => {
         if (message.data) {
-
           const data = JSON.parse(message.data);
-          const changedDoc = applyChanges(this.rtcEditor, data);
-          this.rtcEditor = changedDoc;
-          const text = this.rtcEditor.textArea.toString()
-          if (this.fileEditor.model.value.text !== text) {
+          console.log('Receiving', data);
+          const changedDoc = applyChanges(this.fileEditorDoc, data);
+          this.fileEditorDoc = changedDoc;
+          const text = this.fileEditorDoc.textArea.toString();
+          console.log(text)
+          if (this.fileEditor && this.fileEditor.model.value.text !== text) {
             this.fileEditor.model.value.text = text;
           }
         }
