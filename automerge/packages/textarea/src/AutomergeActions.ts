@@ -39,7 +39,7 @@ export const applyInput = (doc: Doc, diff: SimpleDiff) => {
   return Automerge.change(doc, (d: Doc) => {
     d.textArea.insertAt(diff.index, diff.insert);
     d.textArea.deleteAt(diff.index + 1, diff.remove);
-  })
+  });
 }
 
 export const getHistory = (doc: Doc) => {

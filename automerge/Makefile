@@ -78,6 +78,9 @@ start-textarea:
 	($(CONDA_ACTIVATE) jupyter-rtc; yarn textarea:start )
 	open http://localhost:3001
 
+kill:
+	($(CONDA_ACTIVATE) jupyter-rtc; yarn kill )
+
 clean:
 	-rm -rf externals/automerge*
 	-rm -rf externals/jupyter*

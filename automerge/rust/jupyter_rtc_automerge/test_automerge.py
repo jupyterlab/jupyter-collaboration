@@ -1,7 +1,8 @@
-import jupyter_rtc_automerge as jra
+from jupyter_rtc_automerge import textarea
 
-doc = jra.automerge.new_document("document id", "Document content. Hello !")
+doc = textarea.new_document("document id", "Document content. Hello !")
+print(doc)
 print(f"Document : {doc}")
 
-changes = jra.automerge.get_changes(doc)
+changes = textarea.get_all_changes(doc)
 print(f"Changes : {changes}")
