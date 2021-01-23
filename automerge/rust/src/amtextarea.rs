@@ -27,13 +27,11 @@ fn default_document(doc_id: &str, default_text: &str) -> automerge_backend::Back
         )
         .unwrap();
 
-    // let patch =
     doc_backend
         .apply_local_change(change_request.unwrap())
         .unwrap()
         .0;
 
-    // the textArea key contains the content of the client-side text area
     let change = automerge_frontend::LocalChange::set(
         automerge_frontend::Path::root().key("textArea"),
         automerge_frontend::Value::Text(default_text.chars().collect()),
@@ -46,7 +44,6 @@ fn default_document(doc_id: &str, default_text: &str) -> automerge_backend::Back
         })
         .unwrap();
 
-    // let patch =
     doc_backend
         .apply_local_change(change_request.unwrap())
         .unwrap()
@@ -108,20 +105,15 @@ pub fn init_submodule(module: &PyModule) -> PyResult<()> {
 
 #[test]
 fn test_new_document() {
+    // Simple test over the critical path: create document, get changes.
 
-    // Simple test over the critical path : create document, get changes.
+    // Instanciating an automerge frontend and generating a patch of changes, and checking the document changed.
+    let doc = new_document("test_doc_id", "Test content");
+    let changes = get_changes(doc);
     
-    // apply_changes will have to be tested :
-    // - here, instanciating an automerge frontend and generating a patch of changes, and checking the document changed
-    // - through an automated UI test using a text area
-    
-    let doc_data = new_document("test_doc_id", "Test content");
-    let changes_data = get_changes(doc_data);
-    
+    // There must be two changes : one to set the doc id, one to set the content.
+    assert_eq!( changes.len(), 2  );
 
-    // There must be two changes : one to set the doc id, one to set the content
-    assert_eq!( changes_data.len(), 2  );
-    
-    
+    // TODO apply_changes will have to be tested.
+
 }
-

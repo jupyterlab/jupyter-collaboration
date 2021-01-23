@@ -1,17 +1,12 @@
 // stdlib
 use std::fs::File;
-
 // Python Wrappers
 use pyo3::prelude::*;
-
-
-
 // Logging
 use log::{ LevelFilter};
 use simplelog::*;
 
 mod amtextarea;
-
 
 // The main python module - jupyter_rtc_automerge
 #[pymodule]
