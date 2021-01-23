@@ -5,7 +5,7 @@ import Automerge, { Text } from "automerge";
 // wasmBackend.initCodecFunctions(CodecFunctions)
 // Automerge.setDefaultBackend(wasmBackend);
 
-import { SimpleDiff } from '../utils/simpleDiff';
+import { SimpleDiff } from './simpleDiff';
 
 export type Doc = {
   docId: string;

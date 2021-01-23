@@ -7,7 +7,7 @@ from jupyter_server.utils import url_path_join
 from .handlers import DefaultHandler, RouteHandler, AutomergeWsHandler
 
 
-class JupyterRTCServer(ExtensionApp):
+class JupyterRTCApp(ExtensionApp):
     # The name of the extension.
     name = "jupyter_rtc"
 
@@ -38,4 +38,4 @@ class JupyterRTCServer(ExtensionApp):
 
 # Entry Point Definition
 
-main = launch_new_instance = JupyterRTCServer.launch_instance
+main = launch_new_instance = JupyterRTCApp.launch_instance

@@ -13,6 +13,8 @@ clean:
 install:
 	python setup.py install
 
+test: test-rust test-py
+
 test-rust:
 	cargo test
 
@@ -27,5 +29,4 @@ publish:
 all:
 	make clean && \
 	  make install && \
-	  make test-rust && \
-	  make test-py
+	  make test
