@@ -1,10 +1,10 @@
 // stdlib
 use std::fs::File;
-// Python Wrappers
-use pyo3::prelude::*;
 // Logging
 use log::{ LevelFilter};
 use simplelog::*;
+// Python Wrappers
+use pyo3::prelude::*;
 
 mod amtextarea;
 
