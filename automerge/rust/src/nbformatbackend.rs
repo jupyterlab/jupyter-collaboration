@@ -12,20 +12,35 @@ use std::vec;
 /// This enum is important as it gives us all
 /// the possible types for python dictionary
 /// values.
-enum pydictValues {
+#[derive(PartialEq)]
+enum Value {
     Int(i32),
-    String(String),
+    Str(String),
     VecOfList(Vec<i32>),
 }
 
-//#[derive(Deserialize, Debug)]
-//struct nbModel {
-//    nbformat: i32,
-//    nbformat_minor: i32,
-//    metadata: PyAny,
-//    cells: list[i32],
-//}
-//
+struct nbCodeCell {
+    id: String,
+    cell_type: String,
+    metadata: HashMap<String, String>,
+    execution_count: i32,
+    source: String,
+    output: Vec<i32>,
+}
+
+struct nbModel {
+    nbformat: i32,
+    nbformat_minor: i32,
+    metadata: PyAny,
+    cells: Vec<i32>,
+}
+
+/// Takes a Python Objet of Type List and then
+/// unpacks it to a rust vector type.
+fn _pylist_to_vector(pyd: PyObject, py: Python) {
+    let res: Vec<i32> = pyd.extract(py).unwrap();
+}
+
 /// Takes a PythonObject of Type Dictionary
 /// and then unpacks it to a Rust HashMap.
 ///
@@ -38,11 +53,6 @@ enum pydictValues {
 fn _pydict_to_hashmap(pyd: PyObject, py: Python) {
     let res: HashMap<&str, &str> = pyd.extract(py).unwrap();
     info!("The hashmap from the dict: {:?}", res);
-}
-
-#[pyfunction]
-fn try_convert_pydict(pyd: PyObject, py: Python) {
-    _pydict_to_hashmap(pyd, py);
 }
 
 #[pyfunction]
