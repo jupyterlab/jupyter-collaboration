@@ -22,7 +22,7 @@ const UsersComponent = (data: any) => {
             </a>
             <hr/>
           </div> 
-        )       
+        )
       }
     </div>
   );

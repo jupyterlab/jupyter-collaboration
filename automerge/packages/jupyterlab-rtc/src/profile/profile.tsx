@@ -6,11 +6,11 @@ import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 
-import NotficationsSnackbar from './snack';
+import { useSnackbar, SnackbarProvider } from 'notistack';
 
-import WsRTCClient from './../client/WsRTCClient';
+import { INotification } from "jupyterlab_toastify";
 
-const Available = (opts: {profile: any; ws: WsRTCClient}) => {
+const Available = (opts: {profile: any; ws: WebSocket}) => {
 
   const [state, setState] = React.useState({
     available: true
@@ -20,7 +20,13 @@ const Available = (opts: {profile: any; ws: WsRTCClient}) => {
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setState({ ...state, [event.target.name]: event.target.checked });
-    opts.ws.setUserStatus(opts.profile, state.available);
+    const payload = JSON.stringify({
+      'action': 'user_status',
+      'name': opts.profile.login,
+      'status': state
+    });
+    console.log(payload)
+    opts.ws.send((payload as any));
   };
 
   return (
@@ -41,8 +47,18 @@ const Available = (opts: {profile: any; ws: WsRTCClient}) => {
 
 }
 
-const Profile = (opts: {profile: any; ws: WsRTCClient} ) => {
+const Profile = (opts: {profile: any; ws: WebSocket} ) => {
   const profile = opts.profile.me;
+  const { enqueueSnackbar } = useSnackbar();
+  opts.ws.onmessage = (message: any) => {
+    if (message.data) {
+      const data = JSON.parse(message.data);
+      console.log(data);
+      const info = `User @${data.name} is ${(data.status.available) ? '  ': 'not '}available`;
+      enqueueSnackbar(info);
+      INotification.info(info);
+    }
+  }
   return (
     <div>
       <a href={`https://github.com/${profile.login}`} target="_blank">
@@ -52,25 +68,29 @@ const Profile = (opts: {profile: any; ws: WsRTCClient} ) => {
         {profile.bio && <div className='jp-Profile-bio'>Bio: {profile.bio}</div>}
       </a>
       <Available profile={profile} ws={opts.ws}/>
-      <NotficationsSnackbar />
     </div>
   );
 }
 
 class ProfileWidget extends ReactWidget {
   private profile = {};
-  private wsRTCClient: WsRTCClient;
+  private ws: WebSocket;
+  private uri: string;
 
-  constructor(wsRTCClient: WsRTCClient) {
+  constructor() {
     super();
-    this.wsRTCClient = wsRTCClient;
+    this.uri = encodeURI(`ws://localhost:8888/jupyter_rtc/collaboration?room=_users_`);
+    this.ws = new WebSocket(this.uri);
+    this.ws.binaryType = 'arraybuffer';
     this.addClass('jp-Profile-Widget');
   }
 
   public render(): JSX.Element {
     return (
       <div>
-        <Profile profile={this.profile} ws={this.wsRTCClient} />
+        <SnackbarProvider maxSnack={1}>
+          <Profile profile={this.profile} ws={this.ws}/>
+        </SnackbarProvider>
       </div>
     )
   }

@@ -20,8 +20,6 @@ class WsRTCClient {
   private editorTracker: IEditorTracker;
   private editors = new Map<string, TextAreaModel>();
 
-  private ws: WebSocket;
-  private uri: string;
 /*
   private notebookWs: WebSocket;
   private notebookTracker: INotebookTracker;
@@ -32,16 +30,6 @@ class WsRTCClient {
     editorTracker: IEditorTracker,
     notebookTracker: INotebookTracker
     ) {
-
-      this.uri = encodeURI(`ws://localhost:8888/jupyter_rtc/collaboration?room=_users_`);
-      this.ws = new WebSocket(this.uri);
-      this.ws.binaryType = 'arraybuffer';
-      this.ws.onmessage = (message: any) => {
-        if (message.data) {
-          const data = JSON.parse(message.data);
-          console.log(data)
-        }
-      }
 
       this.editorTracker = editorTracker;
     // this.editorTracker.widgetAdded.connect((sender, widget) => this._setupFileEditor(widget.content));
@@ -55,16 +43,6 @@ class WsRTCClient {
 //      this.notebookTracker.widgetAdded.connect((sender, widget) => console.log('---', sender, widget));
 //      this.notebookTracker.activeCellChanged.connect((sender, cell) => this._activeCellChanged(cell));
   
-  }
-
-  public setUserStatus(profile: any, state: boolean) {
-    const payload = JSON.stringify({
-      'action': 'user_status',
-      'name': profile.login,
-      'status': state
-    });
-    console.log(payload)
-    this.ws.send((payload as any));
   }
 
   private _setupFileEditor(fileEditor: FileEditor): void {

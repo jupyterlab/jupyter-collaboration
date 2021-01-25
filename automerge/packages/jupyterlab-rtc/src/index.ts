@@ -53,15 +53,15 @@ const rtc: JupyterFrontEndPlugin<void> = {
     const wsRTCClient = new WsRTCClient(editorTracker, notebookTracker);
     console.log('JupyterLab extension @jupyterlab/rtc is activated!', wsRTCClient);
 
-    const profile = new Profile(wsRTCClient);
-    profile.title.icon = profileIcon;
-    profile.id = 'jupyter-profile'
-    app.shell.add(profile, 'left', { rank: 300 })
-
     const users = new Users();
     users.title.icon = usersIcon;
     users.id = 'jupyter-users'
-    app.shell.add(users, 'left', { rank: 300 })
+    app.shell.add(users, 'left', { rank: 350 })
+
+    const profile = new Profile();
+    profile.title.icon = profileIcon;
+    profile.id = 'jupyter-profile'
+    app.shell.add(profile, 'left', { rank: 300 })
 
     authRequestAPI<any>('users')
       .then((data: any) => {
