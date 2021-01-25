@@ -1,0 +1,9 @@
+{
+  "ServerApp": {
+    "autoreload": false,
+    "jpserver_extensions": {
+      "jupyter_auth": true,
+      "jupyter_rtc": true
+    }
+  }
+}

@@ -1,30 +1,64 @@
-from jupyter_server.base.handlers import JupyterHandler, APIHandler
-from jupyter_server.extension.handler import ExtensionHandlerMixin, ExtensionHandlerJinjaMixin
-from jupyter_server.base.zmqhandlers import WebSocketMixin
+import json
 
 import tornado
 from tornado.websocket import WebSocketHandler, websocket_connect
 from tornado.ioloop import IOLoop
 
-import json
+from jupyter_server.base.handlers import JupyterHandler, APIHandler
+from jupyter_server.extension.handler import ExtensionHandlerMixin, ExtensionHandlerJinjaMixin
+from jupyter_server.base.zmqhandlers import WebSocketMixin
 
-import jupyter_rtc_automerge as jrtcam
+from jupyter_rtc_automerge import textarea
 
 
-class RouteHandler(APIHandler):
-    # The following decorator should be present on all verb methods (head, get, post,
-    # patch, put, delete, options) to ensure only authorized user can request the
-    # Jupyter server
-    @tornado.web.authenticated
-    def get(self):
-        self.finish(json.dumps({
-            "data": "This is /jupyter_rtc/get_example endpoint!"
-        }))
+rooms = {}
+
+
+class Room:
+
+    def __init__(self, room, text):
+        self.room = room
+        self.websockets = []
+        self.document = textarea.new_document(room, text)
+        print("Room initialized with text:", text)
+        print("Room initialized with document:", self.document)
+
+
+    def get_all_changes(self):
+        return textarea.get_all_changes(self.document)
+
+
+    def add_websocket(self, ws):
+        self.websockets.append(ws)
+
+
+    def remove_websocket(self, ws):
+        self.websockets.remove(ws)
+
+
+    def broadcast_to_users(self, message, sender=None):
+        for ws in self.websockets:
+            if ws != sender:
+                ws.write_message(message)
+
+    def process_message(self, message, sender=None):
+        m = json.loads(message)
+        print(f'process_message: {m}')
+        action = m['action']
+        if action == 'get_all_changes':
+            changes = self.get_all_changes()
+            message = json.dumps({'action': 'all_changes', 'changes': changes})
+            sender.write_message(message)
+            return
+        if action == 'change':
+            m_bytes = list(m['changes'][0].values())
+            self.document = textarea.apply_changes(self.document, m_bytes)
+        self.broadcast_to_users(message, sender)
 
 
 class DefaultHandler(ExtensionHandlerMixin, JupyterHandler):
+    @tornado.web.authenticated
     def get(self):
-        # The name of the extension to which this handler is linked.
         self.log.info("Extension Name in {} Default Handler: {}".format(
             self.name, self.name))
         self.write('<h1>Jupyter RTC Extension</h1>')
@@ -32,75 +66,62 @@ class DefaultHandler(ExtensionHandlerMixin, JupyterHandler):
             self.name, self.config))
 
 
-shared_automerge_rooms = {}
+class ExampleHandler(APIHandler):
+    @tornado.web.authenticated
+    def get(self):
+        self.finish(json.dumps({
+            "data": "This is /jupyter_rtc/example endpoint!"
+        }))
 
 
-class AutomergeRoom:
-
-    def __init__(self, doc):
-
-        self.docname = doc
-        self.websockets = []
-        self.automerge_backend = jrtcam.automerge.new_document("automerge-room", "Hello from Python!")
-        print("Room init, document : ", self.automerge_backend)
-
-    def add_websocket(self, ws):
-        self.websockets.append(ws)
-
-    def remove_websocket(self, ws):
-        self.websockets.remove(ws)
-
-    def get_changes(self):
-        return jrtcam.automerge.get_changes(self.automerge_backend)
-
-    def dispatch_message(self, message, sender=None):
-
-        message_bytes = list(json.loads(message)[0].values())
-        
-        # Forward the message to the automerge document
-        self.automerge_backend = jrtcam.automerge.apply_change(
-            self.automerge_backend, message_bytes)
-
-        # forward the message to other clients
-        for ws in self.websockets:
-            if ws != sender:
-                ws.write_message(message)
+class WsRTCManager(WebSocketMixin, WebSocketHandler, ExtensionHandlerMixin, JupyterHandler):
 
 
-class AutomergeWsHandler(WebSocketMixin, WebSocketHandler, ExtensionHandlerMixin, JupyterHandler):
+    DEFAULT_ROOM = '_default_'
+    USERS_ROOM = '_users_'
+
 
     async def open(self):
+        room = self.get_argument('room', default=self.DEFAULT_ROOM)
+        print(f"WebSocket open {self.request}, {self.request.remote_ip}")
+        if room == self.USERS_ROOM:
+            if room not in rooms:
+                rooms[room] = Room(room, '')
+            rooms[room].add_websocket(self)
+            message = json.dumps({'action': 'ack'})
+            self.write_message(message)
+            return
+        action = 'change'
+        if room not in rooms:
+            action = 'init'
+            content = self.get_content(room)
+            rooms[room] = Room(room, content)
+        rooms[room].add_websocket(self)
+        print(f"Websocket open {room}: {rooms[room].document}")
+        changes = rooms[room].get_all_changes()
+        message = json.dumps({'action': action, 'changes': changes})
+        self.write_message(message)
 
-        doc = self.get_argument('doc', default=None)
-        print(f"\nDEBUG {self.request}, {self.request.remote_ip}  \n")
-
-        if doc not in shared_automerge_rooms:
-            shared_automerge_rooms[doc] = AutomergeRoom(doc)
-
-        shared_automerge_rooms[doc].add_websocket(self)
-        print(
-            f"\nDEBUG shared websockets for doc {doc} : {shared_automerge_rooms[doc]}")
-
-        print("Websocket open : ",
-              shared_automerge_rooms[doc].automerge_backend)
-
-        changes = shared_automerge_rooms[doc].get_changes()
-        payload = json.dumps(changes)
-        self.write_message(payload)
 
     def on_message(self, message,  *args, **kwargs):
-
-        doc = self.get_argument('doc', default=None)
-        if doc not in shared_automerge_rooms:
-            print(
-                f"WEIRD : on_message for {doc} not in shared_automerge_rooms")
+        room = self.get_argument('room', default=self.DEFAULT_ROOM)
+        if room == self.USERS_ROOM:
+            rooms[room].broadcast_to_users(message, sender=self)
+        if room not in rooms:
+            print(f"WEIRD on_message: {room} is not in rooms")
             return
+        rooms[room].process_message(message, sender=self)
 
-        shared_automerge_rooms[doc].dispatch_message(message, sender=self)
 
     def on_close(self,  *args, **kwargs):
-        doc = self.get_argument('doc', default=None)
+        room = self.get_argument('room', default=None)
+        print(f"WebSocket on_close for {room}")
+        if room in rooms:
+            rooms[room].remove_websocket(self)
 
-        print(f"WebSocket on close for {doc}")
-        if doc in shared_automerge_rooms:
-            shared_automerge_rooms[doc].remove_websocket(self)
+
+    def get_content(self, path):
+        model = self.contents_manager.get(
+            path=path, type='file', format='text', content='1',
+        )
+        return model['content']
