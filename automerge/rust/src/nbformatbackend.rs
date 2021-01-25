@@ -9,14 +9,42 @@ use pyo3::wrap_pyfunction;
 use std::collections::HashMap;
 use std::vec;
 
+/// This enum is important as it gives us all
+/// the possible types for python dictionary
+/// values.
+enum pydictValues {
+    Int(i32),
+    String(String),
+    VecOfList(Vec<i32>),
+}
+
 //#[derive(Deserialize, Debug)]
 //struct nbModel {
 //    nbformat: i32,
 //    nbformat_minor: i32,
 //    metadata: PyAny,
-//    cells: list[i32]
+//    cells: list[i32],
 //}
-//TODO: Make this function a
+//
+/// Takes a PythonObject of Type Dictionary
+/// and then unpacks it to a Rust HashMap.
+///
+/// Note: The type of the Keys and Values of
+/// the hashmap cannot be inferred. Therefore,
+/// we expect them to be defined when passed in
+/// from Python.
+///
+/// Returns a rust hashmap.
+fn _pydict_to_hashmap(pyd: PyObject, py: Python) {
+    let res: HashMap<&str, &str> = pyd.extract(py).unwrap();
+    info!("The hashmap from the dict: {:?}", res);
+}
+
+#[pyfunction]
+fn try_convert_pydict(pyd: PyObject, py: Python) {
+    _pydict_to_hashmap(pyd, py);
+}
+
 #[pyfunction]
 fn apply_change(current_data: Vec<u8>, change_data: Vec<u8>) -> Vec<u8> {
     let mut backend = automerge_backend::Backend::load(current_data)
@@ -75,6 +103,6 @@ fn initialize_nbdoc(pynb: PyObject, py: Python) -> Vec<u8> {
 pub fn init_submodule(module: &PyModule) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(initialize_nbdoc, module)?)?;
     module.add_function(wrap_pyfunction!(get_changes, module)?)?;
-    module.add_function(wrap_pyfunction!(apply_changes, module)?)?;
+    module.add_function(wrap_pyfunction!(apply_change, module)?)?;
     Ok(())
 }
