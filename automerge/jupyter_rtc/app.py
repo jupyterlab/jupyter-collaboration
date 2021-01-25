@@ -4,7 +4,7 @@ import jinja2
 from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinjaMixin
 from jupyter_server.utils import url_path_join
 
-from .handlers import DefaultHandler, ExampleHandler, CollaborationWsHandler
+from .handlers import DefaultHandler, ExampleHandler, WsRTCManager
 
 
 class JupyterRTCApp(ExtensionApp):
@@ -27,7 +27,7 @@ class JupyterRTCApp(ExtensionApp):
         self.handlers.extend([
             (r'/{}/default'.format(self.name), DefaultHandler),
             (r'/{}/example'.format(self.name), ExampleHandler),
-            (r'/{}/collaboration'.format(self.name), CollaborationWsHandler),
+            (r'/{}/collaboration'.format(self.name), WsRTCManager),
         ])
 
 # Entry Point Definition

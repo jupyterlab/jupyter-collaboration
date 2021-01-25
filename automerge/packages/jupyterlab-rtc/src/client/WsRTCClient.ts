@@ -13,7 +13,7 @@ import TextAreaModel, {
   initTextArea,
 //  applyChanges,
   getTextAreaChanges,
-} from "../automerge/TextAreaModel";
+} from "../model/TextAreaModel";
 
 class WsRTCClient {
 
@@ -59,8 +59,7 @@ class WsRTCClient {
       this.cell = cell;
       this.cellDoc = initTextArea();
       this.cell.editor.model.value.changed.connect((value, change) => this._onCellValueChange(value, change));
-      // this.notebookWs = new WebSocket(`ws://localhost:4321/notebook-${cell.id}`);
-      this.notebookWs = new WebSocket(`ws://localhost:8888/jupyter_rtc/collaboration?doc=cell`);
+      this.notebookWs = new WebSocket(`ws://localhost:8888/jupyter_rtc/collaboration?room=cell`);
       this.notebookWs.binaryType = 'arraybuffer';
       /*
       this.notebookWs.onmessage = (message: any) => {

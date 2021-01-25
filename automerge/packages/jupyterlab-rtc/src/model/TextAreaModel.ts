@@ -53,31 +53,31 @@ class TextAreaModel {
   private ws: WebSocket;
   private roomId: string;
   private uri: string;
-  private amChanged = false;
-
+  
   constructor(fileEditor: FileEditor) { 
 
     this.fileEditor = fileEditor;
     this.textArea = initTextArea();
     this.roomId = fileEditor.context.path;
 
-    this.uri = encodeURI(`ws://localhost:8888/jupyter_rtc/collaboration?doc=${this.roomId}`);
+    this.uri = encodeURI(`ws://localhost:8888/jupyter_rtc/collaboration?room=/${this.roomId}`);
     this.ws = new WebSocket(this.uri);
-    this.ws.binaryType = 'arraybuffer';  
+    this.ws.binaryType = 'arraybuffer';
+
     this.ws.onmessage = (message: any) => {
       if (message.data) {
         const data = JSON.parse(message.data);
-        console.log('Receiving', data);
+        console.log('TextAreaModel Receiving', data);
+        if (data.action === 'all_changes') {
+          this.textArea = initTextArea();
+          this.textArea = applyTextAreaChanges(this.textArea, data.changes);
+        }
         if (data.action === 'init' || data.action === 'change') {
-          const changedTextArea = applyTextAreaChanges(this.textArea, data.changes);
-          this.textArea = changedTextArea;
-          if (data.action === 'change') {
-            this.amChanged = true;
-          }
-          const text = this.textArea.textArea.toString();
-          if (this.fileEditor.model.value.text !== text) {
-            this.fileEditor.model.value.text = text;
-          }
+          this.textArea = applyTextAreaChanges(this.textArea, data.changes);
+        }
+        const text = this.textArea.textArea.toString();
+        if (this.fileEditor.model.value.text !== text) {
+          this.fileEditor.model.value.text = text;
         }
       }
     }
@@ -88,12 +88,17 @@ class TextAreaModel {
 
   private _onFileEditorValueChange(value: IObservableString, change: IObservableString.IChangedArgs) {
     let newTextArea: TextArea = null;
-    if (change.type === 'set' && !this.amChanged) {
+    if (change.type === 'set') {
+      /*
       newTextArea = Automerge.change(this.textArea, (t: TextArea) => {
         t.docId = this.fileEditor.context.path;
         t.textArea = new Automerge.Text();
         t.textArea.insertAt(change.start, ...change.value);
       });
+      */
+      this.ws.send(JSON.stringify({
+        'action': 'get_all_changes',
+      }));
     }
     else if (this.textArea.textArea) {
       if (this.fileEditor.model.value.text !== this.textArea.textArea.toString()) {
@@ -111,8 +116,8 @@ class TextAreaModel {
       const changes = getTextAreaChanges(this.textArea, newTextArea);
       this.textArea = newTextArea;
       if (changes.length > 0) {
-        console.log('Sending', changes);
-        var payload = JSON.stringify({
+        console.log('TextAreaModel Sending changes', changes);
+        const payload = JSON.stringify({
           'action': 'change',
           'changes': changes
         });

@@ -11,32 +11,43 @@ from jupyter_server.base.zmqhandlers import WebSocketMixin
 from jupyter_rtc_automerge import textarea
 
 
-collaborations = {}
+rooms = {}
 
 
-class Collaboration:
+class Room:
 
-    def __init__(self, doc):
-        self.docname = doc
+    def __init__(self, room, text):
+        self.room = room
         self.websockets = []
-        self.document = textarea.new_document(doc, f'Hello from Python! I am doc: {doc}')
-        print("Room init, document : ", self.document)
+        self.document = textarea.new_document(room, text)
+        print("Room initialized with text:", text)
+        print("Room initialized with document:", self.document)
+
 
     def get_all_changes(self):
         return textarea.get_all_changes(self.document)
 
+
     def add_websocket(self, ws):
         self.websockets.append(ws)
+
 
     def remove_websocket(self, ws):
         self.websockets.remove(ws)
 
-    def dispatch_message(self, message, sender=None):
-        j = json.loads(message)
-        print(j)
-        if (j['action'] == 'change'):
-            message_bytes = list(j['changes'][0].values())
-            self.document = textarea.apply_changes(self.document, message_bytes)
+
+    def process_message(self, message, sender=None):
+        m = json.loads(message)
+        print(f'process_message: {m}')
+        action = m['action']
+        if action == 'get_all_changes':
+            changes = self.get_all_changes()
+            message = json.dumps({'action': 'all_changes', 'changes': changes})
+            sender.write_message(message)
+            return
+        if action == 'change':
+            m_bytes = list(m['changes'][0].values())
+            self.document = textarea.apply_changes(self.document, m_bytes)
         for ws in self.websockets:
             if ws != sender:
                 ws.write_message(message)
@@ -45,7 +56,6 @@ class Collaboration:
 class DefaultHandler(ExtensionHandlerMixin, JupyterHandler):
     @tornado.web.authenticated
     def get(self):
-        # The name of the extension to which this handler is linked.
         self.log.info("Extension Name in {} Default Handler: {}".format(
             self.name, self.name))
         self.write('<h1>Jupyter RTC Extension</h1>')
@@ -61,29 +71,44 @@ class ExampleHandler(APIHandler):
         }))
 
 
-class CollaborationWsHandler(WebSocketMixin, WebSocketHandler, ExtensionHandlerMixin, JupyterHandler):
+class WsRTCManager(WebSocketMixin, WebSocketHandler, ExtensionHandlerMixin, JupyterHandler):
+
+
+    DEFAULT_ROOM = '_shared_'
+
 
     async def open(self):
-        doc = self.get_argument('doc', default=None)
-        print(f"\nDEBUG {self.request}, {self.request.remote_ip}  \n")
-        if doc not in collaborations:
-            collaborations[doc] = Collaboration(doc)
-        collaborations[doc].add_websocket(self)
-        print(f"\nDEBUG shared websockets for doc {doc} : {collaborations[doc]}")
-        print("Websocket open", collaborations[doc].document)
-        changes = collaborations[doc].get_all_changes()
-        payload = json.dumps({'action': 'init', 'changes': changes})
-        self.write_message(payload)
+        room = self.get_argument('room', default=self.DEFAULT_ROOM)
+        print(f"WebSocket open {self.request}, {self.request.remote_ip}")
+        action = 'change'
+        if room not in rooms:
+            action = 'init'
+            content = self.get_content(room)
+            rooms[room] = Room(room, content)
+        rooms[room].add_websocket(self)
+        print(f"Websocket open {room}: {rooms[room].document}")
+        changes = rooms[room].get_all_changes()
+        message = json.dumps({'action': action, 'changes': changes})
+        self.write_message(message)
+
 
     def on_message(self, message,  *args, **kwargs):
-        doc = self.get_argument('doc', default=None)
-        if doc not in collaborations:
-            print(f"WEIRD : on_message for {doc} not in collaborations")
+        room = self.get_argument('room', default=self.DEFAULT_ROOM)
+        if room not in rooms:
+            print(f"WEIRD on_message: {room} is not in rooms")
             return
-        collaborations[doc].dispatch_message(message, sender=self)
+        rooms[room].process_message(message, sender=self)
+
 
     def on_close(self,  *args, **kwargs):
-        doc = self.get_argument('doc', default=None)
-        print(f"WebSocket on close for {doc}")
-        if doc in collaborations:
-            collaborations[doc].remove_websocket(self)
+        room = self.get_argument('room', default=None)
+        print(f"WebSocket on_close for {room}")
+        if room in rooms:
+            rooms[room].remove_websocket(self)
+
+
+    def get_content(self, path):
+        model = self.contents_manager.get(
+            path=path, type='file', format='text', content='1',
+        )
+        return model['content']

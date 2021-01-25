@@ -29,8 +29,7 @@ const AutomergeTextAreaPerf = (props: {docId: string}) => {
   const wsRef = useRef<WebSocket>();
 
   useEffect(() => {
-    wsRef.current = new WebSocket('ws://localhost:8888/jupyter_rtc/collaboration?doc=textarea-react-room');
-    // wsRef.current = new WebSocket('ws://localhost:4321/textarea-react-room');
+    wsRef.current = new WebSocket('ws://localhost:8888/jupyter_rtc/collaboration?room=textarea-react-room');
     wsRef.current.binaryType = 'arraybuffer';
     wsRef.current.onmessage = (message: any) => {
       if (message.data) {
