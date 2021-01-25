@@ -6,8 +6,6 @@ import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 
-import { useSnackbar, SnackbarProvider } from 'notistack';
-
 import { INotification } from "jupyterlab_toastify";
 
 const Available = (opts: {profile: any; ws: WebSocket}) => {
@@ -49,13 +47,10 @@ const Available = (opts: {profile: any; ws: WebSocket}) => {
 
 const Profile = (opts: {profile: any; ws: WebSocket} ) => {
   const profile = opts.profile.me;
-  const { enqueueSnackbar } = useSnackbar();
   opts.ws.onmessage = (message: any) => {
     if (message.data) {
       const data = JSON.parse(message.data);
-      console.log(data);
-      const info = `User @${data.name} is ${(data.status.available) ? '  ': 'not '}available`;
-      enqueueSnackbar(info);
+      const info = `User @${data.name} is ${(data.status.available) ? 'not ': ''}available`;
       INotification.info(info);
     }
   }
@@ -88,9 +83,7 @@ class ProfileWidget extends ReactWidget {
   public render(): JSX.Element {
     return (
       <div>
-        <SnackbarProvider maxSnack={1}>
-          <Profile profile={this.profile} ws={this.ws}/>
-        </SnackbarProvider>
+        <Profile profile={this.profile} ws={this.ws}/>
       </div>
     )
   }
