@@ -1,13 +1,8 @@
-// use std::fs::File;
-// use log::{ LevelFilter};
-// use simplelog::*;
-
 use pyo3::prelude::*;
-
+use std::fs::File;
 // Logging
 use log::LevelFilter;
 use simplelog::*;
-mod ambackend;
 mod load;
 mod nbformatbackend;
 mod textarea;
@@ -26,14 +21,14 @@ fn jupyter_rtc_automerge(py: Python, module: &PyModule) -> PyResult<()> {
     .unwrap();
 
     let submod = PyModule::new(py, "automerge")?;
+    let submod_textarea = PyModule::new(py, "textarea")?;
     let submod_load = PyModule::new(py, "load")?;
     let submod_nbformatbackend = PyModule::new(py, "nbf")?;
-    ambackend::init_submodule(submod)?;
     load::init_submodule(submod_load)?;
     nbformatbackend::init_submodule(submod_nbformatbackend)?;
-    let submod = PyModule::new(py, "textarea")?;
-    textarea::init_submodule(submod)?;
+    textarea::init_submodule(submod_textarea)?;
     module.add_submodule(submod)?;
+    module.add_submodule(submod_textarea)?;
     module.add_submodule(submod_load)?;
     module.add_submodule(submod_nbformatbackend)?;
     Ok(())
