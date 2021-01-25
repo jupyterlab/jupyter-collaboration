@@ -36,6 +36,11 @@ class Room:
         self.websockets.remove(ws)
 
 
+    def broadcast_to_users(self, message, sender=None):
+        for ws in self.websockets:
+            if ws != sender:
+                ws.write_message(message)
+
     def process_message(self, message, sender=None):
         m = json.loads(message)
         print(f'process_message: {m}')
@@ -48,9 +53,7 @@ class Room:
         if action == 'change':
             m_bytes = list(m['changes'][0].values())
             self.document = textarea.apply_changes(self.document, m_bytes)
-        for ws in self.websockets:
-            if ws != sender:
-                ws.write_message(message)
+        self.broadcast_to_users(message, sender)
 
 
 class DefaultHandler(ExtensionHandlerMixin, JupyterHandler):
@@ -74,12 +77,20 @@ class ExampleHandler(APIHandler):
 class WsRTCManager(WebSocketMixin, WebSocketHandler, ExtensionHandlerMixin, JupyterHandler):
 
 
-    DEFAULT_ROOM = '_shared_'
+    DEFAULT_ROOM = '_default_'
+    USERS_ROOM = '_users_'
 
 
     async def open(self):
         room = self.get_argument('room', default=self.DEFAULT_ROOM)
         print(f"WebSocket open {self.request}, {self.request.remote_ip}")
+        if room == self.USERS_ROOM:
+            if room not in rooms:
+                rooms[room] = Room(room, '')
+            rooms[room].add_websocket(self)
+            message = json.dumps({'action': 'ack'})
+            self.write_message(message)
+            return
         action = 'change'
         if room not in rooms:
             action = 'init'
@@ -94,6 +105,8 @@ class WsRTCManager(WebSocketMixin, WebSocketHandler, ExtensionHandlerMixin, Jupy
 
     def on_message(self, message,  *args, **kwargs):
         room = self.get_argument('room', default=self.DEFAULT_ROOM)
+        if room == self.USERS_ROOM:
+            rooms[room].broadcast_to_users(message, sender=self)
         if room not in rooms:
             print(f"WEIRD on_message: {room} is not in rooms")
             return

@@ -2,33 +2,46 @@ import { IEditorTracker, FileEditor } from '@jupyterlab/fileeditor';
 
 import { INotebookTracker } from '@jupyterlab/notebook';
 
+import TextAreaModel from "../model/textarea";
+/*
 import { Cell, ICellModel } from "@jupyterlab/cells";
-
 import { IObservableString } from "@jupyterlab/observables";
-
 import Automerge from "automerge";
 
-import TextAreaModel, {
+import {
   TextArea,
   initTextArea,
-//  applyChanges,
+  applyChanges,
   getTextAreaChanges,
-} from "../model/TextAreaModel";
-
+} from "../model/textarea";
+*/
 class WsRTCClient {
 
   private editorTracker: IEditorTracker;
   private editors = new Map<string, TextAreaModel>();
 
+  private ws: WebSocket;
+  private uri: string;
+/*
   private notebookWs: WebSocket;
   private notebookTracker: INotebookTracker;
   private cell: Cell<ICellModel>;
   private cellDoc: TextArea;
-
+*/
   constructor(
     editorTracker: IEditorTracker,
     notebookTracker: INotebookTracker
     ) {
+
+      this.uri = encodeURI(`ws://localhost:8888/jupyter_rtc/collaboration?room=_users_`);
+      this.ws = new WebSocket(this.uri);
+      this.ws.binaryType = 'arraybuffer';
+      this.ws.onmessage = (message: any) => {
+        if (message.data) {
+          const data = JSON.parse(message.data);
+          console.log(data)
+        }
+      }
 
       this.editorTracker = editorTracker;
     // this.editorTracker.widgetAdded.connect((sender, widget) => this._setupFileEditor(widget.content));
@@ -38,10 +51,20 @@ class WsRTCClient {
         }
       });
 
-      this.notebookTracker = notebookTracker;
-      this.notebookTracker.widgetAdded.connect((sender, widget) => console.log('---', sender, widget));
-      this.notebookTracker.activeCellChanged.connect((sender, cell) => this._activeCellChanged(cell));
+//      this.notebookTracker = notebookTracker;
+//      this.notebookTracker.widgetAdded.connect((sender, widget) => console.log('---', sender, widget));
+//      this.notebookTracker.activeCellChanged.connect((sender, cell) => this._activeCellChanged(cell));
   
+  }
+
+  public setUserStatus(profile: any, state: boolean) {
+    const payload = JSON.stringify({
+      'action': 'user_status',
+      'name': profile.login,
+      'status': state
+    });
+    console.log(payload)
+    this.ws.send((payload as any));
   }
 
   private _setupFileEditor(fileEditor: FileEditor): void {
@@ -53,7 +76,7 @@ class WsRTCClient {
       }
     }
   }
-
+/*
   private _activeCellChanged(cell: Cell<ICellModel>): void {
     if (cell) {
       this.cell = cell;
@@ -61,7 +84,6 @@ class WsRTCClient {
       this.cell.editor.model.value.changed.connect((value, change) => this._onCellValueChange(value, change));
       this.notebookWs = new WebSocket(`ws://localhost:8888/jupyter_rtc/collaboration?room=cell`);
       this.notebookWs.binaryType = 'arraybuffer';
-      /*
       this.notebookWs.onmessage = (message: any) => {
         if (message.data) {
           const data = JSON.parse(message.data);
@@ -74,7 +96,6 @@ class WsRTCClient {
           }
         }
       }
-      */
     }
   }
 
@@ -88,16 +109,16 @@ class WsRTCClient {
           if (change.type === 'remove') {
               d.textArea.deleteAt(change.start, (change.end - change.start));
           }
-          });
-          const changes = getTextAreaChanges(this.cellDoc, newDoc);
-          this.cellDoc = newDoc;
-          console.log('Sending', changes);
-//          var payload = JSON.stringify(changes);
-//          this.notebookWs.send((payload as any));
+        });
+        const changes = getTextAreaChanges(this.cellDoc, newDoc);
+        this.cellDoc = newDoc;
+        console.log('Sending', changes);
+//        var payload = JSON.stringify(changes);
+//        this.notebookWs.send((payload as any));
       }
     }
   }
-
+*/
 }
 
 export default WsRTCClient;

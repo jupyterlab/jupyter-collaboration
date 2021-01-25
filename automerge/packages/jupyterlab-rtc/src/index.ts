@@ -4,22 +4,27 @@ import {
 } from '@jupyterlab/application';
 
 import { IEditorTracker } from '@jupyterlab/fileeditor';
-
 import { INotebookTracker } from '@jupyterlab/notebook';
-
 import { LabIcon } from '@jupyterlab/ui-components';
 
-import { requestAPI } from "./client/RestRTCClient";
+import Users from './users/users';
+import Profile from './profile/profile';
 
-import WsRTCClient from "./client/WsRTCClient";
+import WsRTCClient from './client/WsRTCClient';
+import authRequestAPI from './client/RestAuthClient';
+import rtcRequestAPI from './client/RestRTCClient';
 
-import RtcWidget from "./widget";
+import profileSvg from './../style/icons/person-24px.svg';
+import usersSvg from './../style/icons/people-24px.svg';
 
-import connectSvg from './../style/icons/connect_without_contact-black-24dp.svg';
+export const profileIcon = new LabIcon({
+  name: 'rtc:proflie',
+  svgstr: profileSvg
+});
 
-export const connectIcon = new LabIcon({
-  name: 'rtc:connect',
-  svgstr: connectSvg
+export const usersIcon = new LabIcon({
+  name: 'rtc:users',
+  svgstr: usersSvg
 });
 
 const rtc: JupyterFrontEndPlugin<void> = {
@@ -35,7 +40,7 @@ const rtc: JupyterFrontEndPlugin<void> = {
     notebookTracker: INotebookTracker
   ) => {
 
-    requestAPI<any>('example')
+    rtcRequestAPI<any>('example')
       .then(data => {
         console.log('Got a response from the jupyter_rtc server API', data);
       })
@@ -48,12 +53,30 @@ const rtc: JupyterFrontEndPlugin<void> = {
     const wsRTCClient = new WsRTCClient(editorTracker, notebookTracker);
     console.log('JupyterLab extension @jupyterlab/rtc is activated!', wsRTCClient);
 
-    const widget = new RtcWidget();
-    widget.title.icon = connectIcon;
-    widget.id = 'jupyter-rtc'
-    app.shell.add(widget, 'left', { rank: 400 })
+    const profile = new Profile(wsRTCClient);
+    profile.title.icon = profileIcon;
+    profile.id = 'jupyter-profile'
+    app.shell.add(profile, 'left', { rank: 300 })
 
+    const users = new Users();
+    users.title.icon = usersIcon;
+    users.id = 'jupyter-users'
+    app.shell.add(users, 'left', { rank: 300 })
+
+    authRequestAPI<any>('users')
+      .then((data: any) => {
+        console.log('Got a response from the jupyter_auth server API', data);
+        users.setUsers(data);
+        profile.setProfile(data);
+      })
+      .catch((reason: any) => {
+        console.error(
+          `The jupyter_auth server API appears to be missing.\n${reason}`
+        );
+      });
+    
   }
+
 }
 
 export default rtc;
