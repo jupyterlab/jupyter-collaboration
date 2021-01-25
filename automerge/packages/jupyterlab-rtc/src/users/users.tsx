@@ -1,7 +1,14 @@
 import React from 'react';
 
 import { ReactWidget } from '@jupyterlab/apputils';
-
+/*
+import { LabIcon } from '@jupyterlab/ui-components';
+import onlineSvg from './../../style/icons/connect_without_contact-black-24dp.svg';
+export const onlineIcon = new LabIcon({
+  name: 'rtc:online',
+  svgstr: onlineSvg
+});
+*/
 /**
  * React Users Component.
  *
@@ -20,6 +27,9 @@ const UsersComponent = (data: any) => {
               <div className='jp-Users-username'>@{user.login}</div>
               {user.bio && <div className='jp-Users-bio'>Bio: {user.bio}</div>}
             </a>
+{/*
+            <onlineIcon.react tag="span" right="7px" top="5px" />
+*/}
             <hr/>
           </div> 
         )
@@ -38,17 +48,22 @@ class UsersWidget extends ReactWidget {
   /**
    * Constructs a new CounterWidget.
    */
-  constructor() {
+  public constructor() {
     super();
     this.addClass('jp-Auth-Widget');
   }
 
-  render(): JSX.Element {
+  public render(): JSX.Element {
     return <UsersComponent users={this.users}/>;
   }
 
-  setUsers(users: []) {
+  public setUsers(users: []) {
     this.users = users;
+    this.update();
+  }
+
+  public setUserStatus(status: any) {
+    this.users.map(u => console.log(u));
     this.update();
   }
 
