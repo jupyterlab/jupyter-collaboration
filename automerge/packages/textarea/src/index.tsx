@@ -1,9 +1,9 @@
 import React from 'react';
 import { render } from 'react-dom';
 
-import AutomergeTextAreaPerf from './automerge/AutomergeTextArea';
+import AutomergeTextAreaPerf from './AutomergeTextArea';
 
-import './index.css';
+import './../style/index.css';
 
 render(
   <div>

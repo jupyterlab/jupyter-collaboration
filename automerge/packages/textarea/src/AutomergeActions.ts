@@ -1,11 +1,11 @@
-import Automerge, { Text } from "automerge-wasm-bundler";
+import Automerge, { Text } from "automerge";
 
 // import CodecFunctions from 'automerge-wasm-bundler/backend/columnar'
 // import wasmBackend from 'automerge-backend-wasm-bundler';
 // wasmBackend.initCodecFunctions(CodecFunctions)
 // Automerge.setDefaultBackend(wasmBackend);
 
-import { SimpleDiff } from '../utils/simpleDiff';
+import { SimpleDiff } from './simpleDiff';
 
 export type Doc = {
   docId: string;
@@ -39,7 +39,7 @@ export const applyInput = (doc: Doc, diff: SimpleDiff) => {
   return Automerge.change(doc, (d: Doc) => {
     d.textArea.insertAt(diff.index, diff.insert);
     d.textArea.deleteAt(diff.index + 1, diff.remove);
-  })
+  });
 }
 
 export const getHistory = (doc: Doc) => {

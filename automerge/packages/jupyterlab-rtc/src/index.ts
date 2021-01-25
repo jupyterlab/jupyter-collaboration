@@ -3,147 +3,80 @@ import {
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
 
-import { IEditorTracker, FileEditor } from '@jupyterlab/fileeditor';
-
+import { IEditorTracker } from '@jupyterlab/fileeditor';
 import { INotebookTracker } from '@jupyterlab/notebook';
+import { LabIcon } from '@jupyterlab/ui-components';
 
-import { Cell, ICellModel } from "@jupyterlab/cells";
+import UsersWidget from './users/users';
+import ProfileWidget from './profile/profile';
 
-import { IObservableString } from '@jupyterlab/observables';
+import WsRTCClient from './client/WsRTCClient';
+import authRequestAPI from './client/RestAuthClient';
+import rtcRequestAPI from './client/RestRTCClient';
 
-// import { CodeMirrorEditor } from '@jupyterlab/codemirror';
+import profileSvg from './../style/icons/person-24px.svg';
+import usersSvg from './../style/icons/people-24px.svg';
 
-import Automerge from "automerge-wasm-bundler";
+export const profileIcon = new LabIcon({
+  name: 'rtc:proflie',
+  svgstr: profileSvg
+});
 
-import {
-  Doc,
-  initDocument,
-  applyChanges,
-  getChanges,
-} from "./AutomergeActions";
+export const usersIcon = new LabIcon({
+  name: 'rtc:users',
+  svgstr: usersSvg
+});
 
-class Rtc {
-  private notebookTracker: INotebookTracker;
-  private editorTracker: IEditorTracker;
-  private ws: WebSocket;
-  private rtcCell: Doc;
-  private cell: Cell<ICellModel>;
-  private rtcEditor: Doc;
-  private fileEditor: FileEditor;
-
-  constructor(
-    notebookTracker: INotebookTracker, 
-    editorTracker: IEditorTracker
-    ) {
-    this.notebookTracker = notebookTracker;
-    this.editorTracker = editorTracker;
-    this.notebookTracker.activeCellChanged.connect((sender, cell) => this._activeCellChanged(cell));
-    this.editorTracker.widgetAdded.connect((sender, widget) => this._setupFileEditor(widget.content));
-    this.editorTracker.currentChanged.connect((sender, widget) => this._setupFileEditor(widget.content));
-  }
-
-  private _onCellValueChange(value: IObservableString, change: IObservableString.IChangedArgs) {
-    if (this.rtcCell.textArea) {
-      if (this.cell.model.value.text !== this.rtcCell.textArea.toString()) {
-        const newDoc = Automerge.change(this.rtcCell, (d: Doc) => {
-          if (change.type === 'insert') {
-            d.textArea.insertAt(change.start, change.value);
-          }
-          if (change.type === 'remove') {
-            d.textArea.deleteAt(change.start, (change.end - change.start));
-          }
-        });
-        const changes = getChanges(this.rtcCell, newDoc);
-        this.rtcCell = newDoc;
-        this.ws.send((changes[0] as any));
-      }
-    }
-  }
-
-  private _activeCellChanged(cell: Cell<ICellModel>): void {
-    if (cell != null) {
-      this.rtcCell = initDocument();
-      this.cell = cell;
-      this.cell.editor.model.value.changed.connect((value, change) => this._onCellValueChange(value, change));
-      this.ws = new WebSocket(`ws://localhost:8888/jupyter_rtc/websocket?doc=${cell.id}`);
-      //this.ws = new WebSocket(`ws://localhost:4321/${cell.id}`);
-      this.ws.binaryType = 'arraybuffer';
-      this.ws.onmessage = (message: any) => {
-        if (message.data) {
-
-          const data = JSON.parse(message.data);
-          const changedDoc = applyChanges(this.rtcCell, data);
-          this.rtcCell = changedDoc;
-          const text = this.rtcCell.textArea.toString()
-          if (this.cell.model.value.text !== text) {
-            this.cell.model.value.text = text;
-          }
-        }
-      }
-    }
-  }
-
-  private _onFileEditorValueChange(value: IObservableString, change: IObservableString.IChangedArgs) {
-    if (this.rtcEditor.textArea) {
-      if (this.fileEditor.model.value.text !== this.rtcEditor.textArea.toString()) {
-        const newDoc = Automerge.change(this.rtcEditor, (d: Doc) => {
-          if (change.type === 'insert') {
-            d.textArea.insertAt(change.start, change.value);
-          }
-          if (change.type === 'remove') {
-            d.textArea.deleteAt(change.start, (change.end - change.start));
-          }
-        });
-        const changes = getChanges(this.rtcEditor, newDoc);
-        this.rtcEditor = newDoc;
-        this.ws.send((changes[0] as any));
-      }
-    }
-  }
-
-  private _setupFileEditor(fileEditor: FileEditor): void {
-    if (fileEditor != null) {
-      this.rtcEditor = initDocument();
-      this.fileEditor = fileEditor;
-      this.fileEditor.editor.model.value.changed.connect((value, change) => this._onFileEditorValueChange(value, change));
-//      this.ws = new WebSocket(`ws://localhost:8888/jupyter_rtc/websocket?doc=${cell.id}`);
-      this.ws = new WebSocket(`ws://localhost:4321/${fileEditor.id}`);
-      this.ws.binaryType = 'arraybuffer';
-      this.ws.onmessage = (message: any) => {
-        if (message.data) {
-
-          const data = JSON.parse(message.data);
-          const changedDoc = applyChanges(this.rtcEditor, data);
-          this.rtcEditor = changedDoc;
-          const text = this.rtcEditor.textArea.toString()
-          if (this.fileEditor.model.value.text !== text) {
-            this.fileEditor.model.value.text = text;
-          }
-        }
-      }
-    }
-  }
-
-}
-
-/**
- * Initialization data for the @jupyterlab/rtc extension.
- */
 const rtc: JupyterFrontEndPlugin<void> = {
   id: '@jupyterlab/rtc:extension',
   autoStart: true,
   requires: [
-    INotebookTracker,
-    IEditorTracker
+    IEditorTracker,
+    INotebookTracker
   ],
   activate: (
     app: JupyterFrontEnd,
-    notebookTracker: INotebookTracker, 
-    editorTracker: IEditorTracker
+    editorTracker: IEditorTracker,
+    notebookTracker: INotebookTracker
   ) => {
-    const rtc = new Rtc(notebookTracker, editorTracker);
-    console.log('JupyterLab extension @jupyterlab/rtc is activated!', rtc);
+
+    rtcRequestAPI<any>('example')
+      .then(data => {
+        console.log('Got a response from the jupyter_rtc server API', data);
+      })
+      .catch(reason => {
+        console.error(
+          `The jupyter_rtc server API appears to be missing.\n${reason}`
+        );
+      });
+
+    const wsRTCClient = new WsRTCClient(editorTracker, notebookTracker);
+    console.log('JupyterLab extension @jupyterlab/rtc is activated!', wsRTCClient);
+
+    const users = new UsersWidget();
+    users.title.icon = usersIcon;
+    users.id = 'jupyter-users'
+    app.shell.add(users, 'left', { rank: 350 })
+
+    const profile = new ProfileWidget();
+    profile.title.icon = profileIcon;
+    profile.id = 'jupyter-profile'
+    app.shell.add(profile, 'left', { rank: 300 })
+
+    authRequestAPI<any>('users')
+      .then((data: any) => {
+        console.log('Got a response from the jupyter_auth server API', data);
+        users.setUsers(data);
+        profile.setProfile(data);
+      })
+      .catch((reason: any) => {
+        console.error(
+          `The jupyter_auth server API appears to be missing.\n${reason}`
+        );
+      });
+    
   }
-};
+
+}
 
 export default rtc;

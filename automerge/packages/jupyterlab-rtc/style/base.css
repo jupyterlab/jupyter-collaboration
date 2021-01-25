@@ -1,0 +1,44 @@
+/* Hack for Material UI Snackbars */
+.p-SplitPanel-child, .lm-SplitPanel-child {
+  z-index: auto !important;
+}
+
+.jp-Users-Widget {
+  padding: 10px;
+  color: var(--jp-ui-font-color1);
+  background: var(--jp-layout-color1);
+  font-size: var(--jp-ui-font-size3);
+  display: flex;
+  text-align: center;
+  justify-content: center;
+}
+
+.jp-Users-username {
+  color: var(--jp-ui-font-color1);
+  font-size: var(--jp-ui-font-size1)
+}
+
+.jp-Users-bio {
+  color: var(--jp-ui-font-color3);
+  font-size: var(--jp-ui-font-size1)
+}
+
+.jp-Profile-Widget {
+  padding: 10px;
+  color: var(--jp-ui-font-color1);
+  background: var(--jp-layout-color1);
+  font-size: var(--jp-ui-font-size3);
+  display: flex;
+  text-align: center;
+  justify-content: center;
+}
+
+.jp-Profile-username {
+  color: var(--jp-ui-font-color1);
+  font-size: var(--jp-ui-font-size1)
+}
+
+.jp-Profile-bio {
+  color: var(--jp-ui-font-color3);
+  font-size: var(--jp-ui-font-size1)
+}

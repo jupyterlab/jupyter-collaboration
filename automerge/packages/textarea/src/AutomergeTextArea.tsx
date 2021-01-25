@@ -14,7 +14,7 @@ import {
   getHistory
 } from "./AutomergeActions";
 
-import simpleDiff from '../utils/simpleDiff'
+import simpleDiff from './simpleDiff'
 
 const AutomergeTextAreaPerf = (props: {docId: string}) => {
 
@@ -29,24 +29,19 @@ const AutomergeTextAreaPerf = (props: {docId: string}) => {
   const wsRef = useRef<WebSocket>();
 
   useEffect(() => {
-    // wsRef.current = new WebSocket('ws://localhost:8888/jupyter_rtc/websocket?doc=automerge-room');
-    wsRef.current = new WebSocket('ws://localhost:4321/automerge-room');
-
-    // wsRef.current = new WebSocket('ws://localhost:8989/proxy/4321/automerge-room');
-    // wsRef.current = new WebSocket('ws://localhost:8989/datalayer_rtc/proxy?port=4321&doc=automerge-room2');
+    wsRef.current = new WebSocket('ws://localhost:8888/jupyter_rtc/collaboration?room=textarea-react-room');
     wsRef.current.binaryType = 'arraybuffer';
     wsRef.current.onmessage = (message: any) => {
-
       if (message.data) {
-
         const data = JSON.parse(message.data);
-        var changedDoc = docRef.current;
-        data.forEach((chunk) => {
-          changedDoc = applyChanges(changedDoc, [new Uint8Array(Object.values(chunk))]);
-        });
-
-        setDoc(changedDoc);
-        console.log("changedDoc : ", changedDoc);
+        if (data.action === 'init' || data.action === 'change') {
+          var changedDoc = docRef.current;
+          data.changes.forEach((chunk) => {
+            changedDoc = applyChanges(changedDoc, [new Uint8Array(Object.values(chunk))]);
+          });
+          setDoc(changedDoc);
+          console.log("changedDoc : ", changedDoc);
+        }
       }
     }
   }, []);
@@ -59,7 +54,10 @@ const AutomergeTextAreaPerf = (props: {docId: string}) => {
     const newDoc = applyInput(doc, diff);
     setDoc(newDoc);
     const changes = getChanges(doc, newDoc);
-    var payload = JSON.stringify(changes);
+    var payload = JSON.stringify({
+      action: 'change',
+      changes: changes
+    });
     wsRef.current.send((payload as any));
   }
 

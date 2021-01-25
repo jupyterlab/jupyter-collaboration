@@ -1,6 +1,0 @@
-build/
-target/
-dist/
-jupyter_rtc_automerge/__pycache__
-*.egg-info
-Cargo.lock
