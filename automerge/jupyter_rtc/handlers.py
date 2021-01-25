@@ -107,6 +107,7 @@ class WsRTCManager(WebSocketMixin, WebSocketHandler, ExtensionHandlerMixin, Jupy
         room = self.get_argument('room', default=self.DEFAULT_ROOM)
         if room == self.USERS_ROOM:
             rooms[room].broadcast_to_users(message, sender=self)
+            return
         if room not in rooms:
             print(f"WEIRD on_message: {room} is not in rooms")
             return

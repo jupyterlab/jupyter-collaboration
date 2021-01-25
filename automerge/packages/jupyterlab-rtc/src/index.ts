@@ -7,8 +7,8 @@ import { IEditorTracker } from '@jupyterlab/fileeditor';
 import { INotebookTracker } from '@jupyterlab/notebook';
 import { LabIcon } from '@jupyterlab/ui-components';
 
-import Users from './users/users';
-import Profile from './profile/profile';
+import UsersWidget from './users/users';
+import ProfileWidget from './profile/profile';
 
 import WsRTCClient from './client/WsRTCClient';
 import authRequestAPI from './client/RestAuthClient';
@@ -53,12 +53,12 @@ const rtc: JupyterFrontEndPlugin<void> = {
     const wsRTCClient = new WsRTCClient(editorTracker, notebookTracker);
     console.log('JupyterLab extension @jupyterlab/rtc is activated!', wsRTCClient);
 
-    const users = new Users();
+    const users = new UsersWidget();
     users.title.icon = usersIcon;
     users.id = 'jupyter-users'
     app.shell.add(users, 'left', { rank: 350 })
 
-    const profile = new Profile();
+    const profile = new ProfileWidget();
     profile.title.icon = profileIcon;
     profile.id = 'jupyter-profile'
     app.shell.add(profile, 'left', { rank: 300 })
