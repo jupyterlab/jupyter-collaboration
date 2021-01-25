@@ -25,7 +25,7 @@
     "automerge:hello": "yarn workspace @jupyterlab/automerge-server run hello",
     "automerge:start-server": "yarn workspace @jupyterlab/automerge-server run server:ws:start",
     "automerge:wait": "yarn workspace @jupyterlab/automerge-server run server:ws:wait",
-    "jupyterlab:start": "fkill -s :8888 && jupyter lab --port 8888 --ServerApp.token= --ServerApp.allow_origin='*' --ServerApp.login_handler_class=jupyter_auth.github.LoginHandler",
+    "jupyterlab:start": "fkill -s :8888 && jupyter lab --port 8888 --ServerApp.token= --ServerApp.allow_origin='*' --ServerApp.jpserver_extensions=\"{'jupyter_auth': True, 'jupyter_rtc': True}\" --ServerApp.login_handler_class=jupyter_auth.github.LoginHandler",
     "jupyterlab:extension:watch": "yarn workspace @jupyterlab/rtc run watch",
     "jupyter-server:start": "fkill -s :8989 && jupyter server --port 8989 --ServerApp.jpserver_extensions=\"{'jupyter_auth': True, 'jupyter_rtc': True}\"  --ServerApp.token= --ServerApp.allow_origin='*'",
     "jupyterlab:dev:start": "fkill -s :8888 && jupyter lab --port 8888 --dev-mode --watch --extensions-in-dev-mode --ServerApp.token= --ServerApp.allow_origin='*' --ServerApp.login_handler_class=jupyter_auth.github.LoginHandler",
