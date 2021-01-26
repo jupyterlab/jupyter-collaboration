@@ -12,7 +12,7 @@ use std::vec;
 /// This enum is important as it gives us all
 /// the possible types for python dictionary
 /// values.
-#[derive(FromPyObject)]
+#[derive(Debug, FromPyObject)]
 enum nbCodeCell<'a> {
     id(String),
     cell_type(String),
@@ -23,38 +23,42 @@ enum nbCodeCell<'a> {
     CatchAll(&'a PyAny),
 }
 
-#[derive(FromPyObject)]
-enum nbModel<'a> {
-    nbformat(i32),
-    nbformat_minor(i32),
-    metadata(HashMap<String, String>),
-    cells(Vec<nbCodeCell<'a>>),
-    CatchAll(&'a PyAny),
+#[derive(Debug, FromPyObject)]
+struct nbModel<'a> {
+    nbformat: i32,
+    nbformat_minor: i32,
+    metadata: Option<HashMap<String, &'a PyAny>>,
+    cells: Option<Vec<nbCodeCell<'a>>>,
 }
 
-/// Takes a Python Objet of Type List and then
-/// unpacks it to a rust vector type.
-fn _pylist_to_vector(pyd: PyObject, py: Python) {
-    let res: Vec<i32> = pyd.extract(py).unwrap();
-}
-
-/// Takes a PythonObject of Type Dictionary
-/// and then unpacks it to a Rust HashMap.
+/// Takes a notebook from python's nbformat
+/// and then uses the `v4` version of the document
+/// to let rust access the document using native
+/// rust types.
 ///
-/// Note: The type of the Keys and Values of
-/// the hashmap cannot be inferred. Therefore,
-/// we expect them to be defined when passed in
-/// from Python.
-///
-/// Returns a rust hashmap.
-fn _pydict_to_hashmap(pyd: PyObject, py: Python) {
-    let res: HashMap<&str, &str> = pyd.extract(py).unwrap();
-    info!("The hashmap from the dict: {:?}", res);
-}
-
+/// Check logs for decompiled version.
 #[pyfunction]
 fn serialize_notebook(pynb: PyObject, py: Python) {
-    let res: HashMap<&str, nbModel> = pynb.extract(py).unwrap();
+    let nbformat_model: &PyDict = pynb.extract(py).unwrap();
+    let mut nb = nbModel {
+        nbformat: nbformat_model
+            .get_item("nbformat")
+            .unwrap()
+            .extract()
+            .unwrap(),
+        nbformat_minor: nbformat_model
+            .get_item("nbformat_minor")
+            .unwrap()
+            .extract()
+            .unwrap(),
+        metadata: nbformat_model
+            .get_item("metadata")
+            .unwrap()
+            .extract()
+            .unwrap(),
+        cells: nbformat_model.get_item("cells").unwrap().extract().unwrap(),
+    };
+    info!("The nbmod from the dict: {:?}", nb);
 }
 
 #[pyfunction]
@@ -113,6 +117,7 @@ fn initialize_nbdoc(pynb: PyObject, py: Python) -> Vec<u8> {
 }
 
 pub fn init_submodule(module: &PyModule) -> PyResult<()> {
+    module.add_function(wrap_pyfunction!(serialize_notebook, module)?)?;
     module.add_function(wrap_pyfunction!(initialize_nbdoc, module)?)?;
     module.add_function(wrap_pyfunction!(get_changes, module)?)?;
     module.add_function(wrap_pyfunction!(apply_change, module)?)?;
