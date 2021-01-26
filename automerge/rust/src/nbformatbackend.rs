@@ -12,27 +12,24 @@ use std::vec;
 /// This enum is important as it gives us all
 /// the possible types for python dictionary
 /// values.
-#[derive(PartialEq)]
-enum Value {
-    Int(i32),
-    Str(String),
-    VecOfList(Vec<i32>),
+#[derive(FromPyObject)]
+enum nbCodeCell<'a> {
+    id(String),
+    cell_type(String),
+    metadata(HashMap<String, String>),
+    execution_count(i32),
+    source(String),
+    output(Vec<i32>),
+    CatchAll(&'a PyAny),
 }
 
-struct nbCodeCell {
-    id: String,
-    cell_type: String,
-    metadata: HashMap<String, String>,
-    execution_count: i32,
-    source: String,
-    output: Vec<i32>,
-}
-
-struct nbModel {
-    nbformat: i32,
-    nbformat_minor: i32,
-    metadata: PyAny,
-    cells: Vec<i32>,
+#[derive(FromPyObject)]
+enum nbModel<'a> {
+    nbformat(i32),
+    nbformat_minor(i32),
+    metadata(HashMap<String, String>),
+    cells(Vec<nbCodeCell<'a>>),
+    CatchAll(&'a PyAny),
 }
 
 /// Takes a Python Objet of Type List and then
@@ -53,6 +50,11 @@ fn _pylist_to_vector(pyd: PyObject, py: Python) {
 fn _pydict_to_hashmap(pyd: PyObject, py: Python) {
     let res: HashMap<&str, &str> = pyd.extract(py).unwrap();
     info!("The hashmap from the dict: {:?}", res);
+}
+
+#[pyfunction]
+fn serialize_notebook(pynb: PyObject, py: Python) {
+    let res: HashMap<&str, nbModel> = pynb.extract(py).unwrap();
 }
 
 #[pyfunction]
