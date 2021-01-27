@@ -12,3 +12,5 @@ dependencies:
   - setuptools-rust
   - twine
   - yarn=1.22.5
+  - nbformat
+  - pytest
