@@ -30,3 +30,4 @@ __pycache__
 !**/.readthedocs.yml
 !**/.storybook
 !**/externals/README.md
+automerge/rust/rtc.yaml
