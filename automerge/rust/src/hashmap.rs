@@ -5,7 +5,8 @@ use automerge_protocol;
 use std::println;
 
 use pyo3::prelude::*;
-use pyo3::types::{PyBytes, PyDict, PyInt, PyList, PyString};
+// use pyo3::types::{PyBytes, PyDict, PyInt, PyList, PyString};
+use pyo3::types::PyDict;
 use pyo3::wrap_pyfunction;
 use std::collections::HashMap;
 
@@ -65,15 +66,27 @@ fn new_hashmap(py_struct: &PyDict) -> std::vec::Vec<u8> {
     return data.unwrap();
 }
 
+// WARNING : this function is named "apply_changes", plural, on purpose.
+// It takes a  Vector of changes (each change being a Vector of u8)
 #[pyfunction]
-fn apply_changes(doc: std::vec::Vec<u8>, changes_bytes: std::vec::Vec<u8>) -> std::vec::Vec<u8> {
+fn apply_changes(
+    doc: std::vec::Vec<u8>,
+    raw_changes: std::vec::Vec<std::vec::Vec<u8>>,
+) -> std::vec::Vec<u8> {
     let mut doc = automerge_backend::Backend::load(doc)
         .and_then(|back| Ok(back))
         .unwrap();
-    let changes = automerge_backend::Change::from_bytes(changes_bytes)
-        .and_then(|c| Ok(c))
-        .unwrap();
-    doc.apply_changes(vec![changes])
+
+    let mut changes: std::vec::Vec<automerge_backend::Change> = std::vec::Vec::new();
+    for raw_c in raw_changes.iter() {
+        let change = automerge_backend::Change::from_bytes(raw_c.to_vec())
+            .and_then(|c| Ok(c))
+            .unwrap();
+
+        changes.push(change)
+    }
+
+    doc.apply_changes(changes)
         .and_then(|patch| Ok(patch))
         .unwrap();
     let data = doc.save().and_then(|data| Ok(data));
@@ -135,11 +148,84 @@ fn get_all_changes(doc: std::vec::Vec<u8>) -> std::vec::Vec<std::vec::Vec<u8>> {
     return bytes;
 }
 
+#[pyfunction]
+fn get(doc: std::vec::Vec<u8>, key: String) -> String {
+    // Right, so what you'll need to do is
+    //  instantiate an automerge_backend::Backend (as you're doing),
+    //  then get the patch from that using automerge_backend::Backed::get_patch,
+    //  then apply that patch to a fresh instance of a frontend using automerge_frontend::Frontend::apply_patch.
+
+    //  At this point you have a frontend with the converged value in it,
+    // you can retrieve that using automerge_frontend::Frontend::state() which returns an automerge_frontend::Value.
+    // automerge_frontend::Value implementes serde::Deserialize, so you can turn it into a JSON string with serde_json::to_string
+    // Alternatively you could write a function to turn it into a python value directly as it's a reasonably simple enum
+    // But I would start with the JSON string
+
+    let mut frontend = automerge_frontend::Frontend::new();
+
+    let mut doc = automerge_backend::Backend::load(doc)
+        .and_then(|back| Ok(back))
+        .unwrap();
+    frontend.apply_patch(doc.get_patch().unwrap());
+
+    let root_path = automerge_frontend::Path::root().key(key);
+
+    let value: automerge_frontend::Value = frontend.get_value(&root_path).unwrap();
+
+    println!("RUST value {:?}", value);
+
+    let result = match value {
+        automerge_frontend::Value::Text(chars) => chars.iter().cloned().collect::<String>(),
+        _ => String::new(),
+    };
+
+    return result;
+}
+
+//
+#[pyfunction]
+fn to_dict(doc: std::vec::Vec<u8>) -> HashMap<String, String> {
+    let mut frontend = automerge_frontend::Frontend::new();
+
+    let mut doc = automerge_backend::Backend::load(doc)
+        .and_then(|back| Ok(back))
+        .unwrap();
+    frontend.apply_patch(doc.get_patch().unwrap());
+
+    let root_path = automerge_frontend::Path::root();
+
+    let value: automerge_frontend::Value = frontend.get_value(&root_path).unwrap();
+    let mut result = HashMap::new();
+    match value {
+        automerge_frontend::Value::Map(map, _) => {
+            result = map
+                .iter()
+                .map(|(k, v)| {
+                    (
+                        k.clone(),
+                        match v {
+                            automerge_frontend::Value::Text(chars) => {
+                                chars.iter().cloned().collect::<String>()
+                            }
+                            _ => String::new(),
+                        },
+                    )
+                })
+                .collect();
+        }
+        _ => (),
+    }
+
+    return result;
+}
+
 pub fn init_submodule(module: &PyModule) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(new_hashmap, module)?)?;
     module.add_function(wrap_pyfunction!(apply_changes, module)?)?;
     module.add_function(wrap_pyfunction!(get_all_changes, module)?)?;
     module.add_function(wrap_pyfunction!(set, module)?)?;
+    module.add_function(wrap_pyfunction!(get, module)?)?;
+    module.add_function(wrap_pyfunction!(to_dict, module)?)?;
     Ok(())
 }
 

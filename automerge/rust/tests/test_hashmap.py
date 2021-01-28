@@ -16,21 +16,22 @@ print(f"Changes count doc1: {len(changes)}")
 print(f"Changes doc1: {changes}")
 
 
-#hm_am_doc["key1"] = "modified value 1"
+#doc1["key1"] = "modified value 1"
 # or :
 doc1 = hm.set(doc1, "key1", "modified value 1")
 changes = hm.get_all_changes(doc1)
 print(f"Changes count doc1: {len(changes)}")
 print(f"Changes doc1: {changes}")
 
-for change in changes:
-    doc2_test = hm.apply_changes(doc2, change)
 
-print("doc1 : ", doc1)
-# print("doc2 : ", doc2)
-print("doc test : ", doc2_test)
+doc2 = hm.apply_changes(doc2, changes)
+    
+
+print("should be equal to 'modified value 1' : ",  hm.get(doc2, "key1")) 
+# it's not the case so far - it's still WIP.
 
 
-# hm.set(hm_am_doc, "key2", "modified value 2")
-# changes = hm.get_all_changes(hm_am_doc)
-# print(f"Changes : {len(changes)}")
+print("\n"*3)
+print( hm.to_dict(doc1) ) )
+print("\n"*3)
+print( hm.to_dict(doc2) ) )
