@@ -49,6 +49,7 @@ fn new_document(doc_id: &str, text: &str) -> std::vec::Vec<u8> {
     return data.unwrap();
 }
 
+// TODO : Rename this into "apply_change", as it applies only *one* change
 #[pyfunction]
 fn apply_changes(doc: std::vec::Vec<u8>, changes_bytes: std::vec::Vec<u8>) -> std::vec::Vec<u8> {
     let mut doc = automerge_backend::Backend::load(doc)
