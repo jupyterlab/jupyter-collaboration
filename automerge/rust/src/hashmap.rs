@@ -11,7 +11,7 @@ use pyo3::wrap_pyfunction;
 use std::collections::HashMap;
 
 fn base_document(hashmap_struct: HashMap<String, String>) -> automerge_backend::Backend {
-    let mut doc = automerge_backend::Backend::init();
+    let mut backend = automerge_backend::Backend::init();
     let mut frontend = automerge_frontend::Frontend::new();
 
     // Convert the values of the hashamp into automerge_frontend::Value::Text
@@ -43,8 +43,11 @@ fn base_document(hashmap_struct: HashMap<String, String>) -> automerge_backend::
 
     // println!("RUST initial change request {:?}", change_request);
 
-    doc.apply_local_change(change_request.unwrap()).unwrap().0;
-    return doc;
+    backend
+        .apply_local_change(change_request.unwrap())
+        .unwrap()
+        .0;
+    return backend;
 }
 
 #[pyfunction]
@@ -60,9 +63,9 @@ fn new_hashmap(py_struct: &PyDict) -> std::vec::Vec<u8> {
         .and_then(|hashmap_struct| Ok(hashmap_struct));
     // println!("RUST {:?}", hashmap_struct);
 
-    let doc = base_document(hashmap_struct.unwrap());
+    let backend = base_document(hashmap_struct.unwrap());
 
-    let data = doc.save().and_then(|data| Ok(data));
+    let data = backend.save().and_then(|data| Ok(data));
     return data.unwrap();
 }
 
@@ -70,10 +73,10 @@ fn new_hashmap(py_struct: &PyDict) -> std::vec::Vec<u8> {
 // It takes a  Vector of changes (each change being a Vector of u8)
 #[pyfunction]
 fn apply_changes(
-    doc: std::vec::Vec<u8>,
+    raw_backend: std::vec::Vec<u8>,
     raw_changes: std::vec::Vec<std::vec::Vec<u8>>,
 ) -> std::vec::Vec<u8> {
-    let mut doc = automerge_backend::Backend::load(doc)
+    let mut backend = automerge_backend::Backend::load(raw_backend)
         .and_then(|back| Ok(back))
         .unwrap();
 
@@ -86,21 +89,22 @@ fn apply_changes(
         changes.push(change)
     }
 
-    doc.apply_changes(changes)
+    backend
+        .apply_changes(changes)
         .and_then(|patch| Ok(patch))
         .unwrap();
-    let data = doc.save().and_then(|data| Ok(data));
+    let data = backend.save().and_then(|data| Ok(data));
     return data.unwrap();
 }
 
 #[pyfunction]
-fn set(doc: std::vec::Vec<u8>, key: String, value: String) -> std::vec::Vec<u8> {
-    let mut doc = automerge_backend::Backend::load(doc)
+fn set(raw_backend: std::vec::Vec<u8>, key: String, value: String) -> std::vec::Vec<u8> {
+    let mut backend = automerge_backend::Backend::load(raw_backend)
         .and_then(|back| Ok(back))
         .unwrap();
 
     let mut frontend = automerge_frontend::Frontend::new();
-    frontend.apply_patch(doc.get_patch().unwrap());
+    frontend.apply_patch(backend.get_patch().unwrap());
 
     // println!("RUST set {:?}->{:?}", key, value);
 
@@ -120,18 +124,21 @@ fn set(doc: std::vec::Vec<u8>, key: String, value: String) -> std::vec::Vec<u8> 
 
     // println!("RUST change request {:?} \n", change_request);
 
-    let _patch = doc.apply_local_change(change_request.unwrap()).unwrap().0;
+    let _patch = backend
+        .apply_local_change(change_request.unwrap())
+        .unwrap()
+        .0;
 
-    let data = doc.save().and_then(|data| Ok(data));
+    let data = backend.save().and_then(|data| Ok(data));
     return data.unwrap();
 }
 
 #[pyfunction]
-fn get_all_changes(doc: std::vec::Vec<u8>) -> std::vec::Vec<std::vec::Vec<u8>> {
-    let doc = automerge_backend::Backend::load(doc)
+fn get_all_changes(raw_backend: std::vec::Vec<u8>) -> std::vec::Vec<std::vec::Vec<u8>> {
+    let backend = automerge_backend::Backend::load(raw_backend)
         .and_then(|back| Ok(back))
         .unwrap();
-    let changes = doc.get_changes(&[]);
+    let changes = backend.get_changes(&[]);
 
     // println!("RUST get changes {:?}", changes);
 
@@ -143,7 +150,7 @@ fn get_all_changes(doc: std::vec::Vec<u8>) -> std::vec::Vec<std::vec::Vec<u8>> {
 }
 
 #[pyfunction]
-fn get(doc: std::vec::Vec<u8>, key: String) -> String {
+fn get(raw_backend: std::vec::Vec<u8>, key: String) -> String {
     // According to Alex Good from the Automerge Team, to get a value from an automerge_backend::backend object :
     // > Right, so what you'll need to do is
     // >  instantiate an automerge_backend::Backend (as you're doing),
@@ -158,10 +165,10 @@ fn get(doc: std::vec::Vec<u8>, key: String) -> String {
 
     let mut frontend = automerge_frontend::Frontend::new();
 
-    let doc = automerge_backend::Backend::load(doc)
+    let backend = automerge_backend::Backend::load(raw_backend)
         .and_then(|back| Ok(back))
         .unwrap();
-    frontend.apply_patch(doc.get_patch().unwrap());
+    frontend.apply_patch(backend.get_patch().unwrap());
 
     let root_path = automerge_frontend::Path::root().key(key);
     let value: automerge_frontend::Value = frontend.get_value(&root_path).unwrap();
@@ -178,13 +185,13 @@ fn get(doc: std::vec::Vec<u8>, key: String) -> String {
 
 //
 #[pyfunction]
-fn to_dict(doc: std::vec::Vec<u8>) -> HashMap<String, String> {
+fn to_dict(raw_backend: std::vec::Vec<u8>) -> HashMap<String, String> {
     let mut frontend = automerge_frontend::Frontend::new();
 
-    let doc = automerge_backend::Backend::load(doc)
+    let backend = automerge_backend::Backend::load(raw_backend)
         .and_then(|back| Ok(back))
         .unwrap();
-    frontend.apply_patch(doc.get_patch().unwrap());
+    frontend.apply_patch(backend.get_patch().unwrap());
 
     let root_path = automerge_frontend::Path::root();
 
@@ -222,16 +229,3 @@ pub fn init_submodule(module: &PyModule) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(to_dict, module)?)?;
     Ok(())
 }
-
-// /*
-//  * Critical path: new_document, get_all_changes.
-//  * TODO apply_changes
-//  */
-// #[test]
-// fn test_new_document() {
-//     // Instanciating an automerge frontend and generating a patch of changes, and checking the document changed.
-//     let doc = new_document("test_doc_id", "Test content");
-//     let changes = get_all_changes(doc);
-//     // There must be two changes : one to set the doc id, one to set the content.
-//     assert_eq!(changes.len(), 2);
-// }
