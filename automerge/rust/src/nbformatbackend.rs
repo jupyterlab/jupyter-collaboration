@@ -1,10 +1,8 @@
 use automerge_backend;
-use automerge_frontend;
-use automerge_protocol;
-use log::{debug, info, LevelFilter};
+use log::info;
 use pyo3::conversion::FromPyObject;
 use pyo3::prelude::*;
-use pyo3::types::{PyBytes, PyDict, PyInt, PyList, PyString};
+use pyo3::types::PyDict;
 use pyo3::wrap_pyfunction;
 use std::collections::HashMap;
 use std::vec;

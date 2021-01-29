@@ -133,7 +133,6 @@ fn get_all_changes(doc: std::vec::Vec<u8>) -> std::vec::Vec<std::vec::Vec<u8>> {
         .unwrap();
     let changes = doc.get_changes(&[]);
 
-    let changes = doc.get_changes(&[]);
     // println!("RUST get changes {:?}", changes);
 
     let mut bytes: std::vec::Vec<std::vec::Vec<u8>> = std::vec::Vec::new();
@@ -159,7 +158,7 @@ fn get(doc: std::vec::Vec<u8>, key: String) -> String {
 
     let mut frontend = automerge_frontend::Frontend::new();
 
-    let mut doc = automerge_backend::Backend::load(doc)
+    let doc = automerge_backend::Backend::load(doc)
         .and_then(|back| Ok(back))
         .unwrap();
     frontend.apply_patch(doc.get_patch().unwrap());
@@ -182,7 +181,7 @@ fn get(doc: std::vec::Vec<u8>, key: String) -> String {
 fn to_dict(doc: std::vec::Vec<u8>) -> HashMap<String, String> {
     let mut frontend = automerge_frontend::Frontend::new();
 
-    let mut doc = automerge_backend::Backend::load(doc)
+    let doc = automerge_backend::Backend::load(doc)
         .and_then(|back| Ok(back))
         .unwrap();
     frontend.apply_patch(doc.get_patch().unwrap());
