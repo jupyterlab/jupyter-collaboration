@@ -41,7 +41,7 @@ fn base_document(hashmap_struct: HashMap<String, String>) -> automerge_backend::
         )
         .unwrap();
 
-    println!("RUST initial change request {:?}", change_request);
+    // println!("RUST initial change request {:?}", change_request);
 
     doc.apply_local_change(change_request.unwrap()).unwrap().0;
     return doc;
@@ -52,13 +52,13 @@ fn new_hashmap(py_struct: &PyDict) -> std::vec::Vec<u8> {
     // let gil = Python::acquire_gil();
     // let py = gil.python();
 
-    println!("RUST {:?}", py_struct);
+    // println!("RUST {:?}", py_struct);
 
     //  Convert from a PyDict to a Hashmap Str:Str
     let hashmap_struct: std::result::Result<HashMap<String, String>, PyErr> = py_struct
         .extract()
         .and_then(|hashmap_struct| Ok(hashmap_struct));
-    println!("RUST {:?}", hashmap_struct);
+    // println!("RUST {:?}", hashmap_struct);
 
     let doc = base_document(hashmap_struct.unwrap());
 
@@ -95,20 +95,20 @@ fn apply_changes(
 
 #[pyfunction]
 fn set(doc: std::vec::Vec<u8>, key: String, value: String) -> std::vec::Vec<u8> {
-    let mut frontend = automerge_frontend::Frontend::new();
     let mut doc = automerge_backend::Backend::load(doc)
         .and_then(|back| Ok(back))
         .unwrap();
 
-    println!("RUST set {:?}->{:?}", key, value);
+    let mut frontend = automerge_frontend::Frontend::new();
+    frontend.apply_patch(doc.get_patch().unwrap());
+
+    // println!("RUST set {:?}->{:?}", key, value);
 
     // Create a "change" action, that sets the value for the given key
     let change = automerge_frontend::LocalChange::set(
         automerge_frontend::Path::root().key(key),
         automerge_frontend::Value::Text(value.chars().collect()),
     );
-
-    // println!("RUST change {}", change);
 
     // Apply this change
     let change_request = frontend
@@ -118,14 +118,9 @@ fn set(doc: std::vec::Vec<u8>, key: String, value: String) -> std::vec::Vec<u8> 
         })
         .unwrap();
 
-    println!("RUST change request {:?}", change_request);
+    // println!("RUST change request {:?} \n", change_request);
 
     let _patch = doc.apply_local_change(change_request.unwrap()).unwrap().0;
-
-    // test
-    let changes = doc.get_changes(&[]);
-    println!("RUST (set) get changes {:?}", changes);
-    //
 
     let data = doc.save().and_then(|data| Ok(data));
     return data.unwrap();
@@ -139,7 +134,7 @@ fn get_all_changes(doc: std::vec::Vec<u8>) -> std::vec::Vec<std::vec::Vec<u8>> {
     let changes = doc.get_changes(&[]);
 
     let changes = doc.get_changes(&[]);
-    println!("RUST get changes {:?}", changes);
+    // println!("RUST get changes {:?}", changes);
 
     let mut bytes: std::vec::Vec<std::vec::Vec<u8>> = std::vec::Vec::new();
     for c in changes.iter() {
@@ -150,16 +145,17 @@ fn get_all_changes(doc: std::vec::Vec<u8>) -> std::vec::Vec<std::vec::Vec<u8>> {
 
 #[pyfunction]
 fn get(doc: std::vec::Vec<u8>, key: String) -> String {
-    // Right, so what you'll need to do is
-    //  instantiate an automerge_backend::Backend (as you're doing),
-    //  then get the patch from that using automerge_backend::Backed::get_patch,
-    //  then apply that patch to a fresh instance of a frontend using automerge_frontend::Frontend::apply_patch.
-
-    //  At this point you have a frontend with the converged value in it,
-    // you can retrieve that using automerge_frontend::Frontend::state() which returns an automerge_frontend::Value.
-    // automerge_frontend::Value implementes serde::Deserialize, so you can turn it into a JSON string with serde_json::to_string
-    // Alternatively you could write a function to turn it into a python value directly as it's a reasonably simple enum
-    // But I would start with the JSON string
+    // According to Alex Good from the Automerge Team, to get a value from an automerge_backend::backend object :
+    // > Right, so what you'll need to do is
+    // >  instantiate an automerge_backend::Backend (as you're doing),
+    // >  then get the patch from that using automerge_backend::Backed::get_patch,
+    // >  then apply that patch to a fresh instance of a frontend using automerge_frontend::Frontend::apply_patch.
+    // > At this point you have a frontend with the converged value in it,
+    // > you can retrieve that using automerge_frontend::Frontend::state() which returns an automerge_frontend::Value.
+    // Alex also added, in order to retrieve the data in json :
+    // > automerge_frontend::Value implementes serde::Deserialize, so you can turn it into a JSON string with serde_json::to_string
+    // > Alternatively you could write a function to turn it into a python value directly as it's a reasonably simple enum
+    // > But I would start with the JSON string
 
     let mut frontend = automerge_frontend::Frontend::new();
 
@@ -169,10 +165,9 @@ fn get(doc: std::vec::Vec<u8>, key: String) -> String {
     frontend.apply_patch(doc.get_patch().unwrap());
 
     let root_path = automerge_frontend::Path::root().key(key);
-
     let value: automerge_frontend::Value = frontend.get_value(&root_path).unwrap();
 
-    println!("RUST value {:?}", value);
+    // println!("RUST value {:?}", value);
 
     let result = match value {
         automerge_frontend::Value::Text(chars) => chars.iter().cloned().collect::<String>(),
