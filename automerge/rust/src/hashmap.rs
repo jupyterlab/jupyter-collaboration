@@ -161,6 +161,46 @@ impl HashmapDocument {
     }
 }
 
+fn base_document(hashmap_struct: HashMap<String, String>) -> automerge_backend::Backend {
+    let mut backend = automerge_backend::Backend::init();
+    let mut frontend = automerge_frontend::Frontend::new();
+
+    // Convert the values of the hashamp into automerge_frontend::Value::Text
+    let mut hashmap_converted: HashMap<String, automerge_frontend::Value> = HashMap::new();
+    for key in hashmap_struct.keys() {
+        let converted_value =
+            automerge_frontend::Value::Text(hashmap_struct[key].chars().collect());
+        hashmap_converted
+            .entry(key.to_string())
+            .or_insert(converted_value);
+    }
+
+    // Create a "change" action, that sets the hashmap as root of my automerge document.
+    let change = automerge_frontend::LocalChange::set(
+        automerge_frontend::Path::root(),
+        automerge_frontend::Value::Map(hashmap_converted, automerge_protocol::MapType::Map),
+    );
+
+    // Apply this change
+    let change_request = frontend
+        .change::<_, automerge_frontend::InvalidChangeRequest>(
+            Some("set root object".into()),
+            |frontend| {
+                frontend.add_change(change)?;
+                Ok(())
+            },
+        )
+        .unwrap();
+
+    // println!("RUST initial change request {:?}", change_request);
+
+    backend
+        .apply_local_change(change_request.unwrap())
+        .unwrap()
+        .0;
+    return backend;
+}
+
 pub fn init_submodule(module: &PyModule) -> PyResult<()> {
     module.add_class::<HashmapDocument>()?;
 
