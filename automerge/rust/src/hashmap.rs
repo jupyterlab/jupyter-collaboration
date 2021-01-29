@@ -4,6 +4,7 @@ use automerge_protocol;
 
 use std::println;
 
+use pyo3::class::{PyMappingProtocol, PyObjectProtocol};
 use pyo3::prelude::*;
 // use pyo3::types::{PyBytes, PyDict, PyInt, PyList, PyString};
 use pyo3::types::PyDict;
@@ -64,33 +65,6 @@ impl HashmapDocument {
         Ok(())
     }
 
-    fn set(&mut self, key: String, value: String) -> PyResult<()> {
-        let mut backend = automerge_backend::Backend::load(self.serialized_backend.clone())
-            .and_then(|back| Ok(back))
-            .unwrap();
-        let mut frontend = automerge_frontend::Frontend::new();
-        frontend.apply_patch(backend.get_patch().unwrap());
-        // println!("RUST set {:?}->{:?}", key, value);
-        // Create a "change" action, that sets the value for the given key
-        let change = automerge_frontend::LocalChange::set(
-            automerge_frontend::Path::root().key(key),
-            automerge_frontend::Value::Text(value.chars().collect()),
-        );
-        // Apply this change
-        let change_request = frontend
-            .change::<_, automerge_frontend::InvalidChangeRequest>(Some("set".into()), |frontend| {
-                frontend.add_change(change)?;
-                Ok(())
-            })
-            .unwrap();
-        // println!("RUST change request {:?} \n", change_request);
-        let _patch = backend
-            .apply_local_change(change_request.unwrap())
-            .unwrap()
-            .0;
-        self.serialized_backend = backend.save().and_then(|data| Ok(data)).unwrap();
-        Ok(())
-    }
     fn get_all_changes(&self) -> PyResult<(std::vec::Vec<std::vec::Vec<u8>>)> {
         let backend = automerge_backend::Backend::load(self.serialized_backend.clone())
             .and_then(|back| Ok(back))
@@ -129,6 +103,34 @@ impl HashmapDocument {
         };
         Ok(result)
     }
+
+    fn set(&mut self, key: String, value: String) -> PyResult<()> {
+        let mut backend = automerge_backend::Backend::load(self.serialized_backend.clone())
+            .and_then(|back| Ok(back))
+            .unwrap();
+        let mut frontend = automerge_frontend::Frontend::new();
+        frontend.apply_patch(backend.get_patch().unwrap());
+        // println!("RUST set {:?}->{:?}", key, value);
+        // Create a "change" action, that sets the value for the given key
+        let change = automerge_frontend::LocalChange::set(
+            automerge_frontend::Path::root().key(key),
+            automerge_frontend::Value::Text(value.chars().collect()),
+        );
+        // Apply this change
+        let change_request = frontend
+            .change::<_, automerge_frontend::InvalidChangeRequest>(Some("set".into()), |frontend| {
+                frontend.add_change(change)?;
+                Ok(())
+            })
+            .unwrap();
+        // println!("RUST change request {:?} \n", change_request);
+        let _patch = backend
+            .apply_local_change(change_request.unwrap())
+            .unwrap()
+            .0;
+        self.serialized_backend = backend.save().and_then(|data| Ok(data)).unwrap();
+        Ok(())
+    }
     fn to_dict(&self) -> PyResult<HashMap<String, String>> {
         let mut frontend = automerge_frontend::Frontend::new();
         let backend = automerge_backend::Backend::load(self.serialized_backend.clone())
@@ -161,6 +163,34 @@ impl HashmapDocument {
     }
 }
 
+#[pyproto]
+impl PyObjectProtocol for HashmapDocument {
+    fn __getattr__(&self, name: String) -> PyResult<String> {
+        self.get(name)
+    }
+
+    fn __setattr__(&mut self, name: String, value: String) -> PyResult<()> {
+        self.set(name, value)
+    }
+    // TODO
+    // fn __delattr__(&mut self, name: FromPyObject) -> PyResult<()>
+}
+
+#[pyproto]
+impl PyMappingProtocol for HashmapDocument {
+    // TODO
+    // fn __len__(&self) -> usize
+
+    fn __getitem__(&self, name: String) -> PyResult<String> {
+        self.get(name)
+    }
+
+    fn __setitem__(&mut self, name: String, value: String) -> PyResult<()> {
+        self.set(name, value)
+    }
+}
+
+//  This function is out of the #[pymethods] declaration because we don't want to expose it to Python
 fn base_document(hashmap_struct: HashMap<String, String>) -> automerge_backend::Backend {
     let mut backend = automerge_backend::Backend::init();
     let mut frontend = automerge_frontend::Frontend::new();

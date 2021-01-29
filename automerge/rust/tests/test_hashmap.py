@@ -5,16 +5,35 @@ from unittest import TestCase
 
 class TestHashMap(TestCase):
 
+    def test_item_assignment(self):
+
+        test_struct = {"key1": "value1", "key2": "value2"}
+        new_value = "modified value %s"
+
+        doc = hm.HashmapDocument(test_struct)
+        
+        doc.set("key1", new_value%(1) )
+        self.assertEqual(doc.get("key1"), new_value%(1), "changing the value for a key failed" )
+
+        doc["key1"] = new_value%(2)
+        self.assertEqual(doc["key1"], new_value%(2), "changing the value for a key failed" )
+
+        doc.key1 = new_value%(3)
+        self.assertEqual(doc.key1, new_value%(3), "changing the value for a key failed" )
+
     def test_set_key(self):
 
         test_struct = {"key1": "value1", "key2": "value2"}
         new_value = "modified value 1"
 
         doc = hm.HashmapDocument(test_struct)
-        doc.set("key1", new_value)
+        # doc.set("key1", new_value)
+        doc["key1"] = new_value
         
-        self.assertEqual(doc.get("key1"), new_value, "changing the value for a key failed" )
-        self.assertEqual(doc.get("key2"), "value2", "changing the value for a key changed the value for the wrong key" )
+        # self.assertEqual(doc.get("key1"), new_value, "changing the value for a key failed" )
+        # self.assertEqual(doc.get("key2"), "value2", "changing the value for a key changed the value for the wrong key" )
+        self.assertEqual(doc["key1"], new_value, "changing the value for a key failed" )
+        self.assertEqual(doc["key2"], "value2", "changing the value for a key changed the value for the wrong key" )
 
     def test_repeat_set_key(self):
 
@@ -22,9 +41,9 @@ class TestHashMap(TestCase):
         doc = hm.HashmapDocument(test_struct)
 
         for i in range(1, 10):
-            doc.set("key0", f"value{i}")
+            doc["key0"] = f"value{i}"
             
-        self.assertEqual( doc.get("key0"), f"value{i}")
+        self.assertEqual( doc["key0"], f"value{i}")
         
 
     def test_to_dict(self):
@@ -33,9 +52,9 @@ class TestHashMap(TestCase):
         test_struct = {"key0": "value0", "key1": "value1", "key2": "value2"}
         doc = hm.HashmapDocument(test_struct)
 
-        doc.set("key0", "modified value 0")
-        doc.set("key1", "modified value 1")
-        doc.set("key2", "modified value 2")
+        doc["key0"] = "modified value 0"
+        doc["key1"] = "modified value 1"
+        doc["key2"] = "modified value 2"
         
         expected_result = {  "key0": "modified value 0",
                              "key1": "modified value 1",
@@ -50,10 +69,10 @@ class TestHashMap(TestCase):
         test_struct = {"key1": "value1"}
         
         doc = hm.HashmapDocument(test_struct)
-        doc.set("key2", "value2")
+        doc["key2"] = "value2"
         
-        self.assertEqual(doc.get("key2"), "value2", "Setting the value for a new key failed" )
-        self.assertEqual(doc.get("key1"), "value1", "Setting the value for a new key changed the value for the wrong key" )
+        self.assertEqual(doc["key2"], "value2", "Setting the value for a new key failed" )
+        self.assertEqual(doc["key1"], "value1", "Setting the value for a new key changed the value for the wrong key" )
         
 
 
@@ -63,7 +82,7 @@ class TestHashMap(TestCase):
         doc = hm.HashmapDocument(test_struct)
 
         for i in range(1, 10):
-            doc.set("key0", f"value{i}")
+            doc["key0"] = f"value{i}"
             self.assertEqual( len(doc.get_all_changes()), i+1 )
         
         # 10 changes : the creation with the initial value, and the for-loop
@@ -83,9 +102,9 @@ class TestHashMap(TestCase):
         doc1 = hm.HashmapDocument(test_struct)
         doc2 = doc1.copy()
 
-        doc1.set("key0", expected_result["key0"]  )
-        doc1.set("key1", expected_result["key1"]  )
-        doc1.set("key2", expected_result["key2"]  )
+        doc1["key0"] = expected_result["key0"] 
+        doc1["key1"] = expected_result["key1"] 
+        doc1["key2"] = expected_result["key2"] 
         
         self.assertNotEqual(doc2.to_dict(), expected_result, "Modifications on document 1 are reflected on document 2 : problem with copy")
 
