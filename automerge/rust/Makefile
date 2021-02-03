@@ -19,8 +19,10 @@ test-rust:
 	cargo test
 
 test-py:
-	cd .. && RUST_BACKTRACE=full python rust/jupyter_rtc_automerge/test_automerge.py
+	# cd .. && RUST_BACKTRACE=full python rust/jupyter_rtc_automerge/test_automerge.py
 	cd .. &&  RUST_BACKTRACE=full python -m pytest --color=yes --verbose rust/tests/test_hashmap.py    
+	cd .. &&  RUST_BACKTRACE=full python rust/tests/test_hashmap2.py    
+
 
 publish:
 	python3 setup.py sdist bdist_wheel
