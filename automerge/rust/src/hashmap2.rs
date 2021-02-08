@@ -4,14 +4,14 @@ use automerge_protocol;
 
 use std::println;
 
-use pyo3::class::{PyMappingProtocol, PyObjectProtocol};
+use pyo3::ffi;
 use pyo3::prelude::*;
 use pyo3::type_object::PyTypeObject;
-use pyo3::types::{PyAny, PyBytes, PyDict, PyInt, PyList, PyLong, PyString, PyUnicode};
-
-use pyo3::wrap_pyfunction;
-use std::any::Any;
+use pyo3::types::{
+    PyAny, PyByteArray, PyBytes, PyDict, PyFloat, PyInt, PyList, PyLong, PyString, PyUnicode,
+};
 use std::collections::HashMap;
+use std::os::raw::c_long;
 
 #[pyclass]
 struct HashmapDocument {
@@ -23,7 +23,6 @@ impl HashmapDocument {
     #[new]
     fn new(py_struct: &PyDict) -> Self {
         //  Convert from a PyDict to a Hashmap<Str : automerge_frontend::Value>
-
         let hashmap_struct: std::result::Result<HashMap<String, &PyAny>, PyErr> = py_struct
             .extract()
             .and_then(|hashmap_struct| Ok(hashmap_struct));
@@ -35,8 +34,12 @@ impl HashmapDocument {
         HashmapDocument { serialized_backend }
     }
 
+    fn dump_backend(&self) {
+        println!("DUMP BACKEND : \n {:?}", self.serialized_backend);
+    }
+
     fn copy(&self) -> PyResult<Self> {
-        let mut backend = automerge_backend::Backend::load(self.serialized_backend.clone())
+        let backend = automerge_backend::Backend::load(self.serialized_backend.clone())
             .and_then(|back| Ok(back))
             .unwrap();
 
@@ -74,7 +77,6 @@ impl HashmapDocument {
             .and_then(|back| Ok(back))
             .unwrap();
         let changes = backend.get_changes(&[]);
-        // println!("RUST get changes {:?}", changes);
         let mut bytes: std::vec::Vec<std::vec::Vec<u8>> = std::vec::Vec::new();
         for c in changes.iter() {
             bytes.push(c.bytes.clone());
@@ -94,11 +96,6 @@ impl HashmapDocument {
         // > Alternatively you could write a function to turn it into a python value directly as it's a reasonably simple enum
         // > But I would start with the JSON string
 
-        // let gil = Python::acquire_gil();
-        // let py = gil.python();
-
-        println!(" RUST GET : {:?}", key);
-
         let mut frontend = automerge_frontend::Frontend::new();
         let backend = automerge_backend::Backend::load(self.serialized_backend.clone())
             .and_then(|back| Ok(back))
@@ -106,53 +103,10 @@ impl HashmapDocument {
 
         frontend.apply_patch(backend.get_patch().unwrap());
 
-        /*
         let root_path = automerge_frontend::Path::root().key(key);
         let value: automerge_frontend::Value = frontend.get_value(&root_path).unwrap();
-        */
-        let root_dict: automerge_frontend::Value = frontend
-            .get_value(&automerge_frontend::Path::root())
-            .unwrap();
 
-        let hashmap = match root_dict {
-            automerge_frontend::Value::Map(hashmap, _) => hashmap,
-            _ => (HashMap::new()),
-        };
-
-        println!("RUST hashmap {:?}", hashmap);
-
-        Ok(automerge_to_py_val(py, hashmap.get(&key).unwrap()))
-
-        // let result = match value {
-        //     automerge_frontend::Value::Text(chars) => chars.iter().cloned().collect::<String>(),
-        //     _ => String::new(),
-        // };
-        // Ok(result)
-
-        /*
-        let root_dict: automerge_frontend::Value = frontend.get_value(&root_path).unwrap();
-
-        match root_dict {
-            automerge_frontend::Value::Map(map, _) => {
-                result = map
-                    .iter()
-                    .map(|(k, v)| {
-                        (
-                            k.clone(),
-                            match v {
-                                automerge_frontend::Value::Text(chars) => {
-                                    chars.iter().cloned().collect::<String>()
-                                }
-                                _ => String::new(),
-                            },
-                        )
-                    })
-                    .collect();
-            }
-            _ => (),
-        }
-        */
-        // Convert from automerge value to something Python compatible
+        Ok(automerge_to_py_val(py, &value))
     }
 
     fn set(&mut self, key: String, value: String) -> PyResult<()> {
@@ -243,37 +197,38 @@ impl PyMappingProtocol for HashmapDocument {
 }
 */
 
+// Convert from an automerge scalar value (used by automerge_value::Primitive) to something Python compatible
+fn automerge_primivite_to_py<'p>(
+    py: Python<'p>,
+    am_prim: &automerge_protocol::ScalarValue,
+) -> &'p PyAny {
+    match am_prim {
+        automerge_protocol::ScalarValue::Int(i) => unsafe {
+            &(py.from_owned_ptr(ffi::PyLong_FromLongLong(*i)))
+        },
+        automerge_protocol::ScalarValue::F64(f) => &PyFloat::new(py, *f),
+
+        automerge_protocol::ScalarValue::Boolean(b) => PyString::new(py, "TODO"),
+        // Doesn't compile, fix it
+        // automerge_protocol::ScalarValue::Null => &(py.None().extract(py).unwrap()),
+        automerge_protocol::ScalarValue::Null => PyString::new(py, "TODO"),
+
+        // we're not supposed to store any of the following values in the backend
+        automerge_protocol::ScalarValue::Str(s) => PyString::new(py, "N/A"),
+        automerge_protocol::ScalarValue::Uint(ui) => PyString::new(py, "N/A"),
+        automerge_protocol::ScalarValue::F32(f) => PyString::new(py, "N/A"),
+        automerge_protocol::ScalarValue::Counter(c) => PyString::new(py, "N/A"),
+        automerge_protocol::ScalarValue::Timestamp(t) => PyString::new(py, "N/A"),
+    }
+}
+
+// Convert from an automerge_value to something Python compatible
 fn automerge_to_py_val<'p>(py: Python<'p>, am_value: &automerge_frontend::Value) -> &'p PyAny {
-    println!(" RUST {:?} ", am_value);
-
-    // let gil = Python::acquire_gil();
-    // let py = gil.python();
-
-    // let py = Python::acquire_gil().python();
-
     let result: &PyAny = match am_value {
         automerge_frontend::Value::Text(chars) => {
-            // PyString::new(py, chars) //.iter().cloned().collect::<String>()
-            PyString::new(py, &chars.iter().collect::<String>())
+            PyUnicode::new(py, &chars.iter().collect::<String>())
         }
-        automerge_frontend::Value::Primitive(scalar) => {
-            // scalar.to_i64().to_object(py).cast_as::<PyLong>(py).unwrap()
-            // // PyLong(scalar.to_i64())
-            // PyLong { 0: scalar.to_i64() }
-            // &PyLong { 0: 0 }
-            // scalar.to_i64().to_object(py).clone().cast_as::<PyLong>(py).unwrap()
-
-            // let converted_scalar = scalar.to_i64().to_object(py).clone();
-            // &converted_scalar.as_ref(py)
-
-            // scalar
-            //     .to_i64()
-            //     .unwrap()
-            //     .to_object(py)
-            //     .cast_as::<PyLong>(py)
-            //     .unwrap()
-            PyString::new(py, "TODO")
-        }
+        automerge_frontend::Value::Primitive(scalar) => automerge_primivite_to_py(py, scalar),
         automerge_frontend::Value::Sequence(seq) => {
             // seq is type Vec<automerge_frontend::Value>
             let mut converted_list: std::vec::Vec<&PyAny> = std::vec::Vec::new();
@@ -283,7 +238,7 @@ fn automerge_to_py_val<'p>(py: Python<'p>, am_value: &automerge_frontend::Value)
             PyList::new(py, &converted_list)
         }
         automerge_frontend::Value::Map(map, _) => {
-            let mut converted_map = PyDict::new(py);
+            let converted_map = PyDict::new(py);
 
             for key in map.keys() {
                 converted_map.set_item(key, automerge_to_py_val(py, &map[key]));
@@ -296,8 +251,6 @@ fn automerge_to_py_val<'p>(py: Python<'p>, am_value: &automerge_frontend::Value)
 }
 
 fn py_to_automerge_val(py_value: &PyAny) -> automerge_frontend::Value {
-    // println!(" RUST {:?} ", py_value);
-
     let gil = Python::acquire_gil();
     let py = gil.python();
     let scalar_null = automerge_protocol::ScalarValue::Null;
@@ -305,13 +258,11 @@ fn py_to_automerge_val(py_value: &PyAny) -> automerge_frontend::Value {
         automerge_frontend::Value::Primitive(scalar_null);
 
     if PyInt::type_object(py).is_instance(py_value).unwrap() {
-        // println!(" RUST CAST TO INT {:?} ", py_value.downcast::<PyInt>());
-
         // First, extract the int value
         let int_value = py_value
             .downcast::<PyInt>()
             .unwrap()
-            .extract::<i64>() // Automerge wants i64
+            .extract::<i64>() // To build an Automerge Scalar Value, we need i64
             .unwrap();
 
         // Turn it into a scalar value for automerge - required for Primitive frontend values
@@ -319,16 +270,34 @@ fn py_to_automerge_val(py_value: &PyAny) -> automerge_frontend::Value {
 
         // Now, we can build a frontend value from this scalar value
         converted_value = automerge_frontend::Value::Primitive(scalar_value);
-    } else if PyString::type_object(py).is_instance(py_value).unwrap() {
-        // Extract the string value
+    } else if PyFloat::type_object(py).is_instance(py_value).unwrap() {
+        // First, extract the Float value
+        let float_value = py_value
+            .downcast::<PyFloat>()
+            .unwrap()
+            .extract::<f64>() // To build an Automerge Scalar Value, we need f32 or f64
+            .unwrap();
+
+        // Turn it into a scalar value for automerge - required for Primitive frontend values
+        let scalar_value = automerge_protocol::ScalarValue::F64(float_value);
+
+        // Now, we can build a frontend value from this scalar value
+        converted_value = automerge_frontend::Value::Primitive(scalar_value);
+    } else if PyByteArray::type_object(py).is_instance(py_value).unwrap() {
+        // TODO :  Build the frontend value
+        let byte_array_value = py_value.downcast::<PyByteArray>().unwrap();
+        println!(" RUST TODO HANDLE BYTE ARRAY {:?}", py_value);
+        println!(" RUST UNICODE VALUE {:?}", byte_array_value);
+    } else if PyUnicode::type_object(py).is_instance(py_value).unwrap() {
+        let unicode_value = py_value.downcast::<PyUnicode>().unwrap();
+
         let str_value = py_value
-            .downcast::<PyString>()
+            .downcast::<PyUnicode>()
             .unwrap()
             .extract::<String>()
             .unwrap();
-
-        // Build the frontend value
-        converted_value = automerge_frontend::Value::Text(str_value.chars().collect());
+        converted_value =
+            automerge_frontend::Value::Text(unicode_value.to_str().unwrap().chars().collect());
     } else if PyList::type_object(py).is_instance(py_value).unwrap() {
         // Extract the list value
         let list_value = py_value.downcast::<PyList>().unwrap();
@@ -359,7 +328,6 @@ fn py_to_automerge_val(py_value: &PyAny) -> automerge_frontend::Value {
         // TODO : handle this better
         println!(" RUST COULDNT CAST {:?}", py_value);
     }
-
     return converted_value;
 }
 
@@ -368,7 +336,7 @@ fn base_document(hashmap_struct: HashMap<String, &PyAny>) -> automerge_backend::
     let mut backend = automerge_backend::Backend::init();
     let mut frontend = automerge_frontend::Frontend::new();
 
-    // Convert the values of the hashamp into automerge_frontend::Value::Text
+    // Convert the values of the hashamp into automerge_frontend::Value
     let mut hashmap_converted: HashMap<String, automerge_frontend::Value> = HashMap::new();
     for key in hashmap_struct.keys() {
         let py_value = hashmap_struct[key];
