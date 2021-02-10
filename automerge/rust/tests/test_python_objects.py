@@ -1,6 +1,6 @@
 import logging
-from hypothesis import given, strategies 
-from jupyter_rtc_automerge import hashmap2 as hm # hashmap<str:*>   with * = Lst, int, str, hashmap<str:*>
+from hypothesis import given, strategies as st 
+from jupyter_rtc_automerge import hashmap as hm
 
 logger = logging.getLogger(__name__)
 
@@ -16,27 +16,32 @@ def test_hardcoded_struct():
 
     doc = hm.HashmapDocument(test_struct)
 
-@given(strategies.integers() | strategies.floats() | strategies.complex_numbers())
+@given(st.integers() | st.floats() )
 def test_document_numerics(object):
     doc = hm.HashmapDocument({ 'numeric_python_value' : object })
 
-@given(strategies.characters() | strategies.text())
+@given(st.characters() | st.text())
 def test_document_stringlike(object):
     doc = hm.HashmapDocument({ 'stringlike_python_value' : object })
 
-@given(strategies.lists(strategies.integers()) | strategies.lists(strategies.floats) | strategies.lists(strategies.complex_numbers()))
-def test_document_listNumeric(object):
+@given(st.lists(st.integers())  )
+def test_document_listNumeric_ints(object):
     doc = hm.HashmapDocument({ 'list_numeric_unival_python_value' : object })
 
-@given(strategies.dictionaries(strategies.text(), strategies.integers() | strategies.floats()))
+@given(st.lists(st.floats()) )
+def test_document_listNumeric_floats(object):
+    doc = hm.HashmapDocument({ 'list_numeric_unival_python_value' : object })
+
+
+@given(st.dictionaries(st.text(), st.integers() | st.floats()))
 def test_document_dictNumerics(object):
     doc = hm.HashmapDocument({ 'dict_numeric_test' : object })
 
-@given(strategies.dictionaries(strategies.text(), strategies.text() | strategies.characters()))
+@given(st.dictionaries(st.text(), st.text() | st.characters()))
 def test_document_dictStringlike(object):
     doc = hm.HashmapDocument({ 'dict_stringlike_test' : object })
 
-@given(strategies.dictionaries(strategies.text(), strategies.lists(strategies.integers() | strategies.text())))
+@given(st.dictionaries(st.text(), st.lists(st.integers() | st.text())))
 def test_document_dictlist(object):
     doc = hm.HashmapDocument({ 'dict_with_list_test' : object })
 
