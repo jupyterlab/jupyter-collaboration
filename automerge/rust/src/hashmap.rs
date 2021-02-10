@@ -368,10 +368,13 @@ fn base_document(hashmap_struct: HashMap<String, &PyAny>) -> automerge_backend::
         )
         .unwrap();
 
-    backend
-        .apply_local_change(change_request.unwrap())
-        .unwrap()
-        .0;
+    // the change can be none if something wrong happened, or if the initial hashmap_struct is an empty dict
+    if !change_request.is_none() {
+        backend
+            .apply_local_change(change_request.unwrap())
+            .unwrap()
+            .0;
+    }
     return backend;
 }
 
