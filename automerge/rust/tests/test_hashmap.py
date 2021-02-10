@@ -25,7 +25,8 @@ class TestHashMap(TestCase):
 
     def test_init_basic_types(self):
 
-        test_set = [    { "key_int":99},
+        test_set = [    { "key_bool":True},
+                        { "key_int":99},
                         { "key_float":0.123},
                         { "key_str":"string value"},
                         
@@ -33,10 +34,12 @@ class TestHashMap(TestCase):
                         # { "key_utf8":"🌍🌎🌏"}, 
                         # { "key_list_utf8" : [ "السلام عليكم", "Dobrý den", "שָׁלוֹם", "नमस्ते", "こんにちは", "안녕하세요", "你好", "Olá", "Здравствуйте" ]}
                         
+                        { "key_list_bools":[False, True] },
                         { "key_list_int":[1,2,3] },
                         { "key_list_str":["a","bc","def", "GHIJ"] },
                         { "key_list_int_str":[1, "abcdefgh", 2, "ijklmnop", 3, "qrstuvwx"] },
                         { "key_dict_str_str":{"subkey1":"val1","subkey2":"val2"}  }   ,
+
         ]
 
 
@@ -53,8 +56,10 @@ class TestHashMap(TestCase):
 
         doc = hm.HashmapDocument({})
 
-        test_set = {     "key_int": 99,
+        test_set = {     "key_bool": True, 
+                         "key_int": 99,
                          "key_float": 0.123,
+                         "key_list_bools":[False, True],
                          "key_list_int": [1,2,3],
                          "key_list_str": ["a","bc","def", "GHIJ"],
                          "key_list_int_str": [1, "abcdefgh", 2, "ijklmnop", 3, "qrstuvwx"],

@@ -10,7 +10,8 @@ use pyo3::ffi;
 use pyo3::prelude::*;
 use pyo3::type_object::PyTypeObject;
 use pyo3::types::{
-    PyAny, PyByteArray, PyBytes, PyDict, PyFloat, PyInt, PyList, PyLong, PyString, PyUnicode,
+    PyAny, PyBool, PyByteArray, PyBytes, PyDict, PyFloat, PyInt, PyList, PyLong, PyString,
+    PyUnicode,
 };
 use std::collections::HashMap;
 use std::os::raw::c_long;
@@ -211,7 +212,7 @@ fn automerge_primivite_to_py<'p>(
         },
         automerge_protocol::ScalarValue::F64(f) => &PyFloat::new(py, *f),
 
-        automerge_protocol::ScalarValue::Boolean(b) => PyString::new(py, "TODO"),
+        automerge_protocol::ScalarValue::Boolean(b) => &PyBool::new(py, *b),
         // Doesn't compile, fix it
         // automerge_protocol::ScalarValue::Null => &(py.None().extract(py).unwrap()),
         automerge_protocol::ScalarValue::Null => PyString::new(py, "TODO"),
@@ -285,6 +286,19 @@ fn py_to_automerge_val(py_value: &PyAny) -> automerge_frontend::Value {
 
         // Turn it into a scalar value for automerge - required for Primitive frontend values
         let scalar_value = automerge_protocol::ScalarValue::F64(float_value);
+
+        // Now, we can build a frontend value from this scalar value
+        converted_value = automerge_frontend::Value::Primitive(scalar_value);
+    } else if PyBool::type_object(py).is_instance(py_value).unwrap() {
+        // First, extract the Float value
+        let bool_value = py_value
+            .downcast::<PyBool>()
+            .unwrap()
+            .extract::<bool>() // To build an Automerge Scalar Value, we need a bool
+            .unwrap();
+
+        // Turn it into a scalar value for automerge - required for Primitive frontend values
+        let scalar_value = automerge_protocol::ScalarValue::Boolean(bool_value);
 
         // Now, we can build a frontend value from this scalar value
         converted_value = automerge_frontend::Value::Primitive(scalar_value);
