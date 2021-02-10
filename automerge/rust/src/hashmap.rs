@@ -139,7 +139,8 @@ impl HashmapDocument {
         self.serialized_backend = backend.save().and_then(|data| Ok(data)).unwrap();
         Ok(())
     }
-    fn to_dict(&self) -> PyResult<HashMap<String, String>> {
+
+    fn to_dict<'p>(&self, py: Python<'p>) -> PyResult<HashMap<String, &'p PyAny>> {
         let mut frontend = automerge_frontend::Frontend::new();
         let backend = automerge_backend::Backend::load(self.serialized_backend.clone())
             .and_then(|back| Ok(back))
@@ -152,17 +153,7 @@ impl HashmapDocument {
             automerge_frontend::Value::Map(map, _) => {
                 result = map
                     .iter()
-                    .map(|(k, v)| {
-                        (
-                            k.clone(),
-                            match v {
-                                automerge_frontend::Value::Text(chars) => {
-                                    chars.iter().cloned().collect::<String>()
-                                }
-                                _ => String::new(),
-                            },
-                        )
-                    })
+                    .map(|(k, v)| (k.clone(), automerge_to_py_val(py, &v)))
                     .collect();
             }
             _ => (),
