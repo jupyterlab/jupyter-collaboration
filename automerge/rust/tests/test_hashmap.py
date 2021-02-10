@@ -25,7 +25,8 @@ class TestHashMap(TestCase):
 
     def test_init_basic_types(self):
 
-        test_set = [    { "key_bool":True},
+        test_set = [    { "key_none":None},
+                        { "key_bool":True},
                         { "key_int":99},
                         { "key_float":0.123},
                         { "key_str":"string value"},
@@ -39,6 +40,7 @@ class TestHashMap(TestCase):
                         { "key_list_str":["a","bc","def", "GHIJ"] },
                         { "key_list_int_str":[1, "abcdefgh", 2, "ijklmnop", 3, "qrstuvwx"] },
                         { "key_dict_str_str":{"subkey1":"val1","subkey2":"val2"}  }   ,
+                        { "key_mixed": [ {"k1":"v1", "k2":2, "k3":[True, None, False, {"k31":"v31"}]}   ]}
 
         ]
 
@@ -56,7 +58,8 @@ class TestHashMap(TestCase):
 
         doc = hm.HashmapDocument({})
 
-        test_set = {     "key_bool": True, 
+        test_set = {     "key_none": None, 
+                         "key_bool": True, 
                          "key_int": 99,
                          "key_float": 0.123,
                          "key_list_bools":[False, True],
@@ -64,6 +67,7 @@ class TestHashMap(TestCase):
                          "key_list_str": ["a","bc","def", "GHIJ"],
                          "key_list_int_str": [1, "abcdefgh", 2, "ijklmnop", 3, "qrstuvwx"],
                          "key_dict_str_str": {"subkey1":"val1","subkey2":"val2"},
+                         "key_mixed": [ {"k1":"v1", "k2":2, "k3":[True, None, False, {"k31":"v31"}]}   ]
         }
 
         for k in test_set:

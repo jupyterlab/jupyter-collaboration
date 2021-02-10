@@ -213,9 +213,7 @@ fn automerge_primivite_to_py<'p>(
         automerge_protocol::ScalarValue::F64(f) => &PyFloat::new(py, *f),
 
         automerge_protocol::ScalarValue::Boolean(b) => &PyBool::new(py, *b),
-        // Doesn't compile, fix it
-        // automerge_protocol::ScalarValue::Null => &(py.None().extract(py).unwrap()),
-        automerge_protocol::ScalarValue::Null => PyString::new(py, "TODO"),
+        automerge_protocol::ScalarValue::Null => unsafe { &(py.from_owned_ptr(ffi::Py_None())) },
 
         // we're not supposed to store any of the following values in the backend
         automerge_protocol::ScalarValue::Str(s) => PyString::new(py, "N/A"),
@@ -343,6 +341,9 @@ fn py_to_automerge_val(py_value: &PyAny) -> automerge_frontend::Value {
 
         converted_value =
             automerge_frontend::Value::Map(hashmap_converted, automerge_protocol::MapType::Map);
+    } else if py_value.is_none() {
+        let scalar_value = automerge_protocol::ScalarValue::Null;
+        converted_value = automerge_frontend::Value::Primitive(scalar_value);
     } else {
         // TODO : handle this better
         println!(" RUST COULDNT CAST {:?}", py_value);
