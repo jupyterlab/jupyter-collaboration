@@ -4,6 +4,8 @@ use automerge_protocol;
 
 use std::println;
 
+use pyo3::class::{PyMappingProtocol, PyObjectProtocol};
+use pyo3::exceptions::*;
 use pyo3::ffi;
 use pyo3::prelude::*;
 use pyo3::type_object::PyTypeObject;
@@ -109,7 +111,8 @@ impl HashmapDocument {
         Ok(automerge_to_py_val(py, &value))
     }
 
-    fn set(&mut self, key: String, value: String) -> PyResult<()> {
+    fn set<'p>(&mut self, py: Python<'p>, key: String, value: &'p PyAny) -> PyResult<()> {
+        println!("DUMP set value {:?} {:?}", key, value);
         let mut backend = automerge_backend::Backend::load(self.serialized_backend.clone())
             .and_then(|back| Ok(back))
             .unwrap();
@@ -119,7 +122,7 @@ impl HashmapDocument {
         // Create a "change" action, that sets the value for the given key
         let change = automerge_frontend::LocalChange::set(
             automerge_frontend::Path::root().key(key),
-            automerge_frontend::Value::Text(value.chars().collect()),
+            py_to_automerge_val(value),
         );
         // Apply this change
         let change_request = frontend
@@ -168,15 +171,20 @@ impl HashmapDocument {
     }
 }
 
-/*
 #[pyproto]
-impl PyObjectProtocol for HashmapDocument {
-    fn __getattr__(&self, name: String) -> PyResult<String> {
-        self.get(name)
+impl<'p> PyObjectProtocol<'p> for HashmapDocument {
+    fn __getattr__(&'p self, name: String) -> PyResult<&'p PyAny> {
+        unsafe {
+            let py: Python<'p> = Python::assume_gil_acquired();
+            self.get(py, name)
+        }
     }
 
-    fn __setattr__(&mut self, name: String, value: String) -> PyResult<()> {
-        self.set(name, value)
+    fn __setattr__(&'p mut self, name: String, value: &'p PyAny) -> PyResult<()> {
+        unsafe {
+            let py: Python<'p> = Python::assume_gil_acquired();
+            self.set(py, name, value)
+        }
     }
     // TODO
     // fn __delattr__(&mut self, name: FromPyObject) -> PyResult<()>
@@ -187,15 +195,19 @@ impl PyMappingProtocol for HashmapDocument {
     // TODO
     // fn __len__(&self) -> usize
 
-    fn __getitem__(&self, name: String) -> PyResult<String> {
-        self.get(name)
+    fn __getitem__(&'p self, name: String) -> PyResult<&'p PyAny> {
+        unsafe {
+            let py: Python<'p> = Python::assume_gil_acquired();
+            self.get(py, name)
+        }
     }
-
-    fn __setitem__(&mut self, name: String, value: String) -> PyResult<()> {
-        self.set(name, value)
+    fn __setitem__(&'p mut self, name: String, value: &'p PyAny) -> PyResult<()> {
+        unsafe {
+            let py: Python<'p> = Python::assume_gil_acquired();
+            self.set(py, name, value)
+        }
     }
 }
-*/
 
 // Convert from an automerge scalar value (used by automerge_value::Primitive) to something Python compatible
 fn automerge_primivite_to_py<'p>(
@@ -249,6 +261,8 @@ fn automerge_to_py_val<'p>(py: Python<'p>, am_value: &automerge_frontend::Value)
     };
     return result;
 }
+
+// fn py_int_to_bytearray<'p>(py: Python<'p>, val: int) -> &'p PyByteArray {}
 
 fn py_to_automerge_val(py_value: &PyAny) -> automerge_frontend::Value {
     let gil = Python::acquire_gil();
