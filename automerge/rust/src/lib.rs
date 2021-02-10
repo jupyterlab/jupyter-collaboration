@@ -4,7 +4,6 @@ use std::fs::File;
 use log::LevelFilter;
 use simplelog::*;
 mod hashmap;
-mod hashmap2;
 mod nbformatbackend;
 mod textarea;
 
@@ -31,10 +30,6 @@ fn jupyter_rtc_automerge(py: Python, module: &PyModule) -> PyResult<()> {
 
     let submod_hashmap = PyModule::new(py, "hashmap")?;
     hashmap::init_submodule(submod_hashmap)?;
-    module.add_submodule(submod_hashmap)?;
-
-    let submod_hashmap = PyModule::new(py, "hashmap2")?;
-    hashmap2::init_submodule(submod_hashmap)?;
     module.add_submodule(submod_hashmap)?;
 
     Ok(())
