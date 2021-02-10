@@ -20,8 +20,16 @@ test-rust:
 
 test-py:
 	# cd .. && RUST_BACKTRACE=full python rust/jupyter_rtc_automerge/test_automerge.py
-	cd .. &&  RUST_BACKTRACE=full python -m pytest --color=yes --verbose rust/tests/test_hashmap.py    
-	cd .. &&  RUST_BACKTRACE=full python rust/tests/test_hashmap2.py    
+	
+	# Checks if the backend works as expected for simple values, ensures the syntax and accessors still works.
+	cd .. &&  RUST_BACKTRACE=full python -m pytest --color=yes rust/tests/test_hashmap.py    
+	
+	# Hypothesis tests. Use the --hypothesis-seed parameter to initialize random seed and make tests reproducible
+	# cd .. &&  RUST_BACKTRACE=full python -m pytest --color=yes --verbose rust/tests/test_python_objects.py   --hypothesis-seed=33810593744616933901324063339364330438
+	cd .. &&  RUST_BACKTRACE=full python -m pytest --color=yes --verbose rust/tests/test_python_objects.py
+
+	# TODO : test performances
+
 
 
 publish:
