@@ -1,6 +1,6 @@
 import logging
 from hypothesis import given, strategies as st 
-from jupyter_rtc_automerge import hashmap as hm
+from jupyter_rtc_automerge import automerge_map as am
 
 logger = logging.getLogger(__name__)
 
@@ -14,36 +14,36 @@ def test_hardcoded_struct():
                                     "subkey2":"val2"}
             }
 
-    doc = hm.HashmapDocument(test_struct)
+    doc = am.AutomergeMap(test_struct)
 
 @given(st.integers() | st.floats() )
 def test_document_numerics(object):
-    doc = hm.HashmapDocument({ 'numeric_python_value' : object })
+    doc = am.AutomergeMap({ 'numeric_python_value' : object })
 
 @given(st.characters() | st.text())
 def test_document_stringlike(object):
-    doc = hm.HashmapDocument({ 'stringlike_python_value' : object })
+    doc = am.AutomergeMap({ 'stringlike_python_value' : object })
 
 @given(st.lists(st.integers())  )
 def test_document_listNumeric_ints(object):
-    doc = hm.HashmapDocument({ 'list_numeric_unival_python_value' : object })
+    doc = am.AutomergeMap({ 'list_numeric_unival_python_value' : object })
 
 @given(st.lists(st.floats()) )
 def test_document_listNumeric_floats(object):
-    doc = hm.HashmapDocument({ 'list_numeric_unival_python_value' : object })
+    doc = am.AutomergeMap({ 'list_numeric_unival_python_value' : object })
 
 
 @given(st.dictionaries(st.text(), st.integers() | st.floats()))
 def test_document_dictNumerics(object):
-    doc = hm.HashmapDocument({ 'dict_numeric_test' : object })
+    doc = am.AutomergeMap({ 'dict_numeric_test' : object })
 
 @given(st.dictionaries(st.text(), st.text() | st.characters()))
 def test_document_dictStringlike(object):
-    doc = hm.HashmapDocument({ 'dict_stringlike_test' : object })
+    doc = am.AutomergeMap({ 'dict_stringlike_test' : object })
 
 @given(st.dictionaries(st.text(), st.lists(st.integers() | st.text())))
 def test_document_dictlist(object):
-    doc = hm.HashmapDocument({ 'dict_with_list_test' : object })
+    doc = am.AutomergeMap({ 'dict_with_list_test' : object })
 
 #print(dir(doc))
 #print("\n")

@@ -1,4 +1,4 @@
-from jupyter_rtc_automerge import hashmap as hm 
+from jupyter_rtc_automerge import automerge_map as am
 
 from unittest import TestCase
 
@@ -10,7 +10,7 @@ class TestHashMap(TestCase):
         test_struct = {"key1": "value1", "key2": "value2"}
         new_value = "modified value %s"
 
-        doc = hm.HashmapDocument(test_struct)
+        doc = am.AutomergeMap(test_struct)
 
         # validates accessors
         doc.set("key1", new_value%(1) )
@@ -48,7 +48,7 @@ class TestHashMap(TestCase):
         for test_struct in test_set :
 
             try:
-                doc = hm.HashmapDocument(test_struct)
+                doc = am.AutomergeMap(test_struct)
                 self.assertEqual(doc.to_dict(), test_struct, "Building a backend and retrieving its data failed with init dict %s"%(test_struct) )
             except Exception as e:
                 self.fail("Exception raised with test struct : %s"%(test_struct))
@@ -56,7 +56,7 @@ class TestHashMap(TestCase):
 
     def test_set_basic_types(self):
 
-        doc = hm.HashmapDocument({})
+        doc = am.AutomergeMap({})
 
         test_set = {     "key_none": None, 
                          "key_bool": True, 
@@ -87,7 +87,7 @@ class TestHashMap(TestCase):
         test_struct = {"key1": "value1", "key2": "value2"}
         new_value = "modified value 1"
 
-        doc = hm.HashmapDocument(test_struct)
+        doc = am.AutomergeMap(test_struct)
         # doc.set("key1", new_value)
         doc["key1"] = new_value
         
@@ -99,7 +99,7 @@ class TestHashMap(TestCase):
     def test_repeat_set_key(self):
 
         test_struct = {"key0": "value0"}
-        doc = hm.HashmapDocument(test_struct)
+        doc = am.AutomergeMap(test_struct)
 
         for i in range(1, 10):
             doc["key0"] = f"value{i}"
@@ -111,7 +111,7 @@ class TestHashMap(TestCase):
         # also test setting multiple keys in a row
 
         test_struct = {"key0": "value0", "key1": "value1", "key2": "value2"}
-        doc = hm.HashmapDocument(test_struct)
+        doc = am.AutomergeMap(test_struct)
 
         doc["key0"] = "modified value 0"
         doc["key1"] = "modified value 1"
@@ -129,7 +129,7 @@ class TestHashMap(TestCase):
 
         test_struct = {"key1": "value1"}
         
-        doc = hm.HashmapDocument(test_struct)
+        doc = am.AutomergeMap(test_struct)
         doc["key2"] = "value2"
         
         self.assertEqual(doc["key2"], "value2", "Setting the value for a new key failed" )
@@ -140,7 +140,7 @@ class TestHashMap(TestCase):
     def test_number_changes(self):
 
         test_struct = {"key0": "value0"}
-        doc = hm.HashmapDocument(test_struct)
+        doc = am.AutomergeMap(test_struct)
 
         for i in range(1, 10):
             doc["key0"] = f"value{i}"
@@ -160,7 +160,7 @@ class TestHashMap(TestCase):
                              "key1": "modified value 1",
                              "key2": "modified value 2" }
 
-        doc1 = hm.HashmapDocument(test_struct)
+        doc1 = am.AutomergeMap(test_struct)
         doc2 = doc1.copy()
 
         doc1["key0"] = expected_result["key0"] 

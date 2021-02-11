@@ -17,12 +17,12 @@ use std::collections::HashMap;
 use std::os::raw::c_long;
 
 #[pyclass]
-struct HashmapDocument {
+struct AutomergeMap {
     serialized_backend: std::vec::Vec<u8>,
 }
 
 #[pymethods]
-impl HashmapDocument {
+impl AutomergeMap {
     #[new]
     fn new(py_struct: &PyDict) -> Self {
         //  Convert from a PyDict to a Hashmap<Str : automerge_frontend::Value>
@@ -34,7 +34,7 @@ impl HashmapDocument {
 
         let serialized_backend = backend.save().and_then(|data| Ok(data)).unwrap();
 
-        HashmapDocument { serialized_backend }
+        AutomergeMap { serialized_backend }
     }
 
     fn dump_backend(&self) {
@@ -47,7 +47,7 @@ impl HashmapDocument {
             .unwrap();
 
         let serialized_backend = backend.save().and_then(|data| Ok(data)).unwrap();
-        Ok(HashmapDocument { serialized_backend })
+        Ok(AutomergeMap { serialized_backend })
     }
 
     // WARNING : this function is named "apply_changes", plural, on purpose.
@@ -164,7 +164,7 @@ impl HashmapDocument {
 }
 
 #[pyproto]
-impl<'p> PyObjectProtocol<'p> for HashmapDocument {
+impl<'p> PyObjectProtocol<'p> for AutomergeMap {
     fn __getattr__(&'p self, name: String) -> PyResult<&'p PyAny> {
         unsafe {
             let py: Python<'p> = Python::assume_gil_acquired();
@@ -183,7 +183,7 @@ impl<'p> PyObjectProtocol<'p> for HashmapDocument {
 }
 
 #[pyproto]
-impl PyMappingProtocol for HashmapDocument {
+impl PyMappingProtocol for AutomergeMap {
     // TODO
     // fn __len__(&self) -> usize
 
@@ -394,7 +394,7 @@ fn base_document(hashmap_struct: HashMap<String, &PyAny>) -> automerge_backend::
 }
 
 pub fn init_submodule(module: &PyModule) -> PyResult<()> {
-    module.add_class::<HashmapDocument>()?;
+    module.add_class::<AutomergeMap>()?;
 
     Ok(())
 }
