@@ -78,6 +78,9 @@ start-textarea:
 	($(CONDA_ACTIVATE) jupyter-rtc; yarn textarea:start )
 	open http://localhost:3001
 
+rstest:
+	($(CONDA_ACTIVATE) jupyter-rtc; cd rust && cargo test   )
+
 kill:
 	($(CONDA_ACTIVATE) jupyter-rtc; yarn kill )
 
