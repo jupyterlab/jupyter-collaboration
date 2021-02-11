@@ -28,9 +28,9 @@ fn jupyter_rtc_automerge(py: Python, module: &PyModule) -> PyResult<()> {
     nbformatbackend::init_submodule(submod_nbformatbackend)?;
     module.add_submodule(submod_nbformatbackend)?;
 
-    let submod_hashmap = PyModule::new(py, "automerge_map")?;
-    automerge_map::init_submodule(submod_hashmap)?;
-    module.add_submodule(submod_hashmap)?;
+    let submod_ammap = PyModule::new(py, "automerge_map")?;
+    automerge_map::init_submodule(submod_ammap)?;
+    module.add_submodule(submod_ammap)?;
 
     Ok(())
 }

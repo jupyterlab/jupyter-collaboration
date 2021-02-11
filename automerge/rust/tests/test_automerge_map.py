@@ -3,7 +3,7 @@ from jupyter_rtc_automerge import automerge_map as am
 from unittest import TestCase
 
 
-class TestHashMap(TestCase):
+class TestAutomergeMap(TestCase):
 
     def test_accessors(self):
 
