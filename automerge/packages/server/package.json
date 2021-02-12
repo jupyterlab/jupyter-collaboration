@@ -27,7 +27,7 @@
     "server:ws:wait": "wait-on tcp:4321"
   },
   "dependencies": {
-    "automerge": "file:./../../externals/automerge",
+    "automerge": "file:./../../externals/automerge-observable-path",
     "universal-websocket-client": "1.0.2"
   },
   "devDependencies": {
