@@ -1,86 +1,206 @@
 import WebSocket from 'ws'
 
-import Automerge, { Text } from 'automerge'
-
-// const CodecFunctions = require('automerge-wasm-node/backend/columnar')
-// import wasmBackend from 'automerge-backend-wasm-nodejs'
-// wasmBackend.initCodecFunctions(CodecFunctions)
-// Automerge.setDefaultBackend(wasmBackend)
-
 const http = require('http')
 
-const wsReadyStateConnecting = 0
-const wsReadyStateOpen = 1
+import { IncomingMessage } from 'http'
 
-export const docs = new Map<string, WSSharedDoc>()
+import Automerge, { List, Text } from 'automerge'
 
-export type Doc = {
-  docId: string;
-  textArea: Text;
+import { decodeChanges } from 'automerge/backend/columnar';
+
+export const docs = new Map<string, AMSharedDoc>()
+
+export type AmDoc = {
+  [key: string]: any
 };
 
-const send = (conn, doc: WSSharedDoc, payload: any) => {
-  if (conn.readyState !== wsReadyStateConnecting && conn.readyState !== wsReadyStateOpen) {
-    onClose(doc, conn, null)
+const WS_READY_STATE_CONNECTING = 0
+
+const WS_READY_STATE_OPEN = 1
+
+const INITIAL_TEXT = 'Initial content loaded from Server.'
+
+const INITIAL_NOTEBOOK = {
+  "nbformat": 4,
+  "nbformat_minor": 5,
+  "metadata": {
+    "kernelspec": {
+     "display_name": "Python 3",
+     "language": "python",
+     "name": "python3"
+    },
+    "language_info": {
+     "codemirror_mode": {
+      "name": "ipython",
+      "version": 3
+     },
+     "file_extension": ".py",
+     "mimetype": "text/x-python",
+     "name": "python",
+     "nbconvert_exporter": "python",
+     "pygments_lexer": "ipython3",
+     "version": "3.8.6"
+    }
+   },
+   "cells": [
+   {
+    "id": "imposed-compiler",
+    "cell_type": "code",
+    "execution_count": null,
+    "metadata": {
+     "mimeType": "text/x-ipython"
+    },
+    "outputs": [],
+    "source": [
+     ""
+    ]
+   },
+   {
+    "cell_type": "code",
+    "execution_count": null,
+    "id": "connected-bumper",
+    "metadata": {
+     "mimeType": "text/x-ipython"
+    },
+    "outputs": [],
+    "source": [
+     "print('hello')dd"
+    ]
+   },
+  ],
+ }
+
+export const combine = (changes: Uint8Array[]) => {
+  // Get the total length of all arrays.
+  let length = 0;
+  changes.forEach(item => {
+    length += item.length;
+  });
+  // Create a new array with total length and merge all source arrays.
+  let combined = new Uint8Array(length);
+  let offset = 0;
+  changes.forEach(change => {
+    combined.set(change, offset);
+    offset += change.length;
+  });
+  return combined;
+}
+
+export const createLock = () => {
+  let lock = true;
+  return (a: any, b: any) => {
+    if (lock) {
+      lock = false;
+      try {
+        a();
+      } finally {
+        lock = true;
+      }
+    } else if (b !== undefined) {
+      b();
+    }
+  };
+};
+
+export const lock = createLock()
+
+const broadcastChanges = (conn: WebSocket, doc: AMSharedDoc, changes: Uint8Array[]) => {
+  if (conn.readyState !== WS_READY_STATE_CONNECTING && conn.readyState !== WS_READY_STATE_OPEN) {
+    onClose(conn, doc, null)
   }
   try {
-    conn.send(payload, (err: any) => { err != null && onClose(doc, conn, err) })
+    const combined = combine(changes)
+    conn.send(combined, err => { err != null && onClose(conn, doc, err) })  
   } catch (e) {
-    onClose(doc, conn, e)
+    onClose(conn, doc, e)
   }
 }
 
-class WSSharedDoc {
+class AMSharedDoc {
   private name = null;
-  public doc: Doc = null;
+  public doc: AmDoc = null;
   public conns = new Map()
-  constructor(doc: Doc) {
+  constructor(doc: AmDoc) {
     this.doc = doc;
-    this.name = doc.docId;
   }
 }
 
-const onMessage = (conn, docName, sharedDoc: WSSharedDoc, message: any) => {
-  const data = JSON.parse(message);
-  data.forEach((chunk) => {
-    sharedDoc.doc = Automerge.applyChanges(sharedDoc.doc, [new Uint8Array(Object.values(chunk))])
-  });
-  sharedDoc.conns.forEach((_, cnx) => { if (cnx != conn) { send(cnx, sharedDoc, message) } })
+const onMessage = (currentConn: WebSocket, docName: string, sharedDoc: AMSharedDoc, message: any) => {
+  lock(() => {
+    const changes = new Uint8Array(message)
+    console.log('-------------------------------------------------------------')
+    console.log("Change", docName, decodeChanges([changes]))
+    sharedDoc.doc = Automerge.applyChanges(sharedDoc.doc, [changes])
+    console.log('------')
+    console.log('Doc', docName, sharedDoc.doc)
+    console.log('------')
+    console.log('Notebook', docName, sharedDoc.doc['notebook'])
+    console.log('------')
+    console.log('Notebook Cells')
+    if (sharedDoc.doc.notebook && sharedDoc.doc.notebook.cells) {
+      sharedDoc.doc.notebook.cells.map(cell => {
+        if (cell.codeEditor && cell.codeEditor.value) {
+          console.log('> ', cell.codeEditor.value.toString())
+        }
+        console.log(cell)
+      })
+    }
+    sharedDoc.conns.forEach((_, conn) => {
+      if (currentConn != conn ) {
+        broadcastChanges(conn, sharedDoc, [changes])
+      }
+    })  
+  }, () => {})
 }
 
-export const getSharedDoc = (docName: string): WSSharedDoc => {
-  const k = docs.get(docName)
+export const getAmSharedDoc = (uuid: string, docName: string, initialize: boolean): AMSharedDoc => {
+  let k = docs.get(docName)
   if (k) {
-    return k
+   return k
   }
-  const d = Automerge.init<Doc>()
-  const d1 = Automerge.change(d, doc => {
-    doc.docId = docName;
-    doc.textArea = new Automerge.Text();
-    doc.textArea.insertAt(0, ...'hello from Node.js!')
-    doc.textArea.deleteAt(0)
-    doc.textArea.insertAt(0, 'H')
-  })
-  const sharedDoc = new WSSharedDoc(d1)
+  let doc = Automerge.init<AmDoc>(
+//    { actorId: uuid}
+  )
+  if (initialize) {
+    doc = Automerge.change(doc, d => {
+      d['ownerId'] = uuid
+      /*
+      d.codeEditor = {}
+      d.codeEditor.value = new Text()
+      d.codeEditor.value.insertAt(0, ...INITIAL_TEXT)
+      d.notebook = {}
+      d.notebook.cells = new Array()
+      */
+    })
+  }
+  console.log('Initial Doc', doc)
+  const sharedDoc = new AMSharedDoc(doc)
   docs.set(docName, sharedDoc)
   return sharedDoc
 }
 
-const onClose = (conn, doc: WSSharedDoc, err) => {
-  console.log('Closing', err)
+const onClose = (conn: WebSocket, doc: AMSharedDoc, err) => {
+  console.log('Closing WS', err)
   if (doc.conns.has(conn)) {
     doc.conns.delete(conn)
   }
   conn.close()
 }
 
-const setupWSConnection = (conn, req, { docName = req.url.slice(1).split('?')[0] as string } = {}) => {
+const setupWSConnection = (conn: WebSocket, req: IncomingMessage) => {
+  const urlPath = req.url.slice(1).split('?')[0]
+  const params = req.url.slice(1).split('?')[1]
+  let initialize = false;
+  if (params.indexOf('initialize') > -1) {
+    initialize = true
+  }
+  const uuid = urlPath.split('/')[0]
+  const docName = urlPath.split('/')[1]
+  console.log('Setup WS Connection', uuid, docName)
   conn.binaryType = 'arraybuffer'
-  const sharedDoc = getSharedDoc(docName)
-  const changes = Automerge.getChanges(Automerge.init<Doc>(), sharedDoc.doc)
-
-  var payload = JSON.stringify(changes);
-  send(conn, sharedDoc, payload)
+  const sharedDoc = getAmSharedDoc(uuid, docName, initialize)
+  const changes = Automerge.getChanges(Automerge.init<AmDoc>(), sharedDoc.doc)
+  broadcastChanges(conn, sharedDoc, changes);
   sharedDoc.conns.set(conn, new Set())
   conn.on('message', message => onMessage(conn, docName, sharedDoc, message))
   conn.on('close', err => onClose(conn, sharedDoc, err))

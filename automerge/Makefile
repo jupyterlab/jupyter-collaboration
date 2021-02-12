@@ -25,6 +25,10 @@ install:
 	  cd externals/automerge && \
 	  git checkout performance-a262c
 
+	git clone https://github.com/automerge/automerge externals/automerge-observable-path && \
+	  cd externals/automerge-observable-path && \
+	  git checkout observable-path
+
 	($(CONDA_ACTIVATE) jupyter-rtc; \
 		git clone https://github.com/datalayer/jupyter-auth externals/jupyter-auth && \
 		cd externals/jupyter-auth && \
@@ -32,6 +36,8 @@ install:
 		jupyter labextension develop --overwrite)
 
 	($(CONDA_ACTIVATE) jupyter-rtc; cd externals/automerge && yarn && yarn build)
+
+	($(CONDA_ACTIVATE) jupyter-rtc; cd externals/automerge-observable-path && yarn && yarn build)
 
 	($(CONDA_ACTIVATE) jupyter-rtc; yarn && yarn build)
 	# automerge should only be present in the top node_modules.
