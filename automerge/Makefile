@@ -67,14 +67,14 @@ install:
 
 	# Uninstall the single-user jupyter-server an install a multi-user jupyter-server.
 #	($(CONDA_ACTIVATE) jupyter-rtc; \
-        pip uninstall -y jupyter-server)
+      pip uninstall -y jupyter-server )
 #	($(CONDA_ACTIVATE) jupyter-rtc; \
-        pip install git+https://github.com/datalayer-contrib/jupyter-server.git@sessions )
+      pip install git+https://github.com/datalayer-contrib/jupyter-server.git@sessions )
 #	($(CONDA_ACTIVATE) jupyter-rtc; \
-		git clone https://github.com/datalayer-contrib/jupyter-server externals/jupyter-server && \
-		cd externals/jupyter-server && \
-		git checkout sessions && \
-		pip install -e . )
+	  git clone https://github.com/datalayer-contrib/jupyter-server externals/jupyter-server && \
+	  cd externals/jupyter-server && \
+	  git checkout sessions && \
+	  pip install -e . )
 
 #	($(CONDA_ACTIVATE) jupyter-rtc; \
 	  cd packages/jupyterlab-rtc && \

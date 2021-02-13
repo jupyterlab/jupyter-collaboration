@@ -6,7 +6,7 @@ dependencies:
   - hypothesis
 #  - jupyterlab=3.0.4
   - jupyter-packaging
-  - jupyter-server-prox
+  - jupyter-server-proxy
   - nbformat
   - nodejs=14.15.1
   - pycurl
