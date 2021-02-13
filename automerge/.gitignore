@@ -1,5 +1,6 @@
-externals/automerge
+externals/automerge*
 externals/jupyter_rtc_automerge
+externals-jupyter/jupyter*
 
 *.bundle.*
 lib/
