@@ -110,13 +110,13 @@ kill:
 	($(CONDA_ACTIVATE) jupyter-rtc; yarn kill )
 
 clean:
-	-rm -rf externals/automerge*
-	-rm -rf externals/jupyter*
-	-rm -rf externals-jupyter/jupyter*
-	-rm -rf node_modules
-	-rm -rf packages/*/node_modules
-	-rm tsconfig.tsbuildinfo
-	-rm packages/*/tsconfig.tsbuildinfo
-	conda env remove --name jupyter-rtc
+	-rm -rf externals/automerge* || true
+	-rm -rf externals/jupyter* || true
+	-rm -rf externals-jupyter/jupyter* || true
+	-rm -rf node_modules || true
+	-rm -rf packages/*/node_modules || true
+	-rm tsconfig.tsbuildinfo || true
+	-rm packages/*/tsconfig.tsbuildinfo || true
+	conda env remove --name jupyter-rtc || true
 
 all: clean install build start-node start-lab
