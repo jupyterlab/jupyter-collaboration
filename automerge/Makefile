@@ -10,54 +10,66 @@ install:
 	-conda env create -f environment.yml 
 	
 	($(CONDA_ACTIVATE) jupyter-rtc; cd rust && \
-	  make all && \
+	  make clean && \
+	  make build && \
+	  make install && \
 	  pip list | grep jupyter-rtc-automerge )
 
-	git clone https://github.com/datalayer-contrib/automerge externals/automerge-wasm-bundler && \
+#	git clone https://github.com/datalayer-contrib/automerge externals/automerge-wasm-bundler && \
 	  cd externals/automerge-wasm-bundler && \
 	  git checkout wasm-bundler
 
-	git clone https://github.com/datalayer-contrib/automerge externals/automerge-wasm-nodejs && \
+#	git clone https://github.com/datalayer-contrib/automerge externals/automerge-wasm-nodejs && \
 	  cd externals/automerge-wasm-nodejs && \
 	  git checkout wasm-nodejs
 
-	git clone https://github.com/datalayer-contrib/automerge externals/automerge && \
+#	git clone https://github.com/datalayer-contrib/automerge externals/automerge && \
 	  cd externals/automerge && \
 	  git checkout performance-a262c
 
-	git clone https://github.com/automerge/automerge externals/automerge-observable-path && \
+	($(CONDA_ACTIVATE) jupyter-rtc; \
+	  git clone https://github.com/automerge/automerge externals/automerge-observable-path && \
 	  cd externals/automerge-observable-path && \
-	  git checkout observable-path
+	  git checkout observable-path && \
+	  yarn && yarn build)
 
 	($(CONDA_ACTIVATE) jupyter-rtc; \
+		git clone https://github.com/datalayer-contrib/jupyterlab externals-jupyter/jupyterlab && \
+		cd externals-jupyter/jupyterlab && \
+		pip install -e . && \
+		yarn && \
+		yarn build)
+
+#	($(CONDA_ACTIVATE) jupyter-rtc; \
 		git clone https://github.com/datalayer/jupyter-auth externals/jupyter-auth && \
 		cd externals/jupyter-auth && \
 		pip install -e . && \
 		jupyter labextension develop --overwrite)
 
-	($(CONDA_ACTIVATE) jupyter-rtc; cd externals/automerge && yarn && yarn build)
+#	($(CONDA_ACTIVATE) jupyter-rtc; \
+	  cd externals/automerge && \
+	  yarn && yarn build)
 
-	($(CONDA_ACTIVATE) jupyter-rtc; cd externals/automerge-observable-path && yarn && yarn build)
+	($(CONDA_ACTIVATE) jupyter-rtc; \
+	  yarn && yarn build)
 
-	($(CONDA_ACTIVATE) jupyter-rtc; yarn && yarn build)
 	# automerge should only be present in the top node_modules.
-	-rm -fr packages/jupyterlab-rtc/node_modules/automerge*
-	-rm -fr packages/server/node_modules/automerge*
-	-rm -fr packages/textarea/node_modules/automerge*
+	-rm -fr packages/*/node_modules/automerge*
 
-	($(CONDA_ACTIVATE) jupyter-rtc; pip install -e .)
+	($(CONDA_ACTIVATE) jupyter-rtc; \
+	  pip install -e .)
 
 	# uninstall jupyter-server from the environment.
-	($(CONDA_ACTIVATE) jupyter-rtc; pip uninstall -y jupyter-server)
-	($(CONDA_ACTIVATE) jupyter-rtc; pip install git+https://github.com/datalayer-contrib/jupyter-server.git@sessions)
+#	($(CONDA_ACTIVATE) jupyter-rtc; pip uninstall -y jupyter-server)
+#	($(CONDA_ACTIVATE) jupyter-rtc; pip install git+https://github.com/datalayer-contrib/jupyter-server.git@sessions)
 #	($(CONDA_ACTIVATE) jupyter-rtc; \
 		git clone https://github.com/datalayer-contrib/jupyter-server externals/jupyter-server && \
 		cd externals/jupyter-server && \
 		git checkout sessions && \
 		pip install -e .)
 
-	($(CONDA_ACTIVATE) jupyter-rtc; cd packages/jupyterlab-rtc && jupyter labextension develop --overwrite)
-	($(CONDA_ACTIVATE) jupyter-rtc; cd packages/jupyterlab-rtc && jupyter labextension list)
+#	($(CONDA_ACTIVATE) jupyter-rtc; cd packages/jupyterlab-rtc && jupyter labextension develop --overwrite)
+#	($(CONDA_ACTIVATE) jupyter-rtc; cd packages/jupyterlab-rtc && jupyter labextension list)
 
 start-dev:
 	($(CONDA_ACTIVATE) jupyter-rtc; $(GITHUB_APP_CREDENTIALS); yarn dev )
@@ -65,10 +77,11 @@ start-dev:
 	# open http://localhost:3001
 	# open http://localhost:4321
 
+#	  --ServerApp.jpserver_extensions="{'jupyter_rtc': True}"
 start-jlab:
 	($(CONDA_ACTIVATE) jupyter-rtc; $(GITHUB_APP_CREDENTIALS); jupyter lab \
+	  --dev-mode \
 	  --watch \
-	  --ServerApp.jpserver_extensions="{'jupyter_rtc': True}" \
 	  --ServerApp.allow_origin="*" \
 	  --ServerApp.token= )
 	
@@ -80,12 +93,16 @@ start-jserver:
 	  --ServerApp.jpserver_extensions="{'jupyter_rtc': True}" \
 	  --ServerApp.allow_origin="*" )
 
+start-node-server:
+	($(CONDA_ACTIVATE) jupyter-rtc; yarn automerge:start-server )
+	open http://localhost:3001
+
 start-textarea:
 	($(CONDA_ACTIVATE) jupyter-rtc; yarn textarea:start )
 	open http://localhost:3001
 
-rstest:
-	($(CONDA_ACTIVATE) jupyter-rtc; cd rust && cargo test   )
+test-rs:
+	($(CONDA_ACTIVATE) jupyter-rtc; cd rust && cargo test )
 
 kill:
 	($(CONDA_ACTIVATE) jupyter-rtc; yarn kill )
@@ -93,6 +110,7 @@ kill:
 clean:
 	-rm -rf externals/automerge*
 	-rm -rf externals/jupyter*
+	-rm -rf externals-jupyter/jupyter*
 	-rm -rf node_modules
 	-rm -rf packages/*/node_modules
 	-rm tsconfig.tsbuildinfo

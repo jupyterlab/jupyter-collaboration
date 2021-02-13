@@ -4,7 +4,8 @@
   "license": "BSD-3-Clause",
   "private": true,
   "workspaces": [
-    "packages/*",
+    "packages/server",
+    "packages/textarea",
     "externals/*"
   ],
   "scripts": {
