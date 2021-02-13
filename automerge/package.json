@@ -6,7 +6,7 @@
   "workspaces": [
     "packages/server",
     "packages/textarea",
-    "externals/*"
+    "externals/automerge"
   ],
   "scripts": {
     "build": "lerna run build",
