@@ -36,6 +36,7 @@ install:
 	($(CONDA_ACTIVATE) jupyter-rtc; \
 		git clone https://github.com/datalayer-contrib/jupyterlab externals-jupyter/jupyterlab && \
 		cd externals-jupyter/jupyterlab && \
+		git checkout am-modeldb && \
 		pip install -e . && \
 		yarn && \
 		yarn build)
@@ -82,6 +83,7 @@ start-jlab:
 	($(CONDA_ACTIVATE) jupyter-rtc; $(GITHUB_APP_CREDENTIALS); jupyter lab \
 	  --dev-mode \
 	  --watch \
+	  --notebook-dir=./examples \
 	  --ServerApp.allow_origin="*" \
 	  --ServerApp.token= )
 	
@@ -93,7 +95,7 @@ start-jserver:
 	  --ServerApp.jpserver_extensions="{'jupyter_rtc': True}" \
 	  --ServerApp.allow_origin="*" )
 
-start-node-server:
+start-nodejs:
 	($(CONDA_ACTIVATE) jupyter-rtc; yarn automerge:start-server )
 	open http://localhost:3001
 
