@@ -4,7 +4,7 @@ CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activ
 CONDA_DEACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda deactivate
 CONDA_REMOVE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda remove -y --all -n
 
-GITHUB_APP_CREDENTIALS=echo "export GITHUB_CLIENT_ID=YOUR_CLIENT_ID_HERE; export GITHUB_CLIENT_SECRET=YOUR_SECRET_HERE"
+GITHUB_APP_CREDENTIALS=echo "export GITHUB_CLIENT_ID=YOUR_CLIENT_ID_HERE; export GITHUB_CLIENT_SECRET=YOUR_SECRET_HERE; export GITHUB_OAUTH_CALLBACK_URL=YOUR_OAUTH_CALLBACK_URL"
 
 .PHONY: clean install
 
@@ -93,16 +93,15 @@ start-dev:
 	# open http://localhost:3001
 	# open http://localhost:4321
 
+#	    --ServerApp.jpserver_extensions="{'jupyterlab': True, 'jupyter_rtc': True}"
 start-jupyterlab:
 	($(CONDA_ACTIVATE) jupyter-rtc; \
 	  $(GITHUB_APP_CREDENTIALS); \
 	  jupyter lab \
 	    --dev-mode \
 	    --watch \
-	    --notebook-dir="./examples" \
-	    --ServerApp.jpserver_extensions="{'jupyterlab': True, 'jupyter_rtc': True}" \
-	    --ServerApp.allow_origin="*" \
-	    --ServerApp.token="" )
+	    --notebook-dir=./examples \
+	    --conf=./jupyter_server_config.py )
 	# open http://localhost:8888/lab
 	# open http://localhost:8888/jupyter_rtc/default
 

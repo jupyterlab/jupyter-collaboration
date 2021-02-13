@@ -3,15 +3,16 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.9
+  - hypothesis
 #  - jupyterlab=3.0.4
   - jupyter-packaging
+  - jupyter-server-prox
+  - nbformat
   - nodejs=14.15.1
   - pycurl
+  - pytest
+  - python=3.9
   - rust
   - setuptools-rust
   - twine
   - yarn=1.22.5
-  - nbformat
-  - pytest
-  - hypothesis
