@@ -7,10 +7,10 @@ import { IEditorTracker } from '@jupyterlab/fileeditor';
 import { INotebookTracker } from '@jupyterlab/notebook';
 import { LabIcon } from '@jupyterlab/ui-components';
 
-import UsersWidget from './users/users';
-import ProfileWidget from './profile/profile';
+//import UsersWidget from './users/users';
+//import ProfileWidget from './profile/profile';
 
-import WsRTCClient from './client/WsRTCClient';
+//import WsRTCClient from './client/WsRTCClient';
 import authRequestAPI from './client/RestAuthClient';
 import rtcRequestAPI from './client/RestRTCClient';
 
@@ -49,7 +49,7 @@ const rtc: JupyterFrontEndPlugin<void> = {
           `The jupyter_rtc server API appears to be missing.\n${reason}`
         );
       });
-
+/*
     const wsRTCClient = new WsRTCClient(editorTracker, notebookTracker);
     console.log('JupyterLab extension @jupyterlab/rtc is activated!', wsRTCClient);
 
@@ -62,12 +62,12 @@ const rtc: JupyterFrontEndPlugin<void> = {
     profile.title.icon = profileIcon;
     profile.id = 'jupyter-profile'
     app.shell.add(profile, 'left', { rank: 300 })
-
+*/
     authRequestAPI<any>('users')
       .then((data: any) => {
         console.log('Got a response from the jupyter_auth server API', data);
-        users.setUsers(data);
-        profile.setProfile(data);
+//        users.setUsers(data);
+//        profile.setProfile(data);
       })
       .catch((reason: any) => {
         console.error(
