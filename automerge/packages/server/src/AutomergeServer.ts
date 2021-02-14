@@ -8,7 +8,7 @@ import Automerge, { List, Text } from 'automerge'
 
 import { decodeChanges } from 'automerge/backend/columnar';
 
-export const docs = new Map<string, AMSharedDoc>()
+export const docs = new Map<string, Room>()
 
 export type AmDoc = {
   [key: string]: any
@@ -104,7 +104,7 @@ export const createLock = () => {
 
 export const lock = createLock()
 
-const broadcastChanges = (conn: WebSocket, doc: AMSharedDoc, changes: Uint8Array[]) => {
+const broadcastChanges = (conn: WebSocket, doc: Room, changes: Uint8Array[]) => {
   if (conn.readyState !== WS_READY_STATE_CONNECTING && conn.readyState !== WS_READY_STATE_OPEN) {
     onClose(conn, doc, null)
   }
@@ -116,7 +116,7 @@ const broadcastChanges = (conn: WebSocket, doc: AMSharedDoc, changes: Uint8Array
   }
 }
 
-class AMSharedDoc {
+class Room {
   private name = null;
   public doc: AmDoc = null;
   public conns = new Map()
@@ -125,35 +125,35 @@ class AMSharedDoc {
   }
 }
 
-const onMessage = (currentConn: WebSocket, docName: string, sharedDoc: AMSharedDoc, message: any) => {
+const onMessage = (currentConn: WebSocket, docName: string, room: Room, message: any) => {
   lock(() => {
     const changes = new Uint8Array(message)
     console.log('-------------------------------------------------------------')
     console.log("Change", docName, decodeChanges([changes]))
-    sharedDoc.doc = Automerge.applyChanges(sharedDoc.doc, [changes])
+    room.doc = Automerge.applyChanges(room.doc, [changes])
     console.log('------')
-    console.log('Doc', docName, sharedDoc.doc)
+    console.log('Doc', docName, room.doc)
     console.log('------')
-    console.log('Notebook', docName, sharedDoc.doc['notebook'])
+    console.log('Notebook', docName, room.doc['notebook'])
     console.log('------')
     console.log('Notebook Cells')
-    if (sharedDoc.doc.notebook && sharedDoc.doc.notebook.cells) {
-      sharedDoc.doc.notebook.cells.map(cell => {
+    if (room.doc.notebook && room.doc.notebook.cells) {
+      room.doc.notebook.cells.map(cell => {
         if (cell.codeEditor && cell.codeEditor.value) {
           console.log('> ', cell.codeEditor.value.toString())
         }
         console.log(cell)
       })
     }
-    sharedDoc.conns.forEach((_, conn) => {
+    room.conns.forEach((_, conn) => {
       if (currentConn != conn ) {
-        broadcastChanges(conn, sharedDoc, [changes])
+        broadcastChanges(conn, room, [changes])
       }
     })  
   }, () => {})
 }
 
-export const getAmSharedDoc = (uuid: string, docName: string, initialize: boolean): AMSharedDoc => {
+export const getRoom = (uuid: string, docName: string, initialize: boolean): Room => {
   let k = docs.get(docName)
   if (k) {
    return k
@@ -164,22 +164,20 @@ export const getAmSharedDoc = (uuid: string, docName: string, initialize: boolea
   if (initialize) {
     doc = Automerge.change(doc, d => {
       d['ownerId'] = uuid
-      /*
-      d.codeEditor = {}
-      d.codeEditor.value = new Text()
-      d.codeEditor.value.insertAt(0, ...INITIAL_TEXT)
-      d.notebook = {}
-      d.notebook.cells = new Array()
-      */
+//      d.codeEditor = {}
+//      d.codeEditor.value = new Text()
+//      d.codeEditor.value.insertAt(0, ...INITIAL_TEXT)
+//      d.notebook = {}
+//      d.notebook.cells = new Array()
     })
   }
   console.log('Initial Doc', doc)
-  const sharedDoc = new AMSharedDoc(doc)
-  docs.set(docName, sharedDoc)
-  return sharedDoc
+  const room = new Room(doc)
+  docs.set(docName, room)
+  return room
 }
 
-const onClose = (conn: WebSocket, doc: AMSharedDoc, err) => {
+const onClose = (conn: WebSocket, doc: Room, err) => {
   console.log('Closing WS', err)
   if (doc.conns.has(conn)) {
     doc.conns.delete(conn)
@@ -198,12 +196,12 @@ const setupWSConnection = (conn: WebSocket, req: IncomingMessage) => {
   const docName = urlPath.split('/')[1]
   console.log('Setup WS Connection', uuid, docName)
   conn.binaryType = 'arraybuffer'
-  const sharedDoc = getAmSharedDoc(uuid, docName, initialize)
-  const changes = Automerge.getChanges(Automerge.init<AmDoc>(), sharedDoc.doc)
-  broadcastChanges(conn, sharedDoc, changes);
-  sharedDoc.conns.set(conn, new Set())
-  conn.on('message', message => onMessage(conn, docName, sharedDoc, message))
-  conn.on('close', err => onClose(conn, sharedDoc, err))
+  const room = getRoom(uuid, docName, initialize)
+  const changes = Automerge.getChanges(Automerge.init<AmDoc>(), room.doc)
+  broadcastChanges(conn, room, changes);
+  room.conns.set(conn, new Set())
+  conn.on('message', message => onMessage(conn, docName, room, message))
+  conn.on('close', err => onClose(conn, room, err))
 }
 
 const PORT = process.env.PORT || 4321
