@@ -4,6 +4,7 @@
   "license": "BSD-3-Clause",
   "private": true,
   "workspaces": [
+    "packages/jupyterlab-rtc",
     "packages/server",
     "packages/textarea",
     "externals/automerge"
@@ -43,7 +44,11 @@
   "dependencies": {
   },
   "resolutions": {
-  },
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "@types/react-dom": "^17.0.0",
+    "@types/react": "^17.0.0"
+   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "~4.2.0",
     "@typescript-eslint/parser": "~4.2.0",
