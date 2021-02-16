@@ -3,13 +3,12 @@ name = "jupyter_rtc_automerge"
 version = "0.0.1"
 edition = "2018"
 
+
+
 [dependencies]
-tungstenite = "0.11.1"
-tokio-tungstenite = "*"
-tokio = "0.3.6"
-automerge-backend = { git = "https://github.com/datalayer-contrib/automerge-rs", branch = "jupyter-rtc" }
-automerge-frontend = { git = "https://github.com/datalayer-contrib/automerge-rs", branch = "jupyter-rtc" }
-automerge-protocol = { git = "https://github.com/datalayer-contrib/automerge-rs", branch = "jupyter-rtc" }
+automerge-backend = { git = "https://github.com/pierrotsmnrd/automerge-rs/", tag = "jupyter_rtc_0.0.1" }
+automerge-frontend = { git = "https://github.com/pierrotsmnrd/automerge-rs/", tag = "jupyter_rtc_0.0.1" }
+automerge-protocol = { git = "https://github.com/pierrotsmnrd/automerge-rs/", tag = "jupyter_rtc_0.0.1" }
 
 log = "0.4.11"
 simplelog = "*"

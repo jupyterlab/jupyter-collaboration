@@ -125,6 +125,13 @@ test-rs:
 	  cd rust && \
 	  cargo test )
 
+test-py:
+	($(CONDA_ACTIVATE) jupyter-rtc; \
+	  cd rust && \
+	  make test-py )
+
+test: test-py test-rs
+
 kill:
 	($(CONDA_ACTIVATE) jupyter-rtc; \
 	  yarn kill )
