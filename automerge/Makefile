@@ -1,4 +1,4 @@
-SHELL=/bin/zsh
+SHELL=/bin/bash
 
 CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
 CONDA_DEACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda deactivate
@@ -103,6 +103,17 @@ start-jupyterlab:
 	# open http://localhost:8888/lab
 	# open http://localhost:8888/jupyter_auth/default
 	# open http://localhost:8888/jupyter_rtc/default
+
+start-jupyterlab-80:
+	($(CONDA_ACTIVATE) jupyter-rtc; \
+	  $(GITHUB_APP_CREDENTIALS); \
+	  jupyter lab \
+	    --port 80 \
+	    --dev-mode \
+	    --ServerApp.jpserver_extensions="{'jupyterlab': True, 'jupyter_auth': True, 'jupyter_rtc': True}" \
+	    --ServerApp.login_handler_class=jupyter_auth.github.LoginHandler \
+	    --notebook-dir=./examples \
+	    --extensions-in-dev-mode )
 
 start-jupyter-server:
 	($(CONDA_ACTIVATE) jupyter-rtc; \

@@ -128,23 +128,24 @@ class Room {
 const onMessage = (currentConn: WebSocket, docName: string, room: Room, message: any) => {
   lock(() => {
     const changes = new Uint8Array(message)
-    console.log('-------------------------------------------------------------')
-    console.log("Change", docName, decodeChanges([changes]))
     room.doc = Automerge.applyChanges(room.doc, [changes])
-    console.log('------')
-    console.log('Doc', docName, room.doc)
-    console.log('------')
-    console.log('Notebook', docName, room.doc['notebook'])
-    console.log('------')
-    console.log('Notebook Cells')
-    if (room.doc.notebook && room.doc.notebook.cells) {
-      room.doc.notebook.cells.map(cell => {
-        if (cell.codeEditor && cell.codeEditor.value) {
-          console.log('> ', cell.codeEditor.value.toString())
-        }
-        console.log(cell)
-      })
-    }
+//    console.log('-------------------------------------------------------------')
+//    console.log("Change")
+//    console.log("> ", docName, decodeChanges([changes])[0].message)
+//    console.log('------')
+//    console.log('Doc', docName, room.doc)
+//    console.log('------')
+//    console.log('Notebook', docName, room.doc['notebook'])
+//    console.log('------')
+//    console.log('Notebook Cells')
+//    if (room.doc.notebook && room.doc.notebook.cells) {
+//      room.doc.notebook.cells.map(cell => {
+//        if (cell.codeEditor && cell.codeEditor.value) {
+//          console.log('> ', cell.codeEditor.value.toString())
+//        }
+//        console.log(cell)
+//      })
+//    }
     room.conns.forEach((_, conn) => {
       if (currentConn != conn ) {
         broadcastChanges(conn, room, [changes])
@@ -189,7 +190,7 @@ const setupWSConnection = (conn: WebSocket, req: IncomingMessage) => {
   const urlPath = req.url.slice(1).split('?')[0]
   const params = req.url.slice(1).split('?')[1]
   let initialize = false;
-  if (params.indexOf('initialize') > -1) {
+  if (params && params.indexOf('initialize') > -1) {
     initialize = true
   }
   const uuid = urlPath.split('/')[0]
