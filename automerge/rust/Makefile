@@ -3,9 +3,7 @@ UNAME := $(shell uname)
 .PHONY: build
 
 build:
-# ifeq ($(UNAME),Darwin)
-cargo rustc --release -- -C link-arg=-undefined -C link-arg=dynamic_lookup
-# endif
+	cargo rustc --release -- -C link-arg=-undefined -C link-arg=dynamic_lookup
 
 clean:
 	rm -rf Cargo.lock build dist target jupyter_rtc_automerge.egg-info
