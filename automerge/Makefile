@@ -111,7 +111,7 @@ start-jupyterlab-80:
 	    --port 80 \
 	    --allow-root \
 	    --no-browser \
-	    -ip=0.0.0.0 \
+	    --ip 0.0.0.0 \
 	    --dev-mode \
 	    --ServerApp.terminals_enabled=False \
 	    --ServerApp.jpserver_extensions="{'jupyterlab': True, 'jupyter_auth': True, 'jupyter_rtc': True}" \
