@@ -111,6 +111,7 @@ start-jupyterlab-80:
 	    --port 80 \
 	    --allow-root \
 	    --no-browser \
+	    -ip=0.0.0.0 \
 	    --dev-mode \
 	    --ServerApp.jpserver_extensions="{'jupyterlab': True, 'jupyter_auth': True, 'jupyter_rtc': True}" \
 	    --ServerApp.login_handler_class=jupyter_auth.github.LoginHandler \
