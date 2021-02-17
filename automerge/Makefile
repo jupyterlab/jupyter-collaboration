@@ -4,7 +4,7 @@ CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activ
 CONDA_DEACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda deactivate
 CONDA_REMOVE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda remove -y --all -n
 
-GITHUB_APP_CREDENTIALS=echo "export GITHUB_CLIENT_ID=YOUR_CLIENT_ID_HERE; export GITHUB_CLIENT_SECRET=YOUR_SECRET_HERE"
+GITHUB_APP_CREDENTIALS=echo "export GITHUB_CLIENT_ID=YOUR_CLIENT_ID; export GITHUB_CLIENT_SECRET=YOUR_SECRET; export GITHUB_OAUTH_CALLBACK_URL=YOUR_CALLBACK_URL"
 
 .PHONY: clean install
 
@@ -113,6 +113,7 @@ start-jupyterlab-80:
 	    --no-browser \
 	    -ip=0.0.0.0 \
 	    --dev-mode \
+	    --ServerApp.terminals_enabled=False \
 	    --ServerApp.jpserver_extensions="{'jupyterlab': True, 'jupyter_auth': True, 'jupyter_rtc': True}" \
 	    --ServerApp.login_handler_class=jupyter_auth.github.LoginHandler \
 	    --notebook-dir=./examples \
