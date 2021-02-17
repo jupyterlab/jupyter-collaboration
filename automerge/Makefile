@@ -109,6 +109,7 @@ start-jupyterlab-80:
 	  $(GITHUB_APP_CREDENTIALS); \
 	  jupyter lab \
 	    --port 80 \
+		--allow-root \
 	    --dev-mode \
 	    --ServerApp.jpserver_extensions="{'jupyterlab': True, 'jupyter_auth': True, 'jupyter_rtc': True}" \
 	    --ServerApp.login_handler_class=jupyter_auth.github.LoginHandler \
