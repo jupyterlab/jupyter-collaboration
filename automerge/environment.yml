@@ -16,3 +16,6 @@ dependencies:
   - setuptools-rust
   - twine
   - yarn=1.22.5
+  - pip:
+    - jupyterlab-lsp
+    - python-language-server[all]

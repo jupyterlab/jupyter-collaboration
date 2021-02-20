@@ -38,7 +38,7 @@ install:
 	($(CONDA_ACTIVATE) jupyter-rtc; \
 	  git clone https://github.com/datalayer-contrib/jupyterlab externals/jupyterlab-am-modeldb && \
 	  cd externals/jupyterlab-am-modeldb && \
-	  git checkout am-modeldb && \
+	  git checkout am-modeldb-2 && \
 	  pip install -e . && \
 	  yarn && \
 	  yarn build && \
