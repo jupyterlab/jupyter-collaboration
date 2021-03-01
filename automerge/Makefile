@@ -151,6 +151,25 @@ kill:
 	($(CONDA_ACTIVATE) jupyter-rtc; \
 	  yarn kill )
 
+docker-build:
+	docker build \
+		-t ${DOCKER_REPO}/jupyterlab-rtc:0.1.0 \
+		.
+
+docker-push:
+	docker push \
+	    ${DOCKER_REPO}/jupyterlab-rtc:0.1.0
+
+docker-start:
+	docker run -it \
+	  --rm \
+	  --name jupyterlab-rtc \
+	  -p 8888:8888 \
+	  -e GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID} \
+	  -e GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET} \
+	  -e GITHUB_OAUTH_CALLBACK_URL=${GITHUB_OAUTH_CALLBACK_URL} \
+	  ${DOCKER_REPO}/jupyterlab-rtc:0.1.0
+
 clean:
 	$(CONDA_DEACTIVATE)
 	$(CONDA_REMOVE) jupyter-rtc || true

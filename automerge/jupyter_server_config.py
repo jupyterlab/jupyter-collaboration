@@ -10,7 +10,7 @@ c.ServerApp.token=""
 c.ServerProxy.servers = {
   'jupyter_rtc_proxy': {
     'port': 4321,
-    'command': ['yarn', 'automerge:start-server'],
+    'command': ['node', 'packages/server/src/AutomergeServer.js'],
     'absolute_url': False
   }
 }
