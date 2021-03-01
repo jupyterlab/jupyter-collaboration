@@ -66,7 +66,7 @@ install:
 	  git checkout sessions && \
 	  pip install -e . )
 	($(CONDA_ACTIVATE) jupyter-rtc; \
-	  pip install git+https://github.com/datalayer-contrib/jupyter-server.git@sessions )
+	  pip install git+https://github.com/datalayer-contrib/jupyter-server.git@collaborative-kernel-manager )
 
 	($(CONDA_ACTIVATE) jupyter-rtc; \
 	  pip install -e . )
@@ -153,7 +153,7 @@ kill:
 
 docker-build:
 	docker build \
-		-t ${DOCKER_REPO}/jupyterlab-rtc:0.1.0 \
+		-t ${DOCKER_REPO}/jupyterlab-rtc:0.1.0 --no-cache \
 		.
 
 docker-push:
