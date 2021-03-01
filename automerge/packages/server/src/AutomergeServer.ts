@@ -129,23 +129,31 @@ const onMessage = (currentConn: WebSocket, docName: string, room: Room, message:
   lock(() => {
     const changes = new Uint8Array(message)
     room.doc = Automerge.applyChanges(room.doc, [changes])
-//    console.log('-------------------------------------------------------------')
-//    console.log("Change")
-//    console.log("> ", docName, decodeChanges([changes])[0].message)
-//    console.log('------')
-//    console.log('Doc', docName, room.doc)
-//    console.log('------')
-//    console.log('Notebook', docName, room.doc['notebook'])
-//    console.log('------')
-//    console.log('Notebook Cells')
-//    if (room.doc.notebook && room.doc.notebook.cells) {
-//      room.doc.notebook.cells.map(cell => {
-//        if (cell.codeEditor && cell.codeEditor.value) {
-//          console.log('> ', cell.codeEditor.value.toString())
-//        }
-//        console.log(cell)
-//      })
-//    }
+    /*
+    console.log('-------------------------------------------------------------')
+    console.log("Change")
+    console.log("> ", docName, decodeChanges([changes])[0].message)
+    console.log('------')
+    console.log('Doc', docName, room.doc)
+    console.log('------')
+    console.log('Notebook', docName, room.doc['notebook'])
+    if (room.doc.notebook && room.doc.notebook.cellOrder) {
+      console.log('------')
+      console.log('Notebook CellOrder')
+      console.log(room.doc.notebook.cellOrder)
+    }
+    if (room.doc.notebook && room.doc.notebook.cells) {
+      console.log('------')
+      console.log('Notebook Cells')
+      room.doc.notebook.cellOrder.map(id => {
+        const cell = room.doc.notebook.cells[id]
+        if (cell.codeEditor && cell.codeEditor.value) {
+          console.log('> ', cell.codeEditor.value.toString())
+        }
+        console.log(cell)
+      })
+    }
+    */
     room.conns.forEach((_, conn) => {
       if (currentConn != conn ) {
         broadcastChanges(conn, room, [changes])
