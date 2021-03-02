@@ -2,8 +2,7 @@
 
 source $(conda info --base)/etc/profile.d/conda.sh
 conda activate jupyter-rtc
-cd
-jupyter lab \
+cd /root/rtc/automerge && jupyter lab \
   --dev-mode \
   --watch \
   --allow-root \
@@ -11,6 +10,6 @@ jupyter lab \
   --ServerApp.token= \
   --ServerApp.jpserver_extensions="{'jupyterlab': True, 'jupyter_auth': True, 'jupyter_rtc': True}" \
   --ServerApp.login_handler_class=jupyter_auth.github.LoginHandler \
-  --notebook-dir=./examples \
+  --notebook-dir=/root/rtc/automerge/examples \
   --no-browser \
   --extensions-in-dev-mode

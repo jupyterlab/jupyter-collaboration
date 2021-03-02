@@ -170,6 +170,18 @@ docker-start:
 	  -e GITHUB_OAUTH_CALLBACK_URL=${GITHUB_OAUTH_CALLBACK_URL} \
 	  ${DOCKER_REPO}/jupyterlab-rtc:0.1.0
 
+docker-connect:
+	@exec docker exec -it jupyterlab-rtc bash
+
+docker-logs:
+	docker logs jupyterlab-rtc -f
+
+docker-stop:
+	@exec docker stop jupyterlab-rtc
+
+docker-rm:
+	@exec docker rm -f jupyterlab-rtc
+
 clean:
 	$(CONDA_DEACTIVATE)
 	$(CONDA_REMOVE) jupyter-rtc || true
