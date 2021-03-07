@@ -9,6 +9,7 @@ dependencies:
   - jupyter-server-proxy
   - nbformat
   - nodejs=14.15.1
+  - pip
   - pycurl
   - pytest
   - python=3.9

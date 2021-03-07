@@ -15,7 +15,7 @@ fn jupyter_rtc_automerge(py: Python, module: &PyModule) -> PyResult<()> {
         WriteLogger::new(
             LevelFilter::Info,
             Config::default(),
-            File::create("./jupyter_rtc_automerge.log").unwrap(),
+            File::create("/tmp/jupyter_rtc_automerge.log").unwrap(),
         ),
     ])
     .unwrap();
