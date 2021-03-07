@@ -11,6 +11,7 @@ GITHUB_APP_CREDENTIALS=echo "export GITHUB_CLIENT_ID=YOUR_CLIENT_ID; export GITH
 install:
 	-conda env create -f environment.yml 
 
+	# Install Rust.
 	($(CONDA_ACTIVATE) jupyter-rtc; \
 	  cd rust && \
 	  make clean && \
@@ -28,6 +29,7 @@ install:
 	  cd externals/automerge && \
 	  git checkout performance-a262c
 
+	# Install Automerge.
 	($(CONDA_ACTIVATE) jupyter-rtc; \
 	  git clone https://github.com/automerge/automerge externals/automerge-observable-path && \
 	  cd externals/automerge-observable-path && \
@@ -35,22 +37,16 @@ install:
 	  yarn && \
 	  yarn build )
 
+	# Install JupyterLab.
 	($(CONDA_ACTIVATE) jupyter-rtc; \
 	  git clone https://github.com/datalayer-contrib/jupyterlab externals/jupyterlab-am-modeldb && \
 	  cd externals/jupyterlab-am-modeldb && \
 	  git checkout am-modeldb-2 && \
 	  pip install -e . && \
 	  yarn && \
-	  yarn build && \
-	  jupyter lab build )
-
-	($(CONDA_ACTIVATE) jupyter-rtc; \
-	  yarn && \
 	  yarn build )
 
-	# Automerge should only be present in the top node_modules.
-	-rm -fr packages/*/node_modules/automerge* || true
-
+	# Install Jupyter Auth.
 	($(CONDA_ACTIVATE) jupyter-rtc; \
 	  git clone https://github.com/datalayer/jupyter-auth externals/jupyter-auth && \
 	  cd externals/jupyter-auth && \
@@ -58,19 +54,22 @@ install:
 	  yarn build && \
 	  pip install -e . )
 
-	# Uninstall the single-user jupyter-server and install a multi-user jupyter-server.
-#	($(CONDA_ACTIVATE) jupyter-rtc; \
-      pip uninstall -y jupyter-server && \
-	  git clone https://github.com/datalayer-contrib/jupyter-server externals/jupyter-server && \
-	  cd externals/jupyter-server && \
-	  git checkout sessions && \
-	  pip install -e . )
+	# Install Jupyter Server.
 	($(CONDA_ACTIVATE) jupyter-rtc; \
 	  pip install git+https://github.com/datalayer-contrib/jupyter-server.git@collaborative-kernel-manager )
 
+	# Install Jupyter RTC Frontend.
+	($(CONDA_ACTIVATE) jupyter-rtc; \
+	  yarn && \
+	  yarn build )
+	# Automerge should only be present in the top node_modules.
+	-rm -fr packages/*/node_modules/automerge* || true
+
+	# Install Jupyter RTC Backend.
 	($(CONDA_ACTIVATE) jupyter-rtc; \
 	  pip install -e . )
 
+	# Install JupyterLab RTC Extension.
 	($(CONDA_ACTIVATE) jupyter-rtc; \
 	  cd packages/jupyterlab-rtc && \
 	  jupyter labextension develop --overwrite && \
@@ -96,6 +95,19 @@ start-jupyterlab:
 	  jupyter lab \
 	    --dev-mode \
 	    --watch \
+	    --ServerApp.jpserver_extensions="{'jupyterlab': True, 'jupyter_auth': True, 'jupyter_rtc': True}" \
+	    --ServerApp.login_handler_class=jupyter_auth.github.LoginHandler \
+	    --notebook-dir=./examples \
+	    --extensions-in-dev-mode )
+	# open http://localhost:8888/lab
+	# open http://localhost:8888/jupyter_auth/default
+	# open http://localhost:8888/jupyter_rtc/default
+
+start-jupyterlab-dev:
+	($(CONDA_ACTIVATE) jupyter-rtc; \
+	  $(GITHUB_APP_CREDENTIALS); \
+	  jupyter lab \
+	    --dev-mode \
 	    --ServerApp.jpserver_extensions="{'jupyterlab': True, 'jupyter_auth': True, 'jupyter_rtc': True}" \
 	    --ServerApp.login_handler_class=jupyter_auth.github.LoginHandler \
 	    --notebook-dir=./examples \
@@ -151,10 +163,12 @@ kill:
 	($(CONDA_ACTIVATE) jupyter-rtc; \
 	  yarn kill )
 
+#		--no-cache
 docker-build:
 	docker build \
-		-t ${DOCKER_REPO}/jupyterlab-rtc:0.1.0 --no-cache \
-		.
+		-f ./docker/Dockerfile \
+		-t ${DOCKER_REPO}/jupyterlab-rtc:0.1.0 \
+		./docker
 
 docker-push:
 	docker push \
