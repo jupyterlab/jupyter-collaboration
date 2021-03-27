@@ -4,21 +4,21 @@
 
 We have today the following main packages available:
 
-- [@jupyter-rtc/relay](https://github.com/jupyterlab/rtc/tree/main/lumino/packages/relay): Patch relay server to synchronize patches for `@jupyter-rtc/node`.
-- [@jupyter-rtc/node](https://github.com/jupyterlab/rtc/tree/main/lumino/packages/node): Real time collaboration client, builds on `@lumino/datastore`.
-- [@jupyter-rtc/jupyter](https://github.com/jupyterlab/rtc/tree/main/lumino/packages/jupyter): Holds schema for Jupyter RTC tables that are used in server and client.
-- [@jupyter-rtc/supernode](https://github.com/jupyterlab/rtc/tree/main/lumino/packages/supernode): Server to keep datastore in sync with jupyter server.
+- [@jupyterlab-rtc/relay](https://github.com/jupyterlab/rtc/tree/main/lumino/packages/relay): Patch relay server to synchronize patches for `@jupyterlab-rtc/node`.
+- [@jupyterlab-rtc/node](https://github.com/jupyterlab/rtc/tree/main/lumino/packages/node): Real time collaboration client, builds on `@lumino/datastore`.
+- [@jupyterlab-rtc/jupyter](https://github.com/jupyterlab/rtc/tree/main/lumino/packages/jupyter): Holds schema for JupyterLab RTC tables that are used in server and client.
+- [@jupyterlab-rtc/supernode](https://github.com/jupyterlab/rtc/tree/main/lumino/packages/supernode): Server to keep datastore in sync with jupyter server.
 
 You can use those packages with examples:
 
-- [@jupyter-rtc/jupyter-example](https://github.com/jupyterlab/rtc/tree/main/lumino/examples/jupyter): Client to access Jupyter Server data (notebook content, kernel...).
-- [@jupyter-rtc/lumino-example](https://github.com/jupyterlab/rtc/tree/main/lumino/examples/lumino): Example of a standalone Lumino Datastore application.
-- [@jupyter-rtc/todo-example](https://github.com/jupyterlab/rtc/tree/main/lumino/examples/todo): Example of simple To Do application using `@jupyter-rtc/relat` server.
+- [@jupyterlab-rtc/jupyter-example](https://github.com/jupyterlab/rtc/tree/main/lumino/examples/jupyter): Client to access Jupyter Server data (notebook content, kernel...).
+- [@jupyterlab-rtc/lumino-example](https://github.com/jupyterlab/rtc/tree/main/lumino/examples/lumino): Example of a standalone Lumino Datastore application.
+- [@jupyterlab-rtc/todo-example](https://github.com/jupyterlab/rtc/tree/main/lumino/examples/todo): Example of simple To Do application using `@jupyterlab-rtc/relat` server.
 
 We also provide useful tooling packages to accompany the main packages.
 
-- [@jupyter-rtc/debugger](https://github.com/jupyterlab/rtc/tree/main/lumino/tools/debugger)
-- [@jupyter-rtc /dummy-store](https://github.com/jupyterlab/rtc/tree/main/lumino/tools/dummy-store)
+- [@jupyterlab-rtc/debugger](https://github.com/jupyterlab/rtc/tree/main/lumino/tools/debugger)
+- [@jupyterlab-rtc /dummy-store](https://github.com/jupyterlab/rtc/tree/main/lumino/tools/dummy-store)
 
 ![The development architecture](images/dev-architecture.svg "The development architecture")
 
@@ -32,8 +32,8 @@ Is it useful or needed to introduce a global distributed state management `a-la-
 
 Eventually we see the [jupyterlab/rtc](https://github.com/jupyterlab/rtc) repository containing a number of other server extensions and client packages like:
 
-- `supernode_jupyter_extension`: Jupyter Server extension for running `@jupyter-rtc/supernode`.
-- `relay_jupyter_extension`: Jupyter Server Extension for` @jupyter-rtc/relay`
+- `supernode_jupyter_extension`: Jupyter Server extension for running `@jupyterlab-rtc/supernode`.
+- `relay_jupyter_extension`: Jupyter Server Extension for` @jupyterlab-rtc/relay`
 - `jupyterlab-rtc-client`: A client that connects over `rtc_relay_jupyter_extension`.
 
 ## Actors

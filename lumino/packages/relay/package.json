@@ -1,7 +1,7 @@
 {
-  "name": "@jupyter-rtc/relay",
+  "name": "@jupyterlab-rtc/relay",
   "version": "0.1.0",
-  "description": "Jupyter RTC - Relay",
+  "description": "JupyterLab RTC - Relay",
   "homepage": "https://github.com/jupyterlab/rtc",
   "bugs": {
     "url": "https://github.com/jupyterlab/rtc/issues"

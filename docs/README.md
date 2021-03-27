@@ -1,6 +1,6 @@
-# Jupyter RTC Docs
+# JupyterLab RTC Docs
 
-This folder contains content for the [Jupyter RTC ReadTheDocs website](https://jupyter-rtc.readthedocs.io).
+This folder contains content for the [JupyterLab RTC ReadTheDocs website](https://jupyterlab-rtc.readthedocs.io).
 
 ```bash
 # Install and build the doc site.

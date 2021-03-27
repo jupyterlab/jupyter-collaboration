@@ -1,1 +1,1 @@
-# Jupyter RTC - Jupyter Example
+# JupyterLab RTC - Jupyter Example

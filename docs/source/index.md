@@ -1,14 +1,14 @@
-Jupyter RTC Documentation
+JupyterLab RTC Documentation
 =========================
 
 **Real Time Collaboration for Jupyter and beyond**
 
-Jupyter RTC is the realtime collaboration foundation for Project Jupyter and follows the Jupyter [Community Guides](https://jupyter.readthedocs.io/en/latest/community/content-community.html).
+JupyterLab RTC is the realtime collaboration foundation for Project Jupyter and follows the Jupyter [Community Guides](https://jupyter.readthedocs.io/en/latest/community/content-community.html).
 
 > Think to a `Google Docs` or `HackMD` for Jupyter.
 
 ```{note}
-The Jupyter RTC project is still in the inception stage and is rapidly evolving in terms of design
+The JupyterLab RTC project is still in the inception stage and is rapidly evolving in terms of design
 and implementation. Use at your own risk. If you find any issues or have requirements, please report them 
 on the [Issue Board](https://github.com/jupyterlab/rtc/issues).
 ```

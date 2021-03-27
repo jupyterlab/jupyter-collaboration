@@ -1,13 +1,13 @@
 {
-  "name": "@jupyter-rtc/debugger",
+  "name": "@jupyterlab-rtc/debugger",
   "version": "0.1.0",
-  "description": "Jupyter RTC - Debugger",
+  "description": "JupyterLab RTC - Debugger",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "dependencies": {
     "observable-hooks": "3.0.0",
     "react": "^16.13.1",
-    "@jupyter-rtc/node": "*"
+    "@jupyterlab-rtc/node": "*"
   },
   "devDependencies": {
     "@lumino/datastore": "0.10.2",

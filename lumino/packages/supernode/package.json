@@ -1,7 +1,7 @@
 {
-  "name": "@jupyter-rtc/supernode",
+  "name": "@jupyterlab-rtc/supernode",
   "version": "0.1.0",
-  "description": "Jupyter RTC - Supernode",
+  "description": "JupyterLab RTC - Supernode",
   "homepage": "https://github.com/jupyterlab/rtc",
   "bugs": {
     "url": "https://github.com/jupyterlab/rtc/issues"
@@ -34,8 +34,8 @@
   },
   "dependencies": {
     "@lumino/datastore": "0.10.2",
-    "@jupyter-rtc/jupyter": "*",
-    "@jupyter-rtc/node": "*",
+    "@jupyterlab-rtc/jupyter": "*",
+    "@jupyterlab-rtc/node": "*",
     "rx-jupyter": "*",
     "rxjs": "6.6.0",
     "xhr2": "*"

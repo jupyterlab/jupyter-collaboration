@@ -1,15 +1,15 @@
 {
-  "name": "@jupyter-rtc/todo-example",
+  "name": "@jupyterlab-rtc/todo-example",
   "version": "0.1.0",
-  "description": "Jupyter RTC - ToDo Example",
+  "description": "JupyterLab RTC - ToDo Example",
   "private": true,
   "dependencies": {
     "observable-hooks": "3.0.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.1",
-    "@jupyter-rtc/debugger": "*",
-    "@jupyter-rtc/node": "*",
+    "@jupyterlab-rtc/debugger": "*",
+    "@jupyterlab-rtc/node": "*",
     "typescript": "3.9.6"
   },
   "devDependencies": {

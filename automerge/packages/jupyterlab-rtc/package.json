@@ -12,7 +12,7 @@
     "url": "https://github.com/jupyterlab/rtc/issues"
   },
   "license": "BSD-3-Clause",
-  "author": "Jupyter RTC",
+  "author": "JupyterLab RTC",
   "files": [
     "lib/**/*.{d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
     "style/**/*.{css,.js,eot,gif,html,jpg,json,png,svg,woff2,ttf}"

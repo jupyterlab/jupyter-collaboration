@@ -1,1 +1,1 @@
-# Jupyter RTC - Lumino Example
+# JupyterLab RTC - Lumino Example

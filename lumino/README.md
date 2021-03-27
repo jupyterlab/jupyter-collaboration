@@ -1,3 +1,3 @@
-# Jupyter RTC with Lumino
+# JupyterLab RTC with Lumino
 
-This folder contains incomplete (WIP) implementation for Jupyter Real Time Collaboration with Lumino.
+This folder contains incomplete (WIP) implementation for JupyterLab Real Time Collaboration with Lumino.

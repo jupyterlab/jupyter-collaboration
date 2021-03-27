@@ -17,9 +17,9 @@
 
 # -- Project information -----------------------------------------------------
 
-project = "Jupyter RTC"
-copyright = "2020, Jupyter RTC Project"
-author = "Jupyter RTC Project"
+project = "JupyterLab RTC"
+copyright = "2020, JupyterLab RTC Project"
+author = "JupyterLab RTC Project"
 
 master_doc = "index"
 

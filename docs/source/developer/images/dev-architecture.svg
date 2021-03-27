@@ -359,7 +359,7 @@
          id="tspan846"
          x="38.364597"
          y="179.26004"
-         style="stroke-width:0.26458332">@jupyter-rtc/jupyter-example</tspan></text>
+         style="stroke-width:0.26458332">@jupyterlab-rtc/jupyter-example</tspan></text>
     <rect
        ry="2.5051377"
        rx="3.2755544"
@@ -379,7 +379,7 @@
          y="184.81631"
          x="44.450016"
          id="tspan852"
-         sodipodi:role="line">@jupyter-rtc/jupyter (schemas)</tspan></text>
+         sodipodi:role="line">@jupyterlab-rtc/jupyter (schemas)</tspan></text>
     <rect
        style="opacity:0.82399998;fill:none;fill-opacity:1;stroke:#00000e;stroke-width:0.35277778;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="rect856"
@@ -399,7 +399,7 @@
          id="tspan858"
          x="50.800022"
          y="190.90175"
-         style="stroke-width:0.26458332">@jupyter-rtc/node</tspan></text>
+         style="stroke-width:0.26458332">@jupyterlab-rtc/node</tspan></text>
     <rect
        ry="1.3476721"
        rx="1.7929806"
@@ -428,7 +428,7 @@
          id="tspan876"
          x="149.48936"
          y="182.96425"
-         style="stroke-width:0.26458332">@jupyter-rtc/todo-example</tspan></text>
+         style="stroke-width:0.26458332">@jupyterlab-rtc/todo-example</tspan></text>
     <rect
        ry="1.9516909"
        rx="2.6168132"
@@ -448,7 +448,7 @@
          y="189.04968"
          x="155.83937"
          id="tspan882"
-         sodipodi:role="line">@jupyter-rtc/node</tspan></text>
+         sodipodi:role="line">@jupyterlab-rtc/node</tspan></text>
     <rect
        style="opacity:0.82399998;fill:none;fill-opacity:1;stroke:#00000e;stroke-width:0.35277778;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="rect886"
@@ -477,7 +477,7 @@
          id="tspan913"
          x="97.494186"
          y="117.08538"
-         style="text-align:center;text-anchor:middle;stroke-width:0.26458332">@jupyter-rtc/relay</tspan><tspan
+         style="text-align:center;text-anchor:middle;stroke-width:0.26458332">@jupyterlab-rtc/relay</tspan><tspan
          sodipodi:role="line"
          x="97.494186"
          y="121.4951"
@@ -545,7 +545,7 @@
          id="tspan2039"
          x="119.32708"
          y="48.027122"
-         style="stroke-width:0.26458332">@jupyter-rtc/supernode</tspan></text>
+         style="stroke-width:0.26458332">@jupyterlab-rtc/supernode</tspan></text>
     <rect
        ry="1.9516909"
        rx="2.6168132"
@@ -565,7 +565,7 @@
          y="54.11256"
          x="125.67709"
          id="tspan2045"
-         sodipodi:role="line">@jupyter-rtc/node</tspan></text>
+         sodipodi:role="line">@jupyterlab-rtc/node</tspan></text>
     <rect
        style="opacity:0.82399998;fill:none;fill-opacity:1;stroke:#00000e;stroke-width:0.35277778;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="rect2049"
@@ -679,7 +679,7 @@
          y="216.56644"
          x="124.99131"
          sodipodi:role="line"
-         id="tspan175">@jupyter-rtc/debugger</tspan></text>
+         id="tspan175">@jupyterlab-rtc/debugger</tspan></text>
     <path
        sodipodi:nodetypes="cc"
        inkscape:connector-curvature="0"
@@ -856,7 +856,7 @@
          sodipodi:role="line"
          x="144.50041"
          y="75.543434"
-         style="text-align:center;text-anchor:middle;stroke-width:0.26458332">@jupyter-rtc/</tspan><tspan
+         style="text-align:center;text-anchor:middle;stroke-width:0.26458332">@jupyterlab-rtc/</tspan><tspan
          sodipodi:role="line"
          x="144.50041"
          y="79.953156"
@@ -887,7 +887,7 @@
          y="212.06845"
          x="68.829582"
          sodipodi:role="line"
-         id="tspan157">@jupyter-rtc/</tspan><tspan
+         id="tspan157">@jupyterlab-rtc/</tspan><tspan
          id="tspan159"
          style="text-align:center;text-anchor:middle;stroke-width:0.26458332"
          y="216.47816"
@@ -918,7 +918,7 @@
          sodipodi:role="line"
          x="174.13376"
          y="210.21637"
-         style="text-align:center;text-anchor:middle;stroke-width:0.26458332">@jupyter-rtc/</tspan><tspan
+         style="text-align:center;text-anchor:middle;stroke-width:0.26458332">@jupyterlab-rtc/</tspan><tspan
          sodipodi:role="line"
          x="174.13376"
          y="214.62608"

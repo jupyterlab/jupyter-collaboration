@@ -1,1 +1,1 @@
-# Jupyter RTC with Automerge
+# JupyterLab RTC with Automerge

@@ -1,16 +1,16 @@
 {
-  "name": "@jupyter-rtc/jupyter-example",
+  "name": "@jupyterlab-rtc/jupyter-example",
   "version": "0.1.0",
-  "description": "Jupyter RTC - Jupyter Example",
+  "description": "JupyterLab RTC - Jupyter Example",
   "private": true,
   "dependencies": {
     "observable-hooks": "3.0.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.1",
-    "@jupyter-rtc/debugger": "*",
-    "@jupyter-rtc/jupyter": "*",
-    "@jupyter-rtc/node": "*",
+    "@jupyterlab-rtc/debugger": "*",
+    "@jupyterlab-rtc/jupyter": "*",
+    "@jupyterlab-rtc/node": "*",
     "typescript": "3.9.6"
   },
   "devDependencies": {

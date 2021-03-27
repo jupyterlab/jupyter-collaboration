@@ -1,4 +1,4 @@
-# Jupyter RTC with Automerge Server
+# JupyterLab RTC with Automerge Server
 
 This folder contains source code portions taken from following repositories:
 

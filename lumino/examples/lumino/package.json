@@ -1,7 +1,7 @@
 {
-  "name": "@jupyter-rtc/lumino-example",
+  "name": "@jupyterlab-rtc/lumino-example",
   "version": "0.1.0",
-  "description": "Jupyter RTC - Lumino Example",
+  "description": "JupyterLab RTC - Lumino Example",
   "private": true,
   "scripts": {
     "build": "tsc && webpack",

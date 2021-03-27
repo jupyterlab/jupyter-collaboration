@@ -6,18 +6,18 @@ The goal of these protocols is to provide a shared higher level base for Jupyter
 
 This is really a family of specifications. They exist in levels, like the [OSI model](https://en.wikipedia.org/wiki/OSI_model#Layer_architecture) (in terms of that stack, they all exist at the Application layer). Each level depends only on the interface provided by the level directly below it and provides an interface to the level above it. They are, from highest to lowest:
 
-1. `Jupyter RTC`: Specification of the schemas that correspond to the entities in the Jupyter Server and a specification of how the supernode interacts with these records. There are other protocols at this level as well, for things like chat, commenting, Jupyter Widgets and other extensions.
+1. `JupyterLab RTC`: Specification of the schemas that correspond to the entities in the Jupyter Server and a specification of how the supernode interacts with these records. There are other protocols at this level as well, for things like chat, commenting, Jupyter Widgets and other extensions.
 2. `RTC`: Specification of how to represent schemas and how updates to the data in those schemas can be serialized as transactions.
 3. `Synchronized Append-only Log`: Provides a way to share between all clients a shared append-only log of transactions.
 4. `Bidirectional Asynchronous Communication`: Allows clients to send and receive messages to one another.
 
 ## Specification Details
 
-### Jupyter RTC Specification
+### JupyterLab RTC Specification
 
-_The shared schemas are in [`@jupyter-rtc/jupyter`](https://github.com/jupyterlab/rtc/blob/main/packages/jupyter/src/schemas.ts) and the supernode is in [`@jupyter-rtc/supernode`](https://github.com/jupyterlab/rtc/blob/main/packages/supernode/src/index.ts)_.
+_The shared schemas are in [`@jupyterlab-rtc/jupyter`](https://github.com/jupyterlab/rtc/blob/main/packages/jupyter/src/schemas.ts) and the supernode is in [`@jupyterlab-rtc/supernode`](https://github.com/jupyterlab/rtc/blob/main/packages/supernode/src/index.ts)_.
 
-The `Jupyter RTC` specification is meant to normalize data provided by the Jupyter Server into the `RTC` specification.
+The `JupyterLab RTC` specification is meant to normalize data provided by the Jupyter Server into the `RTC` specification.
 
 It specifies the `schemas` this relies on a **data model** and on the behavior of a `supernode`, which connects to the **data model** and interacts with a running Jupyter server. This is a list of schemas, with types written as TS types that can be mapped to JSON schema.
 
@@ -40,7 +40,7 @@ TODO: Specify this more precisely based on Jupyter messaging specifications [^f1
 
 ### RTC Specification
 
-_This is currently implemented in [`@jupyter-rtc/node`](https://github.com/jupyterlab/rtc/tree/main/lumino/packages/node/src) and by [`@lumino/datastore`](https://github.com/jupyterlab/lumino/tree/master/packages/datastore)_.
+_This is currently implemented in [`@jupyterlab-rtc/node`](https://github.com/jupyterlab/rtc/tree/main/lumino/packages/node/src) and by [`@lumino/datastore`](https://github.com/jupyterlab/lumino/tree/master/packages/datastore)_.
 
 The goal of this layer is to allow you to specify data models, and then to execute updates on them, and have these updates translated to serializable transactions that can be shared using the layer below. This is currently "specified" mostly by the `@lumino/datastore` schemas JS package, but we should work at making it implementation agnostic.
 
@@ -70,7 +70,7 @@ TODO: At some point, we may need higher level abstraction, a bit like [primus](h
 
 ### Synchronized Append-only Log Specification
 
-_This is currently implemented in [`@jupyter-rtc/relay`](https://github.com/jupyterlab/rtc/tree/main/lumino/packages/relay/src)_.
+_This is currently implemented in [`@jupyterlab-rtc/relay`](https://github.com/jupyterlab/rtc/tree/main/lumino/packages/relay/src)_.
 
 The goal of this specification it to provide all clients with a shared append only log they can add transactions to and read transactions from. This is achieved through a central server that stores the logs which all clients connect to.
 
@@ -112,7 +112,7 @@ The simplest way to implement this is a binary write permission, where some clie
 However, if we want to support more nuanced and granular loads then it is helpful to think about the permissions on two levels:
 
 1. What records can clients create or edit in the data store (at the RTC level, i.e. editing a text cell)
-2. What actions can clients cause the supernode to take on the server (at the Jupyter RTC level, i.e. executing a cell)
+2. What actions can clients cause the supernode to take on the server (at the JupyterLab RTC level, i.e. executing a cell)
 
 It may be useful to have security at both levels.
 

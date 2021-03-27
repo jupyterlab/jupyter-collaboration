@@ -58,14 +58,14 @@ install:
 	($(CONDA_ACTIVATE) jupyter-rtc; \
 	  pip install git+https://github.com/datalayer-contrib/jupyter-server.git@collaborative-kernel-manager )
 
-	# Install Jupyter RTC Frontend.
+	# Install JupyterLab RTC Frontend.
 	($(CONDA_ACTIVATE) jupyter-rtc; \
 	  yarn && \
 	  yarn build )
 	# Automerge should only be present in the top node_modules.
 	-rm -fr packages/*/node_modules/automerge* || true
 
-	# Install Jupyter RTC Backend.
+	# Install JupyterLab RTC Backend.
 	($(CONDA_ACTIVATE) jupyter-rtc; \
 	  pip install -e . )
 
@@ -77,7 +77,7 @@ install:
 
 	@echo
 	@echo ----------------------------------------
-	@echo ✨  Jupyter RTC Environment is installed
+	@echo ✨  JupyterLab RTC Environment is installed
 	@echo ----------------------------------------
 	@echo
 
@@ -207,7 +207,7 @@ clean:
 	-rm packages/*/tsconfig.tsbuildinfo || true
 	@echo
 	@echo --------------------------------------
-	@echo ✨  Jupyter RTC Environment is cleaned
+	@echo ✨  JupyterLab RTC Environment is cleaned
 	@echo --------------------------------------
 	@echo
 

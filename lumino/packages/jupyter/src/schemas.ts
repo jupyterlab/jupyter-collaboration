@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/camelcase */
 import { Fields } from "@lumino/datastore";
-import { createSchemas } from "@jupyter-rtc/node";
+import { createSchemas } from "@jupyterlab-rtc/node";
 import { ReadonlyJSONObject, ReadonlyJSONValue } from "@lumino/coreutils";
 
 // TODO: Add state machine possibility to tables?

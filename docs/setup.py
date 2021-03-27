@@ -7,10 +7,10 @@ setup(
     name="jupyter_rtc_docs",
     version='0.0.1',
     description=(
-        "Jupyter RTC"
+        "JupyterLab RTC"
     ),
     url="https://github.com/jupyterlab/rtc",
-    project_urls={"Documentation": "https://jupyter-rtc.readthedocs.io"},
+    project_urls={"Documentation": "https://jupyterlab-rtc.readthedocs.io"},
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",
