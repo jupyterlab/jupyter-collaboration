@@ -1,7 +1,7 @@
 {
-  "name": "@jupyter-rtc/dummy-store",
+  "name": "@jupyterlab-rtc/dummy-store",
   "version": "0.1.0",
-  "description": "Jupyter RTC - Dummy Store, an in-memory, no collaboration implementation of the Lumino Datastore interface",
+  "description": "JupyterLab RTC - Dummy Store, an in-memory, no collaboration implementation of the Lumino Datastore interface",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "directories": {

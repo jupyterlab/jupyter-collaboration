@@ -1,4 +1,4 @@
-# Jupyter RTC with TextArea
+# JupyterLab RTC with TextArea
 
 This folder contains source code portions taken from following repositories:
 

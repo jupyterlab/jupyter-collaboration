@@ -1,6 +1,6 @@
-# Jupyter RTC with Automerge
+# JupyterLab RTC with Automerge
 
-This folder contains (WIP) implementation for Jupyter Real Time Collaboration with [Automerge](https://github.com/automerge/automerge) CRDT Library.
+This folder contains (WIP) implementation for JupyterLab Real Time Collaboration with [Automerge](https://github.com/automerge/automerge) CRDT Library.
 
 You can use the provided `Makefile` to simplify development.
 

@@ -13,7 +13,7 @@ import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import Tabs from "@material-ui/core/Tabs";
 import * as React from "react";
-import { useIds, useRecordValue, useSchemas } from "@jupyter-rtc/node";
+import { useIds, useRecordValue, useSchemas } from "@jupyterlab-rtc/node";
 
 const Debugger: React.FC = () => {
   const schemas = useSchemas();

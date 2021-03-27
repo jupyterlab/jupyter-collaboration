@@ -61,7 +61,7 @@ class DefaultHandler(ExtensionHandlerMixin, JupyterHandler):
     def get(self):
         self.log.info("Extension Name in {} Default Handler: {}".format(
             self.name, self.name))
-        self.write('<h1>Jupyter RTC Extension</h1>')
+        self.write('<h1>JupyterLab RTC Extension</h1>')
         self.write('Config in {} Default Handler: {}'.format(
             self.name, self.config))
 

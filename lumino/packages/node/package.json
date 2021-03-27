@@ -1,7 +1,7 @@
 {
-  "name": "@jupyter-rtc/node",
+  "name": "@jupyterlab-rtc/node",
   "version": "0.1.0",
-  "description": "Jupyter RTC - Node",
+  "description": "JupyterLab RTC - Node",
   "homepage": "https://github.com/jupyterlab/rtc",
   "bugs": {
     "url": "https://github.com/jupyterlab/rtc/issues"

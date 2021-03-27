@@ -5,8 +5,8 @@ import {
   updateRecord,
   createRecord,
   concatInitial,
-} from "@jupyter-rtc/node";
-import { schemas, DisplayType } from "@jupyter-rtc/jupyter";
+} from "@jupyterlab-rtc/node";
+import { schemas, DisplayType } from "@jupyterlab-rtc/jupyter";
 import * as jupyter from "rx-jupyter";
 import { Subscription } from "rxjs";
 import * as commutable from "@nteract/commutable";

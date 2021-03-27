@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import { Fields } from "@lumino/datastore";
-import Debugger from "@jupyter-rtc/debugger";
+import Debugger from "@jupyterlab-rtc/debugger";
 import {
   connect,
   DatastoreRoot,
@@ -11,7 +11,7 @@ import {
   useIds,
   useRecord,
   createSchemas,
-} from "@jupyter-rtc/node";
+} from "@jupyterlab-rtc/node";
 
 const schemas = createSchemas({
   todo: {

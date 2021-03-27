@@ -2,15 +2,15 @@
 // Distributed under the terms of the Modified BSD License.
 
 import * as React from "react";
-import Debugger from "@jupyter-rtc/debugger";
-import { schemas } from "@jupyter-rtc/jupyter";
+import Debugger from "@jupyterlab-rtc/debugger";
+import { schemas } from "@jupyterlab-rtc/jupyter";
 import {
   connect,
   DatastoreRoot,
   useRecordValue,
   useGetOrCreateRecord,
   useCreateRecord,
-} from "@jupyter-rtc/node";
+} from "@jupyterlab-rtc/node";
 
 const datastore = connect({
   schemas: Object.values(schemas),

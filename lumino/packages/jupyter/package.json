@@ -1,7 +1,7 @@
 {
-  "name": "@jupyter-rtc/jupyter",
+  "name": "@jupyterlab-rtc/jupyter",
   "version": "0.1.0",
-  "description": "Jupyter RTC - Jupyter",
+  "description": "JupyterLab RTC - Jupyter",
   "homepage": "https://github.com/jupyterlab/rtc",
   "bugs": {
     "url": "https://github.com/jupyterlab/rtc/issues"
@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "observable-hooks": "3.0.0",
-    "@jupyter-rtc/node": "*",
+    "@jupyterlab-rtc/node": "*",
     "rxjs": "6.6.0"
   },
   "devDependencies": {
