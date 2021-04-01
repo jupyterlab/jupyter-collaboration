@@ -9,8 +9,7 @@ For Jupyter cross-components (JupyterLab / Jupyter Server / JupyterHub) RTC impl
 
 ## Docs
 
-- General considerations around CRDT are available on [https://jupyterlab-rtc.readthedocs.io](https://jupyterlab-rtc.readthedocs.io).
-- Specific design and howto for Jupyter cross-components (JupyterLab / Jupyter Server / JupyterHub) are available on [https://jupyter-rtc.readthedocs.io](https://jupyterlab-rtc.readthedocs.io).
+General considerations around CRDT are available on [https://jupyterlab-rtc.readthedocs.io](https://jupyterlab-rtc.readthedocs.io).
 
 ## Project Meetings
 
