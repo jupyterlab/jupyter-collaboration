@@ -15,7 +15,7 @@ This is really a family of specifications. They exist in levels, like the [OSI m
 
 ### JupyterLab RTC Specification
 
-_The shared schemas are in [`@jupyterlab-rtc/jupyter`](https://github.com/jupyterlab/rtc/blob/main/packages/jupyter/src/schemas.ts) and the supernode is in [`@jupyterlab-rtc/supernode`](https://github.com/jupyterlab/rtc/blob/main/packages/supernode/src/index.ts)_.
+_The shared schemas are in [`@jupyterlab-rtc/jupyter`](https://github.com/jupyterlab/rtc/blob/main/lumino/packages/jupyter/src/schemas.ts) and the supernode is in [`@jupyterlab-rtc/supernode`](https://github.com/jupyterlab/rtc/blob/main/lumino/packages/supernode/src/index.ts)_.
 
 The `JupyterLab RTC` specification is meant to normalize data provided by the Jupyter Server into the `RTC` specification.
 
