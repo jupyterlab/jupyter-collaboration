@@ -13,7 +13,7 @@ General considerations around CRDT are available on [https://jupyterlab-rtc.read
 
 ## Project Meetings
 
-We have a `bi-weekly` meeting call. Please come and join [on Zoom](https://zoom.us/j/98101649538?pwd=aW15K0gxTHZiQ2tOL21UK21MYmN4QT09). All are welcome to come and just listen or discuss any work related to this project. For the time, place and notes, see [this HackMD](https://hackmd.io/@_4xc7QhhSHKODRQn1uiulw/BkV24I3qL/edit). We also use [the same HackMD](https://hackmd.io/@_4xc7QhhSHKODRQn1uiulw/BkV24I3qL/edit) to set an agenda and to capture notes for these meetings (see [jupyterlab/rtc#3](https://github.com/jupyterlab/rtc/issues/3) for the historical notes). Some meetings have been recorded and are available on [this YouTube playlist](https://www.youtube.com/playlist?list=PLUrHeD2K9Cmk5PpU7a3Pf5zEteJ-_kA81).
+We have a `bi-weekly` meeting call. Please come and join [on Zoom](https://zoom.us/my/jovyan?pwd=c0JZTHlNdS9Sek9vdzR3aTJ4SzFTQT09). All are welcome to come and just listen or discuss any work related to this project. For the time, place and notes, see [this HackMD](https://hackmd.io/@_4xc7QhhSHKODRQn1uiulw/BkV24I3qL/edit). We also use [the same HackMD](https://hackmd.io/@_4xc7QhhSHKODRQn1uiulw/BkV24I3qL/edit) to set an agenda and to capture notes for these meetings (see [jupyterlab/rtc#3](https://github.com/jupyterlab/rtc/issues/3) for the historical notes). Some meetings have been recorded and are available on [this YouTube playlist](https://www.youtube.com/playlist?list=PLUrHeD2K9Cmk5PpU7a3Pf5zEteJ-_kA81).
 
 ## Learning Pathway
 
