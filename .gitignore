@@ -1,0 +1,41 @@
+MANIFEST
+build
+dist
+_build
+docs/man/*.gz
+docs/source/api/generated
+docs/source/config.rst
+docs/gh-pages
+node_modules
+*.py[co]
+__pycache__
+*.egg-info
+*~
+*.bak
+.ipynb_checkpoints
+.tox
+.DS_Store
+\#*#
+.#*
+.coverage*
+.pytest_cache
+src
+
+*.swp
+*.map
+Read the Docs
+config.rst
+docs/source/changelog.md
+
+/.project
+/.pydevproject
+
+# jetbrains ide stuff
+*.iml
+.idea/
+
+# vscode ide stuff
+*.code-workspace
+.history
+.vscode/*
+!.vscode/*.template

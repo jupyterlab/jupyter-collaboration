@@ -1,0 +1,11 @@
+jinja2
+jupyter_server
+mistune<2.0  # https://github.com/jupyter/nbconvert/issues/1685
+myst-parser
+nbformat
+packaging
+pydata_sphinx_theme
+sphinxcontrib-openapi
+sphinxcontrib_github_alt
+sphinxemoji
+tornado

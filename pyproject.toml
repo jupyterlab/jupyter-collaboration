@@ -1,0 +1,125 @@
+[build-system]
+requires = ["hatchling>=0.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jupyter_server_ydoc"
+version = "0.1.0"
+license = { file = "LICENSE" }
+description = "A Jupyter Server Extension Providing Y Documents."
+keywords = ["ipython", "jupyter"]
+classifiers = [
+  "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: BSD License",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10"
+]
+requires-python = ">=3.7"
+dependencies = [
+  "jupyter_ydoc==0.1.13",
+  "ypy-websocket>=0.1.13"
+]
+
+[[project.authors]]
+name = "Jupyter Development Team"
+email = "jupyter@googlegroups.com"
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.urls]
+Homepage = "https://jupyter.org"
+
+[project.optional-dependencies]
+test = [
+  "coverage",
+  "jupyter_server[test]>=2.0.0a0",
+  "pytest>=6.0",
+  "pytest_tornasync",
+  "pytest-cov",
+  "pytest-timeout",
+]
+
+[tool.hatch.build.targets.wheel.shared-data]
+"jupyter-config" = "etc/jupyter/jupyter_server_config.d"
+
+[tool.pytest.ini_options]
+addopts = "-raXs --durations 10 --color=yes --doctest-modules"
+testpaths = [
+    "tests/"
+]
+timeout = 300
+# Restore this setting to debug failures
+# timeout_method = "thread"
+filterwarnings = [
+  "error",
+  # From tornado
+  "ignore:unclosed <socket.socket:ResourceWarning",
+  "module:make_current is deprecated:DeprecationWarning",
+  "module:clear_current is deprecated:DeprecationWarning",
+  "module:There is no current event loop:DeprecationWarning",
+]
+
+[tool.mypy]
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+no_implicit_reexport = true
+pretty = true
+show_error_context = true
+show_error_codes = true
+strict_equality = true
+strict_optional = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = [
+  "traitlets.*",
+  "jupyter_server.*",
+  "terminado"
+]
+ignore_missing_imports = true
+
+[tool.jupyter-releaser]
+skip = ["check-links"]
+
+[tool.tbump.version]
+current = "0.1.0"
+regex = '''
+  (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)
+  ((?P<channel>a|b|rc|.dev)(?P<release>\d+))?
+'''
+
+[tool.tbump.git]
+message_template = "Bump to {new_version}"
+tag_template = "v{new_version}"
+
+[[tool.tbump.file]]
+src = "jupyter_server_ydoc/_version.py"
+version_template = '{major}.{minor}.{patch}{channel}{release}'
+
+[[tool.tbump.file]]
+src = "docs/source/conf.py"
+version_template = '{major}.{minor}.{patch}{channel}{release}'
+
+[[tool.tbump.file]]
+src = "pyproject.toml"
+
+[[tool.tbump.field]]
+name = "channel"
+default = ""
+
+[[tool.tbump.field]]
+name = "release"
+default = ""

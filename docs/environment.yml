@@ -1,0 +1,6 @@
+name: jupyter_server_ydoc_docs
+dependencies:
+  - python=3.8
+  - pip
+  - pip:
+      - -r doc-requirements.txt
