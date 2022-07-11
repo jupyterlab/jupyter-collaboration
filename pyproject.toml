@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jupyter_server_ydoc"
-version = "0.1.1"
+version = "0.1.2"
 license = { file = "LICENSE" }
 description = "A Jupyter Server Extension Providing Y Documents."
 keywords = ["ipython", "jupyter"]
@@ -21,8 +21,8 @@ classifiers = [
 ]
 requires-python = ">=3.7"
 dependencies = [
-  "jupyter_ydoc==0.1.13",
-  "ypy-websocket>=0.1.13"
+  "jupyter_ydoc==0.1.23",
+  "ypy-websocket>=0.1.23"
 ]
 
 [[project.authors]]
@@ -95,7 +95,7 @@ ignore_missing_imports = true
 skip = ["check-links"]
 
 [tool.tbump.version]
-current = "0.1.1"
+current = "0.1.2"
 regex = '''
   (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)
   ((?P<channel>a|b|rc|.dev)(?P<release>\d+))?
