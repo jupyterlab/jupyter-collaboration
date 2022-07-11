@@ -1,6 +1,6 @@
 from typing import Dict, List
 
-import jupyter_server
+import jupyter_server.serverapp
 
 from ._version import __version__  # noqa:F401
 from .ydoc import YDocWebSocketHandler
