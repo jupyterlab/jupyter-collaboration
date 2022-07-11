@@ -21,8 +21,8 @@ classifiers = [
 ]
 requires-python = ">=3.7"
 dependencies = [
-  "jupyter_ydoc==0.1.23",
-  "ypy-websocket>=0.1.23"
+  "jupyter_ydoc==0.1.13",
+  "ypy-websocket>=0.1.13"
 ]
 
 [[project.authors]]
