@@ -2,6 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 import asyncio
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
@@ -39,6 +40,13 @@ class JupyterRoom(YRoom):
         self.document = YDOCS.get(type, YFILE)(self.ydoc)
 
 
+async def metadata_callback() -> bytes:
+    # the current datetime will be stored in metadata as bytes
+    # it can be retrieved as:
+    # datetime.fromisoformat(metadata.decode())
+    return datetime.utcnow().isoformat().encode()
+
+
 class JupyterWebsocketServer(WebsocketServer):
 
     rooms: Dict[str, JupyterRoom]
@@ -52,7 +60,7 @@ class JupyterWebsocketServer(WebsocketServer):
         if path not in self.rooms.keys():
             p = Path(file_path)
             updates_file_path = str(p.parent / f".{file_type}:{p.name}.y")
-            ystore = self.ystore_class(path=updates_file_path)
+            ystore = self.ystore_class(path=updates_file_path, metadata_callback=metadata_callback)
             self.rooms[path] = JupyterRoom(file_type, ystore)
         return self.rooms[path]
 
