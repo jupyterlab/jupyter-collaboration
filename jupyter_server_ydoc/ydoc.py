@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.utils import ensure_async
-from jupyter_ydoc import ydocs as YDOCS  # type:ignore
+from jupyter_ydoc import ydocs as YDOCS  # type: ignore
 from tornado import web
 from tornado.websocket import WebSocketHandler
 from ypy_websocket.websocket_server import WebsocketServer, YRoom  # type: ignore
@@ -35,8 +35,8 @@ class JupyterRoom(YRoom):
     def __init__(self, type: str, ystore: BaseYStore):
         super().__init__(ready=False, ystore=ystore)
         self.type = type
-        self.cleaner: Optional[asyncio.Task[Any]] = None
-        self.watcher: Optional[asyncio.Task[Any]] = None
+        self.cleaner: Optional["asyncio.Task[Any]"] = None
+        self.watcher: Optional["asyncio.Task[Any]"] = None
         self.document = YDOCS.get(type, YFILE)(self.ydoc)
 
 
@@ -67,9 +67,9 @@ class JupyterWebsocketServer(WebsocketServer):
 
 class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
-    saving_document: Optional[asyncio.Task[Any]]
+    saving_document: Optional["asyncio.Task[Any]"]
     websocket_server: Optional[JupyterWebsocketServer] = None
-    _message_queue: asyncio.Queue[Any]
+    _message_queue: "asyncio.Queue[Any]"
 
     # Override max_message size to 1GB
     @property
