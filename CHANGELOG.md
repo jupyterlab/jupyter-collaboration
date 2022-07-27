@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.1.8
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server_ydoc/compare/v0.1.7...8c8e3f086a80c07b58257adfe19887385fd2ff4c))
+
+### Enhancements made
+
+- Bump dependencies [#18](https://github.com/jupyter-server/jupyter_server_ydoc/pull/18) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server_ydoc/graphs/contributors?from=2022-07-26&to=2022-07-27&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Adavidbrochart+updated%3A2022-07-26..2022-07-27&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.1.7
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server_ydoc/compare/v0.1.6...1a43251c35a4a59fa2b8439d72fc8a5e2db669f9))
@@ -21,8 +37,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server_ydoc/graphs/contributors?from=2022-07-25&to=2022-07-26&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Adavidbrochart+updated%3A2022-07-25..2022-07-26&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Apre-commit-ci+updated%3A2022-07-25..2022-07-26&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.1.6
 
