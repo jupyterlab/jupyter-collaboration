@@ -13,6 +13,6 @@ def _jupyter_server_extension_points() -> List[Dict[str, str]]:
 
 def _load_jupyter_server_extension(serverapp: jupyter_server.serverapp.ServerApp) -> None:
     web_app = serverapp.web_app
-    host_pattern = '.*$'
+    host_pattern = ".*$"
     route_pattern = url_path_join(web_app.settings["base_url"], r"/api/yjs/(.*)")
     web_app.add_handlers(host_pattern, [(route_pattern, YDocWebSocketHandler)])
