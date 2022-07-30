@@ -31,13 +31,23 @@ class JupyterSQLiteYStore(SQLiteYStore):
     db_path = ".jupyter_ystore.db"
 
 
-class JupyterRoom(YRoom):
+class DocumentRoom(YRoom):
+    """A Y room for a possibly stored document (e.g. a notebook)."""
+
+    is_transient = False
+
     def __init__(self, type: str, ystore: BaseYStore):
         super().__init__(ready=False, ystore=ystore)
         self.type = type
         self.cleaner: Optional["asyncio.Task[Any]"] = None
         self.watcher: Optional["asyncio.Task[Any]"] = None
         self.document = YDOCS.get(type, YFILE)(self.ydoc)
+
+
+class TransientRoom(YRoom):
+    """A Y room for sharing state (e.g. awareness)."""
+
+    is_transient = True
 
 
 async def metadata_callback() -> bytes:
@@ -49,19 +59,26 @@ async def metadata_callback() -> bytes:
 
 class JupyterWebsocketServer(WebsocketServer):
 
-    rooms: Dict[str, JupyterRoom]
+    rooms: Dict[str, YRoom]
 
     def __init__(self, *args, **kwargs):
         self.ystore_class = kwargs.pop("ystore_class")
         super().__init__(*args, **kwargs)
 
-    def get_room(self, path: str) -> JupyterRoom:
-        file_format, file_type, file_path = path.split(":", 2)
+    def get_room(self, path: str) -> YRoom:
         if path not in self.rooms.keys():
-            p = Path(file_path)
-            updates_file_path = str(p.parent / f".{file_type}:{p.name}.y")
-            ystore = self.ystore_class(path=updates_file_path, metadata_callback=metadata_callback)
-            self.rooms[path] = JupyterRoom(file_type, ystore)
+            if path.count(":") >= 2:
+                # it is a stored document (e.g. a notebook)
+                file_format, file_type, file_path = path.split(":", 2)
+                p = Path(file_path)
+                updates_file_path = str(p.parent / f".{file_type}:{p.name}.y")
+                ystore = self.ystore_class(
+                    path=updates_file_path, metadata_callback=metadata_callback
+                )
+                self.rooms[path] = DocumentRoom(file_type, ystore)
+            else:
+                # it is a transient document (e.g. awareness)
+                self.rooms[path] = TransientRoom()
         return self.rooms[path]
 
 
@@ -121,10 +138,10 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         asyncio.create_task(self.websocket_server.serve(self))
 
         # cancel the deletion of the room if it was scheduled
-        if self.room.cleaner is not None:
+        if not self.room.is_transient and self.room.cleaner is not None:
             self.room.cleaner.cancel()
 
-        if not self.room.ready:
+        if not self.room.is_transient and not self.room.ready:
             file_format, file_type, file_path = self.get_file_info()
             model = await ensure_async(
                 self.contents_manager.get(file_path, type=file_type, format=file_format)
@@ -196,7 +213,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
     def on_close(self) -> None:
         # stop serving this client
         self._message_queue.put_nowait(b"")
-        if self.room.clients == [self]:
+        if not self.room.is_transient and self.room.clients == [self]:
             # no client in this room after we disconnect
             # keep the document for a while in case someone reconnects
             self.room.cleaner = asyncio.create_task(self.clean_room())
