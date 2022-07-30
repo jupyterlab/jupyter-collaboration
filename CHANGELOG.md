@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.1.10
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server_ydoc/compare/v0.1.9...821fd7124480b5a1dbe723f1188da6083ad1f332))
+
+### Enhancements made
+
+- Add TransientRoom [#22](https://github.com/jupyter-server/jupyter_server_ydoc/pull/22) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server_ydoc/graphs/contributors?from=2022-07-29&to=2022-07-30&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Adavidbrochart+updated%3A2022-07-29..2022-07-30&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.1.9
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server_ydoc/compare/v0.1.8...1eb8c61f9962b9d0b9b67538946e2041d816e317))
@@ -17,8 +33,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server_ydoc/graphs/contributors?from=2022-07-27&to=2022-07-29&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Adavidbrochart+updated%3A2022-07-27..2022-07-29&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.1.8
 
