@@ -32,8 +32,8 @@ class JupyterSQLiteYStore(SQLiteYStore):
 
 
 class DocumentRoom(YRoom):
-    """A Y room for a possibly stored document (e.g. a notebook).
-    """
+    """A Y room for a possibly stored document (e.g. a notebook)."""
+
     is_transient = False
 
     def __init__(self, type: str, ystore: BaseYStore):
@@ -45,8 +45,8 @@ class DocumentRoom(YRoom):
 
 
 class TransientRoom(YRoom):
-    """A Y room for sharing state (e.g. awareness).
-    """
+    """A Y room for sharing state (e.g. awareness)."""
+
     is_transient = True
 
 
@@ -72,7 +72,9 @@ class JupyterWebsocketServer(WebsocketServer):
                 file_format, file_type, file_path = path.split(":", 2)
                 p = Path(file_path)
                 updates_file_path = str(p.parent / f".{file_type}:{p.name}.y")
-                ystore = self.ystore_class(path=updates_file_path, metadata_callback=metadata_callback)
+                ystore = self.ystore_class(
+                    path=updates_file_path, metadata_callback=metadata_callback
+                )
                 self.rooms[path] = DocumentRoom(file_type, ystore)
             else:
                 # it is a transient document (e.g. awareness)
