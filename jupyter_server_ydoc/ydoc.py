@@ -20,6 +20,7 @@ from ypy_websocket.ystore import (  # type: ignore
 )
 
 YFILE = YDOCS["file"]
+AWARENESS = 1
 RENAME_SESSION = 127
 
 
@@ -198,11 +199,20 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         return message
 
     def on_message(self, message):
+        byte = message[0]
+        msg = message[1:]
+        if byte == AWARENESS:
+            # awareness
+            skip = False
+            # changes = self.room.awareness.get_changes(msg)
+            # filter out message depending on changes
+            if skip:
+                return skip
         self._message_queue.put_nowait(message)
-        if message[0] == RENAME_SESSION:
+        if byte == RENAME_SESSION:
             # The client moved the document to a different location. After receiving this message, we make the current document available under a different url.
             # The other clients are automatically notified of this change because the path is shared through the Yjs document as well.
-            self.set_file_info(message[1:].decode("utf-8"))
+            self.set_file_info(msg.decode("utf-8"))
             assert self.websocket_server is not None
             self.websocket_server.rename_room(self.path, from_room=self.room)
             # send rename acknowledge
