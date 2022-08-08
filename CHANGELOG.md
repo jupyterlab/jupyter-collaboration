@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.1.11
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server_ydoc/compare/v0.1.10...d7e728b0c773977c6a307d7a8878b40c6be3a13d))
+
+### Enhancements made
+
+- Implement filtering in on_message [#25](https://github.com/jupyter-server/jupyter_server_ydoc/pull/25) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Maintenance and upkeep improvements
+
+- [pre-commit.ci] pre-commit autoupdate [#24](https://github.com/jupyter-server/jupyter_server_ydoc/pull/24) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server_ydoc/graphs/contributors?from=2022-07-30&to=2022-08-08&type=c))
+
+[@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Acodecov-commenter+updated%3A2022-07-30..2022-08-08&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Adavidbrochart+updated%3A2022-07-30..2022-08-08&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Apre-commit-ci+updated%3A2022-07-30..2022-08-08&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.1.10
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server_ydoc/compare/v0.1.9...821fd7124480b5a1dbe723f1188da6083ad1f332))
@@ -17,8 +37,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server_ydoc/graphs/contributors?from=2022-07-29&to=2022-07-30&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Adavidbrochart+updated%3A2022-07-29..2022-07-30&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.1.9
 
