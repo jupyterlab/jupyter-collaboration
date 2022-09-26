@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jupyter_server_ydoc"
-version = "0.1.11"
+dynamic = ["version"]
 license = { file = "LICENSE" }
 description = "A Jupyter Server Extension Providing Y Documents."
 keywords = ["ipython", "jupyter"]
@@ -94,32 +94,5 @@ ignore_missing_imports = true
 [tool.jupyter-releaser]
 skip = ["check-links"]
 
-[tool.tbump.version]
-current = "0.1.11"
-regex = '''
-  (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)
-  ((?P<channel>a|b|rc|.dev)(?P<release>\d+))?
-'''
-
-[tool.tbump.git]
-message_template = "Bump to {new_version}"
-tag_template = "v{new_version}"
-
-[[tool.tbump.file]]
-src = "jupyter_server_ydoc/_version.py"
-version_template = '{major}.{minor}.{patch}{channel}{release}'
-
-[[tool.tbump.file]]
-src = "docs/source/conf.py"
-version_template = '{major}.{minor}.{patch}{channel}{release}'
-
-[[tool.tbump.file]]
-src = "pyproject.toml"
-
-[[tool.tbump.field]]
-name = "channel"
-default = ""
-
-[[tool.tbump.field]]
-name = "release"
-default = ""
+[tool.hatch.version]
+path = "jupyter_server_ydoc/__init__.py"
