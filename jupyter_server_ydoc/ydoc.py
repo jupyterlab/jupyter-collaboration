@@ -247,10 +247,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 return
         except Exception:
             pass
-        # unobserve and observe again because the structure of the document may have changed
-        # e.g. a new cell added to a notebook
-        self.room.document.unobserve()
-        self.room.document.observe(self.on_document_change)
         if self.saving_document is not None and not self.saving_document.done():
             # the document is being saved, cancel that
             self.saving_document.cancel()
