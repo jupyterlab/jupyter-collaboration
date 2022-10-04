@@ -2,17 +2,17 @@
 # Distributed under the terms of the Modified BSD License.
 
 import asyncio
-from uuid import uuid4
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from uuid import uuid4
 
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.utils import ensure_async
-from y_py import YArrayEvent # type: ignore
 from jupyter_ydoc import ydocs as YDOCS  # type: ignore
 from tornado import web
 from tornado.websocket import WebSocketHandler
+from y_py import YArrayEvent  # type: ignore
 from ypy_websocket.websocket_server import WebsocketServer, YRoom  # type: ignore
 from ypy_websocket.ystore import (  # type: ignore
     BaseYStore,
@@ -243,16 +243,22 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
     def on_document_change(self, event):
         print("[YDocWebSocketHandler] on_document_change", event)
-        if isinstance(event, List) and isinstance(event[0], YArrayEvent) and len(event[0].target) == 0:
+        if (
+            isinstance(event, List)
+            and isinstance(event[0], YArrayEvent)
+            and len(event[0].target) == 0
+        ):
             print("EMPTY:", len(self.room.document._ycells))
-            self.room.document.append_cell({
-                "cell_type": "code",
-                "execution_count": None,
-                "metadata": {},
-                "outputs": [],
-                "source": "",
-                "id": str(uuid4()),
-            })
+            self.room.document.append_cell(
+                {
+                    "cell_type": "code",
+                    "execution_count": None,
+                    "metadata": {},
+                    "outputs": [],
+                    "source": "",
+                    "id": str(uuid4()),
+                }
+            )
             print("CELL ADDED:", len(self.room.document._ycells))
 
         try:
