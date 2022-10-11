@@ -40,7 +40,7 @@ Homepage = "https://jupyter.org"
 test = [
   "coverage",
   "jupyter_server[test]>=2.0.0a0",
-  "pytest>=6.0",
+  "pytest>=7.0",
   "pytest_tornasync",
   "pytest-cov",
   "pytest-timeout",
