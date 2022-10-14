@@ -21,7 +21,6 @@ from ypy_websocket.ystore import (  # type: ignore
 
 YFILE = YDOCS["file"]
 AWARENESS = 1
-RENAME_SESSION = 127
 
 
 class JupyterTempFileYStore(TempFileYStore):
@@ -105,14 +104,19 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             raise StopAsyncIteration()
         return message
 
-    def get_file_info(self) -> Tuple[str, str, str]:
+    def get_file_info(self) -> Tuple[str, str, str, str]:
         assert self.websocket_server is not None
         room_name = self.websocket_server.get_room_name(self.room)
         file_format: str
         file_type: str
         file_path: str
-        file_format, file_type, file_path = room_name.split(":", 2)
-        return file_format, file_type, file_path
+        file_id: str
+        file_format, file_type, file_id = room_name.split(":", 2)
+        file_path = self.settings["file_id_manager"].get_path(file_id)
+        # jupyter-server needs paths relative to its root directory
+        root_dir = Path(self.settings["server_root_dir"]).expanduser()
+        file_path = str(Path(file_path).relative_to(root_dir))
+        return file_format, file_type, file_path, file_id
 
     def set_file_info(self, value: str) -> None:
         assert self.websocket_server is not None
@@ -143,7 +147,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             self.room.cleaner.cancel()
 
         if not self.room.is_transient and not self.room.ready:
-            file_format, file_type, file_path = self.get_file_info()
+            file_format, file_type, file_path, file_id = self.get_file_info()
             model = await ensure_async(
                 self.contents_manager.get(file_path, type=file_type, format=file_format)
             )
@@ -180,7 +184,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             await self.maybe_load_document()
 
     async def maybe_load_document(self):
-        file_format, file_type, file_path = self.get_file_info()
+        file_format, file_type, file_path, file_id = self.get_file_info()
         model = await ensure_async(
             self.contents_manager.get(file_path, content=False, type=file_type, format=file_format)
         )
@@ -201,9 +205,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         return message
 
     def on_message(self, message):
-        byte = message[0]
-        msg = message[1:]
-        if byte == AWARENESS:
+        if message[0] == AWARENESS:
             # awareness
             skip = False
             # changes = self.room.awareness.get_changes(msg)
@@ -211,14 +213,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             if skip:
                 return skip
         self._message_queue.put_nowait(message)
-        if byte == RENAME_SESSION:
-            # The client moved the document to a different location. After receiving this message, we make the current document available under a different url.
-            # The other clients are automatically notified of this change because the path is shared through the Yjs document as well.
-            self.set_file_info(msg.decode("utf-8"))
-            assert self.websocket_server is not None
-            self.websocket_server.rename_room(self.path, from_room=self.room)
-            # send rename acknowledge
-            self.write_message(bytes([RENAME_SESSION, 1]), binary=True)
 
     def on_close(self) -> None:
         # stop serving this client
@@ -258,7 +252,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         await asyncio.sleep(1)
         # if the room cannot be found, don't save
         try:
-            file_format, file_type, file_path = self.get_file_info()
+            file_format, file_type, file_path, file_id = self.get_file_info()
         except Exception:
             return
         model = await ensure_async(
