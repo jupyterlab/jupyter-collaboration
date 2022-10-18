@@ -4,7 +4,7 @@
 import asyncio
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.utils import ensure_async
@@ -87,6 +87,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
     saving_document: Optional["asyncio.Task[Any]"]
     websocket_server: Optional[JupyterWebsocketServer] = None
     _message_queue: "asyncio.Queue[Any]"
+    _id2path: Callable[[str], str]
 
     # Override max_message size to 1GB
     @property
@@ -112,10 +113,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         file_path: str
         file_id: str
         file_format, file_type, file_id = room_name.split(":", 2)
-        file_path = self.settings["file_id_manager"].get_path(file_id)
-        # jupyter-server needs paths relative to its root directory
-        root_dir = Path(self.settings["server_root_dir"]).expanduser()
-        file_path = str(Path(file_path).relative_to(root_dir))
+        file_path = self._id2path(file_id)
         return file_format, file_type, file_path, file_id
 
     def set_file_info(self, value: str) -> None:
@@ -130,10 +128,11 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         return await super().get(*args, **kwargs)
 
     async def open(self, path):
-        self.ystore_class = self.settings["collaborative_ystore_class"]
+        self._id2path = self.settings.get("file_id2path", lambda x: x)
+        ystore_class = self.settings["collaborative_ystore_class"]
         if self.websocket_server is None:
             YDocWebSocketHandler.websocket_server = JupyterWebsocketServer(
-                rooms_ready=False, auto_clean_rooms=False, ystore_class=self.ystore_class
+                rooms_ready=False, auto_clean_rooms=False, ystore_class=ystore_class
             )
         self._message_queue = asyncio.Queue()
         assert self.websocket_server is not None
