@@ -105,7 +105,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             raise StopAsyncIteration()
         return message
 
-    def get_file_info(self) -> Tuple[str, str, str, str]:
+    def get_file_info(self) -> Tuple[str, str, str]:
         assert self.websocket_server is not None
         room_name = self.websocket_server.get_room_name(self.room)
         file_format: str
@@ -114,7 +114,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         file_id: str
         file_format, file_type, file_id = room_name.split(":", 2)
         file_path = self._id2path(file_id)
-        return file_format, file_type, file_path, file_id
+        return file_format, file_type, file_path
 
     def set_file_info(self, value: str) -> None:
         assert self.websocket_server is not None
@@ -128,7 +128,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         return await super().get(*args, **kwargs)
 
     async def open(self, path):
-        self._id2path = self.settings.get("file_id2path", lambda x: x)
+        self._id2path = self.settings.get("fileid2path", lambda x: x)
         ystore_class = self.settings["collaborative_ystore_class"]
         if self.websocket_server is None:
             YDocWebSocketHandler.websocket_server = JupyterWebsocketServer(
@@ -146,7 +146,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             self.room.cleaner.cancel()
 
         if not self.room.is_transient and not self.room.ready:
-            file_format, file_type, file_path, file_id = self.get_file_info()
+            file_format, file_type, file_path = self.get_file_info()
             model = await ensure_async(
                 self.contents_manager.get(file_path, type=file_type, format=file_format)
             )
@@ -183,7 +183,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             await self.maybe_load_document()
 
     async def maybe_load_document(self):
-        file_format, file_type, file_path, file_id = self.get_file_info()
+        file_format, file_type, file_path = self.get_file_info()
         model = await ensure_async(
             self.contents_manager.get(file_path, content=False, type=file_type, format=file_format)
         )
@@ -251,7 +251,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         await asyncio.sleep(1)
         # if the room cannot be found, don't save
         try:
-            file_format, file_type, file_path, file_id = self.get_file_info()
+            file_format, file_type, file_path = self.get_file_info()
         except Exception:
             return
         model = await ensure_async(
