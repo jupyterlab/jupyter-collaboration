@@ -114,6 +114,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         file_id: str
         file_format, file_type, file_id = room_name.split(":", 2)
         file_path = self._id2path(file_id)
+        self.room.document.path = file_path
         return file_format, file_type, file_path
 
     def set_file_info(self, value: str) -> None:
