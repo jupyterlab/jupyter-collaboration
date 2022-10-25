@@ -4,9 +4,10 @@
 import asyncio
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
-from jupyter_server.base.handlers import JupyterHandler
+from jupyter_server.auth import authorized
+from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS  # type: ignore
 from tornado import web
@@ -87,7 +88,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
     saving_document: Optional["asyncio.Task[Any]"]
     websocket_server: Optional[JupyterWebsocketServer] = None
     _message_queue: "asyncio.Queue[Any]"
-    _id2path: Callable[[str], str]
 
     # Override max_message size to 1GB
     @property
@@ -113,8 +113,14 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         file_path: str
         file_id: str
         file_format, file_type, file_id = room_name.split(":", 2)
-        file_path = self._id2path(file_id)
-        self.room.document.path = file_path
+        file_id_manager = self.settings.get("file_id_manager")
+        if file_id_manager is None:
+            # no file ID manager installed, the path is the ID
+            file_path = file_id
+        else:
+            file_path = file_id_manager.get_path(file_id)
+        if file_path != self.room.document.path:
+            self.room.document.path = file_path
         return file_format, file_type, file_path
 
     def set_file_info(self, value: str) -> None:
@@ -129,7 +135,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         return await super().get(*args, **kwargs)
 
     async def open(self, path):
-        self._id2path = self.settings.get("fileid2path", lambda x: x)
         ystore_class = self.settings["collaborative_ystore_class"]
         if self.websocket_server is None:
             YDocWebSocketHandler.websocket_server = JupyterWebsocketServer(
@@ -275,3 +280,31 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
     def check_origin(self, origin):
         return True
+
+
+class YDocRoomIdHandler(APIHandler):
+    auth_resource = "contents"
+
+    @web.authenticated
+    @authorized
+    async def get(self, path):
+        file_id_manager = self.settings.get("file_id_manager")
+        if file_id_manager is None:
+            # no file ID manager installed, the ID is the path
+            return self.finish(path)
+
+        idx = file_id_manager.get_id(path)
+        if idx is not None:
+            # index already exists
+            self.set_status(200)
+            return self.finish(str(idx))
+
+        # try indexing
+        idx = file_id_manager.index(path)
+        if idx is None:
+            # file does not exists
+            raise web.HTTPError(404, f"File {path!r} does not exist")
+
+        # index successfully created
+        self.set_status(201)
+        return self.finish(str(idx))
