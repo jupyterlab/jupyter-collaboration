@@ -29,7 +29,7 @@ repos:
         args: [--profile=black]
 
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.0.0-alpha.2
+    rev: v3.0.0-alpha.3
     hooks:
       - id: prettier
 
@@ -64,7 +64,7 @@ repos:
         stages: [manual]
 
   - repo: https://github.com/sirosen/check-jsonschema
-    rev: 0.18.3
+    rev: 0.18.4
     hooks:
       - id: check-jsonschema
         name: "Check GitHub Workflows"
