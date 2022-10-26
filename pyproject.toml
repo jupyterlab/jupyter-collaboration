@@ -47,7 +47,8 @@ test = [
 ]
 
 [tool.hatch.build.targets.wheel.shared-data]
-"jupyter-config" = "etc/jupyter/jupyter_server_config.d"
+"jupyter-config/jupyter_notebook_ydoc.json" = "etc/jupyter/jupyter_notebook_config.d/jupyter_server_ydoc.json"
+"jupyter-config/jupyter_server_ydoc.json" = "etc/jupyter/jupyter_server_config.d/jupyter_server_ydoc.json"
 
 [tool.pytest.ini_options]
 addopts = "-raXs --durations 10 --color=yes --doctest-modules"
