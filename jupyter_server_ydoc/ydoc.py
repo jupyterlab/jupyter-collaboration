@@ -2,6 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 import asyncio
+import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
@@ -294,17 +295,22 @@ class YDocRoomIdHandler(APIHandler):
 
     @web.authenticated
     @authorized
-    async def get(self, path):
+    async def put(self, path):
+        body = json.loads(self.request.body)
+        ws_url = f"{body['format']}:{body['type']}:"
+
         file_id_manager = self.settings.get("file_id_manager")
         if file_id_manager is None:
             # no file ID manager installed, the ID is the path
-            return self.finish(path)
+            ws_url += path
+            return self.finish(ws_url)
 
         idx = file_id_manager.get_id(path)
         if idx is not None:
             # index already exists
             self.set_status(200)
-            return self.finish(str(idx))
+            ws_url += str(idx)
+            return self.finish(ws_url)
 
         # try indexing
         idx = file_id_manager.index(path)
@@ -314,4 +320,5 @@ class YDocRoomIdHandler(APIHandler):
 
         # index successfully created
         self.set_status(201)
-        return self.finish(str(idx))
+        ws_url += str(idx)
+        return self.finish(ws_url)
