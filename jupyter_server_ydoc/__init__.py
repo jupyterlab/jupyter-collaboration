@@ -17,3 +17,7 @@ def _load_jupyter_server_extension(serverapp: jupyter_server.serverapp.ServerApp
     host_pattern = ".*$"
     route_pattern = url_path_join(web_app.settings["base_url"], r"/api/yjs/(.*)")
     web_app.add_handlers(host_pattern, [(route_pattern, YDocWebSocketHandler)])
+
+
+# Backward compatibility for classic notebook based start-up (e.g. Binder)
+load_jupyter_server_extension = _load_jupyter_server_extension
