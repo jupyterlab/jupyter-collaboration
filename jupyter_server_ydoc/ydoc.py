@@ -110,7 +110,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         room_name = self.websocket_server.get_room_name(self.room)
         file_format: str
         file_type: str
-        file_path: str
+        file_path: Optional[str]
         file_id: str
         file_format, file_type, file_id = room_name.split(":", 2)
         file_id_manager = self.settings.get("file_id_manager")
@@ -119,6 +119,13 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             file_path = file_id
         else:
             file_path = file_id_manager.get_path(file_id)
+            if file_path is None:
+                # the file may have been moved, sync and try again
+                file_id_manager.sync_all()
+                file_path = file_id_manager.get_path(file_id)
+        if file_path is None:
+            raise RuntimeError(f"File {self.room.document.path} cannot be found anymore")
+        assert file_path is not None
         if file_path != self.room.document.path:
             self.room.document.path = file_path
         return file_format, file_type, file_path
