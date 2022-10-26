@@ -5,7 +5,7 @@ from jupyter_server.utils import url_path_join
 
 from .ydoc import YDocWebSocketHandler
 
-__version__ = "0.1.12"
+__version__ = "0.1.13"
 
 
 def _jupyter_server_extension_points() -> List[Dict[str, str]]:
