@@ -120,10 +120,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             file_path = file_id
         else:
             file_path = file_id_manager.get_path(file_id)
-            if file_path is None:
-                # the file may have been moved, sync and try again
-                file_id_manager.sync_all()
-                file_path = file_id_manager.get_path(file_id)
         if file_path is None:
             raise RuntimeError(f"File {self.room.document.path} cannot be found anymore")
         assert file_path is not None
