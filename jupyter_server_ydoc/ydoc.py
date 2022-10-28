@@ -2,11 +2,13 @@
 # Distributed under the terms of the Modified BSD License.
 
 import asyncio
+import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
-from jupyter_server.base.handlers import JupyterHandler
+from jupyter_server.auth import authorized
+from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS  # type: ignore
 from tornado import web
@@ -21,7 +23,6 @@ from ypy_websocket.ystore import (  # type: ignore
 
 YFILE = YDOCS["file"]
 AWARENESS = 1
-RENAME_SESSION = 127
 
 
 class JupyterTempFileYStore(TempFileYStore):
@@ -110,8 +111,20 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         room_name = self.websocket_server.get_room_name(self.room)
         file_format: str
         file_type: str
-        file_path: str
-        file_format, file_type, file_path = room_name.split(":", 2)
+        file_path: Optional[str]
+        file_id: str
+        file_format, file_type, file_id = room_name.split(":", 2)
+        file_id_manager = self.settings.get("file_id_manager")
+        if file_id_manager is None:
+            # no file ID manager installed, the path is the ID
+            file_path = file_id
+        else:
+            file_path = file_id_manager.get_path(file_id)
+        if file_path is None:
+            raise RuntimeError(f"File {self.room.document.path} cannot be found anymore")
+        assert file_path is not None
+        if file_path != self.room.document.path:
+            self.room.document.path = file_path
         return file_format, file_type, file_path
 
     def set_file_info(self, value: str) -> None:
@@ -126,10 +139,10 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         return await super().get(*args, **kwargs)
 
     async def open(self, path):
-        self.ystore_class = self.settings["collaborative_ystore_class"]
+        ystore_class = self.settings["collaborative_ystore_class"]
         if self.websocket_server is None:
             YDocWebSocketHandler.websocket_server = JupyterWebsocketServer(
-                rooms_ready=False, auto_clean_rooms=False, ystore_class=self.ystore_class
+                rooms_ready=False, auto_clean_rooms=False, ystore_class=ystore_class
             )
         self._message_queue = asyncio.Queue()
         assert self.websocket_server is not None
@@ -201,9 +214,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         return message
 
     def on_message(self, message):
-        byte = message[0]
-        msg = message[1:]
-        if byte == AWARENESS:
+        if message[0] == AWARENESS:
             # awareness
             skip = False
             # changes = self.room.awareness.get_changes(msg)
@@ -211,14 +222,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             if skip:
                 return skip
         self._message_queue.put_nowait(message)
-        if byte == RENAME_SESSION:
-            # The client moved the document to a different location. After receiving this message, we make the current document available under a different url.
-            # The other clients are automatically notified of this change because the path is shared through the Yjs document as well.
-            self.set_file_info(msg.decode("utf-8"))
-            assert self.websocket_server is not None
-            self.websocket_server.rename_room(self.path, from_room=self.room)
-            # send rename acknowledge
-            self.write_message(bytes([RENAME_SESSION, 1]), binary=True)
 
     def on_close(self) -> None:
         # stop serving this client
@@ -281,3 +284,37 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
     def check_origin(self, origin):
         return True
+
+
+class YDocRoomIdHandler(APIHandler):
+    auth_resource = "contents"
+
+    @web.authenticated
+    @authorized
+    async def put(self, path):
+        body = json.loads(self.request.body)
+        ws_url = f"{body['format']}:{body['type']}:"
+
+        file_id_manager = self.settings.get("file_id_manager")
+        if file_id_manager is None:
+            # no file ID manager installed, the ID is the path
+            ws_url += path
+            return self.finish(ws_url)
+
+        idx = file_id_manager.get_id(path)
+        if idx is not None:
+            # index already exists
+            self.set_status(200)
+            ws_url += str(idx)
+            return self.finish(ws_url)
+
+        # try indexing
+        idx = file_id_manager.index(path)
+        if idx is None:
+            # file does not exists
+            raise web.HTTPError(404, f"File {path!r} does not exist")
+
+        # index successfully created
+        self.set_status(201)
+        ws_url += str(idx)
+        return self.finish(ws_url)
