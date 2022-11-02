@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.2.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server_ydoc/compare/v0.1.14...9fb989e5fba5a2144a9ccff0f6ea1694a284d1e4))
+
+### Enhancements made
+
+- Adds a new setting for saving document delay [#46](https://github.com/jupyter-server/jupyter_server_ydoc/pull/46) ([@hbcarlos](https://github.com/hbcarlos))
+
+### Maintenance and upkeep improvements
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server_ydoc/graphs/contributors?from=2022-10-28&to=2022-11-02&type=c))
+
+[@codecov-commenter](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Acodecov-commenter+updated%3A2022-10-28..2022-11-02&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Ahbcarlos+updated%3A2022-10-28..2022-11-02&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Apre-commit-ci+updated%3A2022-10-28..2022-11-02&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.1.14
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server_ydoc/compare/v0.1.13...547667399adeefcf2729a2c76b4526e752efdbf6))
@@ -17,8 +35,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server_ydoc/graphs/contributors?from=2022-10-26&to=2022-10-28&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Adavidbrochart+updated%3A2022-10-26..2022-10-28&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.1.13
 
