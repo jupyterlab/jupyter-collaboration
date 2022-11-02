@@ -257,8 +257,11 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self.saving_document = asyncio.create_task(self.maybe_save_document())
 
     async def maybe_save_document(self):
-        # save after 1 second of inactivity to prevent too frequent saving
-        await asyncio.sleep(1)
+        seconds = self.settings["collaborative_document_save_delay"]
+        if seconds is None:
+            return
+        # save after X seconds of inactivity
+        await asyncio.sleep(seconds)
         # if the room cannot be found, don't save
         try:
             file_format, file_type, file_path = self.get_file_info()
