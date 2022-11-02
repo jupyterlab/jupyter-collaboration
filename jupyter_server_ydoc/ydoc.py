@@ -260,7 +260,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         seconds = self.settings["collaborative_document_save_delay"]
         if seconds is None:
             return
-        # save after X second of inactivity to prevent too frequent saving
+        # save after X seconds of inactivity
         await asyncio.sleep(seconds)
         # if the room cannot be found, don't save
         try:
