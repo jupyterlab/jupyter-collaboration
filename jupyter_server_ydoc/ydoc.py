@@ -114,12 +114,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         file_path: Optional[str]
         file_id: str
         file_format, file_type, file_id = room_name.split(":", 2)
-        file_id_manager = self.settings.get("file_id_manager")
-        if file_id_manager is None:
-            # no file ID manager installed, the path is the ID
-            file_path = file_id
-        else:
-            file_path = file_id_manager.get_path(file_id)
+        file_path = self.settings["file_id_manager"].get_path(file_id)
         if file_path is None:
             raise RuntimeError(f"File {self.room.document.path} cannot be found anymore")
         assert file_path is not None
@@ -298,11 +293,7 @@ class YDocRoomIdHandler(APIHandler):
         body = json.loads(self.request.body)
         ws_url = f"{body['format']}:{body['type']}:"
 
-        file_id_manager = self.settings.get("file_id_manager")
-        if file_id_manager is None:
-            # no file ID manager installed, the ID is the path
-            ws_url += path
-            return self.finish(ws_url)
+        file_id_manager = self.settings["file_id_manager"]
 
         idx = file_id_manager.get_id(path)
         if idx is not None:
