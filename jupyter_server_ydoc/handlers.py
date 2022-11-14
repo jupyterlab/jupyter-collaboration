@@ -62,10 +62,24 @@ async def metadata_callback() -> bytes:
 class JupyterWebsocketServer(WebsocketServer):
 
     rooms: Dict[str, YRoom]
+    ypatch_nb: int
+    connected_user: Dict[int, str]
 
     def __init__(self, *args, **kwargs):
         self.ystore_class = kwargs.pop("ystore_class")
+        self.log = kwargs.pop("log")
         super().__init__(*args, **kwargs)
+        self.ypatch_nb = 0
+        self.connected_users = {}
+        asyncio.create_task(self.monitor())
+
+    async def monitor(self):
+        while True:
+            await asyncio.sleep(60)
+            clients_nb = sum(len(room.clients) for room in self.rooms.values())
+            self.log.info(f"Processed {self.ypatch_nb} Y patches in one minute")
+            self.log.info(f"Connected Y users: {clients_nb}")
+            self.ypatch_nb = 0
 
     def get_room(self, path: str) -> YRoom:
         if path not in self.rooms.keys():
@@ -137,7 +151,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         ystore_class = self.settings["collaborative_ystore_class"]
         if self.websocket_server is None:
             YDocWebSocketHandler.websocket_server = JupyterWebsocketServer(
-                rooms_ready=False, auto_clean_rooms=False, ystore_class=ystore_class
+                rooms_ready=False, auto_clean_rooms=False, ystore_class=ystore_class, log=self.log
             )
         self._message_queue = asyncio.Queue()
         assert self.websocket_server is not None
@@ -209,14 +223,26 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         return message
 
     def on_message(self, message):
+        assert self.websocket_server is not None
         if message[0] == AWARENESS:
             # awareness
             skip = False
-            # changes = self.room.awareness.get_changes(msg)
+            changes = self.room.awareness.get_changes(message[1:])
+            added_users = changes["added"]
+            removed_users = changes["removed"]
+            for i, user in enumerate(added_users):
+                name = changes["states"][i]["user"]["name"]
+                self.websocket_server.connected_users[user] = name
+                self.log.debug(f"Y user joined: {name}")
+            for user in removed_users:
+                name = self.websocket_server.connected_users[user]
+                del self.websocket_server.connected_users[user]
+                self.log.debug(f"Y user left: {name}")
             # filter out message depending on changes
             if skip:
                 return skip
         self._message_queue.put_nowait(message)
+        self.websocket_server.ypatch_nb += 1
 
     def on_close(self) -> None:
         # stop serving this client
@@ -235,6 +261,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             self.room.watcher.cancel()
         self.room.document.unobserve()
         assert self.websocket_server is not None
+        file_format, file_type, file_path = self.get_file_info()
+        self.log.debug(f"Deleting Y document from memory: {file_path}")
         self.websocket_server.delete_room(room=self.room)
 
     def on_document_change(self, event):
@@ -276,6 +304,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             # the same document opened as different types (e.g. notebook/text editor)
             model["format"] = file_format
             model["content"] = self.room.document.source
+            self.log.debug(f"Saving Y document to disk: {file_path}")
             model = await ensure_async(self.contents_manager.save(model, file_path))
             self.last_modified = model["last_modified"]
         self.room.document.dirty = False
@@ -300,6 +329,7 @@ class YDocRoomIdHandler(APIHandler):
             # index already exists
             self.set_status(200)
             ws_url += str(idx)
+            self.log.info(f"Request for Y document '{path}' with room ID: {ws_url}")
             return self.finish(ws_url)
 
         # try indexing
@@ -311,4 +341,5 @@ class YDocRoomIdHandler(APIHandler):
         # index successfully created
         self.set_status(201)
         ws_url += str(idx)
+        self.log.info(f"Request for Y document '{path}' with room ID: {ws_url}")
         return self.finish(ws_url)
