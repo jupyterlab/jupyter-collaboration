@@ -66,6 +66,8 @@ filterwarnings = [
   "module:make_current is deprecated:DeprecationWarning",
   "module:clear_current is deprecated:DeprecationWarning",
   "module:There is no current event loop:DeprecationWarning",
+  #
+  "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
 ]
 
 [tool.mypy]
