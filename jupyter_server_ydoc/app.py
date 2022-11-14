@@ -16,47 +16,46 @@ class YDocExtension(ExtensionApp):
 
     name = "jupyter_server_ydoc"
 
-    collaborative_file_poll_interval = Int(
+    file_poll_interval = Int(
         1,
         config=True,
-        help="""The period in seconds to check for file changes on disk (relevant only
-        in collaborative mode). Defaults to 1s, if 0 then file changes will only be checked when
+        help="""The period in seconds to check for file changes on disk.
+        Defaults to 1s, if 0 then file changes will only be checked when
         saving changes from the front-end.""",
     )
 
-    collaborative_document_cleanup_delay = Int(
+    document_cleanup_delay = Int(
         60,
         allow_none=True,
         config=True,
         help="""The delay in seconds to keep a document in memory in the back-end after all clients
-        disconnect (relevant only in collaborative mode). Defaults to 60s, if None then the
-        document will be kept in memory forever.""",
+        disconnect. Defaults to 60s, if None then the document will be kept in memory forever.""",
     )
 
-    collaborative_document_save_delay = Float(
+    document_save_delay = Float(
         1,
         allow_none=True,
         config=True,
-        help="""The delay in seconds to wait after a change is made to a document before saving it
-        (relevant only in collaborative mode). Defaults to 1s, if None then the document will never be saved.""",
+        help="""The delay in seconds to wait after a change is made to a document before saving it.
+        Defaults to 1s, if None then the document will never be saved.""",
     )
 
-    collaborative_ystore_class = Type(
+    ystore_class = Type(
         default_value=JupyterSQLiteYStore,
         klass=BaseYStore,
         config=True,
-        help="""The YStore class to use for storing Y updates (relevant only in collaborative mode).
-        Defaults to JupyterSQLiteYStore, which stores Y updates in a '.jupyter_ystore.db' SQLite
-        database in the current directory.""",
+        help="""The YStore class to use for storing Y updates. Defaults to JupyterSQLiteYStore,
+        which stores Y updates in a '.jupyter_ystore.db' SQLite database in the current
+        directory.""",
     )
 
     def initialize_settings(self):
         self.settings.update(
             {
-                "collaborative_file_poll_interval": self.collaborative_file_poll_interval,
-                "collaborative_document_cleanup_delay": self.collaborative_document_cleanup_delay,
-                "collaborative_document_save_delay": self.collaborative_document_save_delay,
-                "collaborative_ystore_class": self.collaborative_ystore_class,
+                "collaborative_file_poll_interval": self.file_poll_interval,
+                "collaborative_document_cleanup_delay": self.document_cleanup_delay,
+                "collaborative_document_save_delay": self.document_save_delay,
+                "collaborative_ystore_class": self.ystore_class,
             }
         )
 
