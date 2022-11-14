@@ -166,6 +166,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
         if not self.room.is_transient and not self.room.ready:
             file_format, file_type, file_path = self.get_file_info()
+            self.log.debug(f"Opening Y document from disk: {file_path}")
             model = await ensure_async(
                 self.contents_manager.get(file_path, type=file_type, format=file_format)
             )
@@ -208,6 +209,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         )
         # do nothing if the file was saved by us
         if self.last_modified < model["last_modified"]:
+            self.log.debug(f"Opening Y document from disk: {file_path}")
             model = await ensure_async(
                 self.contents_manager.get(file_path, type=file_type, format=file_format)
             )
@@ -290,6 +292,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             file_format, file_type, file_path = self.get_file_info()
         except Exception:
             return
+        self.log.debug(f"Opening Y document from disk: {file_path}")
         model = await ensure_async(
             self.contents_manager.get(file_path, type=file_type, format=file_format)
         )
