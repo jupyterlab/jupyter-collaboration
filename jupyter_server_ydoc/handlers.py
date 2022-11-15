@@ -13,7 +13,7 @@ from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS  # type: ignore
 from tornado import web
 from tornado.websocket import WebSocketHandler
-from ypy_websocket.websocket_server import WebsocketServer, YRoom  # type: ignore
+from ypy_websocket import WebsocketServer, YMessageType, YRoom  # type: ignore
 from ypy_websocket.ystore import (  # type: ignore
     BaseYStore,
     SQLiteYStore,
@@ -22,7 +22,6 @@ from ypy_websocket.ystore import (  # type: ignore
 )
 
 YFILE = YDOCS["file"]
-AWARENESS = 1
 
 
 class JupyterTempFileYStore(TempFileYStore):
@@ -67,7 +66,7 @@ class JupyterWebsocketServer(WebsocketServer):
 
     def __init__(self, *args, **kwargs):
         self.ystore_class = kwargs.pop("ystore_class")
-        self.log = kwargs.pop("log")
+        self.log = kwargs["log"]
         super().__init__(*args, **kwargs)
         self.ypatch_nb = 0
         self.connected_users = {}
@@ -77,8 +76,8 @@ class JupyterWebsocketServer(WebsocketServer):
         while True:
             await asyncio.sleep(60)
             clients_nb = sum(len(room.clients) for room in self.rooms.values())
-            self.log.info(f"Processed {self.ypatch_nb} Y patches in one minute")
-            self.log.info(f"Connected Y users: {clients_nb}")
+            self.log.info("Processed %s Y patches in one minute", self.ypatch_nb)
+            self.log.info("Connected Y users: %s", clients_nb)
             self.ypatch_nb = 0
 
     def get_room(self, path: str) -> YRoom:
@@ -166,7 +165,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
         if not self.room.is_transient and not self.room.ready:
             file_format, file_type, file_path = self.get_file_info()
-            self.log.debug(f"Opening Y document from disk: {file_path}")
+            self.log.debug("Opening Y document from disk: %s", file_path)
             model = await ensure_async(
                 self.contents_manager.get(file_path, type=file_type, format=file_format)
             )
@@ -209,7 +208,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         )
         # do nothing if the file was saved by us
         if self.last_modified < model["last_modified"]:
-            self.log.debug(f"Opening Y document from disk: {file_path}")
+            self.log.debug("Opening Y document from disk: %s", file_path)
             model = await ensure_async(
                 self.contents_manager.get(file_path, type=file_type, format=file_format)
             )
@@ -226,22 +225,28 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
     def on_message(self, message):
         assert self.websocket_server is not None
-        if message[0] == AWARENESS:
+        message_type = message[0]
+        if message_type == YMessageType.AWARENESS:
             # awareness
             skip = False
             changes = self.room.awareness.get_changes(message[1:])
             added_users = changes["added"]
             removed_users = changes["removed"]
             for i, user in enumerate(added_users):
-                name = changes["states"][i]["user"]["name"]
-                self.websocket_server.connected_users[user] = name
-                self.log.debug(f"Y user joined: {name}")
+                u = changes["states"][i]
+                if "user" in u:
+                    name = u["user"]["name"]
+                    self.websocket_server.connected_users[user] = name
+                    self.log.debug("Y user joined: %s", name)
             for user in removed_users:
                 name = self.websocket_server.connected_users[user]
                 del self.websocket_server.connected_users[user]
-                self.log.debug(f"Y user left: {name}")
+                self.log.debug("Y user left: %s", name)
             # filter out message depending on changes
             if skip:
+                self.log.debug(
+                    "Filtered out Y message of type: %s", YMessageType(message_type).raw_str()
+                )
                 return skip
         self._message_queue.put_nowait(message)
         self.websocket_server.ypatch_nb += 1
@@ -264,7 +269,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self.room.document.unobserve()
         assert self.websocket_server is not None
         file_format, file_type, file_path = self.get_file_info()
-        self.log.debug(f"Deleting Y document from memory: {file_path}")
+        self.log.debug("Deleting Y document from memory: %s", file_path)
         self.websocket_server.delete_room(room=self.room)
 
     def on_document_change(self, event):
@@ -292,7 +297,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             file_format, file_type, file_path = self.get_file_info()
         except Exception:
             return
-        self.log.debug(f"Opening Y document from disk: {file_path}")
+        self.log.debug("Opening Y document from disk: %s", file_path)
         model = await ensure_async(
             self.contents_manager.get(file_path, type=file_type, format=file_format)
         )
@@ -307,7 +312,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             # the same document opened as different types (e.g. notebook/text editor)
             model["format"] = file_format
             model["content"] = self.room.document.source
-            self.log.debug(f"Saving Y document to disk: {file_path}")
+            self.log.debug("Saving Y document to disk: %s", file_path)
             model = await ensure_async(self.contents_manager.save(model, file_path))
             self.last_modified = model["last_modified"]
         self.room.document.dirty = False
@@ -332,7 +337,7 @@ class YDocRoomIdHandler(APIHandler):
             # index already exists
             self.set_status(200)
             ws_url += str(idx)
-            self.log.info(f"Request for Y document '{path}' with room ID: {ws_url}")
+            self.log.info("Request for Y document '%s' with room ID: %s", path, ws_url)
             return self.finish(ws_url)
 
         # try indexing
@@ -344,5 +349,5 @@ class YDocRoomIdHandler(APIHandler):
         # index successfully created
         self.set_status(201)
         ws_url += str(idx)
-        self.log.info(f"Request for Y document '{path}' with room ID: {ws_url}")
+        self.log.info("Request for Y document '%s' with room ID: %s", path, ws_url)
         return self.finish(ws_url)
