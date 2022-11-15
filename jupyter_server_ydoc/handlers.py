@@ -98,6 +98,22 @@ class JupyterWebsocketServer(WebsocketServer):
 
 
 class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
+    """`YDocWebSocketHandler` uses the singleton pattern for `WebsocketServer`,
+    which is a subclass of ypy-websocket's `WebsocketServer`.
+
+    In `WebsocketServer`, we expect to use a WebSocket object as follows:
+    - receive messages until the connection is closed with
+      `for message in websocket: pass`.
+    - send a message with `await websocket.send(message)`.
+
+    Tornado's WebSocket API is different, so `YDocWebSocketHandler` needs to be adapted:
+    - `YDocWebSocketHandler` is an async iterator, that will yield received messages.
+      Messages received in Tornado's `on_message(message)` are put in an async
+      `_message_queue`, from which we get them asynchronously.
+    - The `send(message)` method is async and calls Tornado's `write_message(message)`.
+    - Although it's currently not used in ypy-websocket, `recv()` is an async method for
+      receiving a message.
+    """
 
     saving_document: Optional["asyncio.Task[Any]"]
     websocket_server: Optional[JupyterWebsocketServer] = None
