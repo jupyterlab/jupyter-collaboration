@@ -4,6 +4,7 @@
 import asyncio
 import json
 from datetime import datetime
+from logging import Logger
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
@@ -37,8 +38,8 @@ class DocumentRoom(YRoom):
 
     is_transient = False
 
-    def __init__(self, type: str, ystore: BaseYStore):
-        super().__init__(ready=False, ystore=ystore)
+    def __init__(self, type: str, ystore: BaseYStore, log: Logger):
+        super().__init__(ready=False, ystore=ystore, log=log)
         self.type = type
         self.cleaner: Optional["asyncio.Task[Any]"] = None
         self.watcher: Optional["asyncio.Task[Any]"] = None
@@ -49,6 +50,9 @@ class TransientRoom(YRoom):
     """A Y room for sharing state (e.g. awareness)."""
 
     is_transient = True
+
+    def __init__(self, log):
+        super().__init__(log=log)
 
 
 async def metadata_callback() -> bytes:
@@ -81,7 +85,7 @@ class JupyterWebsocketServer(WebsocketServer):
             self.ypatch_nb = 0
 
     def get_room(self, path: str) -> YRoom:
-        if path not in self.rooms.keys():
+        if path not in self.rooms:
             if path.count(":") >= 2:
                 # it is a stored document (e.g. a notebook)
                 file_format, file_type, file_path = path.split(":", 2)
@@ -90,10 +94,10 @@ class JupyterWebsocketServer(WebsocketServer):
                 ystore = self.ystore_class(
                     path=updates_file_path, metadata_callback=metadata_callback
                 )
-                self.rooms[path] = DocumentRoom(file_type, ystore)
+                self.rooms[path] = DocumentRoom(file_type, ystore, self.log)
             else:
                 # it is a transient document (e.g. awareness)
-                self.rooms[path] = TransientRoom()
+                self.rooms[path] = TransientRoom(self.log)
         return self.rooms[path]
 
 
@@ -148,6 +152,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             raise RuntimeError(f"File {self.room.document.path} cannot be found anymore")
         assert file_path is not None
         if file_path != self.room.document.path:
+            self.log.debug(
+                "File with ID %s was moved from %s to %s", self.room.document.path, file_path
+            )
             self.room.document.path = file_path
         return file_format, file_type, file_path
 
@@ -169,6 +176,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 rooms_ready=False, auto_clean_rooms=False, ystore_class=ystore_class, log=self.log
             )
         self._message_queue = asyncio.Queue()
+        self.lock = asyncio.Lock()
         assert self.websocket_server is not None
         self.room = self.websocket_server.get_room(path)
         self.set_file_info(path)
@@ -219,12 +227,15 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
     async def maybe_load_document(self):
         file_format, file_type, file_path = self.get_file_info()
-        model = await ensure_async(
-            self.contents_manager.get(file_path, content=False, type=file_type, format=file_format)
-        )
+        async with self.lock:
+            model = await ensure_async(
+                self.contents_manager.get(
+                    file_path, content=False, type=file_type, format=file_format
+                )
+            )
         # do nothing if the file was saved by us
         if self.last_modified < model["last_modified"]:
-            self.log.debug("Opening Y document from disk: %s", file_path)
+            self.log.debug("Reverting file that had out-of-band changes: %s", file_path)
             model = await ensure_async(
                 self.contents_manager.get(file_path, type=file_type, format=file_format)
             )
@@ -233,7 +244,10 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
     async def send(self, message):
         # needed to be compatible with WebsocketServer (websocket.send)
-        self.write_message(message, binary=True)
+        try:
+            self.write_message(message, binary=True)
+        except BaseException:
+            pass
 
     async def recv(self):
         message = await self._message_queue.get()
@@ -255,9 +269,10 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     self.websocket_server.connected_users[user] = name
                     self.log.debug("Y user joined: %s", name)
             for user in removed_users:
-                name = self.websocket_server.connected_users[user]
-                del self.websocket_server.connected_users[user]
-                self.log.debug("Y user left: %s", name)
+                if user in self.websocket_server.connected_users:
+                    name = self.websocket_server.connected_users[user]
+                    del self.websocket_server.connected_users[user]
+                    self.log.debug("Y user left: %s", name)
             # filter out message depending on changes
             if skip:
                 self.log.debug(
@@ -314,11 +329,13 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         except Exception:
             return
         self.log.debug("Opening Y document from disk: %s", file_path)
-        model = await ensure_async(
-            self.contents_manager.get(file_path, type=file_type, format=file_format)
-        )
+        async with self.lock:
+            model = await ensure_async(
+                self.contents_manager.get(file_path, type=file_type, format=file_format)
+            )
         if self.last_modified < model["last_modified"]:
             # file changed on disk, let's revert
+            self.log.debug("Reverting file that had out-of-band changes: %s", file_path)
             self.room.document.source = model["content"]
             self.last_modified = model["last_modified"]
             return
@@ -329,8 +346,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             model["format"] = file_format
             model["content"] = self.room.document.source
             self.log.debug("Saving Y document to disk: %s", file_path)
-            model = await ensure_async(self.contents_manager.save(model, file_path))
-            self.last_modified = model["last_modified"]
+            async with self.lock:
+                model = await ensure_async(self.contents_manager.save(model, file_path))
+                self.last_modified = model["last_modified"]
         self.room.document.dirty = False
 
     def check_origin(self, origin):
