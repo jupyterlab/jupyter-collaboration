@@ -38,7 +38,7 @@ class DocumentRoom(YRoom):
 
     is_transient = False
 
-    def __init__(self, type: str, ystore: BaseYStore, log: Logger):
+    def __init__(self, type: str, ystore: BaseYStore, log: Optional[Logger]):
         super().__init__(ready=False, ystore=ystore, log=log)
         self.type = type
         self.cleaner: Optional["asyncio.Task[Any]"] = None
@@ -51,7 +51,7 @@ class TransientRoom(YRoom):
 
     is_transient = True
 
-    def __init__(self, log):
+    def __init__(self, log: Optional[Logger]):
         super().__init__(log=log)
 
 
@@ -246,8 +246,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         # needed to be compatible with WebsocketServer (websocket.send)
         try:
             self.write_message(message, binary=True)
-        except BaseException:
-            pass
+        except Exception as e:
+            self.log.debug("Failed to write message", exc_info=e)
 
     async def recv(self):
         message = await self._message_queue.get()
