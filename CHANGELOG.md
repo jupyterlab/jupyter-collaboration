@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.4.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server_ydoc/compare/v0.3.0...7a024df7b96763d2e065a259728233101dd328e3))
+
+### Enhancements made
+
+- Pass logger to YRoom, require ypy-websocket >=0.5.0 [#58](https://github.com/jupyter-server/jupyter_server_ydoc/pull/58) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server_ydoc/graphs/contributors?from=2022-11-15&to=2022-11-17&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Adavidbrochart+updated%3A2022-11-15..2022-11-17&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.3.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server_ydoc/compare/v0.2.0...c1354de8fd9bc7a1f1f36197135924ea7f2e189d))
@@ -24,8 +40,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server_ydoc/graphs/contributors?from=2022-11-02&to=2022-11-15&type=c))
 
 [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Acodecov+updated%3A2022-11-02..2022-11-15&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Adavidbrochart+updated%3A2022-11-02..2022-11-15&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Apre-commit-ci+updated%3A2022-11-02..2022-11-15&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.2.0
 
