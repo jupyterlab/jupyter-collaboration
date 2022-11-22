@@ -6,7 +6,6 @@ try:
 except ModuleNotFoundError:
     raise ModuleNotFoundError("Jupyter Server must be installed to use this extension.")
 
-from jupyter_server.utils import url_path_join
 from traitlets import Float, Int, Type
 from ypy_websocket.ystore import BaseYStore  # type: ignore
 
@@ -63,9 +62,7 @@ class YDocExtension(ExtensionApp):
     def initialize_handlers(self):
         self.handlers.extend(
             [
-                url_path_join(
-                    self.settings["base_url"], (r"/api/yjs/roomid/(.*)", YDocRoomIdHandler)
-                ),
-                url_path_join(self.settings["base_url"], (r"/api/yjs/(.*)", YDocWebSocketHandler)),
+                (r"/api/yjs/roomid/(.*)", YDocRoomIdHandler),
+                (r"/api/yjs/(.*)", YDocWebSocketHandler),
             ]
         )
