@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.5.0
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server_ydoc/compare/v0.4.0...a8d0e59096b313cbdfc2595a9977041162b4e6b1))
+
+### Bugs fixed
+
+- Add base_url to routes [#61](https://github.com/jupyter-server/jupyter_server_ydoc/pull/61) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Maintenance and upkeep improvements
+
+- Update ypy-websocket [#59](https://github.com/jupyter-server/jupyter_server_ydoc/pull/59) ([@hbcarlos](https://github.com/hbcarlos))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server_ydoc/graphs/contributors?from=2022-11-17&to=2022-11-22&type=c))
+
+[@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Acodecov+updated%3A2022-11-17..2022-11-22&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Adavidbrochart+updated%3A2022-11-17..2022-11-22&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Ahbcarlos+updated%3A2022-11-17..2022-11-22&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.4.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server_ydoc/compare/v0.3.0...7a024df7b96763d2e065a259728233101dd328e3))
@@ -17,8 +37,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server_ydoc/graphs/contributors?from=2022-11-15&to=2022-11-17&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Adavidbrochart+updated%3A2022-11-15..2022-11-17&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.3.0
 
