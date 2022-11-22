@@ -23,6 +23,7 @@ requires-python = ">=3.7"
 dependencies = [
   "jupyter_ydoc>=0.2.0,<0.4.0",
   "ypy-websocket>=0.6.0,<0.7.0",
+  "jupyter_server>=1.15, <3",
   "jupyter_server_fileid >=0.6.0,<1"
 ]
 
@@ -40,7 +41,7 @@ Homepage = "https://jupyter.org"
 [project.optional-dependencies]
 test = [
   "coverage",
-  "jupyter_server[test]>=2.0.0a0",
+  "jupyter_server[test]>=1.15, <3",
   "pytest>=7.0",
   "pytest_tornasync",
   "pytest-cov",
