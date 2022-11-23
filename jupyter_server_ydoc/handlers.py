@@ -92,7 +92,7 @@ class JupyterWebsocketServer(WebsocketServer):
                 p = Path(file_path)
                 updates_file_path = str(p.parent / f".{file_type}:{p.name}.y")
                 ystore = self.ystore_class(
-                    path=updates_file_path, metadata_callback=metadata_callback
+                    path=updates_file_path, metadata_callback=metadata_callback, log=self.log
                 )
                 self.rooms[path] = DocumentRoom(file_type, ystore, self.log)
             else:
