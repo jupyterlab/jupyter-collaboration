@@ -2,7 +2,7 @@ from typing import Any, Dict, List
 
 from .app import YDocExtension
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 
 
 def _jupyter_server_extension_points() -> List[Dict[str, Any]]:
