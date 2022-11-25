@@ -30,6 +30,7 @@ class JupyterTempFileYStore(TempFileYStore):
 
 class JupyterSQLiteYStore(SQLiteYStore):
     db_path = ".jupyter_ystore.db"
+    document_ttl = 24 * 60 * 60
 
 
 class DocumentRoom(YRoom):
