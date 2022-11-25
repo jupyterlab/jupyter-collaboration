@@ -3,7 +3,6 @@
 
 import asyncio
 import json
-from datetime import datetime
 from logging import Logger
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
@@ -31,6 +30,7 @@ class JupyterTempFileYStore(TempFileYStore):
 
 class JupyterSQLiteYStore(SQLiteYStore):
     db_path = ".jupyter_ystore.db"
+    document_ttl = 24 * 60 * 60
 
 
 class DocumentRoom(YRoom):
@@ -53,13 +53,6 @@ class TransientRoom(YRoom):
 
     def __init__(self, log: Optional[Logger]):
         super().__init__(log=log)
-
-
-async def metadata_callback() -> bytes:
-    # the current datetime will be stored in metadata as bytes
-    # it can be retrieved as:
-    # datetime.fromisoformat(metadata.decode())
-    return datetime.utcnow().isoformat().encode()
 
 
 class JupyterWebsocketServer(WebsocketServer):
@@ -91,9 +84,7 @@ class JupyterWebsocketServer(WebsocketServer):
                 file_format, file_type, file_path = path.split(":", 2)
                 p = Path(file_path)
                 updates_file_path = str(p.parent / f".{file_type}:{p.name}.y")
-                ystore = self.ystore_class(
-                    path=updates_file_path, metadata_callback=metadata_callback, log=self.log
-                )
+                ystore = self.ystore_class(path=updates_file_path, log=self.log)
                 self.rooms[path] = DocumentRoom(file_type, ystore, self.log)
             else:
                 # it is a transient document (e.g. awareness)

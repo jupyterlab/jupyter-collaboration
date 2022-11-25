@@ -46,7 +46,7 @@ class YDocExtension(ExtensionApp):
         config=True,
         help="""The YStore class to use for storing Y updates. Defaults to JupyterSQLiteYStore,
         which stores Y updates in a '.jupyter_ystore.db' SQLite database in the current
-        directory.""",
+        directory, and clears history every 24 hours.""",
     )
 
     def initialize_settings(self):
