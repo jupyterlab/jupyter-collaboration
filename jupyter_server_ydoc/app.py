@@ -6,10 +6,10 @@ try:
 except ModuleNotFoundError:
     raise ModuleNotFoundError("Jupyter Server must be installed to use this extension.")
 
-from traitlets import Float, Int, Type
-from ypy_websocket.ystore import BaseYStore  # type: ignore
+from traitlets import Float, Int, Type, Unicode, observe
+from ypy_websocket.ystore import BaseYStore, SQLiteYStore  # type: ignore
 
-from .handlers import JupyterSQLiteYStore, YDocRoomIdHandler, YDocWebSocketHandler
+from .handlers import YDocRoomIdHandler, YDocWebSocketHandler, sqlite_ystore_factory
 
 
 class YDocExtension(ExtensionApp):
@@ -41,13 +41,46 @@ class YDocExtension(ExtensionApp):
     )
 
     ystore_class = Type(
-        default_value=JupyterSQLiteYStore,
+        default_value=sqlite_ystore_factory(),
         klass=BaseYStore,
         config=True,
         help="""The YStore class to use for storing Y updates. Defaults to JupyterSQLiteYStore,
         which stores Y updates in a '.jupyter_ystore.db' SQLite database in the current
         directory, and clears history every 24 hours.""",
     )
+
+    sqlite_ystore_db_path = Unicode(
+        ".jupyter_ystore.db",
+        config=True,
+        help="""The path to the YStore database. Defaults to '.jupyter_ystore.db' in the current
+        directory. Only applicable if the YStore is an SQLiteYStore.""",
+    )
+
+    @observe("sqlite_ystore_db_path")
+    def _observe_sqlite_ystore_db_path(self, change):
+        if issubclass(self.ystore_class, SQLiteYStore):
+            self.ystore_class.db_path = change["new"]
+        else:
+            raise RuntimeError(
+                f"ystore_class must be an SQLiteYStore to be able to set sqlite_ystore_db_path, not {self.ystore_class}"
+            )
+
+    sqlite_ystore_document_ttl = Int(
+        None,
+        allow_none=True,
+        config=True,
+        help="""The document time-to-live in seconds. Defaults to None (document history is never
+        cleared). Only applicable if the YStore is an SQLiteYStore.""",
+    )
+
+    @observe("sqlite_ystore_document_ttl")
+    def _observe_sqlite_ystore_document_ttl(self, change):
+        if issubclass(self.ystore_class, SQLiteYStore):
+            self.ystore_class.document_ttl = change["new"]
+        else:
+            raise RuntimeError(
+                f"ystore_class must be an SQLiteYStore to be able to set sqlite_ystore_document_ttl, not {self.ystore_class}"
+            )
 
     def initialize_settings(self):
         self.settings.update(
