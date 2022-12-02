@@ -5,7 +5,7 @@ import asyncio
 import json
 from logging import Logger
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Type
+from typing import Any, Dict, Optional, Tuple
 
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
@@ -29,17 +29,9 @@ class JupyterTempFileYStore(TempFileYStore):
     prefix_dir = "jupyter_ystore_"
 
 
-def sqlite_ystore_factory(
-    db_path: str = ".jupyter_ystore.db", document_ttl: Optional[int] = None
-) -> Type[SQLiteYStore]:
-    _db_path = db_path
-    _document_ttl = document_ttl
-
-    class JupyterSQLiteYStore(SQLiteYStore):
-        db_path = _db_path
-        document_ttl = _document_ttl
-
-    return JupyterSQLiteYStore
+class JupyterSQLiteYStore(SQLiteYStore):
+    db_path = ".jupyter_ystore.db"
+    document_ttl = None
 
 
 class DocumentRoom(YRoom):
