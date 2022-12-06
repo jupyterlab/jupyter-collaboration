@@ -16,12 +16,10 @@ from tornado.websocket import WebSocketHandler
 from traitlets import Int, Unicode
 from traitlets.config import LoggingConfigurable
 from ypy_websocket.websocket_server import WebsocketServer, YRoom  # type: ignore
-from ypy_websocket.ystore import (  # type: ignore
-    BaseYStore,
-    SQLiteYStore as _SQLiteYStore,
-    TempFileYStore as _TempFileYStore,
-    YDocNotFound,
-)
+from ypy_websocket.ystore import BaseYStore
+from ypy_websocket.ystore import SQLiteYStore as _SQLiteYStore  # type: ignore
+from ypy_websocket.ystore import TempFileYStore as _TempFileYStore
+from ypy_websocket.ystore import YDocNotFound
 from ypy_websocket.yutils import YMessageType  # type: ignore
 
 YFILE = YDOCS["file"]
@@ -35,9 +33,7 @@ class SQLiteYStoreMetaclass(type(LoggingConfigurable), type(_SQLiteYStore)):  # 
     pass
 
 
-class SQLiteYStore(
-    LoggingConfigurable, _SQLiteYStore, metaclass=SQLiteYStoreMetaclass
-):
+class SQLiteYStore(LoggingConfigurable, _SQLiteYStore, metaclass=SQLiteYStoreMetaclass):
     db_path = Unicode(
         ".jupyter_ystore.db",
         config=True,
