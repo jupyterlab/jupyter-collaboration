@@ -18,8 +18,8 @@ from traitlets.config import LoggingConfigurable
 from ypy_websocket.websocket_server import WebsocketServer, YRoom  # type: ignore
 from ypy_websocket.ystore import (  # type: ignore
     BaseYStore,
-    SQLiteYStore,
-    TempFileYStore,
+    SQLiteYStore as _SQLiteYStore,
+    TempFileYStore as _TempFileYStore,
     YDocNotFound,
 )
 from ypy_websocket.yutils import YMessageType  # type: ignore
@@ -27,16 +27,16 @@ from ypy_websocket.yutils import YMessageType  # type: ignore
 YFILE = YDOCS["file"]
 
 
-class JupyterTempFileYStore(TempFileYStore):
+class TempFileYStore(_TempFileYStore):
     prefix_dir = "jupyter_ystore_"
 
 
-class JupyterSQLiteYStoreMetaclass(type(LoggingConfigurable), type(SQLiteYStore)):  # type: ignore
+class SQLiteYStoreMetaclass(type(LoggingConfigurable), type(_SQLiteYStore)):  # type: ignore
     pass
 
 
-class JupyterSQLiteYStore(
-    LoggingConfigurable, SQLiteYStore, metaclass=JupyterSQLiteYStoreMetaclass
+class SQLiteYStore(
+    LoggingConfigurable, _SQLiteYStore, metaclass=SQLiteYStoreMetaclass
 ):
     db_path = Unicode(
         ".jupyter_ystore.db",

@@ -9,7 +9,7 @@ except ModuleNotFoundError:
 from traitlets import Float, Int, Type
 from ypy_websocket.ystore import BaseYStore  # type: ignore
 
-from .handlers import JupyterSQLiteYStore, YDocRoomIdHandler, YDocWebSocketHandler
+from .handlers import SQLiteYStore, YDocRoomIdHandler, YDocWebSocketHandler
 
 
 class YDocExtension(ExtensionApp):
@@ -41,12 +41,12 @@ class YDocExtension(ExtensionApp):
     )
 
     ystore_class = Type(
-        default_value=JupyterSQLiteYStore,
+        default_value=SQLiteYStore,
         klass=BaseYStore,
         config=True,
-        help="""The YStore class to use for storing Y updates. Defaults to JupyterSQLiteYStore,
+        help="""The YStore class to use for storing Y updates. Defaults to an SQLiteYStore,
         which stores Y updates in a '.jupyter_ystore.db' SQLite database in the current
-        directory, and clears history every 24 hours.""",
+        directory.""",
     )
 
     def initialize_settings(self):
