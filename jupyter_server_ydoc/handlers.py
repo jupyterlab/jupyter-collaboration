@@ -16,8 +16,8 @@ from tornado.websocket import WebSocketHandler
 from traitlets import Int, Unicode
 from traitlets.config import LoggingConfigurable
 from ypy_websocket.websocket_server import WebsocketServer, YRoom  # type: ignore
-from ypy_websocket.ystore import BaseYStore
-from ypy_websocket.ystore import SQLiteYStore as _SQLiteYStore  # type: ignore
+from ypy_websocket.ystore import BaseYStore  # type: ignore
+from ypy_websocket.ystore import SQLiteYStore as _SQLiteYStore
 from ypy_websocket.ystore import TempFileYStore as _TempFileYStore
 from ypy_websocket.ystore import YDocNotFound
 from ypy_websocket.yutils import YMessageType  # type: ignore
