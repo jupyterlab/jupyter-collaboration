@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.6.1
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server_ydoc/compare/v0.6.0...c7da14326ce8af586a5282a739eef2fa4cc042ca))
+
+### Enhancements made
+
+- Allow to set SQLiteYStore's database path and document time-to-live [#66](https://github.com/jupyter-server/jupyter_server_ydoc/pull/66) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Bugs fixed
+
+- Allow to set SQLiteYStore's database path and document time-to-live [#66](https://github.com/jupyter-server/jupyter_server_ydoc/pull/66) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Maintenance and upkeep improvements
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server_ydoc/graphs/contributors?from=2022-11-25&to=2022-12-06&type=c))
+
+[@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Acodecov+updated%3A2022-11-25..2022-12-06&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Adavidbrochart+updated%3A2022-11-25..2022-12-06&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Apre-commit-ci+updated%3A2022-11-25..2022-12-06&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.6.0
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server_ydoc/compare/v0.5.1...93511865dfa0b0cc16d4fd72150b824a6a5500df))
@@ -17,8 +39,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server_ydoc/graphs/contributors?from=2022-11-23&to=2022-11-25&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Adavidbrochart+updated%3A2022-11-23..2022-11-25&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.5.1
 
