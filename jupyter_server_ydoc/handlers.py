@@ -13,6 +13,8 @@ from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS  # type: ignore
 from tornado import web
 from tornado.websocket import WebSocketHandler
+from traitlets import Int, Unicode
+from traitlets.config import LoggingConfigurable
 from ypy_websocket.websocket_server import WebsocketServer, YRoom  # type: ignore
 from ypy_websocket.ystore import (  # type: ignore
     BaseYStore,
@@ -29,9 +31,27 @@ class JupyterTempFileYStore(TempFileYStore):
     prefix_dir = "jupyter_ystore_"
 
 
-class JupyterSQLiteYStore(SQLiteYStore):
-    db_path = ".jupyter_ystore.db"
-    document_ttl = None
+class JupyterSQLiteYStoreMetaclass(type(LoggingConfigurable), type(SQLiteYStore)):  # type: ignore
+    pass
+
+
+class JupyterSQLiteYStore(
+    LoggingConfigurable, SQLiteYStore, metaclass=JupyterSQLiteYStoreMetaclass
+):
+    db_path = Unicode(
+        ".jupyter_ystore.db",
+        config=True,
+        help="""The path to the YStore database. Defaults to '.jupyter_ystore.db' in the current
+        directory.""",
+    )
+
+    document_ttl = Int(
+        None,
+        allow_none=True,
+        config=True,
+        help="""The document time-to-live in seconds. Defaults to None (document history is never
+        cleared).""",
+    )
 
 
 class DocumentRoom(YRoom):
@@ -142,7 +162,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         assert file_path is not None
         if file_path != self.room.document.path:
             self.log.debug(
-                "File with ID %s was moved from %s to %s", self.room.document.path, file_path
+                "File with ID %s was moved from %s to %s",
+                self.room.document.path,
+                file_path,
             )
             self.room.document.path = file_path
         return file_format, file_type, file_path
@@ -161,8 +183,13 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
     async def open(self, path):
         ystore_class = self.settings["collaborative_ystore_class"]
         if self.websocket_server is None:
+            for k, v in self.config.get(ystore_class.__name__, {}).items():
+                setattr(ystore_class, k, v)
             YDocWebSocketHandler.websocket_server = JupyterWebsocketServer(
-                rooms_ready=False, auto_clean_rooms=False, ystore_class=ystore_class, log=self.log
+                rooms_ready=False,
+                auto_clean_rooms=False,
+                ystore_class=ystore_class,
+                log=self.log,
             )
         self._message_queue = asyncio.Queue()
         self.lock = asyncio.Lock()
@@ -270,7 +297,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             # filter out message depending on changes
             if skip:
                 self.log.debug(
-                    "Filtered out Y message of type: %s", YMessageType(message_type).name
+                    "Filtered out Y message of type: %s",
+                    YMessageType(message_type).name,
                 )
                 return skip
         self._message_queue.put_nowait(message)
