@@ -98,7 +98,7 @@ github_project_url = "https://github.com/jupyter/jupyter_server_ydoc"
 __version__ = "0.1.11"
 # The short X.Y version.
 version_parsed = parse_version(__version__)
-version = f"{version_parsed.major}.{version_parsed.minor}"  # type:ignore[union-attr]
+version = f"{version_parsed.major}.{version_parsed.minor}"
 
 # The full version, including alpha/beta/rc tags.
 release = __version__
