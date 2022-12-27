@@ -22,7 +22,7 @@ repos:
         args: ["--line-length", "100"]
 
   - repo: https://github.com/PyCQA/isort
-    rev: 5.11.0
+    rev: 5.11.4
     hooks:
       - id: isort
         files: \.py$
@@ -40,7 +40,7 @@ repos:
         args: [--py37-plus]
 
   - repo: https://github.com/PyCQA/doc8
-    rev: v1.0.0
+    rev: v1.1.1
     hooks:
       - id: doc8
         args: [--max-line-length=200]
