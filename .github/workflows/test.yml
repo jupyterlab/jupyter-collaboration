@@ -67,7 +67,7 @@ jobs:
       - name: Run the tests on pypy and Windows
         if: ${{ startsWith(matrix.python-version, 'pypy') || startsWith(runner.os, 'Windows') }}
         run: |
-          python -m pytest -vv
+          python -W ignore::ImportWarning -m pytest -vv
       - name: Coverage
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(runner.os, 'Windows') }}
         run: |
