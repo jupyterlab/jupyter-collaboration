@@ -322,14 +322,12 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self.log.debug("Deleting Y document from memory: %s", file_path)
         self.websocket_server.delete_room(room=self.room)
 
-    def on_document_change(self, event):
-        try:
+    def on_document_change(self, target, event):
+        if target == "state" and "dirty" in event.keys:
             dirty = event.keys["dirty"]["newValue"]
             if not dirty:
                 # we cleared the dirty flag, nothing to save
                 return
-        except Exception:
-            pass
         if self.saving_document is not None and not self.saving_document.done():
             # the document is being saved, cancel that
             self.saving_document.cancel()
