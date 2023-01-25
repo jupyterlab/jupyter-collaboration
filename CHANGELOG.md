@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.6.2
+
+([Full Changelog](https://github.com/jupyter-server/jupyter_server_ydoc/compare/v0.6.1...1ead1e4fea73b561439254d1e4df870309f304a4))
+
+### Maintenance and upkeep improvements
+
+- Update ydoc [#75](https://github.com/jupyter-server/jupyter_server_ydoc/pull/75) ([@hbcarlos](https://github.com/hbcarlos))
+- Add target to document change callback [#72](https://github.com/jupyter-server/jupyter_server_ydoc/pull/72) ([@davidbrochart](https://github.com/davidbrochart))
+- Ignore ImportWarning in PyPy tests [#71](https://github.com/jupyter-server/jupyter_server_ydoc/pull/71) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server_ydoc/graphs/contributors?from=2022-12-06&to=2023-01-25&type=c))
+
+[@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Acodecov+updated%3A2022-12-06..2023-01-25&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Adavidbrochart+updated%3A2022-12-06..2023-01-25&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Ahbcarlos+updated%3A2022-12-06..2023-01-25&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Apre-commit-ci+updated%3A2022-12-06..2023-01-25&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.6.1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server_ydoc/compare/v0.6.0...c7da14326ce8af586a5282a739eef2fa4cc042ca))
@@ -23,8 +41,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server_ydoc/graphs/contributors?from=2022-11-25&to=2022-12-06&type=c))
 
 [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Acodecov+updated%3A2022-11-25..2022-12-06&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Adavidbrochart+updated%3A2022-11-25..2022-12-06&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Apre-commit-ci+updated%3A2022-11-25..2022-12-06&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.6.0
 
