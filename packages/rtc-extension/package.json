@@ -1,14 +1,14 @@
 {
-  "name": "@jupyterlab/collaboration-extension",
+  "name": "@jupyterlab/rtc-extension",
   "version": "4.0.0-alpha.18",
-  "description": "JupyterLab - Collaboration Extension",
-  "homepage": "https://github.com/jupyterlab/jupyterlab",
+  "description": "JupyterLab - RTC Extension",
+  "homepage": "https://github.com/jupyter-server/jupyter_server_ydoc",
   "bugs": {
-    "url": "https://github.com/jupyterlab/jupyterlab/issues"
+    "url": "https://github.com/jupyter-server/jupyter_server_ydoc/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jupyterlab/jupyterlab.git"
+    "url": "https://github.com/jupyter-server/jupyter_server_ydoc.git"
   },
   "license": "BSD-3-Clause",
   "author": "Project Jupyter",
