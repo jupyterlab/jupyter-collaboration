@@ -1,0 +1,51 @@
+{
+  "name": "jupyterlab-rtc",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ]
+  },
+  "scripts": {
+    "build": "lerna run build",
+    "build:prod": "lerna run build:prod",
+		"build:test": "lerna run build:test",
+
+    "clean": "lerna run clean",
+    "clean:all": "lerna run clean:all",
+
+    "eslint": "jlpm eslint:check --fix",
+    "eslint:check": "eslint . --ext .ts,.tsx",
+
+    "install": "lerna bootstrap",
+    "install:extension": "lerna run install:extension",
+
+    "lint": "jlpm prettier && jlpm eslint",
+    "lint:check": "jlpm prettier:check && jlpm eslint:check",
+    "prettier": "jlpm prettier:base --write --list-different",
+    "prettier:base": "prettier \"**/*{.ts,.tsx,.js,.jsx,.css}\"",
+    "prettier:check": "jlpm prettier:base --check",
+
+		"test": "lerna run test",
+    "test:cov": "lerna run test:cov",
+    "test:debug": "lerna run test:debug",
+    "test:debug:watch": "lerna run test:debug:watch",
+
+    "watch": "lerna run watch"
+  },
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.12.1",
+    "@typescript-eslint/parser": "^5.12.1",
+    "eslint": "^8.9.0",
+    "eslint-config-prettier": "^8.4.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-react": "^7.30.0",
+    "prettier": "^2.5.1",
+    "typescript": "~4.7.3"
+  },
+  "devDependencies": {
+    "lerna": "5.1.0",
+    "yarn": "1.22.17"
+  }
+}

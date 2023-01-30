@@ -31,8 +31,11 @@
   ],
   "scripts": {
     "build": "tsc -b",
-    "clean": "rimraf lib && rimraf tsconfig.tsbuildinfo",
+    "build:prod": "jlpm run build",
+    "clean": "rimraf lib tsconfig.tsbuildinfo",
+    "clean:all": "rimraf lib tsconfig.tsbuildinfo node_modules",
     "docs": "typedoc src",
+    "install:extension": "jlpm run build",
     "watch": "tsc -b --watch"
   },
   "dependencies": {

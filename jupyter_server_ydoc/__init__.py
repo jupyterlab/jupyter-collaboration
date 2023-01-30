@@ -1,8 +1,7 @@
 from typing import Any, Dict, List
 
+from ._version import __version__  # noqa
 from .app import YDocExtension
-
-__version__ = "0.7.0"
 
 def _jupyter_labextension_paths():
     return [{

@@ -42,6 +42,7 @@ test = [
 
 [tool.hatch.version]
 source = "nodejs"
+path = "packages/rtc-extension/package.json"
 
 [tool.hatch.metadata.hooks.nodejs]
 fields = ["description", "authors", "urls"]
@@ -57,7 +58,7 @@ exclude = [".github", "binder"]
 "jupyter-config/jupyter_server_ydoc.json" = "etc/jupyter/jupyter_server_config.d/jupyter_server_ydoc.json"
 
 [tool.hatch.build.hooks.version]
-path = "jupyter_server_ydoc/__init__.py"
+path = "jupyter_server_ydoc/_version.py"
 
 [tool.hatch.build.hooks.jupyter-builder]
 dependencies = ["hatch-jupyter-builder>=0.5"]
