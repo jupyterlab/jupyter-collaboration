@@ -1,9 +1,9 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { Menu } from '@lumino/widgets';
-import { Token } from '@lumino/coreutils';
-import { Awareness } from 'y-protocols/awareness';
+import { Menu } from "@lumino/widgets";
+import { Token } from "@lumino/coreutils";
+import { Awareness } from "y-protocols/awareness";
 
 /**
  * The user menu token.
@@ -12,14 +12,14 @@ import { Awareness } from 'y-protocols/awareness';
  * (top-right menu in JupyterLab's interface).
  */
 export const IUserMenu = new Token<IUserMenu>(
-  '@jupyterlab/collaboration:IUserMenu'
+  "@jupyterlab/collaboration:IUserMenu",
 );
 
 /**
  * The global awareness token.
  */
 export const IGlobalAwareness = new Token<IAwareness>(
-  '@jupyterlab/collaboration:IGlobalAwareness'
+  "@jupyterlab/collaboration:IGlobalAwareness",
 );
 
 /**

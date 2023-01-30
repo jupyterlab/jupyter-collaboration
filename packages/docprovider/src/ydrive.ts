@@ -6,16 +6,16 @@ import {
   ISharedDocument,
   YDocument,
   YFile,
-  YNotebook
-} from '@jupyter/ydoc';
-import { URLExt } from '@jupyterlab/coreutils';
-import { Contents, Drive, User } from '@jupyterlab/services';
-import { WebSocketProvider } from './yprovider';
+  YNotebook,
+} from "@jupyter/ydoc";
+import { URLExt } from "@jupyterlab/coreutils";
+import { Contents, Drive, User } from "@jupyterlab/services";
+import { WebSocketProvider } from "./yprovider";
 
 /**
  * The url for the default drive service.
  */
-const Y_DOCUMENT_PROVIDER_URL = 'api/yjs';
+const Y_DOCUMENT_PROVIDER_URL = "api/yjs";
 
 /**
  * A Collaborative implementation for an `IDrive`, talking to the
@@ -28,7 +28,7 @@ export class YDrive extends Drive {
    * @param user - The user manager to add the identity to the awareness of documents.
    */
   constructor(user: User.IManager) {
-    super({ name: 'YDrive' });
+    super({ name: "YDrive" });
     this._user = user;
     this._providers = new Map<string, WebSocketProvider>();
 
@@ -64,7 +64,7 @@ export class YDrive extends Drive {
     if (this.isDisposed) {
       return;
     }
-    this._providers.forEach(p => p.dispose());
+    this._providers.forEach((p) => p.dispose());
     this._providers.clear();
     super.dispose();
   }
@@ -82,7 +82,7 @@ export class YDrive extends Drive {
    */
   async get(
     localPath: string,
-    options?: Contents.IFetchOptions
+    options?: Contents.IFetchOptions,
   ): Promise<Contents.IModel> {
     if (options && options.format && options.type) {
       const key = `${options.type}:${options.format}:${localPath}`;
@@ -113,7 +113,7 @@ export class YDrive extends Drive {
    */
   async rename(
     oldLocalPath: string,
-    newLocalPath: string
+    newLocalPath: string,
   ): Promise<Contents.IModel> {
     return await super.rename(oldLocalPath, newLocalPath);
   }
@@ -135,7 +135,7 @@ export class YDrive extends Drive {
    */
   async save(
     localPath: string,
-    options: Partial<Contents.IModel> = {}
+    options: Partial<Contents.IModel> = {},
   ): Promise<Contents.IModel> {
     // Save is done from the backend
     return this.get(localPath, { ...options, content: false });
@@ -143,9 +143,9 @@ export class YDrive extends Drive {
 
   private _onCreate = (
     options: Contents.ISharedFactoryOptions,
-    sharedModel: YDocument<DocumentChange>
+    sharedModel: YDocument<DocumentChange>,
   ) => {
-    if (typeof options.format !== 'string') {
+    if (typeof options.format !== "string") {
       return;
     }
     try {
@@ -155,7 +155,7 @@ export class YDrive extends Drive {
         format: options.format,
         contentType: options.contentType,
         model: sharedModel,
-        user: this._user
+        user: this._user,
       });
 
       const key = `${options.contentType}:${options.format}:${options.path}`;
@@ -172,7 +172,7 @@ export class YDrive extends Drive {
       // Falling back to the contents API if opening the websocket failed
       //  This may happen if the shared document is not a YDocument.
       console.error(
-        `Failed to open websocket connection for ${options.path}.\n:${error}`
+        `Failed to open websocket connection for ${options.path}.\n:${error}`,
       );
     }
   };
@@ -188,14 +188,14 @@ class SharedModelFactory implements Contents.ISharedFactory {
   constructor(
     private _onCreate: (
       options: Contents.ISharedFactoryOptions,
-      sharedModel: YDocument<DocumentChange>
-    ) => void
+      sharedModel: YDocument<DocumentChange>,
+    ) => void,
   ) {}
 
   createNew(
-    options: Contents.ISharedFactoryOptions
+    options: Contents.ISharedFactoryOptions,
   ): ISharedDocument | undefined {
-    if (typeof options.format !== 'string') {
+    if (typeof options.format !== "string") {
       console.warn(`Only defined format are supported; got ${options.format}.`);
       return;
     }
@@ -206,10 +206,10 @@ class SharedModelFactory implements Contents.ISharedFactory {
 
     let sharedModel: YDocument<DocumentChange> | undefined;
     switch (options.contentType) {
-      case 'file':
+      case "file":
         sharedModel = new YFile();
         break;
-      case 'notebook':
+      case "notebook":
         sharedModel = new YNotebook();
         break;
       //default:

@@ -5,9 +5,9 @@
  * @module user
  */
 
-export * from './tokens';
-export * from './awarenessmock';
-export * from './menu';
-export * from './userinfopanel';
-export * from './collaboratorspanel';
-export * from './utils';
+export * from "./tokens";
+export * from "./awarenessmock";
+export * from "./menu";
+export * from "./userinfopanel";
+export * from "./collaboratorspanel";
+export * from "./utils";
