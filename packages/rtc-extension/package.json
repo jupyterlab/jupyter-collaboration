@@ -2,6 +2,11 @@
   "name": "@jupyterlab/rtc-extension",
   "version": "4.0.0-alpha.18",
   "description": "JupyterLab - RTC Extension",
+  "keywords": [
+    "jupyter",
+    "jupyterlab",
+    "jupyterlab-extension"
+  ],
   "homepage": "https://github.com/jupyter-server/jupyter_server_ydoc",
   "bugs": {
     "url": "https://github.com/jupyter-server/jupyter_server_ydoc/issues"
@@ -19,6 +24,7 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "style": "style/index.css",
+  "styleModule": "style/index.js",
   "directories": {
     "lib": "lib/"
   },
@@ -31,10 +37,20 @@
     "style/index.js"
   ],
   "scripts": {
-    "build": "tsc -b",
-    "clean": "rimraf lib && rimraf tsconfig.tsbuildinfo",
+    "build": "jlpm run build:lib && jlpm run build:labextension:dev",
+    "build:lib": "tsc -b",
+    "build:prod": "jlpm run clean && jlpm run build:lib && jlpm run build:labextension",
+    "build:labextension": "jupyter labextension build .",
+    "build:labextension:dev": "jupyter labextension build --development True .",
+    "clean": "jlpm run clean:lib",
+    "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
+    "clean:labextension": "rimraf ../../jupyter_server_ydoc/labextension",
+    "clean:all": "jlpm run clean:lib && rimraf node_modules && jlpm run clean:labextension",
     "docs": "typedoc src",
-    "watch": "tsc -b --watch"
+    "install:extension": "jlpm run build",
+    "watch": "run-p watch:src watch:labextension",
+    "watch:src": "tsc -w",
+    "watch:labextension": "jupyter labextension watch ."
   },
   "dependencies": {
     "@jupyterlab/application": "^4.0.0-alpha.18",
@@ -51,6 +67,8 @@
     "yjs": "^13.5.40"
   },
   "devDependencies": {
+    "@jupyterlab/builder": "^4.0.0-alpha.18",
+    "npm-run-all": "^4.1.5",
     "rimraf": "~3.0.0",
     "typedoc": "~0.22.10",
     "typescript": "~4.7.3"
@@ -60,7 +78,7 @@
   },
   "jupyterlab": {
     "extension": true,
-    "schemaDir": "./schema"
-  },
-  "styleModule": "style/index.js"
+    "schemaDir": "./schema",
+    "outputDir": "../../jupyter_server_ydoc/labextension"
+  }
 }
