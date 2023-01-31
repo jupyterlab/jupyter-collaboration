@@ -57,7 +57,7 @@ source = "code"
 path = "jupyterlab_rtc/_version.py"
 
 [tool.hatch.build.target.sdist]
-artifacts = ["package.json", "jupyterlab_rtc/labextension"]
+artifacts = ["package.json", "scripts", "jupyterlab_rtc/labextension"]
 exclude = [".github", "binder"]
 
 [tool.hatch.build.targets.wheel.shared-data]
@@ -82,6 +82,11 @@ editable_build_cmd = "install:extension"
 
 [tool.jupyter-releaser.options]
 version-cmd = "python scripts/bump-version.py --force"
+pydist_resource_paths = [
+    "package.json",
+    "scripts",
+    "jupyterlab_rtc/labextension"
+]
 
 [tool.jupyter-releaser.hooks]
 before-build-npm = [

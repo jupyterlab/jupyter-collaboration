@@ -1,15 +1,15 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { ReactWidget } from "@jupyterlab/apputils";
+import { ReactWidget } from '@jupyterlab/apputils';
 
-import { User } from "@jupyterlab/services";
+import { User } from '@jupyterlab/services';
 
-import { Panel } from "@lumino/widgets";
+import { Panel } from '@lumino/widgets';
 
-import * as React from "react";
+import * as React from 'react';
 
-import { UserIconComponent } from "./components";
+import { UserIconComponent } from './components';
 
 export class UserInfoPanel extends Panel {
   private _profile: User.IManager;
@@ -17,7 +17,7 @@ export class UserInfoPanel extends Panel {
 
   constructor(user: User.IManager) {
     super({});
-    this.addClass("jp-UserInfoPanel");
+    this.addClass('jp-UserInfoPanel');
 
     this._profile = user;
     this._body = null;
@@ -33,7 +33,7 @@ export class UserInfoPanel extends Panel {
           this.addWidget(this._body);
           this.update();
         })
-        .catch((e) => console.error(e));
+        .catch(e => console.error(e));
     }
   }
 }

@@ -9,9 +9,10 @@
 
 import json
 from pathlib import Path
-import click
-from jupyter_releaser.util import get_version, run
-from pkg_resources import parse_version
+
+import click  # type: ignore
+from jupyter_releaser.util import get_version, run  # type: ignore
+from pkg_resources import parse_version  # type: ignore
 
 LERNA_CMD = "jlpm run lerna version --no-push --force-publish --no-git-tag-version"
 
@@ -25,21 +26,20 @@ def bump(force, spec):
         raise Exception("Must be in a clean git state with no untracked files")
 
     curr = parse_version(get_version())
-    if spec == 'next':
+    if spec == "next":
         spec = f"{curr.major}.{curr.minor}."
         if curr.pre:
             p, x = curr.pre
             spec += f"{curr.micro}{p}{x + 1}"
         else:
             spec += f"{curr.micro + 1}"
-    
-    elif spec == 'patch':
+
+    elif spec == "patch":
         spec = f"{curr.major}.{curr.minor}."
         if curr.pre:
             spec += f"{curr.micro}"
         else:
             spec += f"{curr.micro + 1}"
-
 
     version = parse_version(spec)
 
@@ -56,19 +56,18 @@ def bump(force, spec):
         lerna_cmd += " --yes"
     run(lerna_cmd)
 
-    
     HERE = Path(__file__).parent.parent.resolve()
     path = HERE.joinpath("package.json")
-    if path.exists() :
-        with path.open(mode='r') as f:
+    if path.exists():
+        with path.open(mode="r") as f:
             data = json.load(f)
-        
-        data['version'] = js_version
 
-        with path.open(mode='w') as f:
+        data["version"] = js_version
+
+        with path.open(mode="w") as f:
             json.dump(data, f, indent=4)
-            
-    else :
+
+    else:
         raise FileNotFoundError(f"Could not find package.json under dir {path!s}")
 
 

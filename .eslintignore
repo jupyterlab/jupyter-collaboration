@@ -10,5 +10,10 @@
 
 docs
 tests
+.eslintrc.js
 jupyter-config
 jupyterlab_rtc
+
+packages/collaboration/babel.config.js
+packages/docprovider/babel.config.js
+packages/docprovider/jest.config.js
