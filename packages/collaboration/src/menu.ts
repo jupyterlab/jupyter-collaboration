@@ -1,10 +1,10 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { userIcon } from '@jupyterlab/ui-components';
-import { User } from '@jupyterlab/services';
-import { Menu, MenuBar } from '@lumino/widgets';
-import { h, VirtualElement } from '@lumino/virtualdom';
+import { userIcon } from "@jupyterlab/ui-components";
+import { User } from "@jupyterlab/services";
+import { Menu, MenuBar } from "@lumino/widgets";
+import { h, VirtualElement } from "@lumino/virtualdom";
 
 /**
  * Custom renderer for the user menu.
@@ -34,10 +34,10 @@ export class RendererUserMenu extends MenuBar.Renderer {
     let dataset = this.createItemDataset(data);
     let aria = this.createItemARIA(data);
     return h.li(
-      { className, dataset, tabindex: '0', onfocus: data.onfocus, ...aria },
+      { className, dataset, tabindex: "0", onfocus: data.onfocus, ...aria },
       this._createUserIcon(),
       this.renderLabel(data),
-      this.renderIcon(data)
+      this.renderIcon(data),
     );
   }
 
@@ -51,8 +51,8 @@ export class RendererUserMenu extends MenuBar.Renderer {
   renderLabel(data: MenuBar.IRenderData): VirtualElement {
     let content = this.formatLabel(data);
     return h.div(
-      { className: 'lm-MenuBar-itemLabel jp-MenuBar-label' },
-      content
+      { className: "lm-MenuBar-itemLabel jp-MenuBar-label" },
+      content,
     );
   }
 
@@ -65,24 +65,24 @@ export class RendererUserMenu extends MenuBar.Renderer {
     if (this._user.isReady && this._user.identity!.avatar_url) {
       return h.div(
         {
-          className: 'lm-MenuBar-itemIcon jp-MenuBar-imageIcon'
+          className: "lm-MenuBar-itemIcon jp-MenuBar-imageIcon",
         },
-        h.img({ src: this._user.identity!.avatar_url })
+        h.img({ src: this._user.identity!.avatar_url }),
       );
     } else if (this._user.isReady) {
       return h.div(
         {
-          className: 'lm-MenuBar-itemIcon jp-MenuBar-anonymousIcon',
-          style: { backgroundColor: this._user.identity!.color }
+          className: "lm-MenuBar-itemIcon jp-MenuBar-anonymousIcon",
+          style: { backgroundColor: this._user.identity!.color },
         },
-        h.span({}, this._user.identity!.initials)
+        h.span({}, this._user.identity!.initials),
       );
     } else {
       return h.div(
         {
-          className: 'lm-MenuBar-itemIcon jp-MenuBar-anonymousIcon'
+          className: "lm-MenuBar-itemIcon jp-MenuBar-anonymousIcon",
         },
-        userIcon
+        userIcon,
       );
     }
   }

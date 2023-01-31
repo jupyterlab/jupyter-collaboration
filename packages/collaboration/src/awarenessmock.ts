@@ -1,8 +1,8 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import * as Y from 'yjs';
-import { IAwareness } from './tokens';
+import * as Y from "yjs";
+import { IAwareness } from "./tokens";
 
 /**
  * Default user implementation.
