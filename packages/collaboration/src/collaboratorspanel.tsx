@@ -62,7 +62,7 @@ export class CollaboratorsPanel extends Panel {
    * Handle collaborator change.
    */
   private _onAwarenessChanged = () => {
-    const state = this._awareness.getStates();
+    const state = this._awareness.getStates() as any;
     const collaborators: ICollaboratorAwareness[] = [];
 
     state.forEach((value: ICollaboratorAwareness, key: any) => {

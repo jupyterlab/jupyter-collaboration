@@ -49,7 +49,8 @@ export class WebSocketProvider implements IDocumentProvider {
     this._serverUrl = options.url;
     this._ydoc = options.model.ydoc;
     this._awareness = options.model.awareness;
-
+    this._yWebsocketProvider = null;
+    
     const user = options.user;
 
     user.ready
@@ -112,7 +113,7 @@ export class WebSocketProvider implements IDocumentProvider {
       return;
     }
     this._isDisposed = true;
-    this._yWebsocketProvider.destroy();
+    this._yWebsocketProvider?.destroy();
     Signal.clearData(this);
   }
 
@@ -128,7 +129,7 @@ export class WebSocketProvider implements IDocumentProvider {
   private _ready = new PromiseDelegate<void>();
   private _serverUrl: string;
   private _ydoc: Doc;
-  private _yWebsocketProvider: YWebsocketProvider;
+  private _yWebsocketProvider: YWebsocketProvider | null;
 }
 
 /**

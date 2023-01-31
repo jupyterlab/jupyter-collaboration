@@ -38,7 +38,7 @@
   ],
   "scripts": {
     "build": "jlpm run build:lib && jlpm run build:labextension:dev",
-    "build:lib": "tsc -b",
+    "build:lib": "tsc",
     "build:prod": "jlpm run clean && jlpm run build:lib && jlpm run build:labextension",
     "build:labextension": "jupyter labextension build .",
     "build:labextension:dev": "jupyter labextension build --development True .",
@@ -55,7 +55,7 @@
   "dependencies": {
     "@jupyterlab/application": "^4.0.0-alpha.18",
     "@jupyterlab/apputils": "^4.0.0-alpha.18",
-    "@jupyterlab/collaboration": "^4.0.0-alpha.19",
+    "@jupyterlab/collaboration": "^4.0.0-alpha.18",
     "@jupyterlab/coreutils": "^6.0.0-alpha.18",
     "@jupyterlab/services": "^7.0.0-alpha.18",
     "@jupyterlab/statedb": "^4.0.0-alpha.18",
@@ -68,6 +68,7 @@
   },
   "devDependencies": {
     "@jupyterlab/builder": "^4.0.0-alpha.18",
+    "@types/react": "^18.0.27",
     "npm-run-all": "^4.1.5",
     "rimraf": "~3.0.0",
     "typedoc": "~0.22.10",

@@ -1,7 +1,7 @@
 {
     "name": "jupyterlab_rtc",
     "private": true,
-    "version": "4.0.0-alpha.19",
+    "version": "4.0.0-alpha.18",
     "description": "JupyterLab - RTC Extension",
     "keywords": [
         "jupyter",
@@ -17,7 +17,10 @@
         "url": "https://github.com/jupyter-server/jupyter_server_ydoc.git"
     },
     "license": "BSD-3-Clause",
-    "author": "Project Jupyter",
+    "author": {
+        "name": "Project Jupyter",
+        "email": ""
+    },
     "workspaces": {
         "packages": [
             "packages/*"

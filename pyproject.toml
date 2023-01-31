@@ -57,7 +57,7 @@ source = "code"
 path = "jupyterlab_rtc/_version.py"
 
 [tool.hatch.build.target.sdist]
-artifacts = ["jupyterlab_rtc/labextension"]
+artifacts = ["package.json", "jupyterlab_rtc/labextension"]
 exclude = [".github", "binder"]
 
 [tool.hatch.build.targets.wheel.shared-data]

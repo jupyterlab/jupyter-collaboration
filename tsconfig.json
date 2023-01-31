@@ -15,7 +15,7 @@
     "resolveJsonModule": true,
 		"strict": true,
     "strictNullChecks": true,
-    "target": "es2017",
+    "target": "es2018",
     "types": []
   }
 }

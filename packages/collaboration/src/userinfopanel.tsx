@@ -13,13 +13,14 @@ import { UserIconComponent } from "./components";
 
 export class UserInfoPanel extends Panel {
   private _profile: User.IManager;
-  private _body: UserInfoBody;
+  private _body: UserInfoBody | null;
 
   constructor(user: User.IManager) {
     super({});
     this.addClass("jp-UserInfoPanel");
 
     this._profile = user;
+    this._body = null;
 
     if (this._profile.isReady) {
       this._body = new UserInfoBody(this._profile.identity!);
