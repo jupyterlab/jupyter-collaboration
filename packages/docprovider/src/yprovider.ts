@@ -50,7 +50,7 @@ export class WebSocketProvider implements IDocumentProvider {
     this._ydoc = options.model.ydoc;
     this._awareness = options.model.awareness;
     this._yWebsocketProvider = null;
-    
+
     const user = options.user;
 
     user.ready

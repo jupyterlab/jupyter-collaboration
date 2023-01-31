@@ -113,8 +113,8 @@ export class CollaboratorsBody extends ReactWidget {
 
         current = PathExt.basename(currentFileLocation);
         current =
-          current.length > 25 ? current.slice(0, 12).concat(`…`) : current;
-        separator = "•";
+          current.length > 25 ? current.slice(0, 12).concat('…') : current;
+        separator = '•';
       }
 
       const onClick = () => {

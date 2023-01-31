@@ -76,14 +76,9 @@ ensured-targets = [
 skip-if-exists = ["jupyterlab_rtc/labextension/static/style.js"]
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
+npm = ["jlpm"]
 build_cmd = "build:prod"
-npm = ["jlpm"]
-
-[tool.hatch.build.hooks.jupyter-builder.editable-build-kwargs]
-build_cmd = "install:extension"
-npm = ["jlpm"]
-source_dir = "src"
-build_dir = "jupyterlab_rtc/labextension"
+editable_build_cmd = "install:extension"
 
 [tool.jupyter-releaser.options]
 version-cmd = "python scripts/bump-version.py --force"

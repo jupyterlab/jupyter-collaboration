@@ -25,7 +25,7 @@ export const IGlobalAwareness = new Token<IAwareness>(
 /**
  * The awareness interface.
  */
-export interface IAwareness extends Awareness {}
+export type IAwareness = Awareness;
 
 /**
  * An interface describing the user menu.

@@ -30,9 +30,9 @@ export class RendererUserMenu extends MenuBar.Renderer {
    * @returns A virtual element representing the item.
    */
   renderItem(data: MenuBar.IRenderData): VirtualElement {
-    let className = this.createItemClass(data);
-    let dataset = this.createItemDataset(data);
-    let aria = this.createItemARIA(data);
+    const className = this.createItemClass(data);
+    const dataset = this.createItemDataset(data);
+    const aria = this.createItemARIA(data);
     return h.li(
       { className, dataset, tabindex: "0", onfocus: data.onfocus, ...aria },
       this._createUserIcon(),
@@ -49,7 +49,7 @@ export class RendererUserMenu extends MenuBar.Renderer {
    * @returns A virtual element representing the item label.
    */
   renderLabel(data: MenuBar.IRenderData): VirtualElement {
-    let content = this.formatLabel(data);
+    const content = this.formatLabel(data);
     return h.div(
       { className: "lm-MenuBar-itemLabel jp-MenuBar-label" },
       content,
