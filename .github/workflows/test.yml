@@ -63,7 +63,7 @@ jobs:
       - name: Run the tests with Coverage
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(runner.os, 'Windows') }}
         run: |
-          python -m pytest -vv --cov jupyter_server_ydoc --cov-branch --cov-report term-missing:skip-covered
+          python -m pytest -vv --cov jupyterlab_rtc --cov-branch --cov-report term-missing:skip-covered
       - name: Run the tests on pypy and Windows
         if: ${{ startsWith(matrix.python-version, 'pypy') || startsWith(runner.os, 'Windows') }}
         run: |
@@ -127,4 +127,4 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - uses: jupyterlab/maintainer-tools/.github/actions/test-sdist@v1
         with:
-          extra_test: 'jupyter server extension list 2>&1 | grep -ie "jupyter_server_ydoc.*OK"'
+          extra_test: 'jupyter server extension list 2>&1 | grep -ie "jupyterlab_rtc.*OK"'

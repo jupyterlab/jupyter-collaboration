@@ -44,7 +44,7 @@
     "build:labextension:dev": "jupyter labextension build --development True .",
     "clean": "jlpm run clean:lib",
     "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
-    "clean:labextension": "rimraf ../../jupyter_server_ydoc/labextension",
+    "clean:labextension": "rimraf ../../jupyterlab_rtc/labextension",
     "clean:all": "jlpm run clean:lib && rimraf node_modules && jlpm run clean:labextension",
     "docs": "typedoc src",
     "install:extension": "jlpm run build",
@@ -55,7 +55,7 @@
   "dependencies": {
     "@jupyterlab/application": "^4.0.0-alpha.18",
     "@jupyterlab/apputils": "^4.0.0-alpha.18",
-    "@jupyterlab/collaboration": "^4.0.0-alpha.18",
+    "@jupyterlab/collaboration": "^4.0.0-alpha.19",
     "@jupyterlab/coreutils": "^6.0.0-alpha.18",
     "@jupyterlab/services": "^7.0.0-alpha.18",
     "@jupyterlab/statedb": "^4.0.0-alpha.18",
@@ -79,6 +79,6 @@
   "jupyterlab": {
     "extension": true,
     "schemaDir": "./schema",
-    "outputDir": "../../jupyter_server_ydoc/labextension"
+    "outputDir": "../../jupyterlab_rtc/labextension"
   }
 }

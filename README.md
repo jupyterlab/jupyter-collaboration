@@ -9,7 +9,7 @@ Jupyter Server YDoc is a Jupyter Server Extension providing support for Y docume
 To install the latest release locally, make sure you have
 [pip installed](https://pip.readthedocs.io/en/stable/installing/) and run:
 
-    pip install jupyter_server_ydoc
+    pip install jupyterlab_rtc
 
 Jupyter Server YDoc currently supports Python>=3.6 on Linux, OSX and Windows.
 

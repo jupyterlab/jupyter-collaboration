@@ -3,7 +3,7 @@ build-backend = "hatchling.build"
 requires = ["hatchling>=1.4.0", "hatch-nodejs-version", "jupyterlab>=4.0.0a32"]
 
 [project]
-name = "jupyter_server_ydoc"
+name = "jupyterlab_rtc"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.7"
@@ -31,6 +31,10 @@ dependencies = [
 dynamic = ["version", "description", "authors", "urls", "keywords"]
 
 [project.optional-dependencies]
+dev = [
+    'click',
+    'jupyter_releaser'
+]
 test = [
     "coverage",
     "jupyter_server[test]>=2.0.0a0",
@@ -42,32 +46,34 @@ test = [
 
 [tool.hatch.version]
 source = "nodejs"
-path = "packages/rtc-extension/package.json"
+path = "package.json"
 
 [tool.hatch.metadata.hooks.nodejs]
+path = "package.json"
 fields = ["description", "authors", "urls"]
 
+[tool.hatch.build.hooks.version]
+source = "code"
+path = "jupyterlab_rtc/_version.py"
+
 [tool.hatch.build.target.sdist]
-artifacts = ["jupyter_server_ydoc/labextension"]
+artifacts = ["jupyterlab_rtc/labextension"]
 exclude = [".github", "binder"]
 
 [tool.hatch.build.targets.wheel.shared-data]
 "install.json" = "share/jupyter/labextensions/@jupyterlab/rtc-extension/install.json"
-"jupyter_server_ydoc/labextension" = "share/jupyter/labextensions/@jupyterlab/rtc-extension"
-"jupyter-config/jupyter_notebook_ydoc.json" = "etc/jupyter/jupyter_notebook_config.d/jupyter_server_ydoc.json"
-"jupyter-config/jupyter_server_ydoc.json" = "etc/jupyter/jupyter_server_config.d/jupyter_server_ydoc.json"
-
-[tool.hatch.build.hooks.version]
-path = "jupyter_server_ydoc/_version.py"
+"jupyterlab_rtc/labextension" = "share/jupyter/labextensions/@jupyterlab/rtc-extension"
+"jupyter-config/jupyter_server.json" = "etc/jupyter/jupyter_server_config.d/jupyterlab_rtc.json"
+"jupyter-config/jupyter_notebook.json" = "etc/jupyter/jupyter_notebook_config.d/jupyterlab_rtc.json"
 
 [tool.hatch.build.hooks.jupyter-builder]
 dependencies = ["hatch-jupyter-builder>=0.5"]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = [
-    "jupyter_server_ydoc/labextension/static/style.js",
-    "jupyter_server_ydoc/labextension/package.json",
+    "jupyterlab_rtc/labextension/static/style.js",
+    "jupyterlab_rtc/labextension/package.json",
 ]
-skip-if-exists = ["jupyter_server_ydoc/labextension/static/style.js"]
+skip-if-exists = ["jupyterlab_rtc/labextension/static/style.js"]
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
 build_cmd = "build:prod"
@@ -77,10 +83,10 @@ npm = ["jlpm"]
 build_cmd = "install:extension"
 npm = ["jlpm"]
 source_dir = "src"
-build_dir = "jupyter_server_ydoc/labextension"
+build_dir = "jupyterlab_rtc/labextension"
 
 [tool.jupyter-releaser.options]
-version_cmd = "hatch version"
+version-cmd = "python scripts/bump-version.py --force"
 
 [tool.jupyter-releaser.hooks]
 before-build-npm = [
@@ -88,7 +94,7 @@ before-build-npm = [
     "jlpm",
     "jlpm build:prod",
 ]
-before-build-python = ["jlpm clean:all"]
+before-build-python = ["jlpm clean:all", "jlpm"]
 
 [tool.check-wheel-contents]
 ignore = ["W002"]

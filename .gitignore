@@ -7,9 +7,9 @@ node_modules/
 *.egg-info/
 .ipynb_checkpoints
 *.tsbuildinfo
-jupyter_server_ydoc/labextension
+jupyterlab_rtc/labextension
 # Version file is handled by hatchling
-jupyter_server_ydoc/_version.py
+#jupyterlab_rtc/_version.py
 
 # Integration tests
 ui-tests/test-results/

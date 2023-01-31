@@ -1,7 +1,7 @@
 {
   "NotebookApp": {
     "nbserver_extensions": {
-      "jupyter_server_ydoc": true
+      "jupyterlab_rtc": true
     }
   }
 }

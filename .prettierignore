@@ -11,4 +11,4 @@
 docs
 tests
 jupyter-config
-jupyter_server_ydoc
+jupyterlab_rtc

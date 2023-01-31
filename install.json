@@ -1,5 +1,5 @@
 {
   "packageManager": "python",
-  "packageName": "jupyter_server_ydoc",
-  "uninstallInstructions": "Use your Python package manager (pip, conda, etc.) to uninstall the package jupyter_server_ydoc"
+  "packageName": "jupyterlab_rtc",
+  "uninstallInstructions": "Use your Python package manager (pip, conda, etc.) to uninstall the package jupyterlab_rtc"
 }
