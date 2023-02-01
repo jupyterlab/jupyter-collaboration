@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Welcome to JupyterLab Real-Time Collaboration documentation!
-=============================================
+============================================================
 
 .. toctree::
    :maxdepth: 1

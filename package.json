@@ -2,7 +2,7 @@
     "name": "jupyterlab_rtc",
     "private": true,
     "version": "4.0.0-alpha.18",
-    "description": "JupyterLab - RTC Extension",
+    "description": "JupyterLab Extension enabling Real-Time Collaboration",
     "keywords": [
         "jupyter",
         "jupyterlab",
@@ -47,7 +47,8 @@
         "test:cov": "lerna run test:cov",
         "test:debug": "lerna run test:debug",
         "test:debug:watch": "lerna run test:debug:watch",
-        "watch": "lerna run watch"
+        "watch": "lerna run watch",
+        "version": "lerna version"
     },
     "dependencies": {
         "@typescript-eslint/eslint-plugin": "^5.12.1",
