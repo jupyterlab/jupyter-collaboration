@@ -59,7 +59,7 @@ def bump(force, spec):
         data["version"] = js_version
 
         with path.open(mode="w") as f:
-            json.dump(data, f, indent=4)
+            json.dump(data, f, indent=2)
 
     else:
         raise FileNotFoundError(f"Could not find package.json under dir {path!s}")
