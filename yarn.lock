@@ -1641,6 +1641,27 @@
     path-browserify "^1.0.0"
     url-parse "~1.5.4"
 
+"@jupyterlab/docmanager@^4.0.0-alpha.18":
+  version "4.0.0-alpha.18"
+  resolved "https://registry.yarnpkg.com/@jupyterlab/docmanager/-/docmanager-4.0.0-alpha.18.tgz#1b39442d88fb5eee0e885259493e7bf89dcb47c2"
+  integrity sha512-Yq16wz4sjSIt3s7+UaR0oUaOYa4MV18Yh+JSxcOHTF/xb0RwRO52M7QngxHfTAf738Dzi+oymDTvxLrcmeA8qA==
+  dependencies:
+    "@jupyterlab/apputils" "^4.0.0-alpha.18"
+    "@jupyterlab/coreutils" "^6.0.0-alpha.18"
+    "@jupyterlab/docregistry" "^4.0.0-alpha.18"
+    "@jupyterlab/services" "^7.0.0-alpha.18"
+    "@jupyterlab/statusbar" "^4.0.0-alpha.18"
+    "@jupyterlab/translation" "^4.0.0-alpha.18"
+    "@jupyterlab/ui-components" "^4.0.0-alpha.33"
+    "@lumino/algorithm" "^2.0.0-alpha.6"
+    "@lumino/coreutils" "^2.0.0-alpha.6"
+    "@lumino/disposable" "^2.0.0-alpha.6"
+    "@lumino/messaging" "^2.0.0-alpha.6"
+    "@lumino/properties" "^2.0.0-alpha.6"
+    "@lumino/signaling" "^2.0.0-alpha.6"
+    "@lumino/widgets" "^2.0.0-alpha.6"
+    react "^18.2.0"
+
 "@jupyterlab/docregistry@^4.0.0-alpha.18":
   version "4.0.0-alpha.18"
   resolved "https://registry.yarnpkg.com/@jupyterlab/docregistry/-/docregistry-4.0.0-alpha.18.tgz#fda19d358dd058e1b201c9b8c550a8e5a4eb95e8"
@@ -1677,6 +1698,32 @@
     "@lumino/messaging" "^2.0.0-alpha.6"
     "@lumino/polling" "^2.0.0-alpha.6"
     "@lumino/signaling" "^2.0.0-alpha.6"
+    "@lumino/widgets" "^2.0.0-alpha.6"
+    react "^18.2.0"
+
+"@jupyterlab/filebrowser@^4.0.0-alpha.18":
+  version "4.0.0-alpha.18"
+  resolved "https://registry.yarnpkg.com/@jupyterlab/filebrowser/-/filebrowser-4.0.0-alpha.18.tgz#3b758598e49a69a6f39905b2e9f2caddd6ea0887"
+  integrity sha512-woMvTQ0G0/se0KkF78fLuQ0RziOnb94WkkL83mPSxexCsWh8MOsvcX+vu4nloGDHDJV2nhE4yweKJN3ipCjl8A==
+  dependencies:
+    "@jupyterlab/apputils" "^4.0.0-alpha.18"
+    "@jupyterlab/coreutils" "^6.0.0-alpha.18"
+    "@jupyterlab/docmanager" "^4.0.0-alpha.18"
+    "@jupyterlab/docregistry" "^4.0.0-alpha.18"
+    "@jupyterlab/services" "^7.0.0-alpha.18"
+    "@jupyterlab/statedb" "^4.0.0-alpha.18"
+    "@jupyterlab/statusbar" "^4.0.0-alpha.18"
+    "@jupyterlab/translation" "^4.0.0-alpha.18"
+    "@jupyterlab/ui-components" "^4.0.0-alpha.33"
+    "@lumino/algorithm" "^2.0.0-alpha.6"
+    "@lumino/coreutils" "^2.0.0-alpha.6"
+    "@lumino/disposable" "^2.0.0-alpha.6"
+    "@lumino/domutils" "^2.0.0-alpha.6"
+    "@lumino/dragdrop" "^2.0.0-alpha.6"
+    "@lumino/messaging" "^2.0.0-alpha.6"
+    "@lumino/polling" "^2.0.0-alpha.6"
+    "@lumino/signaling" "^2.0.0-alpha.6"
+    "@lumino/virtualdom" "^2.0.0-alpha.6"
     "@lumino/widgets" "^2.0.0-alpha.6"
     react "^18.2.0"
 
