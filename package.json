@@ -8,13 +8,13 @@
     "jupyterlab",
     "jupyterlab-extension"
   ],
-  "homepage": "https://github.com/jupyterlab/jupyter_server_ydoc",
+  "homepage": "https://github.com/jupyterlab/jupyterlab_rtc",
   "bugs": {
-    "url": "https://github.com/jupyterlab/jupyter_server_ydoc/issues"
+    "url": "https://github.com/jupyterlab/jupyterlab_rtc/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jupyterlab/jupyter_server_ydoc.git"
+    "url": "https://github.com/jupyterlab/jupyterlab_rtc.git"
   },
   "license": "BSD-3-Clause",
   "author": {
