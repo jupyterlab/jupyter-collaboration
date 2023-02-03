@@ -1,7 +1,7 @@
 {
   "name": "jupyterlab_rtc",
   "private": true,
-  "version": "4.0.0-alpha.18",
+  "version": "4.0.0-alpha.19",
   "description": "JupyterLab Extension enabling Real-Time Collaboration",
   "keywords": [
     "jupyter",
@@ -18,8 +18,8 @@
   },
   "license": "BSD-3-Clause",
   "author": {
-    "name": "Project Jupyter",
-    "email": "fake@gmail.com"
+    "name": "Jupyter Development Team",
+    "email": "jupyter@googlegroups.com"
   },
   "workspaces": {
     "packages": [

@@ -25,7 +25,7 @@ classifiers = [
     "Framework :: Jupyter :: JupyterLab :: Extensions :: Prebuilt",
 ]
 dependencies = [
-    "jupyterlab>=4.0.0a32",
+    "jupyter_server>=2.0.0,<3.0.0",
     "jupyter_ydoc>=0.3.0,<0.4.0",
     "ypy-websocket>=0.8.2,<0.9.0",
     "jupyter_server_fileid >=0.6.0,<1"
@@ -39,7 +39,7 @@ dev = [
 ]
 test = [
     "coverage",
-    "jupyter_server[test]>=2.0.0a0",
+    "jupyter_server[test]>=2.0.0",
     "pytest>=7.0",
     "pytest_tornasync",
     "pytest-cov",
@@ -48,25 +48,24 @@ test = [
 
 [tool.hatch.version]
 source = "nodejs"
-path = "package.json"
-
-[tool.hatch.metadata.hooks.nodejs]
-path = "package.json"
-fields = ["description", "authors", "urls"]
 
 [tool.hatch.build.hooks.version]
-source = "code"
 path = "jupyterlab_rtc/_version.py"
 
-[tool.hatch.build.target.sdist]
-artifacts = ["package.json", "scripts", "jupyterlab_rtc/labextension"]
-exclude = [".github", "binder"]
+[tool.hatch.metadata.hooks.nodejs]
+fields = ["description", "authors", "urls"]
 
+[tool.hatch.build.targets.sdist]
+artifacts = ["/jupyterlab_rtc/labextension"]
+exclude = ["/.github", "/binder"]
+
+[tool.hatch.build.targets.sdist.force-include]
+"./packages" = "packages"
+ 
 [tool.hatch.build.targets.wheel.shared-data]
-"install.json" = "share/jupyter/labextensions/@jupyterlab/rtc-extension/install.json"
 "jupyterlab_rtc/labextension" = "share/jupyter/labextensions/@jupyterlab/rtc-extension"
+"install.json" = "share/jupyter/labextensions/@jupyterlab/rtc-extension/install.json"
 "jupyter-config/jupyter_server.json" = "etc/jupyter/jupyter_server_config.d/jupyterlab_rtc.json"
-"jupyter-config/jupyter_notebook.json" = "etc/jupyter/jupyter_notebook_config.d/jupyterlab_rtc.json"
 
 [tool.hatch.build.hooks.jupyter-builder]
 dependencies = ["hatch-jupyter-builder>=0.5"]
@@ -82,21 +81,21 @@ npm = ["jlpm"]
 build_cmd = "build:prod"
 editable_build_cmd = "install:extension"
 
+[tool.jupyter-releaser]
+skip = ["check-links"]
+
 [tool.jupyter-releaser.options]
 version-cmd = "python scripts/bump_version.py --force"
 
 [tool.jupyter-releaser.hooks]
 before-build-npm = [
-    "python -m pip install 'jupyterlab>=4.0.0a32'",
-    "jlpm",
     "jlpm build:prod"
 ]
 before-build-python = [
-    "python -m pip install 'jupyterlab>=4.0.0a32'",
-    "jlpm"
+    "jlpm clean:all"
 ]
 before-bump-version = [
-    "pip install 'jupyterlab>=4.0.0a32'",
+    "python -m pip install --pre -U jupyterlab",
     "jlpm"
 ]
 
@@ -146,6 +145,3 @@ module = [
     "terminado"
 ]
 ignore_missing_imports = true
-
-[tool.jupyter-releaser]
-skip = ["check-links"]
