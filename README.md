@@ -1,6 +1,6 @@
 # Jupyter Server YDoc
 
-[![Build Status](https://github.com/jupyter-server/jupyter_server_ydoc/actions/workflows/test.yml/badge.svg?query=branch%3Amain++)](https://github.com/jupyter-server/jupyter_server_ydoc/actions?query=branch%3Amain++)
+[![Build Status](https://github.com/jupyterlab/jupyterlab_rtc/actions/workflows/test.yml/badge.svg?query=branch%3Amain++)](https://github.com/jupyterlab/jupyterlab_rtc/actions?query=branch%3Amain++)
 
 Jupyter Server YDoc is a Jupyter Server Extension providing support for Y documents.
 
