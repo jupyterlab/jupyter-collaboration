@@ -1,8 +1,8 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { URLExt } from "@jupyterlab/coreutils";
-import { ServerConnection, User } from "@jupyterlab/services";
+import { URLExt } from '@jupyterlab/coreutils';
+import { ServerConnection, User } from '@jupyterlab/services';
 
 /**
  * Call the API extension
@@ -12,8 +12,8 @@ import { ServerConnection, User } from "@jupyterlab/services";
  * @returns The response body interpreted as JSON
  */
 export async function requestAPI<T>(
-  endPoint = "",
-  init: RequestInit = {},
+  endPoint = '',
+  init: RequestInit = {}
 ): Promise<T> {
   const settings = ServerConnection.makeSettings();
   const requestUrl = URLExt.join(settings.baseUrl, endPoint);
@@ -22,7 +22,7 @@ export async function requestAPI<T>(
   try {
     response = await ServerConnection.makeRequest(requestUrl, init, settings);
   } catch (error) {
-    throw new ServerConnection.NetworkError(error);
+    throw new ServerConnection.NetworkError(error as any);
   }
 
   let data: any = await response.text();
@@ -31,7 +31,7 @@ export async function requestAPI<T>(
     try {
       data = JSON.parse(data);
     } catch (error) {
-      console.log("Not a JSON response body.", response);
+      console.log('Not a JSON response body.', response);
     }
   }
 

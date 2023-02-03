@@ -1,9 +1,9 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { User } from "@jupyterlab/services";
+import { User } from '@jupyterlab/services';
 
-import * as React from "react";
+import * as React from 'react';
 
 type Props = {
   user: User.IIdentity;
@@ -14,7 +14,7 @@ type Props = {
  *
  * @returns The React component
  */
-export const UserIconComponent: React.FC<Props> = (props) => {
+export const UserIconComponent: React.FC<Props> = props => {
   const { user } = props;
 
   return (

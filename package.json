@@ -1,0 +1,72 @@
+{
+  "name": "jupyterlab_rtc",
+  "private": true,
+  "version": "4.0.0-alpha.19",
+  "description": "JupyterLab Extension enabling Real-Time Collaboration",
+  "keywords": [
+    "jupyter",
+    "jupyterlab",
+    "jupyterlab-extension"
+  ],
+  "homepage": "https://github.com/jupyter-server/jupyter_server_ydoc",
+  "bugs": {
+    "url": "https://github.com/jupyter-server/jupyter_server_ydoc/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jupyter-server/jupyter_server_ydoc.git"
+  },
+  "license": "BSD-3-Clause",
+  "author": {
+    "name": "Jupyter Development Team",
+    "email": "jupyter@googlegroups.com"
+  },
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ]
+  },
+  "scripts": {
+    "build": "lerna run build",
+    "build:prod": "lerna run build:prod",
+    "build:test": "lerna run build:test",
+    "clean": "lerna run clean",
+    "clean:all": "lerna run clean:all",
+    "eslint": "jlpm eslint:check --fix",
+    "eslint:check": "eslint . --ext .ts,.tsx",
+    "install": "lerna bootstrap",
+    "install:extension": "lerna run install:extension",
+    "lint": "jlpm prettier && jlpm eslint && jlpm stylelint",
+    "lint:check": "jlpm prettier:check && jlpm eslint:check",
+    "prettier": "jlpm prettier:base --write --list-different",
+    "prettier:base": "prettier \"**/*{.ts,.tsx,.js,.jsx,.css}\"",
+    "prettier:check": "jlpm prettier:base --check",
+    "stylelint": "jlpm stylelint:check --fix",
+    "stylelint:check": "stylelint --cache \"packages/**/style/**/*.css\"",
+    "test": "lerna run test",
+    "test:cov": "lerna run test:cov",
+    "test:debug": "lerna run test:debug",
+    "test:debug:watch": "lerna run test:debug:watch",
+    "watch": "lerna run watch"
+  },
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.12.1",
+    "@typescript-eslint/parser": "^5.12.1",
+    "eslint": "^8.9.0",
+    "eslint-config-prettier": "^8.4.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-react": "^7.30.0",
+    "prettier": "^2.5.1",
+    "rimraf": "^3.0.2",
+    "stylelint": "^14.3.0",
+    "stylelint-config-prettier": "^9.0.4",
+    "stylelint-config-recommended": "^6.0.0",
+    "stylelint-config-standard": "~24.0.0",
+    "stylelint-prettier": "^2.0.0",
+    "typescript": "~4.7.3"
+  },
+  "devDependencies": {
+    "lerna": "^6.4.1",
+    "yarn": "1.22.17"
+  }
+}

@@ -1,3 +1,10 @@
+ci:
+  # skip any check that needs internet access
+  skip: [prettier, eslint, stylelint]
+
+default_language_version:
+  node: system
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
@@ -27,11 +34,6 @@ repos:
       - id: isort
         files: \.py$
         args: [--profile=black]
-
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.0.0-alpha.4
-    hooks:
-      - id: prettier
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.3.1
@@ -72,3 +74,21 @@ repos:
         types: [yaml]
         args: ["--schemafile", "https://json.schemastore.org/github-workflow"]
         stages: [manual]
+
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier
+        entry: 'npm run prettier'
+        language: node
+        types_or: [json, ts, tsx, javascript, jsx, css]
+      - id: eslint
+        name: eslint
+        entry: 'npm run eslint'
+        language: node
+        types_or: [ts, tsx, javascript, jsx]
+      - id: stylelint
+        name: stylelint
+        entry: 'npm run stylelint'
+        language: node
+        types: [css]

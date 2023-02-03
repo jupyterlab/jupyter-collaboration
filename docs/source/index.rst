@@ -1,10 +1,10 @@
-.. jupyter_server_ydoc documentation master file, created by
+.. jupyterlab_rtc documentation master file, created by
    sphinx-quickstart.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Jupyter Server YDoc documentation!
-=============================================
+Welcome to JupyterLab Real-Time Collaboration documentation!
+============================================================
 
 .. toctree::
    :maxdepth: 1

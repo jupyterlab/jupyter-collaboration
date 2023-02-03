@@ -40,7 +40,7 @@ from any directory in your system with::
 
 Code Styling
 -----------------------------
-``jupyter_server_ydoc`` has adopted automatic code formatting so you shouldn't
+``jupyterlab_rtc`` has adopted automatic code formatting so you shouldn't
 need to worry too much about your code style.
 As long as your code is valid,
 the pre-commit hook should take care of how it should look.
@@ -73,9 +73,9 @@ Troubleshooting the Installation
 If you do not see that your Jupyter Server is not running on dev mode, it's possible that you are
 running other instances of Jupyter Server. You can try the following steps:
 
-1. Uninstall all instances of the jupyter_server_ydoc package. These include any installations you made using
+1. Uninstall all instances of the jupyterlab_rtc package. These include any installations you made using
    pip or conda
-2. Run ``python3 -m pip install -e .`` in the jupyter_server_ydoc repository to install jupyter_server_ydoc from there
+2. Run ``python3 -m pip install -e .`` in the jupyterlab_rtc repository to install jupyterlab_rtc from there
 3. Launch with ``python3 -m jupyter_server --port 8989``, and check that the browser is pointing to ``localhost:8989``
    (rather than the default 8888). You don't necessarily have to launch with port 8989, as long as you use
    a port that is neither the default nor in use, then it should be fine.
@@ -91,7 +91,7 @@ Install dependencies::
 
 To run the Python tests, use::
 
-    pytest jupyter_server_ydoc
+    pytest jupyterlab_rtc
 
 
 Building the Docs
@@ -100,11 +100,11 @@ Building the Docs
 To build the documentation you'll need `Sphinx <http://www.sphinx-doc.org/en/master/>`_,
 `pandoc <https://pandoc.org/>`_ and a few other packages.
 
-To install (and activate) a `conda environment`_ named ``jupyter_server_ydoc_docs``
+To install (and activate) a `conda environment`_ named ``jupyterlab_rtc_docs``
 containing all the necessary packages (except pandoc), use::
 
     conda env create -f docs/environment.yml
-    conda activate jupyter_server_ydoc_docs
+    conda activate jupyterlab_rtc_docs
 
 .. _conda environment:
     https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file

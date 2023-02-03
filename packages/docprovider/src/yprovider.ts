@@ -3,21 +3,21 @@
 | Distributed under the terms of the Modified BSD License.
 |----------------------------------------------------------------------------*/
 
-import { URLExt } from "@jupyterlab/coreutils";
-import { ServerConnection, User } from "@jupyterlab/services";
-import { DocumentChange, YDocument } from "@jupyter/ydoc";
-import { PromiseDelegate } from "@lumino/coreutils";
-import { IDisposable } from "@lumino/disposable";
-import { Signal } from "@lumino/signaling";
-import { Awareness } from "y-protocols/awareness";
-import { WebsocketProvider as YWebsocketProvider } from "y-websocket";
-import type { Doc } from "yjs";
+import { URLExt } from '@jupyterlab/coreutils';
+import { ServerConnection, User } from '@jupyterlab/services';
+import { DocumentChange, YDocument } from '@jupyter/ydoc';
+import { PromiseDelegate } from '@lumino/coreutils';
+import { IDisposable } from '@lumino/disposable';
+import { Signal } from '@lumino/signaling';
+import { Awareness } from 'y-protocols/awareness';
+import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
+import type { Doc } from 'yjs';
 
 /**
  * Room Id endpoint provided by `jupyter-server-ydoc`
  * See https://github.com/jupyter-server/jupyter_server_ydoc
  */
-const FILE_PATH_TO_ROOM_ID_URL = "api/yjs/roomid";
+const FILE_PATH_TO_ROOM_ID_URL = 'api/yjs/roomid';
 
 /**
  * An interface for a document provider.
@@ -49,6 +49,7 @@ export class WebSocketProvider implements IDocumentProvider {
     this._serverUrl = options.url;
     this._ydoc = options.model.ydoc;
     this._awareness = options.model.awareness;
+    this._yWebsocketProvider = null;
 
     const user = options.user;
 
@@ -56,38 +57,38 @@ export class WebSocketProvider implements IDocumentProvider {
       .then(() => {
         this._onUserChanged(user);
       })
-      .catch((e) => console.error(e));
+      .catch(e => console.error(e));
     user.userChanged.connect(this._onUserChanged, this);
 
     const serverSettings = ServerConnection.makeSettings();
     const url = URLExt.join(
       serverSettings.baseUrl,
       FILE_PATH_TO_ROOM_ID_URL,
-      encodeURIComponent(this._path),
+      encodeURIComponent(this._path)
     );
     const data = {
-      method: "PUT",
-      body: JSON.stringify({ format: this._format, type: this._contentType }),
+      method: 'PUT',
+      body: JSON.stringify({ format: this._format, type: this._contentType })
     };
     ServerConnection.makeRequest(url, data, serverSettings)
-      .then((response) => {
+      .then(response => {
         if (response.status !== 200 && response.status !== 201) {
           throw new ServerConnection.ResponseError(response);
         }
         return response.text();
       })
-      .then((roomid) => {
+      .then(roomid => {
         this._yWebsocketProvider = new YWebsocketProvider(
           this._serverUrl,
           roomid,
           this._ydoc,
           {
-            awareness: this._awareness,
-          },
+            awareness: this._awareness
+          }
         );
       })
       .then(() => this._ready.resolve())
-      .catch((reason) => console.warn(reason));
+      .catch(reason => console.warn(reason));
   }
 
   /**
@@ -112,12 +113,12 @@ export class WebSocketProvider implements IDocumentProvider {
       return;
     }
     this._isDisposed = true;
-    this._yWebsocketProvider.destroy();
+    this._yWebsocketProvider?.destroy();
     Signal.clearData(this);
   }
 
   private _onUserChanged(user: User.IManager): void {
-    this._awareness.setLocalStateField("user", user.identity);
+    this._awareness.setLocalStateField('user', user.identity);
   }
 
   private _awareness: Awareness;
@@ -128,7 +129,7 @@ export class WebSocketProvider implements IDocumentProvider {
   private _ready = new PromiseDelegate<void>();
   private _serverUrl: string;
   private _ydoc: Doc;
-  private _yWebsocketProvider: YWebsocketProvider;
+  private _yWebsocketProvider: YWebsocketProvider | null;
 }
 
 /**

@@ -1,4 +1,4 @@
-name: jupyter_server_ydoc_docs
+name: jupyterlab_rtc_docs
 dependencies:
   - python=3.8
   - pip

@@ -1,18 +1,4 @@
 {
-  "extends": "../../tsconfigbase.test",
-  "include": ["src/*", "test/*"],
-  "references": [
-    {
-      "path": "../coreutils"
-    },
-    {
-      "path": "../services"
-    },
-    {
-      "path": "."
-    },
-    {
-      "path": "../testing"
-    }
-  ]
+  "extends": "../../tsconfig.test.json",
+  "include": ["src/*", "test/*"]
 }

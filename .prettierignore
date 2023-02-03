@@ -1,0 +1,14 @@
+**/lib
+**/node_modules
+**/style
+**/package.json
+**/tsconfig.json
+**/tsconfig.test.json
+**/*.d.ts
+**/test
+**/ui-tests
+
+docs
+tests
+jupyter-config
+jupyterlab_rtc

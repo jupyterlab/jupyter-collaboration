@@ -1,75 +1,129 @@
 [build-system]
-requires = ["hatchling>=0.25"]
 build-backend = "hatchling.build"
+requires = ["hatchling>=1.4.0", "hatch-nodejs-version", "jupyterlab>=4.0.0a32"]
 
 [project]
-name = "jupyter_server_ydoc"
-dynamic = ["version"]
+name = "jupyterlab_rtc"
+readme = "README.md"
 license = { file = "LICENSE" }
-description = "A Jupyter Server Extension Providing Y Documents."
-keywords = ["ipython", "jupyter"]
+requires-python = ">=3.8"
 classifiers = [
-  "Intended Audience :: Developers",
-  "Intended Audience :: System Administrators",
-  "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: BSD License",
-  "Programming Language :: Python",
-  "Programming Language :: Python :: 3.7",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10"
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Framework :: Jupyter",
+    "Framework :: Jupyter :: JupyterLab",
+    "Framework :: Jupyter :: JupyterLab :: 4",
+    "Framework :: Jupyter :: JupyterLab :: Extensions",
+    "Framework :: Jupyter :: JupyterLab :: Extensions :: Prebuilt",
 ]
-requires-python = ">=3.7"
 dependencies = [
-  "jupyter_ydoc>=0.3.0,<0.4.0",
-  "ypy-websocket>=0.8.2,<0.9.0",
-  "jupyter_server_fileid >=0.6.0,<1"
+    "jupyter_server>=2.0.0,<3.0.0",
+    "jupyter_ydoc>=0.3.0,<0.4.0",
+    "ypy-websocket>=0.8.2,<0.9.0",
+    "jupyter_server_fileid >=0.6.0,<1"
 ]
-
-[[project.authors]]
-name = "Jupyter Development Team"
-email = "jupyter@googlegroups.com"
-
-[project.readme]
-file = "README.md"
-content-type = "text/markdown"
-
-[project.urls]
-Homepage = "https://jupyter.org"
+dynamic = ["version", "description", "authors", "urls", "keywords"]
 
 [project.optional-dependencies]
+dev = [
+    'click',
+    'jupyter_releaser'
+]
 test = [
-  "coverage",
-  "jupyter_server[test]>=2.0.0a0",
-  "pytest>=7.0",
-  "pytest_tornasync",
-  "pytest-cov",
-  "pytest-timeout",
+    "coverage",
+    "jupyter_server[test]>=2.0.0",
+    "pytest>=7.0",
+    "pytest_tornasync",
+    "pytest-cov",
+    "pytest-timeout",
 ]
 
+[tool.hatch.version]
+source = "nodejs"
+
+[tool.hatch.build.hooks.version]
+path = "jupyterlab_rtc/_version.py"
+
+[tool.hatch.metadata.hooks.nodejs]
+fields = ["description", "authors", "urls"]
+
+[tool.hatch.build.targets.sdist]
+artifacts = ["/jupyterlab_rtc/labextension"]
+exclude = ["/.github", "/binder"]
+
+[tool.hatch.build.targets.sdist.force-include]
+"./packages" = "packages"
+
 [tool.hatch.build.targets.wheel.shared-data]
-"jupyter-config/jupyter_notebook_ydoc.json" = "etc/jupyter/jupyter_notebook_config.d/jupyter_server_ydoc.json"
-"jupyter-config/jupyter_server_ydoc.json" = "etc/jupyter/jupyter_server_config.d/jupyter_server_ydoc.json"
+"jupyterlab_rtc/labextension" = "share/jupyter/labextensions/@jupyterlab/rtc-extension"
+"install.json" = "share/jupyter/labextensions/@jupyterlab/rtc-extension/install.json"
+"jupyter-config/jupyter_server.json" = "etc/jupyter/jupyter_server_config.d/jupyterlab_rtc.json"
+
+[tool.hatch.build.hooks.jupyter-builder]
+dependencies = ["hatch-jupyter-builder>=0.5"]
+build-function = "hatch_jupyter_builder.npm_builder"
+ensured-targets = [
+    "jupyterlab_rtc/labextension/static/style.js",
+    "jupyterlab_rtc/labextension/package.json",
+]
+skip-if-exists = ["jupyterlab_rtc/labextension/static/style.js"]
+
+[tool.hatch.build.hooks.jupyter-builder.build-kwargs]
+npm = ["jlpm"]
+build_cmd = "build:prod"
+editable_build_cmd = "install:extension"
+
+[tool.jupyter-releaser]
+skip = [
+    "check-links",
+    # FIXME
+    "check-npm",
+    "build-python",
+    "check-python"
+]
+
+[tool.jupyter-releaser.options]
+version-cmd = "python scripts/bump_version.py --force"
+
+[tool.jupyter-releaser.hooks]
+before-build-npm = [
+    "jlpm build:prod"
+]
+before-build-python = [
+    "jlpm clean:all"
+]
+before-bump-version = [
+    "python -m pip install --pre -U jupyterlab",
+    "jlpm"
+]
+
+[tool.check-wheel-contents]
+ignore = ["W002"]
 
 [tool.pytest.ini_options]
 addopts = "-raXs --durations 10 --color=yes --doctest-modules"
-testpaths = [
-    "tests/"
-]
+testpaths = ["tests/"]
 timeout = 300
 # Restore this setting to debug failures
 # timeout_method = "thread"
 filterwarnings = [
-  "error",
-  # From tornado
-  "ignore:unclosed <socket.socket:ResourceWarning",
-  "module:make_current is deprecated:DeprecationWarning",
-  "module:clear_current is deprecated:DeprecationWarning",
-  "module:There is no current event loop:DeprecationWarning",
-  #
-  "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
-  # In PyPy/Cython: see https://github.com/yaml/pyyaml/issues/688
-  "ignore:can't resolve package from __spec__ or __package__, falling back on __name__ and __path__:ImportWarning",
+    "error",
+    # From tornado
+    "ignore:unclosed <socket.socket:ResourceWarning",
+    "module:make_current is deprecated:DeprecationWarning",
+    "module:clear_current is deprecated:DeprecationWarning",
+    "module:There is no current event loop:DeprecationWarning",
+    #
+    "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
+    # In PyPy/Cython: see https://github.com/yaml/pyyaml/issues/688
+    "ignore:can't resolve package from __spec__ or __package__, falling back on __name__ and __path__:ImportWarning",
 ]
 
 [tool.mypy]
@@ -91,14 +145,8 @@ warn_unused_ignores = true
 
 [[tool.mypy.overrides]]
 module = [
-  "traitlets.*",
-  "jupyter_server.*",
-  "terminado"
+    "traitlets.*",
+    "jupyter_server.*",
+    "terminado"
 ]
 ignore_missing_imports = true
-
-[tool.jupyter-releaser]
-skip = ["check-links"]
-
-[tool.hatch.version]
-path = "jupyter_server_ydoc/__init__.py"

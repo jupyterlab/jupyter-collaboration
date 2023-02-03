@@ -5,26 +5,40 @@ on:
   pull_request:
     branches: ["*"]
 
+permissions:
+  contents: write
+
 jobs:
   check_release:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        group: [check_release, link_check]
-      fail-fast: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+
       - name: Install Dependencies
         run: |
-          pip install -e .
+          python -m pip install -e .
+
       - name: Check Release
-        if: ${{ matrix.group == 'check_release' }}
-        uses: jupyter-server/jupyter_releaser/.github/actions/check-release@v1
+        uses: jupyter-server/jupyter_releaser/.github/actions/check-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Run Link Check
-        if: ${{ matrix.group == 'link_check' }}
-        uses: jupyter-server/jupyter_releaser/.github/actions/check-links@v1
+
+      # FIXME - should be done by jupyter-releaser
+      - name: Build Python package
+        run: |
+          set -ex
+          python -m pip install build
+
+          python -m build
+
+      - name: Upload Distributions
+        uses: actions/upload-artifact@v3
+        with:
+          name: jupyter-releaser-dist-${{ github.run_number }}
+          path: |
+            .jupyter_releaser_checkout/dist
+            dist

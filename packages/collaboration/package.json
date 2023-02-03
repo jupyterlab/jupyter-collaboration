@@ -1,14 +1,14 @@
 {
   "name": "@jupyterlab/collaboration",
-  "version": "4.0.0-alpha.18",
+  "version": "4.0.0-alpha.19",
   "description": "JupyterLab - Real Time Collaboration Widgets",
-  "homepage": "https://github.com/jupyterlab/jupyterlab",
+  "homepage": "https://github.com/jupyter-server/jupyter_server_ydoc",
   "bugs": {
-    "url": "https://github.com/jupyterlab/jupyterlab/issues"
+    "url": "https://github.com/jupyter-server/jupyter_server_ydoc/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jupyterlab/jupyterlab.git"
+    "url": "https://github.com/jupyter-server/jupyter_server_ydoc.git"
   },
   "license": "BSD-3-Clause",
   "author": "Project Jupyter",
@@ -31,8 +31,11 @@
   ],
   "scripts": {
     "build": "tsc -b",
-    "clean": "rimraf lib && rimraf tsconfig.tsbuildinfo",
+    "build:prod": "jlpm run build",
+    "clean": "rimraf lib tsconfig.tsbuildinfo",
+    "clean:all": "rimraf lib tsconfig.tsbuildinfo node_modules",
     "docs": "typedoc src",
+    "install:extension": "jlpm run build",
     "watch": "tsc -b --watch"
   },
   "dependencies": {
