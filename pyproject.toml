@@ -61,7 +61,7 @@ exclude = ["/.github", "/binder"]
 
 [tool.hatch.build.targets.sdist.force-include]
 "./packages" = "packages"
- 
+
 [tool.hatch.build.targets.wheel.shared-data]
 "jupyterlab_rtc/labextension" = "share/jupyter/labextensions/@jupyterlab/rtc-extension"
 "install.json" = "share/jupyter/labextensions/@jupyterlab/rtc-extension/install.json"
