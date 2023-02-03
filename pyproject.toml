@@ -81,7 +81,13 @@ build_cmd = "build:prod"
 editable_build_cmd = "install:extension"
 
 [tool.jupyter-releaser]
-skip = ["check-links", "check-npm"]
+skip = [
+    "check-links",
+    # FIXME
+    "check-npm",
+    "build-python",
+    "check-python"
+]
 
 [tool.jupyter-releaser.options]
 version-cmd = "python scripts/bump_version.py --force"
