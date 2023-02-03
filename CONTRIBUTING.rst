@@ -25,7 +25,7 @@ Once you have installed the dependencies mentioned above, use the following
 steps::
 
     pip install --upgrade pip
-    git clone https://github.com/jupyter/jupyter_server_ydoc
+    git clone https://github.com/jupyterlab/jupyter_server_ydoc
     cd jupyter_server_ydoc
     pip install -e .
 

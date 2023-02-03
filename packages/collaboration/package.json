@@ -2,13 +2,13 @@
   "name": "@jupyterlab/collaboration",
   "version": "4.0.0-alpha.19",
   "description": "JupyterLab - Real Time Collaboration Widgets",
-  "homepage": "https://github.com/jupyter-server/jupyter_server_ydoc",
+  "homepage": "https://github.com/jupyterlab/jupyter_server_ydoc",
   "bugs": {
-    "url": "https://github.com/jupyter-server/jupyter_server_ydoc/issues"
+    "url": "https://github.com/jupyterlab/jupyter_server_ydoc/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jupyter-server/jupyter_server_ydoc.git"
+    "url": "https://github.com/jupyterlab/jupyter_server_ydoc.git"
   },
   "license": "BSD-3-Clause",
   "author": "Project Jupyter",
