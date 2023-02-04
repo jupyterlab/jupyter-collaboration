@@ -34,6 +34,7 @@ dynamic = ["version", "description", "authors", "urls", "keywords"]
 [project.optional-dependencies]
 dev = [
     'click',
+    "pre-commit",
     'jupyter_releaser'
 ]
 test = [
@@ -43,6 +44,11 @@ test = [
     "pytest_tornasync",
     "pytest-cov",
     "pytest-timeout",
+]
+docs = [
+    "sphinx",
+    "myst-parser",
+    "pydata-sphinx-theme"
 ]
 
 [tool.hatch.version]
@@ -142,6 +148,7 @@ warn_unused_configs = true
 warn_redundant_casts = true
 warn_return_any = true
 warn_unused_ignores = true
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = [

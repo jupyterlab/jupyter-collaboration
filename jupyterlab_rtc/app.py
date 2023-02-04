@@ -7,7 +7,7 @@ except ModuleNotFoundError:
     raise ModuleNotFoundError("Jupyter Server must be installed to use this extension.")
 
 from traitlets import Float, Int, Type
-from ypy_websocket.ystore import BaseYStore  # type: ignore
+from ypy_websocket.ystore import BaseYStore
 
 from .handlers import SQLiteYStore, YDocRoomIdHandler, YDocWebSocketHandler
 

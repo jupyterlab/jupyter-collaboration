@@ -34,7 +34,7 @@
     "build:prod": "jlpm run build",
     "clean": "rimraf lib tsconfig.tsbuildinfo",
     "clean:all": "rimraf lib tsconfig.tsbuildinfo node_modules",
-    "docs": "typedoc src",
+    "docs": "typedoc --out ../../docs/source/api/collaboration src",
     "install:extension": "jlpm run build",
     "watch": "tsc -b --watch"
   },

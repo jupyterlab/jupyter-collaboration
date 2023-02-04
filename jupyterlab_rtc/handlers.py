@@ -10,17 +10,17 @@ from typing import Any, Dict, Optional, Tuple
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.utils import ensure_async
-from jupyter_ydoc import ydocs as YDOCS  # type: ignore
+from jupyter_ydoc import ydocs as YDOCS
 from tornado import web
 from tornado.websocket import WebSocketHandler
 from traitlets import Int, Unicode
 from traitlets.config import LoggingConfigurable
-from ypy_websocket.websocket_server import WebsocketServer, YRoom  # type: ignore
-from ypy_websocket.ystore import BaseYStore  # type: ignore
+from ypy_websocket.websocket_server import WebsocketServer, YRoom
+from ypy_websocket.ystore import BaseYStore
 from ypy_websocket.ystore import SQLiteYStore as _SQLiteYStore
 from ypy_websocket.ystore import TempFileYStore as _TempFileYStore
 from ypy_websocket.ystore import YDocNotFound
-from ypy_websocket.yutils import YMessageType  # type: ignore
+from ypy_websocket.yutils import YMessageType
 
 YFILE = YDOCS["file"]
 

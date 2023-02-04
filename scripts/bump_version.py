@@ -4,8 +4,8 @@
 import json
 from pathlib import Path
 
-import click  # type: ignore
-from jupyter_releaser.util import get_version, run  # type: ignore
+import click
+from jupyter_releaser.util import get_version, run
 from pkg_resources import parse_version  # type: ignore
 
 LERNA_CMD = "jlpm run lerna version --no-push --force-publish --no-git-tag-version"

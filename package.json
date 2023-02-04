@@ -32,6 +32,7 @@
     "build:test": "lerna run build:test",
     "clean": "lerna run clean",
     "clean:all": "lerna run clean:all",
+    "docs": "lerna run docs",
     "eslint": "jlpm eslint:check --fix",
     "eslint:check": "eslint . --ext .ts,.tsx",
     "install": "lerna bootstrap",
