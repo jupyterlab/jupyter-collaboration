@@ -1,6 +1,6 @@
 {
   "name": "@jupyterlab/collaboration",
-  "version": "4.0.0-alpha.19",
+  "version": "4.0.0-alpha.18",
   "description": "JupyterLab - Real Time Collaboration Widgets",
   "homepage": "https://github.com/jupyterlab/jupyterlab_rtc",
   "bugs": {

@@ -24,6 +24,7 @@ classifiers = [
     "Framework :: Jupyter :: JupyterLab :: Extensions :: Prebuilt",
 ]
 dependencies = [
+    "jupyterlab>=4.0.0a32",
     "jupyter_server>=2.0.0,<3.0.0",
     "jupyter_ydoc>=0.3.0,<0.4.0",
     "ypy-websocket>=0.8.2,<0.9.0",
@@ -48,14 +49,11 @@ test = [
 [tool.hatch.version]
 source = "nodejs"
 
-[tool.hatch.build.hooks.version]
-path = "jupyterlab_rtc/_version.py"
-
 [tool.hatch.metadata.hooks.nodejs]
 fields = ["description", "authors", "urls"]
 
-[tool.hatch.build.targets.sdist]
-artifacts = ["/jupyterlab_rtc/labextension"]
+[tool.hatch.build]
+artifacts = ["package.json", "scripts", "packages", "jupyterlab_rtc/labextension"]
 exclude = ["/.github", "/binder"]
 
 [tool.hatch.build.targets.sdist.force-include]
@@ -78,31 +76,19 @@ skip-if-exists = ["jupyterlab_rtc/labextension/static/style.js"]
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
 npm = ["jlpm"]
 build_cmd = "build:prod"
-editable_build_cmd = "install:extension"
 
-[tool.jupyter-releaser]
-skip = [
-    "check-links",
-    # FIXME
-    "check-npm",
-    "build-python",
-    "check-python"
-]
+[tool.hatch.build.hooks.jupyter-builder.editable-build-kwargs]
+build_cmd = "install:extension"
+npm = ["jlpm"]
+build_dir = "jupyterlab_rtc/labextension"
 
 [tool.jupyter-releaser.options]
 version-cmd = "python scripts/bump_version.py --force"
 
 [tool.jupyter-releaser.hooks]
-before-build-npm = [
-    "jlpm build:prod"
-]
-before-build-python = [
-    "jlpm clean:all"
-]
-before-bump-version = [
-    "python -m pip install --pre -U jupyterlab",
-    "jlpm"
-]
+before-bump-version = ["python -m pip install 'jupyterlab>=4.0.0a32'", "jlpm"]
+before-build-npm = ["python -m pip install 'jupyterlab>=4.0.0a32'", "jlpm", "jlpm build:prod"]
+before-build-python = ["jlpm clean:all"]
 
 [tool.check-wheel-contents]
 ignore = ["W002"]

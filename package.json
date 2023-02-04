@@ -1,7 +1,7 @@
 {
   "name": "jupyterlab_rtc",
   "private": true,
-  "version": "4.0.0-alpha.19",
+  "version": "4.0.0-alpha.18",
   "description": "JupyterLab Extension enabling Real-Time Collaboration",
   "keywords": [
     "jupyter",
