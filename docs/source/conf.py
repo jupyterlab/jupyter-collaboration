@@ -89,7 +89,7 @@ copyright = "2021, Jupyter Team, https://jupyter.org"
 author = "The Jupyter Server Team"
 
 # ghissue config
-github_project_url = "https://github.com/jupyter/jupyter_server_ydoc"
+github_project_url = "https://github.com/jupyterlab/jupyterlab_rtc"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
