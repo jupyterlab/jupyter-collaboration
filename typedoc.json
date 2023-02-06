@@ -1,0 +1,13 @@
+{
+  "entryPointStrategy": "packages",
+  "entryPoints": [
+    "packages/collaboration",
+    "packages/docprovider"
+  ],
+  "githubPages": false,
+  "navigationLinks": {
+    "GitHub": "https://github.com/jupyterlab/jupyterlab_rtc",
+    "Jupyter": "https://jupyter.org"
+  },
+  "out": "docs/source/ts/api"
+}

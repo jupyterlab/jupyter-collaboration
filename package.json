@@ -1,5 +1,5 @@
 {
-  "name": "jupyterlab_rtc",
+  "name": "@jupyterlab/realtime-collaboration",
   "private": true,
   "version": "4.0.0-alpha.19",
   "description": "JupyterLab Extension enabling Real-Time Collaboration",
@@ -32,7 +32,7 @@
     "build:test": "lerna run build:test",
     "clean": "lerna run clean",
     "clean:all": "lerna run clean:all",
-    "docs": "lerna run docs",
+    "docs": "typedoc",
     "eslint": "jlpm eslint:check --fix",
     "eslint:check": "eslint . --ext .ts,.tsx",
     "install": "lerna bootstrap",
@@ -50,13 +50,14 @@
     "test:debug:watch": "lerna run test:debug:watch",
     "watch": "lerna run watch"
   },
-  "dependencies": {
+  "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.12.1",
     "@typescript-eslint/parser": "^5.12.1",
     "eslint": "^8.9.0",
     "eslint-config-prettier": "^8.4.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react": "^7.30.0",
+    "lerna": "^6.4.1",
     "prettier": "^2.5.1",
     "rimraf": "^3.0.2",
     "stylelint": "^14.3.0",
@@ -64,10 +65,8 @@
     "stylelint-config-recommended": "^6.0.0",
     "stylelint-config-standard": "~24.0.0",
     "stylelint-prettier": "^2.0.0",
-    "typescript": "~4.7.3"
-  },
-  "devDependencies": {
-    "lerna": "^6.4.1",
+    "typedoc": "~0.23.24",
+    "typescript": "~4.7.3",
     "yarn": "1.22.17"
   }
 }

@@ -88,15 +88,11 @@ def setup(app):
     docprovider = js_docs / "docprovider"
     extension = js_docs / "rtc-extension"
 
-    print(f"collaboration {collaboration!s}, {collaboration.exists()}")
-    print(f"docprovider {docprovider!s}, {docprovider.exists()}")
-    print(f"extension {extension!s}, {extension.exists()}")
     if collaboration.exists() and docprovider.exists() and extension.exists():
         # avoid rebuilding docs because it takes forever
         # `make clean` to force a rebuild
         print(f"already have {js_docs!s}")
     else:
         print("Building JavaScript API docs")
-        check_call(["npm", "install"], cwd=str(js))
-        check_call(["npm", "run", "build"], cwd=str(js))
-        check_call(["npm", "run", "docs"], cwd=str(js))
+        check_call(["jlpm", "install"], cwd=str(js))
+        check_call(["jlpm", "run", "docs"], cwd=str(js))

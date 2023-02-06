@@ -4,14 +4,11 @@
 JavaScript API
 ==============
 
-`@jupyterlab/collaboration`
----------------------------
-The `@jupyterlab/collaboration` API reference docs are `here <./api/collaboration/index.html>`__.
+.. this doc exists as a resolvable link target
+.. which statically included files are not
 
-`@jupyterlab/docprovider`
--------------------------
-The `@jupyterlab/docprovider` API reference docs are `here <./api/docprovider/index.html>`__.
+.. meta::
+    :http-equiv=refresh: 0;url=./api/index.html
 
-`@jupyterlab/rtc-extension`
----------------------------
-The `@jupyterlab/rtc-extension` API reference docs are `here <./api/rtc-extension/index.html>`__.
+The JavaScript API reference docs are `here <./api/index.html>`_
+if you are not redirected automatically.

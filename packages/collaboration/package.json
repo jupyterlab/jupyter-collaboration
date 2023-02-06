@@ -34,7 +34,6 @@
     "build:prod": "jlpm run build",
     "clean": "rimraf lib tsconfig.tsbuildinfo",
     "clean:all": "rimraf lib tsconfig.tsbuildinfo node_modules",
-    "docs": "typedoc --out ../../docs/source/ts/api/collaboration src",
     "install:extension": "jlpm run build",
     "watch": "tsc -b --watch"
   },
@@ -59,5 +58,11 @@
     "access": "public"
   },
   "jupyterlab": {},
+  "typedoc": {
+    "entryPoint": "./src/index.ts",
+    "readmeFile": "./README.md",
+    "displayName": "@jupyterlab/collaboration",
+    "tsconfig": "./tsconfig.json"
+  },
   "styleModule": "style/index.js"
 }

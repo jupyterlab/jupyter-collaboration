@@ -46,7 +46,6 @@
     "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
     "clean:labextension": "rimraf ../../jupyterlab_rtc/labextension",
     "clean:all": "jlpm run clean:lib && rimraf node_modules && jlpm run clean:labextension",
-    "docs": "typedoc --out ../../docs/source/ts/api/rtc-extension src",
     "install:extension": "jlpm run build",
     "watch": "run-p watch:src watch:labextension",
     "watch:src": "tsc -w",
@@ -79,6 +78,12 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "typedoc": {
+    "entryPoint": "./src/index.ts",
+    "readmeFile": "./README.md",
+    "displayName": "@jupyterlab/rtc-extension",
+    "tsconfig": "./tsconfig.json"
   },
   "jupyterlab": {
     "extension": true,

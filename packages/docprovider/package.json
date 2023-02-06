@@ -32,7 +32,6 @@
     "build:test": "tsc --build tsconfig.test.json",
     "clean": "rimraf lib tsconfig.tsbuildinfo",
     "clean:all": "rimraf lib tsconfig.tsbuildinfo node_modules",
-    "docs": "typedoc --out ../../docs/source/ts/api/docprovider src",
     "install:extension": "jlpm run build",
     "test": "jest",
     "test:cov": "jest --collect-coverage",
@@ -60,5 +59,10 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "typedoc": {
+    "entryPoint": "./src/index.ts",
+    "displayName": "@jupyterlab/docprovider",
+    "tsconfig": "./tsconfig.json"
   }
 }
