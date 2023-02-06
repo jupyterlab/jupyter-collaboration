@@ -8,7 +8,7 @@ node_modules/
 .ipynb_checkpoints
 *.tsbuildinfo
 package-lock.json
-docs/source/api
+docs/source/ts
 jupyterlab_rtc/labextension
 
 # Version file is handled by hatchling
@@ -123,3 +123,4 @@ dmypy.json
 
 # OSX files
 .DS_Store
+docs/source/changelog.md

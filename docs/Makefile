@@ -24,5 +24,5 @@ help:
 
 clean:
 	# clean api build as well
-	-rm -rf "$(SOURCEDIR)/../api"
+	-rm -rf "$(SOURCEDIR)/ts"
 	@$(SPHINXBUILD) -M clean "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)

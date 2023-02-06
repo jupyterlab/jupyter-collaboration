@@ -10,4 +10,3 @@ export * from './awarenessmock';
 export * from './menu';
 export * from './userinfopanel';
 export * from './collaboratorspanel';
-export * from './utils';

@@ -13,7 +13,7 @@ import { User } from '@jupyterlab/services';
 
 import { PathExt } from '@jupyterlab/coreutils';
 
-import { ICollaboratorAwareness } from './utils';
+import { ICollaboratorAwareness } from './tokens';
 
 /**
  * The CSS class added to collaborators list container.

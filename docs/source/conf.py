@@ -26,7 +26,7 @@ release = "0.3.0"
 extensions = ["myst_parser", "sphinx.ext.autodoc"]
 
 templates_path = ["_templates"]
-exclude_patterns = ["_static/api/**"]
+exclude_patterns = ["ts/**"]
 source_suffix = {
     ".rst": "restructuredtext",
     ".md": "markdown",
@@ -35,8 +35,7 @@ source_suffix = {
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-# html_static_path = ['_static']
-
+html_extra_path = ['ts']
 html_theme = "pydata_sphinx_theme"
 html_logo = "_static/jupyter_logo.svg"
 html_favicon = "_static/logo-icon.png"
@@ -84,11 +83,10 @@ def setup(app):
 
     # Build JavaScript Docs
     js = HERE.parent.parent
-    js_docs = HERE / "api"
+    js_docs = HERE / "ts" / "api"
     collaboration = js_docs / "collaboration"
     docprovider = js_docs / "docprovider"
     extension = js_docs / "rtc-extension"
-    # dest_dir = Path(app.outdir) / "api"
 
     print(f"collaboration {collaboration!s}, {collaboration.exists()}")
     print(f"docprovider {docprovider!s}, {docprovider.exists()}")
@@ -102,9 +100,3 @@ def setup(app):
         check_call(["npm", "install"], cwd=str(js))
         check_call(["npm", "run", "build"], cwd=str(js))
         check_call(["npm", "run", "docs"], cwd=str(js))
-
-    # Copy JavaScript Docs
-    # print(f"Copying {js_docs!s} -> {dest_dir!s}")
-    # if dest_dir.exists():
-    #    shutil.rmtree(str(dest_dir))
-    # shutil.copytree(str(js_docs), str(dest_dir))
