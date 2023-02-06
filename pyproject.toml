@@ -46,6 +46,7 @@ test = [
     "pytest-timeout",
 ]
 docs = [
+    "jupyterlab>=4.0.0a32",
     "sphinx",
     "myst-parser",
     "pydata-sphinx-theme"
