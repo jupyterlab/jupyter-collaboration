@@ -13,7 +13,6 @@ from .handlers import SQLiteYStore, YDocRoomIdHandler, YDocWebSocketHandler
 
 
 class YDocExtension(ExtensionApp):
-
     name = "jupyterlab_rtc"
 
     file_poll_interval = Int(

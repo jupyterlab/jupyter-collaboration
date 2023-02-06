@@ -40,7 +40,7 @@
     "lint": "jlpm prettier && jlpm eslint && jlpm stylelint",
     "lint:check": "jlpm prettier:check && jlpm eslint:check",
     "prettier": "jlpm prettier:base --write --list-different",
-    "prettier:base": "prettier \"**/*{.ts,.tsx,.js,.jsx,.css}\"",
+    "prettier:base": "prettier \"**/*{.ts,.tsx,.js,.json,.jsx,.css}\"",
     "prettier:check": "jlpm prettier:base --check",
     "stylelint": "jlpm stylelint:check --fix",
     "stylelint:check": "stylelint --cache \"packages/**/style/**/*.css\"",

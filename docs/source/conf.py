@@ -7,6 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 import shutil
+import time
 from pathlib import Path
 from subprocess import check_call
 
@@ -16,7 +17,7 @@ HERE = Path(__file__).parent.resolve()
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "jupyterlab_rtc"
-copyright = "2022, Jupyter Development Team"
+copyright = f"2022-{time.localtime().tm_year}, Jupyter Development Team"  # noqa
 author = "Jupyter Development Team"
 release = "0.3.0"
 
@@ -35,7 +36,7 @@ source_suffix = {
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_extra_path = ['ts']
+html_extra_path = ["ts"]
 html_theme = "pydata_sphinx_theme"
 html_logo = "_static/jupyter_logo.svg"
 html_favicon = "_static/logo-icon.png"

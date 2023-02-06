@@ -69,7 +69,6 @@ class TransientRoom(YRoom):
 
 
 class JupyterWebsocketServer(WebsocketServer):
-
     rooms: Dict[str, YRoom]
     ypatch_nb: int
     connected_user: Dict[int, str]
@@ -156,7 +155,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         file_format, file_type, file_id = room_name.split(":", 2)
         file_path = self.settings["file_id_manager"].get_path(file_id)
         if file_path is None:
-            raise RuntimeError(f"File {self.room.document.path} cannot be found anymore")
+            raise RuntimeError(
+                f"File {self.room.document.path} cannot be found anymore"
+            )
         assert file_path is not None
         if file_path != self.room.document.path:
             self.log.debug(
@@ -170,7 +171,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
     def set_file_info(self, value: str) -> None:
         assert self.websocket_server is not None
         self.websocket_server.rename_room(value, from_room=self.room)
-        self.path = value  # needed to be compatible with WebsocketServer (websocket.path)
+        self.path = (
+            value  # needed to be compatible with WebsocketServer (websocket.path)
+        )
 
     async def get(self, *args, **kwargs):
         if self.get_current_user() is None:

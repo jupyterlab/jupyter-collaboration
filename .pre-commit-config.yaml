@@ -79,16 +79,16 @@ repos:
     hooks:
       - id: prettier
         name: prettier
-        entry: 'npm run prettier'
+        entry: 'jlpm run prettier'
         language: node
         types_or: [json, ts, tsx, javascript, jsx, css]
       - id: eslint
         name: eslint
-        entry: 'npm run eslint'
+        entry: 'jlpm run eslint'
         language: node
         types_or: [ts, tsx, javascript, jsx]
       - id: stylelint
         name: stylelint
-        entry: 'npm run stylelint'
+        entry: 'jlpm run stylelint'
         language: node
         types: [css]
