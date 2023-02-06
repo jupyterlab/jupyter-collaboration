@@ -1,9 +1,10 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { Menu } from '@lumino/widgets';
+import type { Menu } from '@lumino/widgets';
 import { Token } from '@lumino/coreutils';
-import { Awareness } from 'y-protocols/awareness';
+import type { Awareness } from 'y-protocols/awareness';
+import type { User } from '@jupyterlab/services';
 
 /**
  * The user menu token.
@@ -78,4 +79,19 @@ export interface IUserMenu {
    * This is a no-op if the item is not in the menu.
    */
   removeItem(item: Menu.IItem): void;
+}
+
+/**
+ * Global awareness for JupyterLab scopped shared data.
+ */
+export interface ICollaboratorAwareness {
+  /**
+   * The User owning theses data.
+   */
+  user: User.IIdentity;
+
+  /**
+   * The current file/context the user is working on.
+   */
+  current?: string;
 }

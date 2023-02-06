@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 
 import { URLExt } from '@jupyterlab/coreutils';
-import { ServerConnection, User } from '@jupyterlab/services';
+import { ServerConnection } from '@jupyterlab/services';
 
 /**
  * Call the API extension
@@ -40,19 +40,4 @@ export async function requestAPI<T>(
   }
 
   return data;
-}
-
-/**
- * Global awareness for JupyterLab scopped shared data.
- */
-export interface ICollaboratorAwareness {
-  /**
-   * The User owning theses data.
-   */
-  user: User.IIdentity;
-
-  /**
-   * The current file/context the user is working on.
-   */
-  current?: string;
 }

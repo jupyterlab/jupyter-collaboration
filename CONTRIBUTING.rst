@@ -26,7 +26,7 @@ steps::
 
     pip install --upgrade pip
     git clone https://github.com/jupyterlab/jupyterlab_rtc
-    cd jupyter_server_ydoc
+    cd jupyterlab_rtc
     pip install -e .
 
 If you are using a system-wide Python installation and you only want to install the server for you,

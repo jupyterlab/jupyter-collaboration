@@ -6,12 +6,6 @@ All notable changes to this project will be documented in this file.
 
 ## 0.7.0
 
-No merged PRs
-
-<!-- <END NEW CHANGELOG ENTRY> -->
-
-## 0.6.2
-
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server_ydoc/compare/v0.6.1...1ead1e4fea73b561439254d1e4df870309f304a4))
 
 ### Maintenance and upkeep improvements
@@ -25,6 +19,8 @@ No merged PRs
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server_ydoc/graphs/contributors?from=2022-12-06&to=2023-01-25&type=c))
 
 [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Acodecov+updated%3A2022-12-06..2023-01-25&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Adavidbrochart+updated%3A2022-12-06..2023-01-25&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Ahbcarlos+updated%3A2022-12-06..2023-01-25&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Apre-commit-ci+updated%3A2022-12-06..2023-01-25&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.6.1
 
