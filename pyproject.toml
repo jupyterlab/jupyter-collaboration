@@ -69,7 +69,7 @@ fields = ["description", "authors", "urls"]
 
 [tool.hatch.build.targets.sdist]
 artifacts = ["/jupyterlab_rtc/labextension"]
-exclude = ["/.github", "/binder"]
+exclude = ["/.github", "/binder", "node_modules"]
 
 [tool.hatch.build.targets.sdist.force-include]
 "./packages" = "packages"
