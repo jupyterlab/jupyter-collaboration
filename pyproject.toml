@@ -104,7 +104,11 @@ before-build-npm = [
     "jlpm build:prod"
 ]
 before-build-python = [
-    "jlpm clean:all"
+    "jlpm clean:all",
+    # Build the assets
+    "jlpm build:prod",
+    # Clean the build artifacts to not include them in sdist
+    "jlpm clean:lib"
 ]
 before-bump-version = [
     "python -m pip install --pre -U jupyterlab",

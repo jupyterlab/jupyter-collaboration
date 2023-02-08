@@ -28,7 +28,7 @@
   },
   "scripts": {
     "build": "lerna run build",
-    "build:prod": "lerna run build:prod && lerna run clean:lib",
+    "build:prod": "lerna run build:prod",
     "build:test": "lerna run build:test",
     "clean": "lerna run clean",
     "clean:lib": "lerna run clean:lib",
