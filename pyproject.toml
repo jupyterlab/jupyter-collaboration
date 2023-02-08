@@ -27,15 +27,15 @@ dependencies = [
     "jupyter_server>=2.0.0,<3.0.0",
     "jupyter_ydoc>=0.3.0,<0.4.0",
     "ypy-websocket>=0.8.2,<0.9.0",
-    "jupyter_server_fileid >=0.6.0,<1"
+    "jupyter_server_fileid>=0.6.0,<1"
 ]
 dynamic = ["version", "description", "authors", "urls", "keywords"]
 
 [project.optional-dependencies]
 dev = [
-    'click',
+    "click",
     "pre-commit",
-    'jupyter_releaser'
+    "jupyter_releaser"
 ]
 test = [
     "coverage",
@@ -94,13 +94,7 @@ build_cmd = "build:prod"
 editable_build_cmd = "install:extension"
 
 [tool.jupyter-releaser]
-skip = [
-    "check-links",
-    # FIXME
-    "check-npm",
-    "build-python",
-    "check-python"
-]
+skip = ["check-links"]
 
 [tool.jupyter-releaser.options]
 version-cmd = "python scripts/bump_version.py --force"

@@ -23,14 +23,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # # FIXME - should be done by jupyter-releaser
-      # - name: Build Python package
-      #   run: |
-      #     set -ex
-      #     python -m pip install build
-
-      #     python -m build
-
       - name: Upload Distributions
         uses: actions/upload-artifact@v3
         with:
