@@ -33,6 +33,7 @@
     "build": "tsc -b",
     "build:prod": "jlpm run build",
     "clean": "rimraf lib tsconfig.tsbuildinfo",
+    "clean:lib": "jlpm run clean:all",
     "clean:all": "rimraf lib tsconfig.tsbuildinfo node_modules",
     "install:extension": "jlpm run build",
     "watch": "tsc -b --watch"
@@ -51,7 +52,6 @@
   },
   "devDependencies": {
     "rimraf": "~3.0.0",
-    "typedoc": "~0.22.10",
     "typescript": "~4.7.3"
   },
   "publishConfig": {

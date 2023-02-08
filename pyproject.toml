@@ -27,15 +27,15 @@ dependencies = [
     "jupyter_server>=2.0.0,<3.0.0",
     "jupyter_ydoc>=0.3.0,<0.4.0",
     "ypy-websocket>=0.8.2,<0.9.0",
-    "jupyter_server_fileid >=0.6.0,<1"
+    "jupyter_server_fileid>=0.6.0,<1"
 ]
 dynamic = ["version", "description", "authors", "urls", "keywords"]
 
 [project.optional-dependencies]
 dev = [
-    'click',
+    "click",
     "pre-commit",
-    'jupyter_releaser'
+    "jupyter_releaser"
 ]
 test = [
     "coverage",
@@ -69,7 +69,7 @@ fields = ["description", "authors", "urls"]
 
 [tool.hatch.build.targets.sdist]
 artifacts = ["/jupyterlab_rtc/labextension"]
-exclude = ["/.github", "/binder"]
+exclude = ["/.github", "/binder", "node_modules"]
 
 [tool.hatch.build.targets.sdist.force-include]
 "./packages" = "packages"
@@ -94,13 +94,7 @@ build_cmd = "build:prod"
 editable_build_cmd = "install:extension"
 
 [tool.jupyter-releaser]
-skip = [
-    "check-links",
-    # FIXME
-    "check-npm",
-    "build-python",
-    "check-python"
-]
+skip = ["check-links"]
 
 [tool.jupyter-releaser.options]
 version-cmd = "python scripts/bump_version.py --force"
@@ -110,7 +104,11 @@ before-build-npm = [
     "jlpm build:prod"
 ]
 before-build-python = [
-    "jlpm clean:all"
+    "jlpm clean:all",
+    # Build the assets
+    "jlpm build:prod",
+    # Clean the build artifacts to not include them in sdist
+    "jlpm clean:lib"
 ]
 before-bump-version = [
     "python -m pip install --pre -U jupyterlab",

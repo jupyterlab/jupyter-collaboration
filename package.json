@@ -31,6 +31,7 @@
     "build:prod": "lerna run build:prod",
     "build:test": "lerna run build:test",
     "clean": "lerna run clean",
+    "clean:lib": "lerna run clean:lib",
     "clean:all": "lerna run clean:all",
     "docs": "typedoc",
     "eslint": "jlpm eslint:check --fix",

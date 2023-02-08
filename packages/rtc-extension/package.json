@@ -43,9 +43,9 @@
     "build:labextension": "jupyter labextension build .",
     "build:labextension:dev": "jupyter labextension build --development True .",
     "clean": "jlpm run clean:lib",
-    "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
+    "clean:lib": "rimraf lib tsconfig.tsbuildinfo node_modules",
     "clean:labextension": "rimraf ../../jupyterlab_rtc/labextension",
-    "clean:all": "jlpm run clean:lib && rimraf node_modules && jlpm run clean:labextension",
+    "clean:all": "jlpm run clean:lib && jlpm run clean:labextension",
     "install:extension": "jlpm run build",
     "watch": "run-p watch:src watch:labextension",
     "watch:src": "tsc -w",
@@ -73,7 +73,6 @@
     "@types/react": "^18.0.27",
     "npm-run-all": "^4.1.5",
     "rimraf": "~3.0.0",
-    "typedoc": "~0.22.10",
     "typescript": "~4.7.3"
   },
   "publishConfig": {
