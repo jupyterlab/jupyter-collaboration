@@ -28,9 +28,10 @@
   },
   "scripts": {
     "build": "lerna run build",
-    "build:prod": "lerna run build:prod",
+    "build:prod": "lerna run build:prod && lerna run clean:lib",
     "build:test": "lerna run build:test",
     "clean": "lerna run clean",
+    "clean:lib": "lerna run clean:lib",
     "clean:all": "lerna run clean:all",
     "docs": "typedoc",
     "eslint": "jlpm eslint:check --fix",
