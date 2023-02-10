@@ -9,6 +9,7 @@ Editors are not collaborative by default; to activate it, install the extension
 `jupyterlab_rtc`.
 
 Installation using mamba/conda:
+
 ```
 mamba install -c conda-forge jupyterlab_rtc
 ```
