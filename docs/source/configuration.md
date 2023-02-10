@@ -1,12 +1,7 @@
-<!--
-jupyter-ydoc documentation master file, created by
-sphinx-quickstart on Wed Nov 23 12:45:39 2022.
-You can adapt this file completely to your liking, but it should at least
-contain the root `toctree` directive.
--->
+# Overview
 
-# Welcome to JupyterLab Real-Time collaboration documentation!
-
+> To activate Real-Time Collaboration in JupyterLab, is necessary to install
+jupyterlab_rtc.
 
 From JupyterLab v4, file documents and notebooks have collaborative
 editing using the [Yjs shared editing framework](https://github.com/yjs/yjs).
@@ -15,13 +10,12 @@ Editors are not collaborative by default; to activate it, install the extension
 
 Installation using mamba/conda:
 
-```sh
+```
 mamba install -c conda-forge jupyterlab_rtc
 ```
 
 Installation using pip:
-
-```sh
+```
 pip install jupyterlab_rtc
 ```
 
@@ -64,12 +58,28 @@ message indicating that the file was modified by someone else, and asking if you
 your changes or revert to the saved content. There cannot be any conflict, everyone works in sync
 on the same document.
 
+> By default, any change made to a document is saved to disk in an SQLite database file called
+`.jupyter_ystore.db` in the directory where JupyterLab was launched. This file helps in
+preserving the timeline of documents, for instance between JupyterLab sessions, or when a user
+looses connection and goes offline for a while. You should never have to touch it, and it is
+fine to just ignore it, including in your version control system (don't commit this file). If
+you happen to delete it, there shouldn't be any serious consequence either.
 
-```{toctree}
-:maxdepth: 1
-:caption: Contents
+There are a number of settings that you can change:
 
-configuration
-developer/contributing
-changelog
+```bash
+# The delay of inactivity (in seconds) after which a document is saved to disk (default: 1).
+# If None, the document will never be saved.
+jupyter lab --collaborative --YDocExtension.document_save_delay=0.5
+
+# The period (in seconds) to check for file changes on disk (default: 1).
+# If 0, file changes will only be checked when saving.
+jupyter lab --collaborative --YDocExtension.file_poll_interval=2
+
+# The delay (in seconds) to keep a document in memory in the back-end after all clients disconnect (default: 60).
+# If None, the document will be kept in memory forever.
+jupyter lab --collaborative --YDocExtension.document_cleanup_delay=100
+
+# The YStore class to use for storing Y updates (default: JupyterSQLiteYStore).
+jupyter lab --collaborative --YDocExtension.ystore_class=ypy_websocket.ystore.TempFileYStore
 ```

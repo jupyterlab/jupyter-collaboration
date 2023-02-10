@@ -15,8 +15,8 @@ Jupyter Server YDoc currently supports Python>=3.6 on Linux, OSX and Windows.
 
 ### Testing
 
-See [CONTRIBUTING](./CONTRIBUTING.rst#running-tests).
+See [CONTRIBUTING](./docs/source/developer/contributing.rst#running-tests).
 
 ## Contributing
 
-If you are interested in contributing to the project, see [CONTRIBUTING](./CONTRIBUTING.rst).
+If you are interested in contributing to the project, see [CONTRIBUTING](./docs/source/developer/contributing.rst).

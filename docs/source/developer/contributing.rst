@@ -13,11 +13,18 @@ For general documentation about contributing to Jupyter projects, see the
 
 __ https://jupyter.readthedocs.io/en/latest/contributing/content-contributor.html
 
+.. toctree::
+    :hidden:
+
+    architecture
+    javascript_api
+    python_api
+
 Setting Up a Development Environment
 ====================================
 
-Installing Jupyter Server YDoc
-------------------------------
+Installing JupyterLab Real-Time Collaboration
+---------------------------------------------
 
 The development version of the server requires `node <https://nodejs.org/en/download/>`_ and `pip <https://pip.pypa.io/en/stable/installing/>`_.
 
@@ -39,7 +46,8 @@ from any directory in your system with::
 
 
 Code Styling
------------------------------
+------------
+
 ``jupyterlab_rtc`` has adopted automatic code formatting so you shouldn't
 need to worry too much about your code style.
 As long as your code is valid,
