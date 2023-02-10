@@ -1,4 +1,4 @@
-// Copyright (c) Jupyter Development Team.
+ISharedFactory// Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
 import {
@@ -192,6 +192,16 @@ class SharedModelFactory implements Contents.ISharedFactory {
     ) => void
   ) {}
 
+  /**
+   * Whether the IDrive supports real-time collaboration or not.
+   */
+  readonly collaborative = true;
+
+  /**
+   * Create a new `ISharedDocument` instance.
+   *
+   * It should return `undefined` if the factory is not able to create a `ISharedDocument`.
+   */
   createNew(
     options: Contents.ISharedFactoryOptions
   ): ISharedDocument | undefined {
