@@ -8,7 +8,7 @@ JavaScript API
 .. which statically included files are not
 
 .. meta::
-    :http-equiv=refresh: 0;url=./api/index.html
+    :http-equiv=refresh: 0;url=../api/index.html
 
-The JavaScript API reference docs are `here <./api/index.html>`_
+The JavaScript API reference docs are `here <../api/index.html>`_
 if you are not redirected automatically.
