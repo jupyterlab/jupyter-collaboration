@@ -12,3 +12,4 @@ docs
 tests
 jupyter-config
 jupyterlab_rtc
+.mypy_cache
