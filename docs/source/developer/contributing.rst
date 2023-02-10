@@ -21,10 +21,10 @@ __ https://jupyter.readthedocs.io/en/latest/contributing/content-contributor.htm
     python_api
 
 Setting Up a Development Environment
-====================================
+------------------------------------
 
 Installing JupyterLab Real-Time Collaboration
----------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The development version of the server requires `node <https://nodejs.org/en/download/>`_ and `pip <https://pip.pypa.io/en/stable/installing/>`_.
 
@@ -46,7 +46,7 @@ from any directory in your system with::
 
 
 Code Styling
-------------
+^^^^^^^^^^^^
 
 ``jupyterlab_rtc`` has adopted automatic code formatting so you shouldn't
 need to worry too much about your code style.
@@ -76,7 +76,7 @@ Some of the hooks only run on CI by default, but you can invoke them by
 running with the ``--hook-stage manual`` argument.
 
 Troubleshooting the Installation
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you do not see that your Jupyter Server is not running on dev mode, it's possible that you are
 running other instances of Jupyter Server. You can try the following steps:
@@ -90,7 +90,7 @@ running other instances of Jupyter Server. You can try the following steps:
 4. Verify the installation with the steps in the previous section.
 
 Running Tests
-=============
+-------------
 
 Install dependencies::
 
@@ -103,7 +103,7 @@ To run the Python tests, use::
 
 
 Building the Docs
-=================
+-----------------
 
 To build the documentation you'll need `Sphinx <http://www.sphinx-doc.org/en/master/>`_,
 `pandoc <https://pandoc.org/>`_ and a few other packages.
