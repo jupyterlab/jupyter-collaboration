@@ -1,6 +1,6 @@
 # JupyterLab Real-Time Collaboration
 
-[![Build Status](https://github.com/jupyterlab/jupyterlab_rtc/actions/workflows/test.yml/badge.svg?query=branch%3Amain++)](https://github.com/jupyterlab/jupyterlab_rtc/actions?query=branch%3Amain++)
+[![Build Status](https://github.com/jupyterlab/jupyterlab_collaboration/actions/workflows/test.yml/badge.svg?query=branch%3Amain++)](https://github.com/jupyterlab/jupyterlab_collaboration/actions?query=branch%3Amain++)
 
 JupyterLab Real-Time Collaboration is a Jupyter Server Extension and JupyterLab extensions providing support for Y documents
 and adding collaboration UI elements in JupyterLab.

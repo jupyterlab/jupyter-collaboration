@@ -1,5 +1,5 @@
 {
-  "name": "@jupyterlab/rtc-extension",
+  "name": "@jupyterlab/collaboration-extension",
   "version": "4.0.0-alpha.19",
   "description": "JupyterLab - RTC Extension",
   "keywords": [
@@ -7,13 +7,13 @@
     "jupyterlab",
     "jupyterlab-extension"
   ],
-  "homepage": "https://github.com/jupyterlab/jupyterlab_rtc",
+  "homepage": "https://github.com/jupyterlab/jupyterlab_collaboration",
   "bugs": {
-    "url": "https://github.com/jupyterlab/jupyterlab_rtc/issues"
+    "url": "https://github.com/jupyterlab/jupyterlab_collaboration/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jupyterlab/jupyterlab_rtc.git"
+    "url": "https://github.com/jupyterlab/jupyterlab_collaboration.git"
   },
   "license": "BSD-3-Clause",
   "author": "Project Jupyter",
@@ -44,7 +44,7 @@
     "build:labextension:dev": "jupyter labextension build --development True .",
     "clean": "jlpm run clean:lib",
     "clean:lib": "rimraf lib tsconfig.tsbuildinfo node_modules",
-    "clean:labextension": "rimraf ../../jupyterlab_rtc/labextension",
+    "clean:labextension": "rimraf ../../jupyterlab_collaboration/labextension",
     "clean:all": "jlpm run clean:lib && jlpm run clean:labextension",
     "install:extension": "jlpm run build",
     "watch": "run-p watch:src watch:labextension",
@@ -81,13 +81,13 @@
   "typedoc": {
     "entryPoint": "./src/index.ts",
     "readmeFile": "./README.md",
-    "displayName": "@jupyterlab/rtc-extension",
+    "displayName": "@jupyterlab/collaboration-extension",
     "tsconfig": "./tsconfig.json"
   },
   "jupyterlab": {
     "extension": true,
     "schemaDir": "./schema",
-    "outputDir": "../../jupyterlab_rtc/labextension",
+    "outputDir": "../../jupyterlab_collaboration/labextension",
     "disabledExtensions": [
       "@jupyterlab/filebrowser-extension:defaultFileBrowser"
     ],

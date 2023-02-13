@@ -36,7 +36,7 @@ import { WebsocketProvider } from 'y-websocket';
  * Jupyter plugin providing the IUserMenu.
  */
 export const userMenuPlugin: JupyterFrontEndPlugin<IUserMenu> = {
-  id: '@jupyterlab/rtc-extension:userMenu',
+  id: '@jupyterlab/collaboration-extension:userMenu',
   autoStart: true,
   requires: [],
   provides: IUserMenu,
@@ -51,7 +51,7 @@ export const userMenuPlugin: JupyterFrontEndPlugin<IUserMenu> = {
  * Jupyter plugin adding the IUserMenu to the menu bar if collaborative flag enabled.
  */
 export const menuBarPlugin: JupyterFrontEndPlugin<void> = {
-  id: '@jupyterlab/rtc-extension:userMenuBar',
+  id: '@jupyterlab/collaboration-extension:userMenuBar',
   autoStart: true,
   requires: [IUserMenu],
   activate: async (app: JupyterFrontEnd, menu: IUserMenu): Promise<void> => {
@@ -80,7 +80,7 @@ export const menuBarPlugin: JupyterFrontEndPlugin<void> = {
  * Jupyter plugin creating a global awareness for RTC.
  */
 export const rtcGlobalAwarenessPlugin: JupyterFrontEndPlugin<IAwareness> = {
-  id: '@jupyterlab/rtc-extension:rtcGlobalAwareness',
+  id: '@jupyterlab/collaboration-extension:rtcGlobalAwareness',
   autoStart: true,
   requires: [IStateDB],
   provides: IGlobalAwareness,
@@ -129,7 +129,7 @@ export const rtcGlobalAwarenessPlugin: JupyterFrontEndPlugin<IAwareness> = {
  * Jupyter plugin adding the RTC information to the application left panel if collaborative flag enabled.
  */
 export const rtcPanelPlugin: JupyterFrontEndPlugin<void> = {
-  id: '@jupyterlab/rtc-extension:rtcPanel',
+  id: '@jupyterlab/collaboration-extension:rtcPanel',
   autoStart: true,
   requires: [IGlobalAwareness, ITranslator],
   activate: (

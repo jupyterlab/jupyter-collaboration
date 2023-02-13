@@ -3,7 +3,7 @@
   "entryPoints": ["packages/collaboration", "packages/docprovider"],
   "githubPages": false,
   "navigationLinks": {
-    "GitHub": "https://github.com/jupyterlab/jupyterlab_rtc",
+    "GitHub": "https://github.com/jupyterlab/jupyterlab_collaboration",
     "Jupyter": "https://jupyter.org"
   },
   "titleLink": "https://jupyterlab-realtime-collaboration.readthedocs.io/en/latest",

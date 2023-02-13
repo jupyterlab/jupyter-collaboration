@@ -12,7 +12,7 @@ docs
 tests
 .eslintrc.js
 jupyter-config
-jupyterlab_rtc
+jupyterlab_collaboration
 
 packages/collaboration/babel.config.js
 packages/docprovider/babel.config.js

@@ -4,10 +4,10 @@
 Python API
 ==========
 
-.. automodule:: jupyterlab_rtc.app
+.. automodule:: jupyterlab_collaboration.app
   :members:
   :inherited-members:
 
-.. automodule:: jupyterlab_rtc.handlers
+.. automodule:: jupyterlab_collaboration.handlers
   :members:
   :inherited-members:

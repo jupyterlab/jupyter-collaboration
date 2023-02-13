@@ -14,8 +14,8 @@ import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
 import type { Doc } from 'yjs';
 
 /**
- * Room Id endpoint provided by `jupyterlab_rtc`
- * See https://github.com/jupyterlab/jupyterlab_rtc
+ * Room Id endpoint provided by `jupyterlab_collaboration`
+ * See https://github.com/jupyterlab/jupyterlab_collaboration
  */
 const FILE_PATH_TO_ROOM_ID_URL = 'api/yjs/roomid';
 

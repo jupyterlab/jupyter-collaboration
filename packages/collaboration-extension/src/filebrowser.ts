@@ -25,7 +25,7 @@ namespace CommandIDs {
  * The default file browser factory provider.
  */
 export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
-  id: '@jupyterlab/rtc-extension:defaultFileBrowser',
+  id: '@jupyterlab/collaboration-extension:defaultFileBrowser',
   provides: IDefaultFileBrowser,
   requires: [IFileBrowserFactory],
   optional: [IRouter, JupyterFrontEnd.ITreeResolver, ILabShell],
@@ -36,7 +36,9 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
     tree: JupyterFrontEnd.ITreeResolver | null,
     labShell: ILabShell | null
   ): Promise<IDefaultFileBrowser> => {
-    console.debug('@jupyterlab/rtc-extension:defaultFileBrowser: activated');
+    console.debug(
+      '@jupyterlab/collaboration-extension:defaultFileBrowser: activated'
+    );
     const { commands } = app;
 
     const drive = new YDrive(app.serviceManager.user);
