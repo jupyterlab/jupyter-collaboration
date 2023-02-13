@@ -13,13 +13,13 @@ To install the latest release locally, make sure you have
 [pip installed](https://pip.readthedocs.io/en/stable/installing/) and run:
 
 ```bash
-pip install jupyterlab-rtc
+pip install jupyterlab_collaboration
 ```
 
 Or using ``conda``/``mamba``:
 
 ```bash
-conda install jupyterlab-rtc
+conda install jupyterlab_collaboration
 ```
 
 ### Testing
