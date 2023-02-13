@@ -29,4 +29,3 @@ See [CONTRIBUTING](./docs/source/developer/contributing.rst#running-tests).
 ## Contributing
 
 If you are interested in contributing to the project, see [CONTRIBUTING](./docs/source/developer/contributing.rst).
-
