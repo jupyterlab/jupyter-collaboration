@@ -2,13 +2,13 @@
   "name": "@jupyterlab/docprovider",
   "version": "4.0.0-alpha.19",
   "description": "JupyterLab - Document Provider",
-  "homepage": "https://github.com/jupyterlab/jupyterlab_rtc",
+  "homepage": "https://github.com/jupyterlab/jupyterlab_collaboration",
   "bugs": {
-    "url": "https://github.com/jupyterlab/jupyterlab_rtc/issues"
+    "url": "https://github.com/jupyterlab/jupyterlab_collaboration/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jupyterlab/jupyterlab_rtc.git"
+    "url": "https://github.com/jupyterlab/jupyterlab_collaboration.git"
   },
   "license": "BSD-3-Clause",
   "author": "Project Jupyter",

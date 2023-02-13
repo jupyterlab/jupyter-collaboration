@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 /**
  * @packageDocumentation
- * @module rtc-extension
+ * @module collaboration-extension
  */
 
 import { JupyterFrontEndPlugin } from '@jupyterlab/application';

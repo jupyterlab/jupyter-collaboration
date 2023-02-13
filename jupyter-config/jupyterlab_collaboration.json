@@ -1,7 +1,7 @@
 {
   "ServerApp": {
     "jpserver_extensions": {
-      "jupyterlab_rtc": true
+      "jupyterlab_collaboration": true
     }
   }
 }
