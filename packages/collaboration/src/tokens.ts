@@ -13,14 +13,14 @@ import type { User } from '@jupyterlab/services';
  * (top-right menu in JupyterLab's interface).
  */
 export const IUserMenu = new Token<IUserMenu>(
-  '@jupyterlab/collaboration:IUserMenu'
+  '@jupyter/collaboration:IUserMenu'
 );
 
 /**
  * The global awareness token.
  */
 export const IGlobalAwareness = new Token<IAwareness>(
-  '@jupyterlab/collaboration:IGlobalAwareness'
+  '@jupyter/collaboration:IGlobalAwareness'
 );
 
 /**

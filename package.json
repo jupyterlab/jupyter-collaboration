@@ -1,5 +1,5 @@
 {
-  "name": "@jupyterlab/realtime-collaboration",
+  "name": "@jupyter/real-time-collaboration",
   "private": true,
   "version": "4.0.0-alpha.19",
   "description": "JupyterLab Extension enabling Real-Time Collaboration",
@@ -8,13 +8,13 @@
     "jupyterlab",
     "jupyterlab-extension"
   ],
-  "homepage": "https://github.com/jupyterlab/jupyterlab_collaboration",
+  "homepage": "https://github.com/jupyterlab/jupyter_collaboration",
   "bugs": {
-    "url": "https://github.com/jupyterlab/jupyterlab_collaboration/issues"
+    "url": "https://github.com/jupyterlab/jupyter_collaboration/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jupyterlab/jupyterlab_collaboration.git"
+    "url": "https://github.com/jupyterlab/jupyter_collaboration.git"
   },
   "license": "BSD-3-Clause",
   "author": {

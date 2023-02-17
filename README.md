@@ -1,6 +1,6 @@
 # JupyterLab Real-Time Collaboration
 
-[![Build Status](https://github.com/jupyterlab/jupyterlab_collaboration/actions/workflows/test.yml/badge.svg?query=branch%3Amain++)](https://github.com/jupyterlab/jupyterlab_collaboration/actions?query=branch%3Amain++)
+[![Build Status](https://github.com/jupyterlab/jupyter_collaboration/actions/workflows/test.yml/badge.svg?query=branch%3Amain++)](https://github.com/jupyterlab/jupyter_collaboration/actions?query=branch%3Amain++)
 
 JupyterLab Real-Time Collaboration is a Jupyter Server Extension and JupyterLab extensions providing support for [Y documents](https://github.com/jupyter-server/jupyter_ydoc) and adding collaboration UI elements in JupyterLab.
 
@@ -12,13 +12,13 @@ To install the latest release locally, make sure you have
 [pip installed](https://pip.readthedocs.io/en/stable/installing/) and run:
 
 ```bash
-pip install jupyterlab_collaboration
+pip install jupyter_collaboration
 ```
 
 Or using ``conda``/``mamba``:
 
 ```bash
-conda install jupyterlab_collaboration
+conda install jupyter_collaboration
 ```
 
 ### Testing

@@ -1,14 +1,14 @@
 {
-  "name": "@jupyterlab/collaboration",
-  "version": "4.0.0-alpha.19",
-  "description": "JupyterLab - Real Time Collaboration Widgets",
-  "homepage": "https://github.com/jupyterlab/jupyterlab_collaboration",
+  "name": "@jupyter/collaboration",
+  "version": "1.0.0-alpha.0",
+  "description": "JupyterLab - Real-Time Collaboration Widgets",
+  "homepage": "https://github.com/jupyterlab/jupyter_collaboration",
   "bugs": {
-    "url": "https://github.com/jupyterlab/jupyterlab_collaboration/issues"
+    "url": "https://github.com/jupyterlab/jupyter_collaboration/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jupyterlab/jupyterlab_collaboration.git"
+    "url": "https://github.com/jupyterlab/jupyter_collaboration.git"
   },
   "license": "BSD-3-Clause",
   "author": "Project Jupyter",
@@ -61,7 +61,7 @@
   "typedoc": {
     "entryPoint": "./src/index.ts",
     "readmeFile": "./README.md",
-    "displayName": "@jupyterlab/collaboration",
+    "displayName": "@jupyter/collaboration",
     "tsconfig": "./tsconfig.json"
   },
   "styleModule": "style/index.js"

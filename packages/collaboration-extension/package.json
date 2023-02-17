@@ -1,19 +1,19 @@
 {
-  "name": "@jupyterlab/collaboration-extension",
-  "version": "4.0.0-alpha.19",
-  "description": "JupyterLab - RTC Extension",
+  "name": "@jupyter/collaboration-extension",
+  "version": "1.0.0-alpha.0",
+  "description": "JupyterLab - Real-Time Collaboration Extension",
   "keywords": [
     "jupyter",
     "jupyterlab",
     "jupyterlab-extension"
   ],
-  "homepage": "https://github.com/jupyterlab/jupyterlab_collaboration",
+  "homepage": "https://github.com/jupyterlab/jupyter_collaboration",
   "bugs": {
-    "url": "https://github.com/jupyterlab/jupyterlab_collaboration/issues"
+    "url": "https://github.com/jupyterlab/jupyter_collaboration/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jupyterlab/jupyterlab_collaboration.git"
+    "url": "https://github.com/jupyterlab/jupyter_collaboration.git"
   },
   "license": "BSD-3-Clause",
   "author": "Project Jupyter",
@@ -44,7 +44,7 @@
     "build:labextension:dev": "jupyter labextension build --development True .",
     "clean": "jlpm run clean:lib",
     "clean:lib": "rimraf lib tsconfig.tsbuildinfo node_modules",
-    "clean:labextension": "rimraf ../../jupyterlab_collaboration/labextension",
+    "clean:labextension": "rimraf ../../jupyter_collaboration/labextension",
     "clean:all": "jlpm run clean:lib && jlpm run clean:labextension",
     "install:extension": "jlpm run build",
     "watch": "run-p watch:src watch:labextension",
@@ -52,11 +52,11 @@
     "watch:labextension": "jupyter labextension watch ."
   },
   "dependencies": {
+    "@jupyter/collaboration": "^1.0.0-alpha.0",
+    "@jupyter/docprovider": "^1.0.0-alpha.0",
     "@jupyterlab/application": "^4.0.0-alpha.18",
     "@jupyterlab/apputils": "^4.0.0-alpha.18",
-    "@jupyterlab/collaboration": "^4.0.0-alpha.18",
     "@jupyterlab/coreutils": "^6.0.0-alpha.18",
-    "@jupyterlab/docprovider": "^4.0.0-alpha.18",
     "@jupyterlab/filebrowser": "^4.0.0-alpha.18",
     "@jupyterlab/services": "^7.0.0-alpha.18",
     "@jupyterlab/statedb": "^4.0.0-alpha.18",
@@ -81,22 +81,22 @@
   "typedoc": {
     "entryPoint": "./src/index.ts",
     "readmeFile": "./README.md",
-    "displayName": "@jupyterlab/collaboration-extension",
+    "displayName": "@jupyter/collaboration-extension",
     "tsconfig": "./tsconfig.json"
   },
   "jupyterlab": {
     "extension": true,
     "schemaDir": "./schema",
-    "outputDir": "../../jupyterlab_collaboration/labextension",
+    "outputDir": "../../jupyter_collaboration/labextension",
     "disabledExtensions": [
       "@jupyterlab/filebrowser-extension:defaultFileBrowser"
     ],
     "sharedPackages": {
-      "@jupyterlab/collaboration": {
+      "@jupyter/collaboration": {
         "bundled": true,
         "singleton": true
       },
-      "@jupyterlab/docprovider": {
+      "@jupyter/docprovider": {
         "bundled": true,
         "singleton": true
       }

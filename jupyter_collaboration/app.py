@@ -1,11 +1,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-try:
-    from jupyter_server.extension.application import ExtensionApp
-except ModuleNotFoundError:
-    raise ModuleNotFoundError("Jupyter Server must be installed to use this extension.")
-
+from jupyter_server.extension.application import ExtensionApp
 from traitlets import Float, Int, Type
 from ypy_websocket.ystore import BaseYStore
 
@@ -13,7 +9,7 @@ from .handlers import SQLiteYStore, YDocRoomIdHandler, YDocWebSocketHandler
 
 
 class YDocExtension(ExtensionApp):
-    name = "jupyterlab_collaboration"
+    name = "jupyter_collaboration"
 
     file_poll_interval = Int(
         1,
