@@ -16,7 +16,7 @@ HERE = Path(__file__).parent.resolve()
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "jupyterlab_collaboration"
+project = "jupyter_collaboration"
 copyright = f"2022-{time.localtime().tm_year}, Jupyter Development Team"  # noqa
 author = "Jupyter Development Team"
 release = "0.3.0"
@@ -58,7 +58,7 @@ html_theme_options = {
             "type": "local",
         }
     ],
-    "github_url": "https://github.com/jupyterlab/jupyterlab_collaboration",
+    "github_url": "https://github.com/jupyterlab/jupyter_collaboration",
     "use_edit_page_button": True,
     "show_toc_level": 1,
     "navbar_align": "left",
@@ -69,7 +69,7 @@ html_theme_options = {
 # Output for github to be used in links
 html_context = {
     "github_user": "jupyterlab",  # Username
-    "github_repo": "jupyterlab_collaboration",  # Repo name
+    "github_repo": "jupyter_collaboration",  # Repo name
     "github_version": "main",  # Version
     "conf_py_path": "/docs/source/",  # Path in the checkout to the docs root
 }

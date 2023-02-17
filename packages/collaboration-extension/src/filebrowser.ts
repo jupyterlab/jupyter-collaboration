@@ -12,7 +12,7 @@ import {
 
 import { CommandRegistry } from '@lumino/commands';
 
-import { YDrive } from '@jupyterlab/docprovider';
+import { YDrive } from '@jupyter/docprovider';
 
 /**
  * The command IDs used by the file browser plugin.
@@ -25,7 +25,7 @@ namespace CommandIDs {
  * The default file browser factory provider.
  */
 export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
-  id: '@jupyterlab/collaboration-extension:defaultFileBrowser',
+  id: '@jupyter/collaboration-extension:defaultFileBrowser',
   provides: IDefaultFileBrowser,
   requires: [IFileBrowserFactory],
   optional: [IRouter, JupyterFrontEnd.ITreeResolver, ILabShell],
@@ -37,7 +37,7 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
     labShell: ILabShell | null
   ): Promise<IDefaultFileBrowser> => {
     console.debug(
-      '@jupyterlab/collaboration-extension:defaultFileBrowser: activated'
+      '@jupyter/collaboration-extension:defaultFileBrowser: activated'
     );
     const { commands } = app;
 

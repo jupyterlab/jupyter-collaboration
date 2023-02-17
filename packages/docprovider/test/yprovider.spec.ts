@@ -3,7 +3,7 @@
 
 import { WebSocketProvider } from "../src";
 
-describe("@jupyterlab/docprovider", () => {
+describe("@jupyter/docprovider", () => {
   describe("docprovider", () => {
     it("should have a type", () => {
       expect(WebSocketProvider).not.toBeUndefined();

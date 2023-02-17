@@ -3,7 +3,7 @@ build-backend = "hatchling.build"
 requires = ["hatchling>=1.4.0", "hatch-nodejs-version", "jupyterlab>=4.0.0a32"]
 
 [project]
-name = "jupyterlab_collaboration"
+name = "jupyter_collaboration"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.8"
@@ -60,31 +60,31 @@ profile = "black"
 source = "nodejs"
 
 [tool.hatch.build.hooks.version]
-path = "jupyterlab_collaboration/_version.py"
+path = "jupyter_collaboration/_version.py"
 
 [tool.hatch.metadata.hooks.nodejs]
 fields = ["description", "authors", "urls"]
 
 [tool.hatch.build.targets.sdist]
-artifacts = ["/jupyterlab_collaboration/labextension"]
+artifacts = ["/jupyter_collaboration/labextension"]
 exclude = ["/.github", "/binder", "node_modules"]
 
 [tool.hatch.build.targets.sdist.force-include]
 "./packages" = "packages"
 
 [tool.hatch.build.targets.wheel.shared-data]
-"jupyterlab_collaboration/labextension" = "share/jupyter/labextensions/@jupyterlab/collaboration-extension"
-"install.json" = "share/jupyter/labextensions/@jupyterlab/collaboration-extension/install.json"
-"jupyter-config/jupyterlab_collaboration.json" = "etc/jupyter/jupyter_server_config.d/jupyterlab_collaboration.json"
+"jupyter_collaboration/labextension" = "share/jupyter/labextensions/@jupyter/collaboration-extension"
+"install.json" = "share/jupyter/labextensions/@jupyter/collaboration-extension/install.json"
+"jupyter-config/jupyter_collaboration.json" = "etc/jupyter/jupyter_server_config.d/jupyter_collaboration.json"
 
 [tool.hatch.build.hooks.jupyter-builder]
 dependencies = ["hatch-jupyter-builder>=0.5"]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = [
-    "jupyterlab_collaboration/labextension/static/style.js",
-    "jupyterlab_collaboration/labextension/package.json",
+    "jupyter_collaboration/labextension/static/style.js",
+    "jupyter_collaboration/labextension/package.json",
 ]
-skip-if-exists = ["jupyterlab_collaboration/labextension/static/style.js"]
+skip-if-exists = ["jupyter_collaboration/labextension/static/style.js"]
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
 npm = ["jlpm"]

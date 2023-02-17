@@ -11,18 +11,18 @@ contain the root `toctree` directive.
 From JupyterLab v4, file documents and notebooks have collaborative
 editing using the [Yjs shared editing framework](https://github.com/yjs/yjs).
 Editors are not collaborative by default; to activate it, install the extension
-`jupyterlab_collaboration`.
+`jupyter_collaboration`.
 
 Installation using mamba/conda:
 
 ```sh
-mamba install -c conda-forge jupyterlab_collaboration
+mamba install -c conda-forge jupyter_collaboration
 ```
 
 Installation using pip:
 
 ```sh
-pip install jupyterlab_collaboration
+pip install jupyter_collaboration
 ```
 
 To share a document with other users, you can copy the URL and send it, or you
