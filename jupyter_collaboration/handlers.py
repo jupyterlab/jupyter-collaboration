@@ -160,6 +160,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         if file_path != self.room.document.path:
             self.log.debug(
                 "File with ID %s was moved from %s to %s",
+                file_id,
                 self.room.document.path,
                 file_path,
             )
