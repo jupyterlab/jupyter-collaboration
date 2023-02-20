@@ -95,6 +95,7 @@ editable_build_cmd = "install:extension"
 skip = ["check-links"]
 
 [tool.jupyter-releaser.options]
+npm-cmd = "npm publish --tag next"
 version-cmd = "python scripts/bump_version.py --force"
 
 [tool.jupyter-releaser.hooks]
