@@ -1,8 +1,10 @@
 name: example-environment
 channels:
   - conda-forge
+  - conda-forge/label/jupyterlab_alpha
   - nodefaults
 dependencies:
+  - jupyterlab >=4.0.0a34
   - jupyterlab-link-share >=0.2
   - nodejs >=18,<19
   - python >=3.11,<3.12
