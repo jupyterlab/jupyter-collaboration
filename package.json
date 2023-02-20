@@ -58,16 +58,24 @@
     "eslint-config-prettier": "^8.4.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react": "^7.30.0",
-    "lerna": "^6.4.1",
-    "prettier": "^2.5.1",
-    "rimraf": "^3.0.2",
-    "stylelint": "^14.3.0",
+    "lerna": "^6.5.1",
+    "prettier": "^2.8.4",
+    "rimraf": "^4.1.2",
+    "stylelint": "^15.2.0",
     "stylelint-config-prettier": "^9.0.4",
-    "stylelint-config-recommended": "^6.0.0",
-    "stylelint-config-standard": "~24.0.0",
+    "stylelint-config-recommended": "^10.0.0",
+    "stylelint-config-standard": "^30.0.1",
     "stylelint-prettier": "^2.0.0",
     "typedoc": "~0.23.24",
     "typescript": "~4.7.3",
     "yarn": "1.22.17"
+  },
+  "resolutions": {
+    "@lumino/coreutils": "^2.0.0-beta.0",
+    "@lumino/commands": "^2.0.0-beta.1",
+    "@lumino/disposable": "^2.0.0-beta.1",
+    "@lumino/signaling": "^2.0.0-beta.1",
+    "@lumino/virtualdom": "^2.0.0-beta.0",
+    "@lumino/widgets": "^2.0.0-beta.1"
   }
 }
