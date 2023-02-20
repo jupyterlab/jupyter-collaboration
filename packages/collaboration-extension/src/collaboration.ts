@@ -9,10 +9,8 @@ import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
-import { PageConfig } from '@jupyterlab/coreutils';
 import { DOMUtils } from '@jupyterlab/apputils';
 import {
-  AwarenessMock,
   CollaboratorsPanel,
   IAwareness,
   IGlobalAwareness,
@@ -58,10 +56,6 @@ export const menuBarPlugin: JupyterFrontEndPlugin<void> = {
     const { shell } = app;
     const { user } = app.serviceManager;
 
-    if (PageConfig.getOption('collaborative') !== 'true') {
-      return;
-    }
-
     const menuBar = new MenuBar({
       forceItemsPosition: {
         forceX: false,
@@ -87,10 +81,6 @@ export const rtcGlobalAwarenessPlugin: JupyterFrontEndPlugin<IAwareness> = {
   activate: (app: JupyterFrontEnd, state: StateDB): IAwareness => {
     const { user } = app.serviceManager;
     const ydoc = new Y.Doc();
-
-    if (PageConfig.getOption('collaborative') !== 'true') {
-      return new AwarenessMock(ydoc);
-    }
 
     const awareness = new Awareness(ydoc);
 
@@ -137,12 +127,9 @@ export const rtcPanelPlugin: JupyterFrontEndPlugin<void> = {
     awareness: Awareness,
     translator: ITranslator
   ): void => {
-    if (PageConfig.getOption('collaborative') !== 'true') {
-      return;
-    }
     const { user } = app.serviceManager;
 
-    const trans = translator.load('jupyterlab');
+    const trans = translator.load('jupyter_collaboration');
 
     const userPanel = new SidePanel();
     userPanel.id = DOMUtils.createDomID();
