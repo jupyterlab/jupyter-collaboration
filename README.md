@@ -1,4 +1,4 @@
-# JupyterLab Real-Time Collaboration
+# Jupyter Real-Time Collaboration
 
 [![Build Status](https://github.com/jupyterlab/jupyter_collaboration/actions/workflows/test.yml/badge.svg?query=branch%3Amain++)](https://github.com/jupyterlab/jupyter_collaboration/actions?query=branch%3Amain++)
 
