@@ -1,11 +1,8 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-# mypy: no-name-defined
 import logging
 
 c.ServerApp.log_level = logging.DEBUG
-
-c.LabApp.extensions_in_dev_mode = True
 
 c.ContentsManager.allow_hidden = True
 # Use advance file ID service for out of band rename support
