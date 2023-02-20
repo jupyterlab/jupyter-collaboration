@@ -1,5 +1,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+# mypy: no-name-defined
 import logging
 
 c.ServerApp.log_level = logging.DEBUG

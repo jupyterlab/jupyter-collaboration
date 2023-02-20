@@ -137,9 +137,6 @@ filterwarnings = [
 ]
 
 [tool.mypy]
-exclude = [
-    "^binder/",
-]
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_incomplete_defs = true
