@@ -5,7 +5,6 @@ channels:
 dependencies:
   - jupyterlab-link-share >=0.2
   - nodejs >=18,<19
-  - pip
   - python >=3.11,<3.12
   - yarn <2
   # build

@@ -9,7 +9,7 @@ set -euxo pipefail
 
 yarn || yarn
 
-pip install -vv -e . --no-build-isolation
+python -m pip install -vv -e . --no-build-isolation
 jupyter server enable jupyter_collaboration
 
 mkdir -p ~/.jupyter/
