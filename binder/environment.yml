@@ -10,6 +10,7 @@ dependencies:
   # build
   - hatchling >=1.5.0
   - hatch-jupyter-builder >=0.3.2
+  - hatch-nodejs-version
   # dependencies
   - jupyter_server >=2.0.0
   # Use pip to get the the latest version
