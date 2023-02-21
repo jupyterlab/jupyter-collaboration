@@ -4,6 +4,49 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.0.0alpha1
+
+([Full Changelog](https://github.com/jupyterlab/jupyter_collaboration/compare/v0.7.0...1d87cf141558ce28f64c671398bb4c4f82a4b0ac))
+
+### Enhancements made
+
+- Setup a monorepo with a JupyterLab extension [#77](https://github.com/jupyterlab/jupyter_collaboration/pull/77) ([@hbcarlos](https://github.com/hbcarlos))
+- Move rtc packages [#76](https://github.com/jupyterlab/jupyter_collaboration/pull/76) ([@hbcarlos](https://github.com/hbcarlos))
+
+### Bugs fixed
+
+- Include style from dependencies [#103](https://github.com/jupyterlab/jupyter_collaboration/pull/103) ([@fcollonval](https://github.com/fcollonval))
+- Remove `PageConfig` [#97](https://github.com/jupyterlab/jupyter_collaboration/pull/97) ([@fcollonval](https://github.com/fcollonval))
+- Add missing argument for format string (#92) [#93](https://github.com/jupyterlab/jupyter_collaboration/pull/93) ([@cghanke](https://github.com/cghanke))
+
+### Maintenance and upkeep improvements
+
+- Bump dependencies [#98](https://github.com/jupyterlab/jupyter_collaboration/pull/98) ([@fcollonval](https://github.com/fcollonval))
+- Publish 1.0.0alpha0 [#96](https://github.com/jupyterlab/jupyter_collaboration/pull/96) ([@fcollonval](https://github.com/fcollonval))
+- Add releaser workflows [#95](https://github.com/jupyterlab/jupyter_collaboration/pull/95) ([@fcollonval](https://github.com/fcollonval))
+- Rename to `jupyter_collaboration` and `@jupyter/collaboration` [#91](https://github.com/jupyterlab/jupyter_collaboration/pull/91) ([@fcollonval](https://github.com/fcollonval))
+- Renames python package and lab extension [#88](https://github.com/jupyterlab/jupyter_collaboration/pull/88) ([@hbcarlos](https://github.com/hbcarlos))
+- Drop pytest_tornasync [#87](https://github.com/jupyterlab/jupyter_collaboration/pull/87) ([@fcollonval](https://github.com/fcollonval))
+- Fix releaser job [#82](https://github.com/jupyterlab/jupyter_collaboration/pull/82) ([@fcollonval](https://github.com/fcollonval))
+
+### Documentation improvements
+
+- Add binder [#99](https://github.com/jupyterlab/jupyter_collaboration/pull/99) ([@fcollonval](https://github.com/fcollonval))
+- Link to the `jupyter_ydoc` repo in README.md [#90](https://github.com/jupyterlab/jupyter_collaboration/pull/90) ([@jtpio](https://github.com/jtpio))
+- Improve readme [#86](https://github.com/jupyterlab/jupyter_collaboration/pull/86) ([@fcollonval](https://github.com/fcollonval))
+- Improve the documentation [#85](https://github.com/jupyterlab/jupyter_collaboration/pull/85) ([@fcollonval](https://github.com/fcollonval))
+- Moves documentation from JupyterLab [#84](https://github.com/jupyterlab/jupyter_collaboration/pull/84) ([@hbcarlos](https://github.com/hbcarlos))
+- Adds documentation [#80](https://github.com/jupyterlab/jupyter_collaboration/pull/80) ([@hbcarlos](https://github.com/hbcarlos))
+- Update links [#79](https://github.com/jupyterlab/jupyter_collaboration/pull/79) ([@hbcarlos](https://github.com/hbcarlos))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter_collaboration/graphs/contributors?from=2023-01-26&to=2023-02-21&type=c))
+
+[@cghanke](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Acghanke+updated%3A2023-01-26..2023-02-21&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Acodecov+updated%3A2023-01-26..2023-02-21&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Acodecov-commenter+updated%3A2023-01-26..2023-02-21&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Afcollonval+updated%3A2023-01-26..2023-02-21&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Ahbcarlos+updated%3A2023-01-26..2023-02-21&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Ajtpio+updated%3A2023-01-26..2023-02-21&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Apre-commit-ci+updated%3A2023-01-26..2023-02-21&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Awelcome+updated%3A2023-01-26..2023-02-21&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.0.0alpha0
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter_collaboration/compare/v0.7.0...fd69ba94af56f069434b2c8638ada90500ef4be5))
@@ -39,9 +82,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter_collaboration/graphs/contributors?from=2023-01-26&to=2023-02-20&type=c))
 
 [@cghanke](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Acghanke+updated%3A2023-01-26..2023-02-20&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Acodecov+updated%3A2023-01-26..2023-02-20&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Acodecov-commenter+updated%3A2023-01-26..2023-02-20&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Afcollonval+updated%3A2023-01-26..2023-02-20&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Ahbcarlos+updated%3A2023-01-26..2023-02-20&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Ajtpio+updated%3A2023-01-26..2023-02-20&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Apre-commit-ci+updated%3A2023-01-26..2023-02-20&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Awelcome+updated%3A2023-01-26..2023-02-20&type=Issues)
-
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.x
 
