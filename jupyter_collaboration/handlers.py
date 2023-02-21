@@ -81,9 +81,7 @@ class JupyterWebsocketServer(WebsocketServer):
         self.ypatch_nb = 0
         self.connected_users = {}
         self.background_tasks = set()
-        task = asyncio.create_task(self.monitor())
-        self.background_tasks.add(task)
-        task.add_done_callback(self.background_tasks.discard)
+        self.monitor_task = asyncio.create_task(self.monitor())
 
     async def monitor(self):
         while True:
@@ -200,8 +198,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self.set_file_info(path)
         self.saving_document = None
         task = asyncio.create_task(self.websocket_server.serve(self))
-        self.background_tasks.add(task)
-        task.add_done_callback(self.background_tasks.discard)
+        self.websocket_server.background_tasks.add(task)
+        task.add_done_callback(self.websocket_server.background_tasks.discard)
 
         # cancel the deletion of the room if it was scheduled
         if isinstance(self.room, DocumentRoom) and self.room.cleaner is not None:
