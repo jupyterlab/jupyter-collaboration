@@ -5,7 +5,7 @@ import asyncio
 import json
 from logging import Logger
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Set, Tuple
 
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
@@ -72,6 +72,7 @@ class JupyterWebsocketServer(WebsocketServer):
     rooms: Dict[str, YRoom]
     ypatch_nb: int
     connected_user: Dict[int, str]
+    background_tasks: Set[asyncio.Task[Any]]
 
     def __init__(self, *args, **kwargs):
         self.ystore_class = kwargs.pop("ystore_class")
@@ -79,7 +80,8 @@ class JupyterWebsocketServer(WebsocketServer):
         super().__init__(*args, **kwargs)
         self.ypatch_nb = 0
         self.connected_users = {}
-        asyncio.create_task(self.monitor())
+        self.background_tasks = set()
+        self.monitor_task = asyncio.create_task(self.monitor())
 
     async def monitor(self):
         while True:
@@ -195,7 +197,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self.room = self.websocket_server.get_room(path)
         self.set_file_info(path)
         self.saving_document = None
-        asyncio.create_task(self.websocket_server.serve(self))
+        task = asyncio.create_task(self.websocket_server.serve(self))
+        self.websocket_server.background_tasks.add(task)
+        task.add_done_callback(self.websocket_server.background_tasks.discard)
 
         # cancel the deletion of the room if it was scheduled
         if isinstance(self.room, DocumentRoom) and self.room.cleaner is not None:
