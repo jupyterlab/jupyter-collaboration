@@ -9,6 +9,7 @@ import {
   YNotebook
 } from '@jupyter/ydoc';
 import { URLExt } from '@jupyterlab/coreutils';
+import { TranslationBundle } from '@jupyterlab/translation';
 import { Contents, Drive, User } from '@jupyterlab/services';
 import { WebSocketProvider } from './yprovider';
 
@@ -27,9 +28,10 @@ export class YDrive extends Drive {
    *
    * @param user - The user manager to add the identity to the awareness of documents.
    */
-  constructor(user: User.IManager) {
+  constructor(user: User.IManager, translator: TranslationBundle) {
     super({ name: 'YDrive' });
     this._user = user;
+    this._translator = translator;
     this._providers = new Map<string, WebSocketProvider>();
 
     this.sharedModelFactory = new SharedModelFactory(this._onCreate);
@@ -155,7 +157,8 @@ export class YDrive extends Drive {
         format: options.format,
         contentType: options.contentType,
         model: sharedModel,
-        user: this._user
+        user: this._user,
+        translator: this._translator
       });
 
       const key = `${options.contentType}:${options.format}:${options.path}`;
@@ -178,6 +181,7 @@ export class YDrive extends Drive {
   };
 
   private _user: User.IManager;
+  private _translator: TranslationBundle;
   private _providers: Map<string, WebSocketProvider>;
 }
 

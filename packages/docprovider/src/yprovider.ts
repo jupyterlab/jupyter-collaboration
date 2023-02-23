@@ -6,6 +6,7 @@
 import { URLExt } from '@jupyterlab/coreutils';
 import { showErrorMessage, Dialog } from '@jupyterlab/apputils';
 import { ServerConnection, User } from '@jupyterlab/services';
+import { TranslationBundle } from '@jupyterlab/translation';
 
 import { PromiseDelegate } from '@lumino/coreutils';
 import { IDisposable } from '@lumino/disposable';
@@ -53,6 +54,7 @@ export class WebSocketProvider implements IDocumentProvider {
     this._sharedModel = options.model;
     this._awareness = options.model.awareness;
     this._yWebsocketProvider = null;
+    this._translator = options.translator;
 
     const user = options.user;
 
@@ -133,9 +135,11 @@ export class WebSocketProvider implements IDocumentProvider {
       console.error('Document provider closed:', event.reason);
 
       showErrorMessage(
-        'Session expired',
-        'The document session expired. We need to reload this browser tab.',
-        [Dialog.okButton()]
+        this._translator.__('Session expired'),
+        this._translator.__(
+          'The document session expired. You need to reload this browser tab.'
+        ),
+        [Dialog.okButton({ label: this._translator.__('Reload') })]
       )
         .then(r => window.location.reload())
         .catch(e => window.location.reload());
@@ -154,6 +158,7 @@ export class WebSocketProvider implements IDocumentProvider {
   private _serverUrl: string;
   private _sharedModel: YDocument<DocumentChange>;
   private _yWebsocketProvider: YWebsocketProvider | null;
+  private _translator: TranslationBundle;
 }
 
 /**
@@ -193,5 +198,10 @@ export namespace WebSocketProvider {
      * The user data
      */
     user: User.IManager;
+
+    /**
+     * The jupyterlab translator
+     */
+    translator: TranslationBundle;
   }
 }
