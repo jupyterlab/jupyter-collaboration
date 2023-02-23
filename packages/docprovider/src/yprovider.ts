@@ -4,14 +4,17 @@
 |----------------------------------------------------------------------------*/
 
 import { URLExt } from '@jupyterlab/coreutils';
+import { showErrorMessage, Dialog } from '@jupyterlab/apputils';
 import { ServerConnection, User } from '@jupyterlab/services';
-import { DocumentChange, YDocument } from '@jupyter/ydoc';
+
 import { PromiseDelegate } from '@lumino/coreutils';
 import { IDisposable } from '@lumino/disposable';
 import { Signal } from '@lumino/signaling';
+
+import { DocumentChange, YDocument } from '@jupyter/ydoc';
+
 import { Awareness } from 'y-protocols/awareness';
 import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
-import type { Doc } from 'yjs';
 
 /**
  * Room Id endpoint provided by `jupyter_collaboration`
@@ -47,7 +50,7 @@ export class WebSocketProvider implements IDocumentProvider {
     this._contentType = options.contentType;
     this._format = options.format;
     this._serverUrl = options.url;
-    this._ydoc = options.model.ydoc;
+    this._sharedModel = options.model;
     this._awareness = options.model.awareness;
     this._yWebsocketProvider = null;
 
@@ -66,25 +69,29 @@ export class WebSocketProvider implements IDocumentProvider {
       FILE_PATH_TO_ROOM_ID_URL,
       encodeURIComponent(this._path)
     );
-    const data = {
-      method: 'PUT',
-      body: JSON.stringify({ format: this._format, type: this._contentType })
-    };
+    const data = { method: 'PUT' };
     ServerConnection.makeRequest(url, data, serverSettings)
       .then(response => {
         if (response.status !== 200 && response.status !== 201) {
           throw new ServerConnection.ResponseError(response);
         }
-        return response.text();
+        return response.json();
       })
-      .then(roomid => {
+      .then(resp => {
         this._yWebsocketProvider = new YWebsocketProvider(
           this._serverUrl,
-          roomid,
-          this._ydoc,
+          `${this._format}:${this._contentType}:${resp['file_id']}`,
+          this._sharedModel.ydoc,
           {
+            disableBc: true,
+            params: { session: resp['session'] },
             awareness: this._awareness
           }
+        );
+
+        this._yWebsocketProvider.on(
+          'connection-close',
+          this._onConnectionClosed
         );
       })
       .then(() => this._ready.resolve())
@@ -121,6 +128,23 @@ export class WebSocketProvider implements IDocumentProvider {
     this._awareness.setLocalStateField('user', user.identity);
   }
 
+  private _onConnectionClosed(event: any): void {
+    if (event.code === 1) {
+      console.error('Document provider closed:', event.reason);
+
+      showErrorMessage(
+        'Session expired',
+        'The document session expired. We need to reload this browser tab.',
+        [Dialog.okButton()]
+      )
+        .then(r => window.location.reload())
+        .catch(e => window.location.reload());
+      // Dispose shared model immediately. Better break the document model,
+      // than overriding data on disk
+      this._sharedModel.dispose();
+    }
+  }
+
   private _awareness: Awareness;
   private _contentType: string;
   private _format: string;
@@ -128,7 +152,7 @@ export class WebSocketProvider implements IDocumentProvider {
   private _path: string;
   private _ready = new PromiseDelegate<void>();
   private _serverUrl: string;
-  private _ydoc: Doc;
+  private _sharedModel: YDocument<DocumentChange>;
   private _yWebsocketProvider: YWebsocketProvider | null;
 }
 
