@@ -206,7 +206,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
         # Close the connection if the document session expired
         session = self.get_query_argument("session", "")
-        if isinstance(self.room, DocumentRoom) and not DOCUMENT_SESSION == session:
+        if isinstance(self.room, DocumentRoom) and DOCUMENT_SESSION != session:
             self.close(1, "Document session expired")
 
         # cancel the deletion of the room if it was scheduled
