@@ -16,7 +16,7 @@ import { WebSocketProvider } from './yprovider';
 /**
  * The url for the default drive service.
  */
-const Y_DOCUMENT_PROVIDER_URL = 'api/yjs';
+const DOCUMENT_PROVIDER_URL = 'api/collaboration/room';
 
 /**
  * A Collaborative implementation for an `IDrive`, talking to the
@@ -31,7 +31,7 @@ export class YDrive extends Drive {
   constructor(user: User.IManager, translator: TranslationBundle) {
     super({ name: 'YDrive' });
     this._user = user;
-    this._translator = translator;
+    this._trans = translator;
     this._providers = new Map<string, WebSocketProvider>();
 
     this.sharedModelFactory = new SharedModelFactory(this._onCreate);
@@ -87,7 +87,7 @@ export class YDrive extends Drive {
     options?: Contents.IFetchOptions
   ): Promise<Contents.IModel> {
     if (options && options.format && options.type) {
-      const key = `${options.type}:${options.format}:${localPath}`;
+      const key = `${options.format}:${options.type}:${localPath}`;
       const provider = this._providers.get(key);
 
       if (provider) {
@@ -152,16 +152,16 @@ export class YDrive extends Drive {
     }
     try {
       const provider = new WebSocketProvider({
-        url: URLExt.join(this.serverSettings.wsUrl, Y_DOCUMENT_PROVIDER_URL),
+        url: URLExt.join(this.serverSettings.wsUrl, DOCUMENT_PROVIDER_URL),
         path: options.path,
         format: options.format,
         contentType: options.contentType,
         model: sharedModel,
         user: this._user,
-        translator: this._translator
+        translator: this._trans
       });
 
-      const key = `${options.contentType}:${options.format}:${options.path}`;
+      const key = `${options.format}:${options.contentType}:${options.path}`;
       this._providers.set(key, provider);
 
       sharedModel.disposed.connect(() => {
@@ -181,7 +181,7 @@ export class YDrive extends Drive {
   };
 
   private _user: User.IManager;
-  private _translator: TranslationBundle;
+  private _trans: TranslationBundle;
   private _providers: Map<string, WebSocketProvider>;
 }
 

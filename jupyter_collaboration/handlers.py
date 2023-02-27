@@ -25,7 +25,7 @@ from ypy_websocket.yutils import YMessageType
 
 YFILE = YDOCS["file"]
 
-DOCUMENT_SESSION = str(uuid.uuid4())
+SERVER_SESSION = str(uuid.uuid4())
 
 
 class TempFileYStore(_TempFileYStore):
@@ -205,9 +205,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         task.add_done_callback(self.websocket_server.background_tasks.discard)
 
         # Close the connection if the document session expired
-        session = self.get_query_argument("session", "")
-        if isinstance(self.room, DocumentRoom) and DOCUMENT_SESSION != session:
-            self.close(1, "Document session expired")
+        session_id = self.get_query_argument("sessionId", "")
+        if isinstance(self.room, DocumentRoom) and SERVER_SESSION != session_id:
+            self.close(1003, f"Document session {session_id} expired")
 
         # cancel the deletion of the room if it was scheduled
         if isinstance(self.room, DocumentRoom) and self.room.cleaner is not None:
@@ -394,15 +394,18 @@ class YDocRoomIdHandler(APIHandler):
     @web.authenticated
     @authorized
     async def put(self, path):
+        body = json.loads(self.request.body)
+        ws_url = f"{body['format']}:{body['type']}:"
+
         file_id_manager = self.settings["file_id_manager"]
 
         idx = file_id_manager.get_id(path)
         if idx is not None:
             # index already exists
             self.set_status(200)
-            self.log.info("Request for Y document '%s' with room ID: %s", path, idx)
-            data = json.dumps({"file_id": idx, "session": DOCUMENT_SESSION})
-            return self.finish(data)
+            ws_url += str(idx)
+            self.log.info("Request for Y document '%s' with room ID: %s", path, ws_url)
+            return self.finish(ws_url)
 
         # try indexing
         idx = file_id_manager.index(path)
@@ -412,6 +415,42 @@ class YDocRoomIdHandler(APIHandler):
 
         # index successfully created
         self.set_status(201)
+        ws_url += str(idx)
+        self.log.info("Request for Y document '%s' with room ID: %s", path, ws_url)
+        return self.finish(ws_url)
+
+
+class DocSessionHandler(APIHandler):
+    auth_resource = "contents"
+
+    @web.authenticated
+    @authorized
+    async def put(self, path):
+        body = json.loads(self.request.body)
+        format = body["format"]
+        content_type = body["type"]
+        file_id_manager = self.settings["file_id_manager"]
+
+        idx = file_id_manager.get_id(path)
+        if idx is not None:
+            # index already exists
+            self.log.info("Request for Y document '%s' with room ID: %s", path, idx)
+            data = json.dumps(
+                {"format": format, "type": content_type, "fileId": idx, "sessionId": SERVER_SESSION}
+            )
+            self.set_status(200)
+            return self.finish(data)
+
+        # try indexing
+        idx = file_id_manager.index(path)
+        if idx is None:
+            # file does not exists
+            raise web.HTTPError(404, f"File {path!r} does not exist")
+
+        # index successfully created
         self.log.info("Request for Y document '%s' with room ID: %s", path, idx)
-        data = json.dumps({"file_id": idx, "session": DOCUMENT_SESSION})
+        data = json.dumps(
+            {"format": format, "type": content_type, "fileId": idx, "sessionId": SERVER_SESSION}
+        )
+        self.set_status(201)
         return self.finish(data)
