@@ -70,8 +70,8 @@ class YDocExtension(ExtensionApp):
                 # Deprecated - to remove for 1.0.0
                 (r"/api/yjs/roomid/(.*)", YDocRoomIdHandler),
                 # Deprecated - to remove for 1.0.0
-                (r"/api/yjs/(.*)", YDocWebSocketHandler),
-                (r"/api/collaboration/room/(.*)", YDocWebSocketHandler),
-                (r"/api/collaboration/session/(.*)", DocSessionHandler),
+                (r"/api/yjs/session/(.*)", DocSessionHandler),
+                # Deprecated - to remove for 1.0.0
+                (r"/api/yjs/(.*)", YDocWebSocketHandler)
             ]
         )
