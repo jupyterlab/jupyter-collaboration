@@ -9,7 +9,12 @@ except ModuleNotFoundError:
 from traitlets import Float, Int, Type
 from ypy_websocket.ystore import BaseYStore  # type: ignore
 
-from .handlers import SQLiteYStore, YDocRoomIdHandler, YDocWebSocketHandler
+from .handlers import (
+    DocSessionHandler,
+    SQLiteYStore,
+    YDocRoomIdHandler,
+    YDocWebSocketHandler,
+)
 
 
 class YDocExtension(ExtensionApp):
@@ -62,7 +67,11 @@ class YDocExtension(ExtensionApp):
     def initialize_handlers(self):
         self.handlers.extend(
             [
+                # Deprecated - to remove for 1.0.0
                 (r"/api/yjs/roomid/(.*)", YDocRoomIdHandler),
+                # Deprecated - to remove for 1.0.0
                 (r"/api/yjs/(.*)", YDocWebSocketHandler),
+                (r"/api/collaboration/room/(.*)", YDocWebSocketHandler),
+                (r"/api/collaboration/session/(.*)", DocSessionHandler),
             ]
         )
