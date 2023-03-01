@@ -3,6 +3,7 @@
 
 import asyncio
 import json
+import uuid
 from logging import Logger
 from pathlib import Path
 from typing import Any, Dict, Optional, Set, Tuple
@@ -23,6 +24,8 @@ from ypy_websocket.ystore import YDocNotFound
 from ypy_websocket.yutils import YMessageType
 
 YFILE = YDOCS["file"]
+
+SERVER_SESSION = str(uuid.uuid4())
 
 
 class TempFileYStore(_TempFileYStore):
@@ -201,6 +204,11 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self.websocket_server.background_tasks.add(task)
         task.add_done_callback(self.websocket_server.background_tasks.discard)
 
+        # Close the connection if the document session expired
+        session_id = self.get_query_argument("sessionId", "")
+        if isinstance(self.room, DocumentRoom) and SERVER_SESSION != session_id:
+            self.close(1003, f"Document session {session_id} expired")
+
         # cancel the deletion of the room if it was scheduled
         if isinstance(self.room, DocumentRoom) and self.room.cleaner is not None:
             self.room.cleaner.cancel()
@@ -227,6 +235,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     # if YStore updates and source file are out-of-sync, resync updates with source
                     if self.room.document.source != model["content"]:
                         read_from_source = True
+
                 if read_from_source:
                     self.room.document.source = model["content"]
                     if self.room.ystore:
@@ -409,3 +418,39 @@ class YDocRoomIdHandler(APIHandler):
         ws_url += str(idx)
         self.log.info("Request for Y document '%s' with room ID: %s", path, ws_url)
         return self.finish(ws_url)
+
+
+class DocSessionHandler(APIHandler):
+    auth_resource = "contents"
+
+    @web.authenticated
+    @authorized
+    async def put(self, path):
+        body = json.loads(self.request.body)
+        format = body["format"]
+        content_type = body["type"]
+        file_id_manager = self.settings["file_id_manager"]
+
+        idx = file_id_manager.get_id(path)
+        if idx is not None:
+            # index already exists
+            self.log.info("Request for Y document '%s' with room ID: %s", path, idx)
+            data = json.dumps(
+                {"format": format, "type": content_type, "fileId": idx, "sessionId": SERVER_SESSION}
+            )
+            self.set_status(200)
+            return self.finish(data)
+
+        # try indexing
+        idx = file_id_manager.index(path)
+        if idx is None:
+            # file does not exists
+            raise web.HTTPError(404, f"File {path!r} does not exist")
+
+        # index successfully created
+        self.log.info("Request for Y document '%s' with room ID: %s", path, idx)
+        data = json.dumps(
+            {"format": format, "type": content_type, "fileId": idx, "sessionId": SERVER_SESSION}
+        )
+        self.set_status(201)
+        return self.finish(data)

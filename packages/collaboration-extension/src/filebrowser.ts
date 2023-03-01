@@ -9,6 +9,7 @@ import {
   IDefaultFileBrowser,
   IFileBrowserFactory
 } from '@jupyterlab/filebrowser';
+import { ITranslator } from '@jupyterlab/translation';
 
 import { CommandRegistry } from '@lumino/commands';
 
@@ -27,11 +28,12 @@ namespace CommandIDs {
 export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
   id: '@jupyter/collaboration-extension:defaultFileBrowser',
   provides: IDefaultFileBrowser,
-  requires: [IFileBrowserFactory],
+  requires: [IFileBrowserFactory, ITranslator],
   optional: [IRouter, JupyterFrontEnd.ITreeResolver, ILabShell],
   activate: async (
     app: JupyterFrontEnd,
     fileBrowserFactory: IFileBrowserFactory,
+    translator: ITranslator,
     router: IRouter | null,
     tree: JupyterFrontEnd.ITreeResolver | null,
     labShell: ILabShell | null
@@ -41,7 +43,8 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
     );
     const { commands } = app;
 
-    const drive = new YDrive(app.serviceManager.user);
+    const trans = translator.load('jupyter_collaboration');
+    const drive = new YDrive(app.serviceManager.user, trans);
     app.serviceManager.contents.addDrive(drive);
 
     // Manually restore and load the default file browser.

@@ -3,21 +3,20 @@
 | Distributed under the terms of the Modified BSD License.
 |----------------------------------------------------------------------------*/
 
-import { URLExt } from '@jupyterlab/coreutils';
-import { ServerConnection, User } from '@jupyterlab/services';
-import { DocumentChange, YDocument } from '@jupyter/ydoc';
+import { showErrorMessage, Dialog } from '@jupyterlab/apputils';
+import { User } from '@jupyterlab/services';
+import { TranslationBundle } from '@jupyterlab/translation';
+
 import { PromiseDelegate } from '@lumino/coreutils';
 import { IDisposable } from '@lumino/disposable';
 import { Signal } from '@lumino/signaling';
+
+import { DocumentChange, YDocument } from '@jupyter/ydoc';
+
 import { Awareness } from 'y-protocols/awareness';
 import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
-import type { Doc } from 'yjs';
 
-/**
- * Room Id endpoint provided by `jupyter_collaboration`
- * See https://github.com/jupyterlab/jupyter_collaboration
- */
-const FILE_PATH_TO_ROOM_ID_URL = 'api/yjs/roomid';
+import { ISessionModel, requestDocSession } from './requests';
 
 /**
  * An interface for a document provider.
@@ -47,9 +46,10 @@ export class WebSocketProvider implements IDocumentProvider {
     this._contentType = options.contentType;
     this._format = options.format;
     this._serverUrl = options.url;
-    this._ydoc = options.model.ydoc;
+    this._sharedModel = options.model;
     this._awareness = options.model.awareness;
     this._yWebsocketProvider = null;
+    this._trans = options.translator;
 
     const user = options.user;
 
@@ -60,35 +60,7 @@ export class WebSocketProvider implements IDocumentProvider {
       .catch(e => console.error(e));
     user.userChanged.connect(this._onUserChanged, this);
 
-    const serverSettings = ServerConnection.makeSettings();
-    const url = URLExt.join(
-      serverSettings.baseUrl,
-      FILE_PATH_TO_ROOM_ID_URL,
-      encodeURIComponent(this._path)
-    );
-    const data = {
-      method: 'PUT',
-      body: JSON.stringify({ format: this._format, type: this._contentType })
-    };
-    ServerConnection.makeRequest(url, data, serverSettings)
-      .then(response => {
-        if (response.status !== 200 && response.status !== 201) {
-          throw new ServerConnection.ResponseError(response);
-        }
-        return response.text();
-      })
-      .then(roomid => {
-        this._yWebsocketProvider = new YWebsocketProvider(
-          this._serverUrl,
-          roomid,
-          this._ydoc,
-          {
-            awareness: this._awareness
-          }
-        );
-      })
-      .then(() => this._ready.resolve())
-      .catch(reason => console.warn(reason));
+    this._connect();
   }
 
   /**
@@ -113,13 +85,57 @@ export class WebSocketProvider implements IDocumentProvider {
       return;
     }
     this._isDisposed = true;
+    this._yWebsocketProvider?.off('connection-close', this._onConnectionClosed);
     this._yWebsocketProvider?.destroy();
     Signal.clearData(this);
+  }
+
+  private _connect(): void {
+    requestDocSession(this._format, this._contentType, this._path)
+      .then((session: ISessionModel) => {
+        this._yWebsocketProvider = new YWebsocketProvider(
+          this._serverUrl,
+          `${session.format}:${session.type}:${session.fileId}`,
+          this._sharedModel.ydoc,
+          {
+            disableBc: true,
+            params: { sessionId: session.sessionId },
+            awareness: this._awareness
+          }
+        );
+
+        this._yWebsocketProvider.on(
+          'connection-close',
+          this._onConnectionClosed
+        );
+      })
+      .then(r => this._ready.resolve())
+      .catch(e => console.warn(e));
   }
 
   private _onUserChanged(user: User.IManager): void {
     this._awareness.setLocalStateField('user', user.identity);
   }
+
+  private _onConnectionClosed = (event: any): void => {
+    if (event.code === 1003) {
+      console.error('Document provider closed:', event.reason);
+
+      showErrorMessage(
+        this._trans.__('Session expired'),
+        this._trans.__(
+          'The document session expired. You need to reload this browser tab.'
+        ),
+        [Dialog.okButton({ label: this._trans.__('Reload') })]
+      )
+        .then(r => window.location.reload())
+        .catch(e => window.location.reload());
+
+      // Dispose shared model immediately. Better break the document model,
+      // than overriding data on disk.
+      this._sharedModel.dispose();
+    }
+  };
 
   private _awareness: Awareness;
   private _contentType: string;
@@ -128,8 +144,9 @@ export class WebSocketProvider implements IDocumentProvider {
   private _path: string;
   private _ready = new PromiseDelegate<void>();
   private _serverUrl: string;
-  private _ydoc: Doc;
+  private _sharedModel: YDocument<DocumentChange>;
   private _yWebsocketProvider: YWebsocketProvider | null;
+  private _trans: TranslationBundle;
 }
 
 /**
@@ -169,5 +186,10 @@ export namespace WebSocketProvider {
      * The user data
      */
     user: User.IManager;
+
+    /**
+     * The jupyterlab translator
+     */
+    translator: TranslationBundle;
   }
 }
