@@ -72,6 +72,6 @@ class YDocExtension(ExtensionApp):
                 # Deprecated - to remove for 1.0.0
                 (r"/api/yjs/session/(.*)", DocSessionHandler),
                 # Deprecated - to remove for 1.0.0
-                (r"/api/yjs/(.*)", YDocWebSocketHandler)
+                (r"/api/yjs/(.*)", YDocWebSocketHandler),
             ]
         )
