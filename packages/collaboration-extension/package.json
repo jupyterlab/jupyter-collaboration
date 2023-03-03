@@ -99,6 +99,10 @@
       "@jupyter/docprovider": {
         "bundled": true,
         "singleton": true
+      },
+      "@jupyter/ydoc": {
+        "bundled": false,
+        "singleton": true
       }
     }
   }
