@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.0.0alpha2
+
+([Full Changelog](https://github.com/jupyterlab/jupyter_collaboration/compare/@jupyter/collaboration-extension@1.0.0-alpha.1...416b164be2489dfabb21b6257d225b3fd7285fd8))
+
+### Bugs fixed
+
+- Update ydoc [#114](https://github.com/jupyterlab/jupyter_collaboration/pull/114) ([@hbcarlos](https://github.com/hbcarlos))
+- Creates document session [#108](https://github.com/jupyterlab/jupyter_collaboration/pull/108) ([@hbcarlos](https://github.com/hbcarlos))
+- Keep reference to asyncio tasks [#106](https://github.com/jupyterlab/jupyter_collaboration/pull/106) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter_collaboration/graphs/contributors?from=2023-02-21&to=2023-03-05&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Adavidbrochart+updated%3A2023-02-21..2023-03-05&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Agithub-actions+updated%3A2023-02-21..2023-03-05&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Ahbcarlos+updated%3A2023-02-21..2023-03-05&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.0.0alpha1
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter_collaboration/compare/v0.7.0...1d87cf141558ce28f64c671398bb4c4f82a4b0ac))
@@ -44,8 +62,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter_collaboration/graphs/contributors?from=2023-01-26&to=2023-02-21&type=c))
 
 [@cghanke](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Acghanke+updated%3A2023-01-26..2023-02-21&type=Issues) | [@codecov](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Acodecov+updated%3A2023-01-26..2023-02-21&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Acodecov-commenter+updated%3A2023-01-26..2023-02-21&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Afcollonval+updated%3A2023-01-26..2023-02-21&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Ahbcarlos+updated%3A2023-01-26..2023-02-21&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Ajtpio+updated%3A2023-01-26..2023-02-21&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Apre-commit-ci+updated%3A2023-01-26..2023-02-21&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Awelcome+updated%3A2023-01-26..2023-02-21&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.0.0alpha0
 
