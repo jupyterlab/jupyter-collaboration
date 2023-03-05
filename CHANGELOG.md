@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.8.0a0
+
+([Full Changelog](https://github.com/jupyterlab/jupyter_collaboration/compare/v0.6.1...a1c2411b78eb0e8d0fa0272e93b593faf1deefe1))
+
+### Bugs fixed
+
+- Creates document session [#108](https://github.com/jupyterlab/jupyter_collaboration/pull/108) ([@hbcarlos](https://github.com/hbcarlos))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter_collaboration/graphs/contributors?from=2022-12-06&to=2023-03-05&type=c))
+
+[@codecov](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Acodecov+updated%3A2022-12-06..2023-03-05&type=Issues) | [@codecov-commenter](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Acodecov-commenter+updated%3A2022-12-06..2023-03-05&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Adavidbrochart+updated%3A2022-12-06..2023-03-05&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Afcollonval+updated%3A2022-12-06..2023-03-05&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Agithub-actions+updated%3A2022-12-06..2023-03-05&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Ahbcarlos+updated%3A2022-12-06..2023-03-05&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Awelcome+updated%3A2022-12-06..2023-03-05&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.6.1
 
 ([Full Changelog](https://github.com/jupyter-server/jupyter_server_ydoc/compare/v0.6.0...c7da14326ce8af586a5282a739eef2fa4cc042ca))
@@ -23,8 +39,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyter-server/jupyter_server_ydoc/graphs/contributors?from=2022-11-25&to=2022-12-06&type=c))
 
 [@codecov](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Acodecov+updated%3A2022-11-25..2022-12-06&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Adavidbrochart+updated%3A2022-11-25..2022-12-06&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Fjupyter_server_ydoc+involves%3Apre-commit-ci+updated%3A2022-11-25..2022-12-06&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.6.0
 
