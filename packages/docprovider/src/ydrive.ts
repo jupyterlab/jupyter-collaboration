@@ -189,22 +189,27 @@ export class YDrive extends Drive {
  * Yjs sharedModel factory for real-time collaboration.
  */
 class SharedModelFactory implements Contents.ISharedFactory {
-  private _disableDocumentWideUndo = true;
+  private _documentOptions: Map<Contents.ContentType, Record<string, any>>;
 
   constructor(
     private _onCreate: (
       options: Contents.ISharedFactoryOptions,
       sharedModel: YDocument<DocumentChange>
     ) => void
-  ) {}
+  ) {
+    this._documentOptions = new Map();
+    this._documentOptions.set('notebook', {
+      disableDocumentWideUndoRedo: true
+    });
+  }
 
   /**
    * Whether the IDrive supports real-time collaboration or not.
    */
   readonly collaborative = true;
 
-  set disableDocumentWideUndo(value: boolean) {
-    this._disableDocumentWideUndo = value;
+  setDocumentOptions(type: Contents.ContentType, value: Record<string, any>) {
+    this._documentOptions.set(type, value);
   }
 
   /**
@@ -230,9 +235,7 @@ class SharedModelFactory implements Contents.ISharedFactory {
         sharedModel = new YFile();
         break;
       case 'notebook':
-        sharedModel = new YNotebook({
-          disableDocumentWideUndoRedo: this._disableDocumentWideUndo
-        });
+        sharedModel = new YNotebook(this._documentOptions.get('notebook'));
         break;
       //default:
       // FIXME we should request a registry for the proper sharedModel

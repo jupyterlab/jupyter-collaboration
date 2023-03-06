@@ -77,9 +77,10 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
             const enableDocWideUndo = settings?.get(
               'experimentalEnableDocumentWideUndoRedo'
             ).composite as boolean;
-            const disableDocumentWideUndo = !enableDocWideUndo ?? true;
-            drive.sharedModelFactory.disableDocumentWideUndo =
-              disableDocumentWideUndo;
+
+            drive.sharedModelFactory.setDocumentOptions('notebook', {
+              disableDocumentWideUndoRedo: !enableDocWideUndo ?? true
+            });
           };
 
           updateSettings(settings);
