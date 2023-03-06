@@ -189,7 +189,7 @@ export class YDrive extends Drive {
  * Yjs sharedModel factory for real-time collaboration.
  */
 class SharedModelFactory implements Contents.ISharedFactory {
-  private _disableDocumentWideUndo: boolean = true;
+  private _disableDocumentWideUndo = true;
 
   constructor(
     private _onCreate: (
@@ -230,7 +230,9 @@ class SharedModelFactory implements Contents.ISharedFactory {
         sharedModel = new YFile();
         break;
       case 'notebook':
-        sharedModel = new YNotebook({ disableDocumentWideUndoRedo: this._disableDocumentWideUndo });
+        sharedModel = new YNotebook({
+          disableDocumentWideUndoRedo: this._disableDocumentWideUndo
+        });
         break;
       //default:
       // FIXME we should request a registry for the proper sharedModel

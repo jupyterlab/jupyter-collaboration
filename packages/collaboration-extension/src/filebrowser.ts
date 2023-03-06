@@ -30,7 +30,12 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
   id: '@jupyter/collaboration-extension:defaultFileBrowser',
   provides: IDefaultFileBrowser,
   requires: [IFileBrowserFactory, ITranslator],
-  optional: [IRouter, JupyterFrontEnd.ITreeResolver, ILabShell, ISettingRegistry],
+  optional: [
+    IRouter,
+    JupyterFrontEnd.ITreeResolver,
+    ILabShell,
+    ISettingRegistry
+  ],
   activate: async (
     app: JupyterFrontEnd,
     fileBrowserFactory: IFileBrowserFactory,
@@ -38,7 +43,7 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
     router: IRouter | null,
     tree: JupyterFrontEnd.ITreeResolver | null,
     labShell: ILabShell | null,
-    settingRegistry: ISettingRegistry | null,
+    settingRegistry: ISettingRegistry | null
   ): Promise<IDefaultFileBrowser> => {
     console.debug(
       '@jupyter/collaboration-extension:defaultFileBrowser: activated'
@@ -65,17 +70,23 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
 
     // Fetch settings if possible.
     if (settingRegistry) {
-      settingRegistry.load('@jupyterlab/notebook-extension:tracker')
-      .then(settings => {
-        const updateSettings = (settings: ISettingRegistry.ISettings) => {
-          const enableDocWideUndo = settings?.get('experimentalEnableDocumentWideUndoRedo').composite as boolean;
-          const disableDocumentWideUndo =  !enableDocWideUndo ?? true;
-          drive.sharedModelFactory.disableDocumentWideUndo = disableDocumentWideUndo;
-        }
-        
-        updateSettings(settings);
-        settings.changed.connect((settings: ISettingRegistry.ISettings) => updateSettings(settings));
-      });
+      settingRegistry
+        .load('@jupyterlab/notebook-extension:tracker')
+        .then(settings => {
+          const updateSettings = (settings: ISettingRegistry.ISettings) => {
+            const enableDocWideUndo = settings?.get(
+              'experimentalEnableDocumentWideUndoRedo'
+            ).composite as boolean;
+            const disableDocumentWideUndo = !enableDocWideUndo ?? true;
+            drive.sharedModelFactory.disableDocumentWideUndo =
+              disableDocumentWideUndo;
+          };
+
+          updateSettings(settings);
+          settings.changed.connect((settings: ISettingRegistry.ISettings) =>
+            updateSettings(settings)
+          );
+        });
     }
 
     return defaultBrowser;

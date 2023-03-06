@@ -128,7 +128,7 @@ export class WebSocketProvider implements IDocumentProvider {
         ),
         [Dialog.okButton({ label: this._trans.__('Reload') })]
       )
-        .then((r: any) => { 
+        .then((r: any) => {
           if (r.button.accept) {
             window.location.reload();
           }
