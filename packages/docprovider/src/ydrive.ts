@@ -40,7 +40,7 @@ export class YDrive extends Drive {
   /**
    * SharedModel factory for the YDrive.
    */
-  readonly sharedModelFactory: Contents.ISharedFactory;
+  readonly sharedModelFactory: SharedModelFactory;
 
   /**
    * Delete a file.
@@ -189,6 +189,8 @@ export class YDrive extends Drive {
  * Yjs sharedModel factory for real-time collaboration.
  */
 class SharedModelFactory implements Contents.ISharedFactory {
+  private _disableDocumentWideUndo: boolean = true;
+
   constructor(
     private _onCreate: (
       options: Contents.ISharedFactoryOptions,
@@ -200,6 +202,10 @@ class SharedModelFactory implements Contents.ISharedFactory {
    * Whether the IDrive supports real-time collaboration or not.
    */
   readonly collaborative = true;
+
+  set disableDocumentWideUndo(value: boolean) {
+    this._disableDocumentWideUndo = value;
+  }
 
   /**
    * Create a new `ISharedDocument` instance.
@@ -224,7 +230,7 @@ class SharedModelFactory implements Contents.ISharedFactory {
         sharedModel = new YFile();
         break;
       case 'notebook':
-        sharedModel = new YNotebook();
+        sharedModel = new YNotebook({ disableDocumentWideUndoRedo: this._disableDocumentWideUndo });
         break;
       //default:
       // FIXME we should request a registry for the proper sharedModel

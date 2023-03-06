@@ -10,6 +10,7 @@ import {
   IFileBrowserFactory
 } from '@jupyterlab/filebrowser';
 import { ITranslator } from '@jupyterlab/translation';
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
 import { CommandRegistry } from '@lumino/commands';
 
@@ -29,14 +30,15 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
   id: '@jupyter/collaboration-extension:defaultFileBrowser',
   provides: IDefaultFileBrowser,
   requires: [IFileBrowserFactory, ITranslator],
-  optional: [IRouter, JupyterFrontEnd.ITreeResolver, ILabShell],
+  optional: [IRouter, JupyterFrontEnd.ITreeResolver, ILabShell, ISettingRegistry],
   activate: async (
     app: JupyterFrontEnd,
     fileBrowserFactory: IFileBrowserFactory,
     translator: ITranslator,
     router: IRouter | null,
     tree: JupyterFrontEnd.ITreeResolver | null,
-    labShell: ILabShell | null
+    labShell: ILabShell | null,
+    settingRegistry: ISettingRegistry | null,
   ): Promise<IDefaultFileBrowser> => {
     console.debug(
       '@jupyter/collaboration-extension:defaultFileBrowser: activated'
@@ -60,6 +62,22 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
       tree,
       labShell
     );
+
+    // Fetch settings if possible.
+    if (settingRegistry) {
+      settingRegistry.load('@jupyterlab/notebook-extension:tracker')
+      .then(settings => {
+        const updateSettings = (settings: ISettingRegistry.ISettings) => {
+          const enableDocWideUndo = settings?.get('experimentalEnableDocumentWideUndoRedo').composite as boolean;
+          const disableDocumentWideUndo =  !enableDocWideUndo ?? true;
+          drive.sharedModelFactory.disableDocumentWideUndo = disableDocumentWideUndo;
+        }
+        
+        updateSettings(settings);
+        settings.changed.connect((settings: ISettingRegistry.ISettings) => updateSettings(settings));
+      });
+    }
+
     return defaultBrowser;
   }
 };
