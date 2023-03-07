@@ -59,6 +59,7 @@
     "@jupyterlab/coreutils": "^6.0.0-alpha.19",
     "@jupyterlab/filebrowser": "^4.0.0-alpha.19",
     "@jupyterlab/services": "^7.0.0-alpha.19",
+    "@jupyterlab/settingregistry": "^4.0.0-alpha.19",
     "@jupyterlab/statedb": "^4.0.0-alpha.19",
     "@jupyterlab/translation": "^4.0.0-alpha.19",
     "@jupyterlab/ui-components": "^4.0.0-alpha.34",

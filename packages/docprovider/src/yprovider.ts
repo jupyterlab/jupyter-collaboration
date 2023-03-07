@@ -128,7 +128,11 @@ export class WebSocketProvider implements IDocumentProvider {
         ),
         [Dialog.okButton({ label: this._trans.__('Reload') })]
       )
-        .then(r => window.location.reload())
+        .then((r: any) => {
+          if (r.button.accept) {
+            window.location.reload();
+          }
+        })
         .catch(e => window.location.reload());
 
       // Dispose shared model immediately. Better break the document model,
