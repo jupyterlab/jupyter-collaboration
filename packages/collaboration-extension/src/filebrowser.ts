@@ -45,9 +45,6 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
     labShell: ILabShell | null,
     settingRegistry: ISettingRegistry | null
   ): Promise<IDefaultFileBrowser> => {
-    console.debug(
-      '@jupyter/collaboration-extension:defaultFileBrowser: activated'
-    );
     const { commands } = app;
 
     const trans = translator.load('jupyter_collaboration');
