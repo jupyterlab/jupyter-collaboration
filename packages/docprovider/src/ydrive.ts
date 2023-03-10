@@ -43,23 +43,6 @@ export class YDrive extends Drive {
   readonly sharedModelFactory: SharedModelFactory;
 
   /**
-   * Delete a file.
-   *
-   * @param localPath - The path to the file.
-   *
-   * @returns A promise which resolves when the file is deleted.
-   *
-   * #### Notes
-   * Uses the [Jupyter Notebook API](http://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/notebook/master/notebook/services/api/api.yaml#!/contents).
-   */
-  async delete(localPath: string): Promise<void> {
-    await super.delete(localPath);
-    // FIXME
-    // We are not removing the path from `sharedPaths` as multiple providers of the same file (with different model) may exist.
-    //this._sharedPaths.delete(localPath);
-  }
-
-  /**
    * Dispose of the resources held by the manager.
    */
   dispose(): void {
@@ -101,26 +84,6 @@ export class YDrive extends Drive {
   }
 
   /**
-   * Rename a file or directory.
-   *
-   * @param oldLocalPath - The original file path.
-   *
-   * @param newLocalPath - The new file path.
-   *
-   * @returns A promise which resolves with the new file contents model when
-   *   the file is renamed.
-   *
-   * #### Notes
-   * Uses the [Jupyter Notebook API](http://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/notebook/master/notebook/services/api/api.yaml#!/contents) and validates the response model.
-   */
-  async rename(
-    oldLocalPath: string,
-    newLocalPath: string
-  ): Promise<Contents.IModel> {
-    return await super.rename(oldLocalPath, newLocalPath);
-  }
-
-  /**
    * Save a file.
    *
    * @param localPath - The desired file path.
@@ -129,18 +92,23 @@ export class YDrive extends Drive {
    *
    * @returns A promise which resolves with the file content model when the
    *   file is saved.
-   *
-   * #### Notes
-   * Ensure that `model.content` is populated for the file.
-   *
-   * Uses the [Jupyter Notebook API](http://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/notebook/master/notebook/services/api/api.yaml#!/contents) and validates the response model.
    */
   async save(
     localPath: string,
     options: Partial<Contents.IModel> = {}
   ): Promise<Contents.IModel> {
-    // Save is done from the backend
-    return this.get(localPath, { ...options, content: false });
+    // Check that there is a provider - it won't e.g. if the document model is not collaborative.
+    if (options.format && options.type) {
+      const key = `${options.format}:${options.type}:${localPath}`;
+      const provider = this._providers.get(key);
+
+      if (provider) {
+        // Save is done from the backend
+        return this.get(localPath, { ...options, content: false });
+      }
+    }
+
+    return super.save(localPath, options);
   }
 
   private _onCreate = (
@@ -191,6 +159,11 @@ export class YDrive extends Drive {
 class SharedModelFactory implements Contents.ISharedFactory {
   private _documentOptions: Map<Contents.ContentType, Record<string, any>>;
 
+  /**
+   * Shared model factory constructor
+   *
+   * @param _onCreate Callback on new document model creation
+   */
   constructor(
     private _onCreate: (
       options: Contents.ISharedFactoryOptions,
@@ -208,8 +181,14 @@ class SharedModelFactory implements Contents.ISharedFactory {
    */
   readonly collaborative = true;
 
+  /**
+   * Set shared document model options
+   *
+   * @param type Document type
+   * @param value Document options
+   */
   setDocumentOptions(type: Contents.ContentType, value: Record<string, any>) {
-    this._documentOptions.set(type, value);
+    this._documentOptions.set(type, { ...value });
   }
 
   /**
@@ -226,6 +205,8 @@ class SharedModelFactory implements Contents.ISharedFactory {
     }
 
     if (!options.collaborative) {
+      // Bail if the document model does not support collaboration
+      // the `sharedModel` will be the default one.
       return;
     }
 
