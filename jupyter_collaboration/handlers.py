@@ -4,7 +4,6 @@
 import asyncio
 import json
 import uuid
-from logging import Logger
 from pathlib import Path
 from typing import Any, Dict, Optional, Set, Tuple
 
@@ -14,61 +13,15 @@ from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS
 from tornado import web
 from tornado.websocket import WebSocketHandler
-from traitlets import Int, Unicode
-from traitlets.config import LoggingConfigurable
 from ypy_websocket.websocket_server import WebsocketServer, YRoom
-from ypy_websocket.ystore import BaseYStore
-from ypy_websocket.ystore import SQLiteYStore as _SQLiteYStore
-from ypy_websocket.ystore import TempFileYStore as _TempFileYStore
 from ypy_websocket.ystore import YDocNotFound
 from ypy_websocket.yutils import YMessageType
+
+from .rooms import DocumentRoom, TransientRoom
 
 YFILE = YDOCS["file"]
 
 SERVER_SESSION = str(uuid.uuid4())
-
-
-class TempFileYStore(_TempFileYStore):
-    prefix_dir = "jupyter_ystore_"
-
-
-class SQLiteYStoreMetaclass(type(LoggingConfigurable), type(_SQLiteYStore)):  # type: ignore
-    pass
-
-
-class SQLiteYStore(LoggingConfigurable, _SQLiteYStore, metaclass=SQLiteYStoreMetaclass):
-    db_path = Unicode(
-        ".jupyter_ystore.db",
-        config=True,
-        help="""The path to the YStore database. Defaults to '.jupyter_ystore.db' in the current
-        directory.""",
-    )
-
-    document_ttl = Int(
-        None,
-        allow_none=True,
-        config=True,
-        help="""The document time-to-live in seconds. Defaults to None (document history is never
-        cleared).""",
-    )
-
-
-class DocumentRoom(YRoom):
-    """A Y room for a possibly stored document (e.g. a notebook)."""
-
-    def __init__(self, type: str, ystore: BaseYStore, log: Optional[Logger]):
-        super().__init__(ready=False, ystore=ystore, log=log)
-        self.type = type
-        self.cleaner: Optional["asyncio.Task[Any]"] = None
-        self.watcher: Optional["asyncio.Task[Any]"] = None
-        self.document = YDOCS.get(type, YFILE)(self.ydoc)
-
-
-class TransientRoom(YRoom):
-    """A Y room for sharing state (e.g. awareness)."""
-
-    def __init__(self, log: Optional[Logger]):
-        super().__init__(log=log)
 
 
 class JupyterWebsocketServer(WebsocketServer):
