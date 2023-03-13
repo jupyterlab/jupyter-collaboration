@@ -11,10 +11,15 @@ import {
 } from '@jupyterlab/application';
 import { DOMUtils } from '@jupyterlab/apputils';
 import {
+  EditorExtensionRegistry,
+  IEditorExtensionRegistry
+} from '@jupyterlab/codemirror';
+import {
   CollaboratorsPanel,
   IAwareness,
   IGlobalAwareness,
   IUserMenu,
+  remoteUserCursors,
   RendererUserMenu,
   UserInfoPanel,
   UserMenu
@@ -154,5 +159,25 @@ export const rtcPanelPlugin: JupyterFrontEndPlugin<void> = {
     );
     collaboratorsPanel.title.label = trans.__('Online Collaborators');
     userPanel.addWidget(collaboratorsPanel);
+  }
+};
+
+export const userEditorCursors: JupyterFrontEndPlugin<void> = {
+  id: '@jupyter/collaboration-extension:userEditorCursors',
+  autoStart: true,
+  requires: [IEditorExtensionRegistry],
+  activate: (
+    app: JupyterFrontEnd,
+    extensions: IEditorExtensionRegistry
+  ): void => {
+    extensions.addExtension({
+      name: 'remote-user-cursors',
+      factory(options) {
+        const { awareness, ysource: ytext } = options.model.sharedModel as any;
+        return EditorExtensionRegistry.createImmutableExtension(
+          remoteUserCursors({ awareness, ytext })
+        );
+      }
+    });
   }
 };

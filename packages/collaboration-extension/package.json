@@ -76,6 +76,10 @@
     "rimraf": "^4.1.2",
     "typescript": "~5.0.2"
   },
+  "resolutions": {
+    "@codemirror/state": "6.2.0",
+    "@codemirror/view": "6.7.3"
+  },
   "publishConfig": {
     "access": "public"
   },
@@ -93,6 +97,14 @@
       "@jupyterlab/filebrowser-extension:defaultFileBrowser"
     ],
     "sharedPackages": {
+      "@codemirror/state": {
+        "bundled": true,
+        "singleton": true
+      },
+      "@codemirror/view": {
+        "bundled": true,
+        "singleton": true
+      },
       "@jupyter/collaboration": {
         "bundled": true,
         "singleton": true
@@ -102,6 +114,14 @@
         "singleton": true
       },
       "@jupyter/ydoc": {
+        "bundled": false,
+        "singleton": true
+      },
+      "y-protocols": {
+        "bundled": false,
+        "singleton": true
+      },
+      "yjs": {
         "bundled": false,
         "singleton": true
       }

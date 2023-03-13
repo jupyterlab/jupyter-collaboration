@@ -12,7 +12,8 @@ import {
   userMenuPlugin,
   menuBarPlugin,
   rtcGlobalAwarenessPlugin,
-  rtcPanelPlugin
+  rtcPanelPlugin,
+  userEditorCursors
 } from './collaboration';
 
 /**
@@ -23,7 +24,8 @@ const plugins: JupyterFrontEndPlugin<any>[] = [
   userMenuPlugin,
   menuBarPlugin,
   rtcGlobalAwarenessPlugin,
-  rtcPanelPlugin
+  rtcPanelPlugin,
+  userEditorCursors
 ];
 
 export default plugins;
