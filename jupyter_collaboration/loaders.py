@@ -3,7 +3,8 @@ from typing import Any, Dict
 
 from jupyter_server.utils import ensure_async
 
-from .rooms import DocumentRoom
+from ypy_websocket.websocket_server import YRoom
+
 from .utils import decode_file_path
 
 
@@ -14,7 +15,7 @@ class FileLoader():
         self._path = path
         self._last_modified = None
         self._lock = asyncio.Lock()
-        self._rooms: Dict[str, DocumentRoom] = {}
+        self._rooms: Dict[str, YRoom] = {}
 
         self._save_delay = save_delay
         self._poll_interval = poll_interval
@@ -29,7 +30,7 @@ class FileLoader():
     def number_of_rooms(self) -> int:
         return len(self._rooms)
     
-    def add_room(self, room_id: str, room: DocumentRoom) -> None:
+    def add_room(self, room_id: str, room: YRoom) -> None:
         self._rooms[room_id] = room
     
     def remove_room(self, room_id: str) -> None:

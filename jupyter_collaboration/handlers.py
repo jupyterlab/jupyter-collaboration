@@ -17,7 +17,8 @@ from ypy_websocket.websocket_server import WebsocketServer, YRoom
 from ypy_websocket.ystore import YDocNotFound
 from ypy_websocket.yutils import YMessageType
 
-from .rooms import DocumentRoom, TransientRoom
+from .rooms import DocumentRoom, TransientRoom, FileLoader
+from .utils import decode_file_path
 
 YFILE = YDOCS["file"]
 
@@ -47,15 +48,15 @@ class JupyterWebsocketServer(WebsocketServer):
             self.log.info("Connected Y users: %s", clients_nb)
             self.ypatch_nb = 0
 
-    def get_room(self, path: str) -> YRoom:
+    def get_room(self, path: str, file: FileLoader) -> YRoom:
         if path not in self.rooms:
             if path.count(":") >= 2:
                 # it is a stored document (e.g. a notebook)
-                file_format, file_type, file_path = path.split(":", 2)
+                file_format, file_type, file_path = decode_file_path(path)
                 p = Path(file_path)
                 updates_file_path = str(p.parent / f".{file_type}:{p.name}.y")
                 ystore = self.ystore_class(path=updates_file_path, log=self.log)
-                self.rooms[path] = DocumentRoom(file_type, ystore, self.log)
+                self.rooms[path] = DocumentRoom(path, file, ystore, self.log)
             else:
                 # it is a transient document (e.g. awareness)
                 self.rooms[path] = TransientRoom(self.log)

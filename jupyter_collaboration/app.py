@@ -5,8 +5,8 @@ from jupyter_server.extension.application import ExtensionApp
 from traitlets import Float, Int, Type
 from ypy_websocket.ystore import BaseYStore
 
-from .handlers import DocSessionHandler, SQLiteYStore, YDocWebSocketHandler
-
+from .handlers import DocSessionHandler, YDocWebSocketHandler
+from .stores import SQLiteYStore
 
 class YDocExtension(ExtensionApp):
     name = "jupyter_collaboration"
