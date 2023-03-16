@@ -27,7 +27,7 @@ import {
 } from 'yjs';
 
 /*
-  Add widget to codemirror 6 editors displaying collaboratros.
+  Add widget to codemirror 6 editors displaying collaborators.
 
   This code is inspired by https://github.com/yjs/y-codemirror.next/blob/main/src/y-remote-selections.js licensed under MIT License by Kevin Jahns
  */
@@ -59,13 +59,32 @@ const editorAwarenessFacet = Facet.define<EditorAwareness, EditorAwareness>({
  * Remote selection theme
  */
 const remoteSelectionTheme = EditorView.baseTheme({
-  '.jp-remote-cursors': {
-    'background-color': 'pink'
+  '.jp-remote-cursor': {
+    borderLeft: '2px solid black'
   }
 });
 
 // TODO fix which user needs update
 const remoteSelectionsAnnotation = Annotation.define();
+
+class RemoteCursor implements LayerMarker {
+  constructor(private color: string, private marker: RectangleMarker) {}
+
+  draw(): HTMLElement {
+    const elt = this.marker.draw();
+    elt.style.borderLeftColor = this.color;
+    return elt;
+  }
+
+  eq(other: RemoteCursor): boolean {
+    return this.marker.eq(other.marker) && this.color === other.color;
+  }
+
+  update(dom: HTMLElement, oldMarker: RemoteCursor): boolean {
+    dom.style.borderLeftColor = this.color;
+    return this.marker.update(dom, oldMarker.marker);
+  }
+}
 
 const remoteCursorsLayer = layer({
   above: true,
@@ -79,7 +98,7 @@ const remoteCursorsLayer = layer({
       }
 
       const cursor = state.cursor;
-      if (cursor === null || cursor.anchor === null || cursor.head === null) {
+      if (!cursor?.anchor || !cursor?.head) {
         return;
       }
 
@@ -91,12 +110,7 @@ const remoteCursorsLayer = layer({
         cursor.head,
         ydoc
       );
-      if (
-        anchor === null ||
-        head === null ||
-        anchor.type !== ytext ||
-        head.type !== ytext
-      ) {
+      if (anchor?.type !== ytext || head?.type !== ytext) {
         return;
       }
 
@@ -106,7 +120,8 @@ const remoteCursorsLayer = layer({
         head.index > anchor.index ? -1 : 1
       );
       for (const piece of RectangleMarker.forRange(view, className, cursor_)) {
-        cursors.push(piece);
+        // Wrap the rectange marker to set the user color
+        cursors.push(new RemoteCursor(state.user?.color ?? 'black', piece));
       }
     });
     return cursors;
@@ -139,6 +154,7 @@ const showCollaborators = ViewPlugin.fromClass(
             id => id !== this.editorAwareness.awareness.doc.clientID
           ) >= 0
         ) {
+          // Trick to get the remoteCursorLayers to be updated
           view.dispatch({ annotations: [remoteSelectionsAnnotation.of([])] });
         }
       };
@@ -162,22 +178,18 @@ const showCollaborators = ViewPlugin.fromClass(
       const localAwarenessState = awareness.getLocalState();
 
       // set local awareness state (update cursors)
-      if (localAwarenessState !== null) {
+      if (localAwarenessState) {
         const hasFocus =
           update.view.hasFocus && update.view.dom.ownerDocument.hasFocus();
         const selection = update.state.selection.main;
 
         if (hasFocus && selection !== null) {
-          const currentAnchor =
-            localAwarenessState.cursor === null
-              ? null
-              : createRelativePositionFromJSON(
-                  localAwarenessState.cursor.anchor
-                );
-          const currentHead =
-            localAwarenessState.cursor === null
-              ? null
-              : createRelativePositionFromJSON(localAwarenessState.cursor.head);
+          const currentAnchor = localAwarenessState.cursor?.anchor
+            ? createRelativePositionFromJSON(localAwarenessState.cursor.anchor)
+            : null;
+          const currentHead = localAwarenessState.cursor?.head
+            ? createRelativePositionFromJSON(localAwarenessState.cursor.head)
+            : null;
 
           const anchor = createRelativePositionFromTypeIndex(
             ytext,
@@ -188,7 +200,7 @@ const showCollaborators = ViewPlugin.fromClass(
             selection.head
           );
           if (
-            localAwarenessState.cursor === null ||
+            !localAwarenessState.cursor ||
             !compareRelativePositions(currentAnchor, anchor) ||
             !compareRelativePositions(currentHead, head)
           ) {
