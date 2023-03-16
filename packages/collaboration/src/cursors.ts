@@ -91,6 +91,9 @@ const remoteSelectionTheme = EditorView.baseTheme({
   },
   '.jp-remote-cursor.jp-mod-primary': {
     borderLeftWidth: '2px'
+  },
+  '.jp-remote-selection': {
+    opacity: 0.5
   }
 });
 
@@ -98,27 +101,47 @@ const remoteSelectionTheme = EditorView.baseTheme({
 const remoteSelectionsAnnotation = Annotation.define();
 
 /**
- * Wrapper around RectangleMarker to be able to set the user color for the cursor.
+ * Wrapper around RectangleMarker to be able to set the user color for the remote cursor and selection ranges.
  */
-class RemoteCursor implements LayerMarker {
-  constructor(private color: string, private marker: RectangleMarker) {}
+class RemoteMarker implements LayerMarker {
+  /**
+   * Constructor
+   *
+   * @param style Specific user style to be applied on the marker element
+   * @param marker {@link RectangleMarker} to wrap
+   */
+  constructor(
+    private style: Record<string, string>,
+    private marker: RectangleMarker
+  ) {}
 
-  draw(): HTMLElement {
+  draw(): HTMLDivElement {
     const elt = this.marker.draw();
-    elt.style.borderLeftColor = this.color;
+    for (const [key, value] of Object.entries(this.style)) {
+      // @ts-expect-error Unknown key
+      elt.style[key] = value;
+    }
     return elt;
   }
 
-  eq(other: RemoteCursor): boolean {
-    return this.marker.eq(other.marker) && this.color === other.color;
+  eq(other: RemoteMarker): boolean {
+    return (
+      this.marker.eq(other.marker) && JSONExt.deepEqual(this.style, other.style)
+    );
   }
 
-  update(dom: HTMLElement, oldMarker: RemoteCursor): boolean {
-    dom.style.borderLeftColor = this.color;
+  update(dom: HTMLElement, oldMarker: RemoteMarker): boolean {
+    for (const [key, value] of Object.entries(this.style)) {
+      // @ts-expect-error Unknown key
+      dom.style[key] = value;
+    }
     return this.marker.update(dom, oldMarker.marker);
   }
 }
 
+/**
+ * Extension defining a new editor layer storing the remote user cursors
+ */
 const remoteCursorsLayer = layer({
   above: true,
   markers(view) {
@@ -132,7 +155,7 @@ const remoteCursorsLayer = layer({
 
       const cursors_ = state.cursors;
       for (const cursor of cursors_ ?? []) {
-        if (!(cursor.empty ?? true) || !cursor?.anchor || !cursor?.head) {
+        if (!cursor?.anchor || !cursor?.head) {
           return;
         }
 
@@ -162,7 +185,12 @@ const remoteCursorsLayer = layer({
           cursor_
         )) {
           // Wrap the rectangle marker to set the user color
-          cursors.push(new RemoteCursor(state.user?.color ?? 'black', piece));
+          cursors.push(
+            new RemoteMarker(
+              { borderLeftColor: state.user?.color ?? 'black' },
+              piece
+            )
+          );
         }
       }
     });
@@ -176,9 +204,69 @@ const remoteCursorsLayer = layer({
   class: 'jp-remote-cursors'
 });
 
+/**
+ * Extension defining a new editor layer storing the remote selections
+ */
+const remoteSelectionLayer = layer({
+  above: false,
+  markers(view) {
+    const { awareness, ytext } = view.state.facet(editorAwarenessFacet);
+    const ydoc = ytext.doc!;
+    const cursors: LayerMarker[] = [];
+    awareness.getStates().forEach((state: IAwarenessState, clientID) => {
+      if (clientID === awareness.doc.clientID) {
+        return;
+      }
+
+      const cursors_ = state.cursors;
+      for (const cursor of cursors_ ?? []) {
+        if ((cursor.empty ?? true) || !cursor?.anchor || !cursor?.head) {
+          return;
+        }
+
+        const anchor = createAbsolutePositionFromRelativePosition(
+          cursor.anchor,
+          ydoc
+        );
+        const head = createAbsolutePositionFromRelativePosition(
+          cursor.head,
+          ydoc
+        );
+        if (anchor?.type !== ytext || head?.type !== ytext) {
+          return;
+        }
+
+        const className = 'jp-remote-selection';
+        for (const piece of RectangleMarker.forRange(
+          view,
+          className,
+          EditorSelection.range(anchor.index, head.index)
+        )) {
+          // Wrap the rectangle marker to set the user color
+          cursors.push(
+            new RemoteMarker(
+              { backgroundColor: state.user?.color ?? 'black' },
+              piece
+            )
+          );
+        }
+      }
+    });
+    return cursors;
+  },
+  update(update, layer) {
+    return !!update.transactions.find(t =>
+      t.annotation(remoteSelectionsAnnotation)
+    );
+  },
+  class: 'jp-remote-selections'
+});
+
+/**
+ * CodeMirror extension exchanging and displaying remote user selection ranges (including cursors)
+ */
 const showCollaborators = ViewPlugin.fromClass(
   class {
-    decorations: DecorationSet;
     editorAwareness: EditorAwareness;
     _listener: (t: {
       added: Array<any>;
@@ -188,7 +276,6 @@ const showCollaborators = ViewPlugin.fromClass(
 
     constructor(view: EditorView) {
       this.editorAwareness = view.state.facet(editorAwarenessFacet);
-      this.decorations = Decoration.set([]);
       this._listener = ({ added, updated, removed }) => {
         const clients = added.concat(updated).concat(removed);
         if (
@@ -254,7 +341,6 @@ const showCollaborators = ViewPlugin.fromClass(
               };
             });
             if (!JSONExt.deepEqual(cursors as any, oldCursors as any)) {
-              console.log('Update cursors');
               // Update cursors
               awareness.setLocalStateField('cursors', cursors);
             }
@@ -265,15 +351,11 @@ const showCollaborators = ViewPlugin.fromClass(
   },
   {
     provide: plugin => {
-      return [remoteCursorsLayer];
+      return [remoteSelectionTheme, remoteCursorsLayer, remoteSelectionLayer];
     }
   }
 );
 
 export function remoteUserCursors(config: EditorAwareness): Extension {
-  return [
-    editorAwarenessFacet.of(config),
-    remoteSelectionTheme,
-    showCollaborators
-  ];
+  return [editorAwarenessFacet.of(config), showCollaborators];
 }
