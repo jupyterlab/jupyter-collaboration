@@ -8,12 +8,12 @@ import {
   Facet
 } from '@codemirror/state';
 import {
-  Decoration,
-  DecorationSet,
   EditorView,
+  hoverTooltip,
   layer,
   LayerMarker,
   RectangleMarker,
+  tooltips,
   ViewPlugin,
   ViewUpdate
 } from '@codemirror/view';
@@ -51,7 +51,13 @@ export type EditorAwareness = {
 };
 
 interface ICursorState {
+  /**
+   * Cursor anchor
+   */
   anchor: RelativePosition;
+  /**
+   * Cursor head
+   */
   head: RelativePosition;
   /**
    * Whether the cursor is an empty range or not.
@@ -67,8 +73,17 @@ interface ICursorState {
   primary?: boolean;
 }
 
+/**
+ * Awareness state definition
+ */
 interface IAwarenessState extends Record<string, any> {
+  /**
+   * User identity
+   */
   user?: User.IIdentity;
+  /**
+   * User cursors
+   */
   cursors?: ICursorState[];
 }
 
@@ -94,6 +109,13 @@ const remoteSelectionTheme = EditorView.baseTheme({
   },
   '.jp-remote-selection': {
     opacity: 0.5
+  },
+  '.cm-tooltip': {
+    border: 'none'
+  },
+  '.cm-tooltip .jp-remote-userInfo': {
+    color: 'var(--jp-ui-inverse-font-color0)',
+    padding: '0px 2px'
   }
 });
 
@@ -203,6 +225,55 @@ const remoteCursorsLayer = layer({
   },
   class: 'jp-remote-cursors'
 });
+
+/**
+ * Tooltip extension to display user display name at cursor position
+ */
+const userHover = hoverTooltip(
+  (view, pos) => {
+    const { awareness, ytext } = view.state.facet(editorAwarenessFacet);
+    const ydoc = ytext.doc!;
+
+    for (const [clientID, state] of awareness.getStates()) {
+      if (clientID === awareness.doc.clientID) {
+        continue;
+      }
+
+      for (const cursor of state.cursors ?? []) {
+        if (!cursor?.head) {
+          continue;
+        }
+        const head = createAbsolutePositionFromRelativePosition(
+          cursor.head,
+          ydoc
+        );
+        if (head?.type !== ytext) {
+          continue;
+        }
+        // Use some margin around the cursor to display the user.
+        if (head.index - 1 <= pos && pos <= head.index + 1) {
+          return {
+            pos: head.index,
+            above: true,
+            create: () => {
+              const dom = document.createElement('div');
+              dom.classList.add('jp-remote-userInfo');
+              dom.style.backgroundColor = state.user?.color ?? 'darkgrey';
+              dom.textContent =
+                (state as IAwarenessState).user?.display_name ?? 'Anonymous';
+              return { dom };
+            }
+          };
+        }
+      }
+    }
+
+    return null;
+  },
+  {
+    hideOn: (tr, tooltip) => !!tr.annotation(remoteSelectionsAnnotation)
+  }
+);
 
 /**
  * Extension defining a new editor layer storing the remote selections
@@ -350,12 +421,26 @@ const showCollaborators = ViewPlugin.fromClass(
     }
   },
   {
-    provide: plugin => {
-      return [remoteSelectionTheme, remoteCursorsLayer, remoteSelectionLayer];
+    provide: () => {
+      return [
+        remoteSelectionTheme,
+        remoteCursorsLayer,
+        remoteSelectionLayer,
+        userHover,
+        // As we use relative positioning of widget, the tooltip must be positioned absolutely
+        // And we attach the tooltip to the body to avoid overflow rules
+        tooltips({ position: 'absolute', parent: document.body })
+      ];
     }
   }
 );
 
+/**
+ * CodeMirror extension to display remote users cursors
+ *
+ * @param config Editor source and awareness
+ * @returns CodeMirror extension
+ */
 export function remoteUserCursors(config: EditorAwareness): Extension {
   return [editorAwarenessFacet.of(config), showCollaborators];
 }
