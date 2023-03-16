@@ -17,12 +17,14 @@ import {
   ViewPlugin,
   ViewUpdate
 } from '@codemirror/view';
+import { User } from '@jupyterlab/services';
+import { JSONExt } from '@lumino/coreutils';
 import { Awareness } from 'y-protocols/awareness';
 import {
-  compareRelativePositions,
   createAbsolutePositionFromRelativePosition,
   createRelativePositionFromJSON,
   createRelativePositionFromTypeIndex,
+  RelativePosition,
   Text
 } from 'yjs';
 
@@ -30,6 +32,8 @@ import {
   Add widget to codemirror 6 editors displaying collaborators.
 
   This code is inspired by https://github.com/yjs/y-codemirror.next/blob/main/src/y-remote-selections.js licensed under MIT License by Kevin Jahns
+
+  But it uses an approach similar to the draw selection extension of core CodeMirror to display cursors and selections.
  */
 
 /**
@@ -46,6 +50,28 @@ export type EditorAwareness = {
   ytext: Text;
 };
 
+interface ICursorState {
+  anchor: RelativePosition;
+  head: RelativePosition;
+  /**
+   * Whether the cursor is an empty range or not.
+   *
+   * Default `true`
+   */
+  empty?: boolean;
+  /**
+   * Whether the cursor is the primary one or not.
+   *
+   * Default `false`
+   */
+  primary?: boolean;
+}
+
+interface IAwarenessState extends Record<string, any> {
+  user?: User.IIdentity;
+  cursors?: ICursorState[];
+}
+
 /**
  * Facet storing the Yjs document objects
  */
@@ -60,13 +86,20 @@ const editorAwarenessFacet = Facet.define<EditorAwareness, EditorAwareness>({
  */
 const remoteSelectionTheme = EditorView.baseTheme({
   '.jp-remote-cursor': {
-    borderLeft: '2px solid black'
+    borderLeft: '1px solid black',
+    marginLeft: '-1px'
+  },
+  '.jp-remote-cursor.jp-mod-primary': {
+    borderLeftWidth: '2px'
   }
 });
 
 // TODO fix which user needs update
 const remoteSelectionsAnnotation = Annotation.define();
 
+/**
+ * Wrapper around RectangleMarker to be able to set the user color for the cursor.
+ */
 class RemoteCursor implements LayerMarker {
   constructor(private color: string, private marker: RectangleMarker) {}
 
@@ -92,36 +125,45 @@ const remoteCursorsLayer = layer({
     const { awareness, ytext } = view.state.facet(editorAwarenessFacet);
     const ydoc = ytext.doc!;
     const cursors: LayerMarker[] = [];
-    awareness.getStates().forEach((state, clientID) => {
+    awareness.getStates().forEach((state: IAwarenessState, clientID) => {
       if (clientID === awareness.doc.clientID) {
         return;
       }
 
-      const cursor = state.cursor;
-      if (!cursor?.anchor || !cursor?.head) {
-        return;
-      }
+      const cursors_ = state.cursors;
+      for (const cursor of cursors_ ?? []) {
+        if (!(cursor.empty ?? true) || !cursor?.anchor || !cursor?.head) {
+          return;
+        }
 
-      const anchor = createAbsolutePositionFromRelativePosition(
-        cursor.anchor,
-        ydoc
-      );
-      const head = createAbsolutePositionFromRelativePosition(
-        cursor.head,
-        ydoc
-      );
-      if (anchor?.type !== ytext || head?.type !== ytext) {
-        return;
-      }
+        const anchor = createAbsolutePositionFromRelativePosition(
+          cursor.anchor,
+          ydoc
+        );
+        const head = createAbsolutePositionFromRelativePosition(
+          cursor.head,
+          ydoc
+        );
+        if (anchor?.type !== ytext || head?.type !== ytext) {
+          return;
+        }
 
-      const className = 'jp-remote-cursor';
-      const cursor_ = EditorSelection.cursor(
-        head.index,
-        head.index > anchor.index ? -1 : 1
-      );
-      for (const piece of RectangleMarker.forRange(view, className, cursor_)) {
-        // Wrap the rectange marker to set the user color
-        cursors.push(new RemoteCursor(state.user?.color ?? 'black', piece));
+        const className =
+          cursor.primary ?? true
+            ? 'jp-remote-cursor jp-mod-primary'
+            : 'jp-remote-cursor';
+        const cursor_ = EditorSelection.cursor(
+          head.index,
+          head.index > anchor.index ? -1 : 1
+        );
+        for (const piece of RectangleMarker.forRange(
+          view,
+          className,
+          cursor_
+        )) {
+          // Wrap the rectangle marker to set the user color
+          cursors.push(new RemoteCursor(state.user?.color ?? 'black', piece));
+        }
       }
     });
     return cursors;
@@ -175,39 +217,47 @@ const showCollaborators = ViewPlugin.fromClass(
       }
 
       const { awareness, ytext } = this.editorAwareness;
-      const localAwarenessState = awareness.getLocalState();
+      const localAwarenessState =
+        awareness.getLocalState() as IAwarenessState | null;
 
       // set local awareness state (update cursors)
       if (localAwarenessState) {
         const hasFocus =
           update.view.hasFocus && update.view.dom.ownerDocument.hasFocus();
-        const selection = update.state.selection.main;
+        const selection = update.state.selection;
+        const cursors = new Array<ICursorState>();
 
-        if (hasFocus && selection !== null) {
-          const currentAnchor = localAwarenessState.cursor?.anchor
-            ? createRelativePositionFromJSON(localAwarenessState.cursor.anchor)
-            : null;
-          const currentHead = localAwarenessState.cursor?.head
-            ? createRelativePositionFromJSON(localAwarenessState.cursor.head)
-            : null;
+        if (hasFocus && selection) {
+          for (const r of selection.ranges) {
+            const primary = r === selection.main;
+            const anchor = createRelativePositionFromTypeIndex(ytext, r.anchor);
+            const head = createRelativePositionFromTypeIndex(ytext, r.head);
 
-          const anchor = createRelativePositionFromTypeIndex(
-            ytext,
-            selection.anchor
-          );
-          const head = createRelativePositionFromTypeIndex(
-            ytext,
-            selection.head
-          );
-          if (
-            !localAwarenessState.cursor ||
-            !compareRelativePositions(currentAnchor, anchor) ||
-            !compareRelativePositions(currentHead, head)
-          ) {
-            awareness.setLocalStateField('cursor', {
+            cursors.push({
               anchor,
-              head
+              head,
+              primary,
+              empty: r.empty
             });
+          }
+
+          if (!localAwarenessState.cursors || cursors.length > 0) {
+            const oldCursors = localAwarenessState.cursors?.map(cursor => {
+              return {
+                ...cursor,
+                anchor: cursor?.anchor
+                  ? createRelativePositionFromJSON(cursor.anchor)
+                  : null,
+                head: cursor?.head
+                  ? createRelativePositionFromJSON(cursor.head)
+                  : null
+              };
+            });
+            if (!JSONExt.deepEqual(cursors as any, oldCursors as any)) {
+              console.log('Update cursors');
+              // Update cursors
+              awareness.setLocalStateField('cursors', cursors);
+            }
           }
         }
       }
