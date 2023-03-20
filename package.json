@@ -36,7 +36,6 @@
     "docs": "typedoc",
     "eslint": "jlpm eslint:check --fix",
     "eslint:check": "eslint . --ext .ts,.tsx",
-    "install": "lerna bootstrap",
     "install:extension": "lerna run install:extension",
     "lint": "jlpm prettier && jlpm eslint && jlpm stylelint",
     "lint:check": "jlpm prettier:check && jlpm eslint:check",
@@ -52,30 +51,22 @@
     "watch": "lerna run watch"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^5.12.1",
-    "@typescript-eslint/parser": "^5.12.1",
-    "eslint": "^8.9.0",
-    "eslint-config-prettier": "^8.4.0",
-    "eslint-plugin-prettier": "^4.0.0",
-    "eslint-plugin-react": "^7.30.0",
+    "@typescript-eslint/eslint-plugin": "~5.55.0",
+    "@typescript-eslint/parser": "~5.55.0",
+    "eslint": "~8.36.0",
+    "eslint-config-prettier": "~8.7.0",
+    "eslint-plugin-jest": "~27.2.1",
+    "eslint-plugin-prettier": "~4.2.1",
+    "eslint-plugin-react": "~7.32.2",
     "lerna": "^6.5.1",
     "prettier": "^2.8.4",
     "rimraf": "^4.1.2",
     "stylelint": "^15.2.0",
-    "stylelint-config-prettier": "^9.0.4",
     "stylelint-config-recommended": "^10.0.0",
     "stylelint-config-standard": "^30.0.1",
-    "stylelint-prettier": "^2.0.0",
-    "typedoc": "~0.23.24",
-    "typescript": "~4.7.3",
-    "yarn": "1.22.17"
+    "stylelint-prettier": "^3.0.0",
+    "typedoc": "~0.23.28",
+    "typescript": "~5.0.2"
   },
-  "resolutions": {
-    "@lumino/coreutils": "^2.0.0-beta.0",
-    "@lumino/commands": "^2.0.0-beta.1",
-    "@lumino/disposable": "^2.0.0-beta.1",
-    "@lumino/signaling": "^2.0.0-beta.1",
-    "@lumino/virtualdom": "^2.0.0-beta.0",
-    "@lumino/widgets": "^2.0.0-beta.1"
-  }
+  "packageManager": "yarn@3.5.0"
 }

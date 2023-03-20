@@ -124,3 +124,11 @@ dmypy.json
 # OSX files
 .DS_Store
 docs/source/changelog.md
+
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
