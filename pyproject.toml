@@ -100,7 +100,7 @@ version-cmd = "python scripts/bump_version.py --force"
 
 [tool.jupyter-releaser.hooks]
 before-build-npm = [
-    "jlpm build:prod"
+    "YARN_ENABLE_IMMUTABLE_INSTALLS=0 jlpm build:prod"
 ]
 before-build-python = [
     "jlpm clean:all",
