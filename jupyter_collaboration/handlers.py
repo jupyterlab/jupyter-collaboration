@@ -388,38 +388,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         return True
 
 
-class YDocRoomIdHandler(APIHandler):
-    auth_resource = "contents"
-
-    @web.authenticated
-    @authorized
-    async def put(self, path):
-        body = json.loads(self.request.body)
-        ws_url = f"{body['format']}:{body['type']}:"
-
-        file_id_manager = self.settings["file_id_manager"]
-
-        idx = file_id_manager.get_id(path)
-        if idx is not None:
-            # index already exists
-            self.set_status(200)
-            ws_url += str(idx)
-            self.log.info("Request for Y document '%s' with room ID: %s", path, ws_url)
-            return self.finish(ws_url)
-
-        # try indexing
-        idx = file_id_manager.index(path)
-        if idx is None:
-            # file does not exists
-            raise web.HTTPError(404, f"File {path!r} does not exist")
-
-        # index successfully created
-        self.set_status(201)
-        ws_url += str(idx)
-        self.log.info("Request for Y document '%s' with room ID: %s", path, ws_url)
-        return self.finish(ws_url)
-
-
 class DocSessionHandler(APIHandler):
     auth_resource = "contents"
 
