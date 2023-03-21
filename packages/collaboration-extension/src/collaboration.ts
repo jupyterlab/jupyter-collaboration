@@ -11,10 +11,15 @@ import {
 } from '@jupyterlab/application';
 import { DOMUtils } from '@jupyterlab/apputils';
 import {
+  EditorExtensionRegistry,
+  IEditorExtensionRegistry
+} from '@jupyterlab/codemirror';
+import {
   CollaboratorsPanel,
   IAwareness,
   IGlobalAwareness,
   IUserMenu,
+  remoteUserCursors,
   RendererUserMenu,
   UserInfoPanel,
   UserMenu
@@ -24,7 +29,7 @@ import { Menu, MenuBar } from '@lumino/widgets';
 import { URLExt } from '@jupyterlab/coreutils';
 import { ServerConnection } from '@jupyterlab/services';
 import { IStateDB, StateDB } from '@jupyterlab/statedb';
-import { ITranslator } from '@jupyterlab/translation';
+import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 
 import * as Y from 'yjs';
 import { Awareness } from 'y-protocols/awareness';
@@ -35,7 +40,7 @@ import { WebsocketProvider } from 'y-websocket';
  */
 export const userMenuPlugin: JupyterFrontEndPlugin<IUserMenu> = {
   id: '@jupyter/collaboration-extension:userMenu',
-  autoStart: true,
+  description: 'Provide connected user menu.',
   requires: [],
   provides: IUserMenu,
   activate: (app: JupyterFrontEnd): IUserMenu => {
@@ -50,6 +55,7 @@ export const userMenuPlugin: JupyterFrontEndPlugin<IUserMenu> = {
  */
 export const menuBarPlugin: JupyterFrontEndPlugin<void> = {
   id: '@jupyter/collaboration-extension:userMenuBar',
+  description: 'Add user menu to the interface.',
   autoStart: true,
   requires: [IUserMenu],
   activate: async (app: JupyterFrontEnd, menu: IUserMenu): Promise<void> => {
@@ -75,7 +81,7 @@ export const menuBarPlugin: JupyterFrontEndPlugin<void> = {
  */
 export const rtcGlobalAwarenessPlugin: JupyterFrontEndPlugin<IAwareness> = {
   id: '@jupyter/collaboration-extension:rtcGlobalAwareness',
-  autoStart: true,
+  description: 'Add global awareness to share working document of users.',
   requires: [IStateDB],
   provides: IGlobalAwareness,
   activate: (app: JupyterFrontEnd, state: StateDB): IAwareness => {
@@ -120,16 +126,18 @@ export const rtcGlobalAwarenessPlugin: JupyterFrontEndPlugin<IAwareness> = {
  */
 export const rtcPanelPlugin: JupyterFrontEndPlugin<void> = {
   id: '@jupyter/collaboration-extension:rtcPanel',
+  description: 'Add side panel to display all currently connected users.',
   autoStart: true,
-  requires: [IGlobalAwareness, ITranslator],
+  requires: [IGlobalAwareness],
+  optional: [ITranslator],
   activate: (
     app: JupyterFrontEnd,
     awareness: Awareness,
-    translator: ITranslator
+    translator: ITranslator | null
   ): void => {
     const { user } = app.serviceManager;
 
-    const trans = translator.load('jupyter_collaboration');
+    const trans = (translator ?? nullTranslator).load('jupyter_collaboration');
 
     const userPanel = new SidePanel();
     userPanel.id = DOMUtils.createDomID();
@@ -154,5 +162,27 @@ export const rtcPanelPlugin: JupyterFrontEndPlugin<void> = {
     );
     collaboratorsPanel.title.label = trans.__('Online Collaborators');
     userPanel.addWidget(collaboratorsPanel);
+  }
+};
+
+export const userEditorCursors: JupyterFrontEndPlugin<void> = {
+  id: '@jupyter/collaboration-extension:userEditorCursors',
+  description:
+    'Add CodeMirror extension to display remote user cursors and selections.',
+  autoStart: true,
+  requires: [IEditorExtensionRegistry],
+  activate: (
+    app: JupyterFrontEnd,
+    extensions: IEditorExtensionRegistry
+  ): void => {
+    extensions.addExtension({
+      name: 'remote-user-cursors',
+      factory(options) {
+        const { awareness, ysource: ytext } = options.model.sharedModel as any;
+        return EditorExtensionRegistry.createImmutableExtension(
+          remoteUserCursors({ awareness, ytext })
+        );
+      }
+    });
   }
 };

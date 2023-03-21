@@ -38,8 +38,9 @@
   ],
   "scripts": {
     "build": "jlpm run build:lib && jlpm run build:labextension:dev",
-    "build:lib": "tsc",
-    "build:prod": "jlpm run clean && jlpm run build:lib && jlpm run build:labextension",
+    "build:lib": "tsc --sourceMap",
+    "build:lib:prod": "tsc",
+    "build:prod": "jlpm run clean && jlpm run build:lib:prod && jlpm run build:labextension",
     "build:labextension": "jupyter labextension build .",
     "build:labextension:dev": "jupyter labextension build --development True .",
     "clean": "jlpm run clean:lib",
@@ -56,6 +57,7 @@
     "@jupyter/docprovider": "^1.0.0-alpha.4",
     "@jupyterlab/application": "^4.0.0-alpha.22",
     "@jupyterlab/apputils": "^4.0.0-alpha.22",
+    "@jupyterlab/codemirror": "^4.0.0-alpha.22",
     "@jupyterlab/coreutils": "^6.0.0-alpha.22",
     "@jupyterlab/filebrowser": "^4.0.0-alpha.22",
     "@jupyterlab/services": "^7.0.0-alpha.22",
@@ -93,6 +95,14 @@
       "@jupyterlab/filebrowser-extension:defaultFileBrowser"
     ],
     "sharedPackages": {
+      "@codemirror/state": {
+        "bundled": false,
+        "singleton": true
+      },
+      "@codemirror/view": {
+        "bundled": false,
+        "singleton": true
+      },
       "@jupyter/collaboration": {
         "bundled": true,
         "singleton": true
@@ -102,6 +112,14 @@
         "singleton": true
       },
       "@jupyter/ydoc": {
+        "bundled": false,
+        "singleton": true
+      },
+      "y-protocols": {
+        "bundled": false,
+        "singleton": true
+      },
+      "yjs": {
         "bundled": false,
         "singleton": true
       }
