@@ -62,10 +62,6 @@ class YDocExtension(ExtensionApp):
     def initialize_handlers(self):
         self.handlers.extend(
             [
-                # Deprecated - to remove for 1.0.0
-                (r"/api/yjs/roomid/(.*)", YDocRoomIdHandler),
-                # Deprecated - to remove for 1.0.0
-                (r"/api/yjs/(.*)", YDocWebSocketHandler),
                 (r"/api/collaboration/room/(.*)", YDocWebSocketHandler),
                 (r"/api/collaboration/session/(.*)", DocSessionHandler),
             ]

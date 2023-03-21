@@ -91,7 +91,7 @@ export const rtcGlobalAwarenessPlugin: JupyterFrontEndPlugin<IAwareness> = {
     const awareness = new Awareness(ydoc);
 
     const server = ServerConnection.makeSettings();
-    const url = URLExt.join(server.wsUrl, 'api/yjs');
+    const url = URLExt.join(server.wsUrl, 'api/collaboration/room');
 
     new WebsocketProvider(url, 'JupyterLab:globalAwareness', ydoc, {
       awareness: awareness
