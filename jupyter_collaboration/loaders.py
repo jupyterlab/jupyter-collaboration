@@ -10,7 +10,7 @@ from .utils import decode_file_path
 
 class FileLoader():
 
-    def __init__(self, path: str, contents_manager: Any, save_delay: str = None, poll_interval: str = None) -> None:
+    def __init__(self, path: str, contents_manager: Any, save_delay: int = None, poll_interval: int = None) -> None:
         
         self._path = path
         self._last_modified = None
@@ -24,6 +24,9 @@ class FileLoader():
         self._saving_document = None
         self._watcher = asyncio.create_task(self.watch_file())
     
+    def __del__(self) -> None:
+        self._watcher.cancel()
+
     def rename_file(self, path: str):
         self._path = path
 
@@ -38,7 +41,7 @@ class FileLoader():
     
     async def load_file_data(self, format: str, file_type: str, content: bool) -> Dict[str, Any]:
         return await ensure_async(
-            self.contents_manager.get(self._path, format=format, type=file_type, content=content)
+            self._contents_manager.get(self._path, format=format, type=file_type, content=content)
         )
     
     async def save_content(self, model: Dict[str, Any]):
@@ -105,7 +108,7 @@ class FileLoader():
             return
 
         async with self._lock:
-            model = await ensure_async(self.contents_manager.save(model, self._path))
+            model = await ensure_async(self._contents_manager.save(model, self._path))
             self._last_modified = model["last_modified"]
             # Set dirty to false for each room accessing this file
             for room_id, room in self._rooms.items():
