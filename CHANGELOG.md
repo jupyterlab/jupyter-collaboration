@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.0.0alpha5
+
+([Full Changelog](https://github.com/jupyterlab/jupyter_collaboration/compare/@jupyter/collaboration-extension@1.0.0-alpha.4...d57df5b1f03593997674d0698ca69893bf4db987))
+
+### Enhancements made
+
+- Removes deprecated endpoints [#126](https://github.com/jupyterlab/jupyter_collaboration/pull/126) ([@hbcarlos](https://github.com/hbcarlos))
+- Display remote user cursors [#122](https://github.com/jupyterlab/jupyter_collaboration/pull/122) ([@fcollonval](https://github.com/fcollonval))
+
+### Bugs fixed
+
+- Removes drive name from file path [#127](https://github.com/jupyterlab/jupyter_collaboration/pull/127) ([@hbcarlos](https://github.com/hbcarlos))
+- Fix yarn on releaser [#125](https://github.com/jupyterlab/jupyter_collaboration/pull/125) ([@fcollonval](https://github.com/fcollonval))
+
+### Maintenance and upkeep improvements
+
+- Bump dependencies [#123](https://github.com/jupyterlab/jupyter_collaboration/pull/123) ([@fcollonval](https://github.com/fcollonval))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter_collaboration/graphs/contributors?from=2023-03-15&to=2023-03-24&type=c))
+
+[@codecov-commenter](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Acodecov-commenter+updated%3A2023-03-15..2023-03-24&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Afcollonval+updated%3A2023-03-15..2023-03-24&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Agithub-actions+updated%3A2023-03-15..2023-03-24&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Ahbcarlos+updated%3A2023-03-15..2023-03-24&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.0.0alpha4
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter_collaboration/compare/@jupyter/collaboration-extension@1.0.0-alpha.3...12b606cf87c6b64b87ef3adfb5927a49eeaed5bc))
@@ -22,8 +48,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter_collaboration/graphs/contributors?from=2023-03-07&to=2023-03-15&type=c))
 
 [@codecov-commenter](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Acodecov-commenter+updated%3A2023-03-07..2023-03-15&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Afcollonval+updated%3A2023-03-07..2023-03-15&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Agithub-actions+updated%3A2023-03-07..2023-03-15&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Ajtpio+updated%3A2023-03-07..2023-03-15&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.0.0alpha3
 

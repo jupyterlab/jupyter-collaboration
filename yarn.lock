@@ -2029,8 +2029,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@jupyter/collaboration-extension@workspace:packages/collaboration-extension"
   dependencies:
-    "@jupyter/collaboration": ^1.0.0-alpha.4
-    "@jupyter/docprovider": ^1.0.0-alpha.4
+    "@jupyter/collaboration": ^1.0.0-alpha.5
+    "@jupyter/docprovider": ^1.0.0-alpha.5
     "@jupyterlab/application": ^4.0.0-alpha.22
     "@jupyterlab/apputils": ^4.0.0-alpha.22
     "@jupyterlab/builder": ^4.0.0-alpha.22
@@ -2054,7 +2054,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@jupyter/collaboration@^1.0.0-alpha.4, @jupyter/collaboration@workspace:packages/collaboration":
+"@jupyter/collaboration@^1.0.0-alpha.5, @jupyter/collaboration@workspace:packages/collaboration":
   version: 0.0.0-use.local
   resolution: "@jupyter/collaboration@workspace:packages/collaboration"
   dependencies:
@@ -2076,7 +2076,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@jupyter/docprovider@^1.0.0-alpha.4, @jupyter/docprovider@workspace:packages/docprovider":
+"@jupyter/docprovider@^1.0.0-alpha.5, @jupyter/docprovider@workspace:packages/docprovider":
   version: 0.0.0-use.local
   resolution: "@jupyter/docprovider@workspace:packages/docprovider"
   dependencies:
