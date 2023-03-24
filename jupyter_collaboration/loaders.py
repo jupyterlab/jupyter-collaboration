@@ -1,27 +1,22 @@
 import asyncio
-from typing import Any, Dict
+from typing import Any, Dict, Callable
 
 from jupyter_server.utils import ensure_async
-
-from ypy_websocket.websocket_server import YRoom
-
-from .utils import decode_file_path
 
 
 class FileLoader():
 
-    def __init__(self, path: str, contents_manager: Any, save_delay: int = None, poll_interval: int = None) -> None:
-        
-        self._path = path
+    def __init__(self, path: str, file_format: str, file_type: str, contents_manager: Any, poll_interval: int = None) -> None:
+        self._path: str = path
+        self._file_format: str = file_format
+        self._file_type: str = file_type
         self._last_modified = None
+        
         self._lock = asyncio.Lock()
-        self._rooms: Dict[str, YRoom] = {}
-
-        self._save_delay = save_delay
         self._poll_interval = poll_interval
         self._contents_manager = contents_manager
-        
-        self._saving_document = None
+
+        self._subscriptions: Dict[str, Callable] = {}
         self._watcher = asyncio.create_task(self.watch_file())
     
     def __del__(self) -> None:
@@ -30,29 +25,37 @@ class FileLoader():
     def rename_file(self, path: str):
         self._path = path
 
-    def number_of_rooms(self) -> int:
-        return len(self._rooms)
+    def number_of_subscriptions(self) -> int:
+        return len(self._subscriptions)
     
-    def add_room(self, room_id: str, room: YRoom) -> None:
-        self._rooms[room_id] = room
+    def observe(self, id: str, callback: Callable) -> None:
+        self._subscriptions[id] = callback
     
-    def remove_room(self, room_id: str) -> None:
-        del self._rooms[room_id]
+    def unobserve(self, id: str) -> None:
+        del self._subscriptions[id]
     
-    async def load_file_data(self, format: str, file_type: str, content: bool) -> Dict[str, Any]:
+    async def load_content(self, format: str, file_type: str, content: bool) -> Dict[str, Any]:
         return await ensure_async(
             self._contents_manager.get(self._path, format=format, type=file_type, content=content)
         )
     
     async def save_content(self, model: Dict[str, Any]):
-        if self._saving_document is not None and not self._saving_document.done():
-            # the document is being saved, cancel that
-            self._saving_document.cancel()
-            self._saving_document = None
-
-        self._saving_document = asyncio.create_task(
-            self._maybe_save_document(model)
-        )
+        #self.log.debug("Opening Y document from disk: %s", self._path)
+        async with self._lock:
+            m = await self.load_content(model["format"], model["type"], False)
+        
+            if self._last_modified is None or self._last_modified >= m["last_modified"]:
+                model = await ensure_async(self._contents_manager.save(model, self._path))
+                self._last_modified = model["last_modified"]
+                
+            else :
+                # file changed on disk, let's revert
+                #self.log.debug("Reverting file that had out-of-band changes: %s", self._path)
+                self._last_modified = model["last_modified"]
+                # Notify that the content changed on disk
+                for _, callback in self._subscriptions.items():
+                    callback('changed')
+            
         
     async def watch_file(self):
         if not self._poll_interval:
@@ -64,53 +67,13 @@ class FileLoader():
             await self._maybe_load_document()
 
     async def _maybe_load_document(self):
-        # Check whether there is rooms, and get the metadata from
-        # the first room.
-        # Doesn't mather which 'type' and 'format' we use since we
-        # are not loading the content
-        if not len(self._rooms):
-            return
-
-        # Get format and type from room_id
-        format, file_type, _ = decode_file_path(self._rooms.keys()[0])
-
-        async with self._lock:
-            model = self.load_file_data(format, file_type, False)
-        
-        # do nothing if the file was saved by us
-        if self._last_modified < model["last_modified"]:
-            self.log.debug("Reverting file that had out-of-band changes: %s", self._path)
-            self._last_modified = model["last_modified"]
-            # Load the content for each room accessing this file
-            for room_id, room in self._rooms.items():
-                room.set_document_content()
-                
-    
-    async def _maybe_save_document(self, model: Dict[str, Any]):
-        if self._save_delay is None:
-            return
-        
-        # save after X seconds of inactivity
-        await asyncio.sleep(self._save_delay)
-        
-        self.log.debug("Opening Y document from disk: %s", self._path)
-        async with self._lock:
-            model = await self.load_file_data(model["format"], model["type"], False)
-        
-        if self._last_modified < model["last_modified"]:
-            # file changed on disk, let's revert
-            self.log.debug("Reverting file that had out-of-band changes: %s", self._path)
-            self._last_modified = model["last_modified"]
-            # Load the content for each room accessing this file
-            for room_id, room in self._rooms.items():
-                room.set_document_content()
+        if not self._lock.locked():
+            model = self.load_content(self._file_format, self._file_type, False)
             
-            return
-
-        async with self._lock:
-            model = await ensure_async(self._contents_manager.save(model, self._path))
-            self._last_modified = model["last_modified"]
-            # Set dirty to false for each room accessing this file
-            for room_id, room in self._rooms.items():
-                room.clear_dirty_flag()
-            
+            # do nothing if the file was saved by us
+            if self._last_modified < model["last_modified"]:
+                #self.log.debug("Reverting file that had out-of-band changes: %s", self._path)
+                self._last_modified = model["last_modified"]
+                # Notify that the content changed on disk
+                for _, callback in self._subscriptions.items():
+                    callback('changed')
