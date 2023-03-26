@@ -3,7 +3,6 @@
 
 from traitlets import Int, Unicode
 from traitlets.config import LoggingConfigurable
-
 from ypy_websocket.ystore import SQLiteYStore as _SQLiteYStore
 from ypy_websocket.ystore import TempFileYStore as _TempFileYStore
 

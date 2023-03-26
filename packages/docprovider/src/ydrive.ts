@@ -138,10 +138,6 @@ export class YDrive extends Drive implements ICollaborativeDrive {
           this._providers.delete(key);
         }
       });
-
-      sharedModel.changed.connect((sender, args) => {
-        console.debug("ARGS:", args);
-      });
     } catch (error) {
       // Falling back to the contents API if opening the websocket failed
       //  This may happen if the shared document is not a YDocument.

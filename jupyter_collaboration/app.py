@@ -8,6 +8,7 @@ from ypy_websocket.ystore import BaseYStore
 from .handlers import DocSessionHandler, YDocWebSocketHandler
 from .stores import SQLiteYStore
 
+
 class YDocExtension(ExtensionApp):
     name = "jupyter_collaboration"
 
