@@ -16,6 +16,11 @@ import { PathExt } from '@jupyterlab/coreutils';
 import { ICollaboratorAwareness } from './tokens';
 
 /**
+ * The CSS class added to collaborators panel.
+ */
+const COLLABORATORS_PANEL_CLASS = 'jp-CollaboratorsPanel';
+
+/**
  * The CSS class added to collaborators list container.
  */
 const COLLABORATORS_LIST_CLASS = 'jp-CollaboratorsList';
@@ -50,6 +55,8 @@ export class CollaboratorsPanel extends Panel {
     this._awareness = awareness;
 
     this._currentUser = currentUser;
+
+    this.addClass(COLLABORATORS_PANEL_CLASS);
 
     this._body = new CollaboratorsBody(fileopener);
     this.addWidget(this._body);
