@@ -139,7 +139,9 @@ export const rtcPanelPlugin: JupyterFrontEndPlugin<void> = {
 
     const trans = (translator ?? nullTranslator).load('jupyter_collaboration');
 
-    const userPanel = new SidePanel();
+    const userPanel = new SidePanel({
+      alignment: 'justify'
+    });
     userPanel.id = DOMUtils.createDomID();
     userPanel.title.icon = usersIcon;
     userPanel.title.caption = trans.__('Collaboration');
