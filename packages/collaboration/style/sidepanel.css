@@ -76,6 +76,10 @@
                 Collaborators Info Panel
 *************************************************************/
 
+.jp-CollaboratorsPanel {
+  overflow-y: auto;
+}
+
 .jp-CollaboratorsList {
   flex-direction: column;
   display: flex;
