@@ -97,8 +97,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         super().__init__(app, request, **kwargs)
 
         # CONFIG
-        self._file_id_manager = self.settings["file_id_manager"]
-        self._ystore_class = self.settings["collaborative_ystore_class"]
+        file_id_manager = self.settings["file_id_manager"]
+        ystore_class = self.settings["collaborative_ystore_class"]
         self._cleanup_delay = self.settings["collaborative_document_cleanup_delay"]
         # self.settings["collaborative_file_poll_interval"]
         # self.settings["collaborative_document_save_delay"]
@@ -106,13 +106,13 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         # Instantiate the JupyterWebsocketServer as a Class property
         # if it doesn't exist yet
         if self.websocket_server is None:
-            for k, v in self.config.get(self._ystore_class.__name__, {}).items():
-                setattr(self._ystore_class, k, v)
+            for k, v in self.config.get(ystore_class.__name__, {}).items():
+                setattr(ystore_class, k, v)
 
             YDocWebSocketHandler.websocket_server = JupyterWebsocketServer(
                 rooms_ready=False,
                 auto_clean_rooms=False,
-                ystore_class=self._ystore_class,
+                ystore_class=ystore_class,
                 log=self.log,
             )
 
@@ -129,7 +129,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             if self._room_id.count(":") >= 2:
                 # DocumentRoom
                 file_format, file_type, file_id = decode_file_path(self._room_id)
-                self._path = self._file_id_manager.get_path(file_id)
+                self._path = file_id_manager.get_path(file_id)
 
                 # Instantiate the FileLoader if it doesn't exist yet
                 file = YDocWebSocketHandler.files.get(self._path)
@@ -147,7 +147,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
                 path = Path(self._path)
                 updates_file_path = str(path.parent / f".{file_type}:{path.name}.y")
-                ystore = self._ystore_class(path=updates_file_path, log=self.log)
+                ystore = ystore_class(path=updates_file_path, log=self.log)
                 self.room = DocumentRoom(
                     self._room_id,
                     file_format,
@@ -210,9 +210,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 self.room.cleaner.cancel()
 
             # Initialize the room
-            async with self.room.lock:
-                if not self.room.ready:
-                    await self.room.initialize()
+            await self.room.initialize()
 
     async def send(self, message):
         # needed to be compatible with WebsocketServer (websocket.send)
@@ -294,6 +292,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
     @classmethod
     def clean_up(cls):
+        assert cls.websocket_server is not None
         # Cancel tasks and clean up
         # TODO: should we wait for any save task?
         rooms = list(cls.websocket_server.rooms.values())

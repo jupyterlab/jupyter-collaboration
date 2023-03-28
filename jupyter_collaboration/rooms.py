@@ -47,10 +47,6 @@ class DocumentRoom(YRoom):
         return self._room_id
 
     @property
-    def lock(self) -> asyncio.Lock:
-        return self._lock
-
-    @property
     def cleaner(self) -> Optional[asyncio.Task]:
         return self._cleaner
 
@@ -67,43 +63,49 @@ class DocumentRoom(YRoom):
         self._file.unobserve(self.room_id)
 
     async def initialize(self) -> None:
-        self.log.info("Initializing room %s", self._room_id)
-        model = await self._file.load_content(self._file_format, self._file_type, True)
+        async with self._lock:
+            if self.ready:
+                return
 
-        # try to apply Y updates from the YStore for this document
-        read_from_source = True
-        if self.ystore is not None:
-            try:
-                await self.ystore.apply_updates(self.ydoc)
+            self.log.info("Initializing room %s", self._room_id)
+            model = await self._file.load_content(self._file_format, self._file_type, True)
+
+            # try to apply Y updates from the YStore for this document
+            read_from_source = True
+            if self.ystore is not None:
+                try:
+                    await self.ystore.apply_updates(self.ydoc)
+                    self.log.info(
+                        "Content in room %s loaded from the ystore %s",
+                        self._room_id,
+                        self.ystore.__class__.__name__,
+                    )
+                    read_from_source = False
+                except YDocNotFound:
+                    # YDoc not found in the YStore, create the document from the source file (no change history)
+                    pass
+
+            if not read_from_source:
+                # if YStore updates and source file are out-of-sync, resync updates with source
+                if self._document.source != model["content"]:
+                    self.log.info(
+                        "Content in file %s is out-of-sync with the ystore %s",
+                        self._file.path,
+                        self.ystore.__class__.__name__,
+                    )
+                    read_from_source = True
+
+            if read_from_source:
                 self.log.info(
-                    "Content in room %s loaded from the ystore %s",
-                    self._room_id,
-                    self.ystore.__class__.__name__,
+                    "Content in room %s loaded from file %s", self._room_id, self._file.path
                 )
-                read_from_source = False
-            except YDocNotFound:
-                # YDoc not found in the YStore, create the document from the source file (no change history)
-                pass
+                self._document.source = model["content"]
 
-        if not read_from_source:
-            # if YStore updates and source file are out-of-sync, resync updates with source
-            if self._document.source != model["content"]:
-                self.log.info(
-                    "Content in file %s is out-of-sync with the ystore %s",
-                    self._file.path,
-                    self.ystore.__class__.__name__,
-                )
-                read_from_source = True
+                if self.ystore:
+                    await self.ystore.encode_state_as_update(self.ydoc)
 
-        if read_from_source:
-            self.log.info("Content in room %s loaded from file %s", self._room_id, self._file.path)
-            self._document.source = model["content"]
-
-            if self.ystore:
-                await self.ystore.encode_state_as_update(self.ydoc)
-
-        self._document.dirty = False
-        self.ready = True
+            self._document.dirty = False
+            self.ready = True
 
     async def _on_content_change(self, event: str) -> None:
         if event == "changed":
