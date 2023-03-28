@@ -62,3 +62,6 @@ class YDocExtension(ExtensionApp):
                 (r"/api/collaboration/session/(.*)", DocSessionHandler),
             ]
         )
+
+    async def stop_extension(self):
+        YDocWebSocketHandler.clean_up()

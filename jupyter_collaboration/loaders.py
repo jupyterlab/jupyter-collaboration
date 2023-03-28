@@ -34,7 +34,7 @@ class FileLoader:
     def path(self):
         return self._path
 
-    def __del__(self) -> None:
+    def clean(self) -> None:
         self._watcher.cancel()
 
     def rename_file(self, path: str) -> None:

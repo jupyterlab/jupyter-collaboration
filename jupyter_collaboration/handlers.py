@@ -286,10 +286,24 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         file = self.files[self._path]
         if file.number_of_subscriptions() == 0:
             self.log.info("Deleting file %s", file.path)
+            file.clean()
             del self.files[self._path]
 
     def check_origin(self, origin):
         return True
+
+    @classmethod
+    def clean_up(cls):
+        # Cancel tasks and clean up
+        # TODO: should we wait for any save task?
+        rooms = list(cls.websocket_server.rooms.values())
+        for room in rooms:
+            cls.websocket_server.delete_room(room=room)
+
+        for file in cls.files.values():
+            file.clean()
+
+        cls.files.clear()
 
 
 class DocSessionHandler(APIHandler):
