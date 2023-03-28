@@ -1,16 +1,16 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import {
-  DocumentChange,
-  ISharedDocument,
-  YDocument
-} from '@jupyter/ydoc';
+import { DocumentChange, ISharedDocument, YDocument } from '@jupyter/ydoc';
 import { URLExt } from '@jupyterlab/coreutils';
 import { TranslationBundle } from '@jupyterlab/translation';
 import { Contents, Drive, User } from '@jupyterlab/services';
 import { WebSocketProvider } from './yprovider';
-import { ICollaborativeDrive, ISharedModelFactory, SharedDocumentFactory } from './tokens';
+import {
+  ICollaborativeDrive,
+  ISharedModelFactory,
+  SharedDocumentFactory
+} from './tokens';
 
 /**
  * The url for the default drive service.
@@ -183,7 +183,10 @@ class SharedModelFactory implements ISharedModelFactory {
    * @param type Document type
    * @param factory Document factory
    */
-  registerDocumentFactory(type: Contents.ContentType, factory: SharedDocumentFactory) {
+  registerDocumentFactory(
+    type: Contents.ContentType,
+    factory: SharedDocumentFactory
+  ) {
     this._documentFactories.set(type, factory);
   }
 

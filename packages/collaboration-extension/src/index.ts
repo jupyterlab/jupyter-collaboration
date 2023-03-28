@@ -7,12 +7,7 @@
 
 import { JupyterFrontEndPlugin } from '@jupyterlab/application';
 
-import {
-  drive,
-  yfile,
-  ynotebook,
-  defaultFileBrowser
-} from './filebrowser';
+import { drive, yfile, ynotebook, defaultFileBrowser } from './filebrowser';
 import {
   userMenuPlugin,
   menuBarPlugin,

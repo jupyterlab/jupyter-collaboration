@@ -14,12 +14,9 @@ import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
 import { CommandRegistry } from '@lumino/commands';
 
-import {
-  YFile,
-  YNotebook
-} from '@jupyter/ydoc';
+import { YFile, YNotebook } from '@jupyter/ydoc';
 
-import { 
+import {
   ICollaborativeDrive,
   SharedDocumentFactory,
   YDrive
@@ -42,7 +39,7 @@ export const drive: JupyterFrontEndPlugin<ICollaborativeDrive> = {
   optional: [],
   activate: (
     app: JupyterFrontEnd,
-    translator: ITranslator,
+    translator: ITranslator
   ): ICollaborativeDrive => {
     const trans = translator.load('jupyter_collaboration');
     const drive = new YDrive(app.serviceManager.user, trans);
@@ -59,10 +56,7 @@ export const yfile: JupyterFrontEndPlugin<void> = {
   autoStart: true,
   requires: [ICollaborativeDrive],
   optional: [],
-  activate: (
-    app: JupyterFrontEnd,
-    drive: ICollaborativeDrive,
-  ): void => {
+  activate: (app: JupyterFrontEnd, drive: ICollaborativeDrive): void => {
     const yFileFactory: SharedDocumentFactory = () => {
       return new YFile();
     };
@@ -83,7 +77,7 @@ export const ynotebook: JupyterFrontEndPlugin<void> = {
     drive: ICollaborativeDrive,
     settingRegistry: ISettingRegistry | null
   ): void => {
-    let disableDocumentWideUndoRedo: boolean = true;
+    let disableDocumentWideUndoRedo = true;
 
     // Fetch settings if possible.
     if (settingRegistry) {
@@ -110,7 +104,10 @@ export const ynotebook: JupyterFrontEndPlugin<void> = {
         disableDocumentWideUndoRedo
       });
     };
-    drive.sharedModelFactory.registerDocumentFactory('notebook', yNotebookFactory);
+    drive.sharedModelFactory.registerDocumentFactory(
+      'notebook',
+      yNotebookFactory
+    );
   }
 };
 
