@@ -34,6 +34,7 @@ class DocumentRoom(YRoom):
 
         self._save_delay = save_delay
 
+        self._lock = asyncio.Lock()
         self._cleaner: Optional[asyncio.Task] = None
         self._saving_document: Optional[asyncio.Task] = None
 
@@ -44,6 +45,10 @@ class DocumentRoom(YRoom):
     @property
     def room_id(self) -> str:
         return self._room_id
+
+    @property
+    def lock(self) -> asyncio.Lock:
+        return self._lock
 
     @property
     def cleaner(self) -> Optional[asyncio.Task]:

@@ -17,7 +17,8 @@ from tornado.websocket import WebSocketHandler
 from ypy_websocket.websocket_server import WebsocketServer, YRoom
 from ypy_websocket.yutils import YMessageType
 
-from .rooms import DocumentRoom, FileLoader, TransientRoom
+from .loaders import FileLoader
+from .rooms import DocumentRoom, TransientRoom
 from .utils import decode_file_path
 
 YFILE = YDOCS["file"]
@@ -192,21 +193,26 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         return await super().get(*args, **kwargs)
 
     async def open(self, path):
+        assert self.websocket_server is not None
+
         task = asyncio.create_task(self.websocket_server.serve(self))
         self.websocket_server.background_tasks.add(task)
         task.add_done_callback(self.websocket_server.background_tasks.discard)
 
-        # Close the connection if the document session expired
-        session_id = self.get_query_argument("sessionId", "")
-        if isinstance(self.room, DocumentRoom) and SERVER_SESSION != session_id:
-            self.close(1003, f"Document session {session_id} expired")
+        if isinstance(self.room, DocumentRoom):
+            # Close the connection if the document session expired
+            session_id = self.get_query_argument("sessionId", "")
+            if SERVER_SESSION != session_id:
+                self.close(1003, f"Document session {session_id} expired")
 
-        # cancel the deletion of the room if it was scheduled
-        if isinstance(self.room, DocumentRoom) and self.room.cleaner is not None:
-            self.room.cleaner.cancel()
+            # cancel the deletion of the room if it was scheduled
+            if self.room.cleaner is not None:
+                self.room.cleaner.cancel()
 
-        if isinstance(self.room, DocumentRoom) and not self.room.ready:
-            await self.room.initialize()
+            # Initialize the room
+            async with self.room.lock:
+                if not self.room.ready:
+                    await self.room.initialize()
 
     async def send(self, message):
         # needed to be compatible with WebsocketServer (websocket.send)

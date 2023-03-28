@@ -75,6 +75,7 @@ class FileLoader:
 
     async def watch_file(self) -> None:
         self._log.info("Watching file: %s", self._path)
+        assert self._poll_interval is not None
 
         while True:
             await asyncio.sleep(self._poll_interval)
