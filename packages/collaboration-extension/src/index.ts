@@ -7,7 +7,12 @@
 
 import { JupyterFrontEndPlugin } from '@jupyterlab/application';
 
-import { defaultFileBrowser } from './filebrowser';
+import {
+  drive,
+  yfile,
+  ynotebook,
+  defaultFileBrowser
+} from './filebrowser';
 import {
   userMenuPlugin,
   menuBarPlugin,
@@ -20,6 +25,9 @@ import {
  * Export the plugins as default.
  */
 const plugins: JupyterFrontEndPlugin<any>[] = [
+  drive,
+  yfile,
+  ynotebook,
   defaultFileBrowser,
   userMenuPlugin,
   menuBarPlugin,

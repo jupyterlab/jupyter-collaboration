@@ -14,7 +14,16 @@ import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
 import { CommandRegistry } from '@lumino/commands';
 
-import { YDrive } from '@jupyter/docprovider';
+import {
+  YFile,
+  YNotebook
+} from '@jupyter/ydoc';
+
+import { 
+  ICollaborativeDrive,
+  SharedDocumentFactory,
+  YDrive
+} from '@jupyter/docprovider';
 
 /**
  * The command IDs used by the file browser plugin.
@@ -26,44 +35,55 @@ namespace CommandIDs {
 /**
  * The default file browser factory provider.
  */
-export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
-  id: '@jupyter/collaboration-extension:defaultFileBrowser',
-  provides: IDefaultFileBrowser,
-  requires: [IFileBrowserFactory, ITranslator],
-  optional: [
-    IRouter,
-    JupyterFrontEnd.ITreeResolver,
-    ILabShell,
-    ISettingRegistry
-  ],
-  activate: async (
+export const drive: JupyterFrontEndPlugin<ICollaborativeDrive> = {
+  id: '@jupyter/collaboration-extension:drive',
+  provides: ICollaborativeDrive,
+  requires: [ITranslator],
+  optional: [],
+  activate: (
     app: JupyterFrontEnd,
-    fileBrowserFactory: IFileBrowserFactory,
     translator: ITranslator,
-    router: IRouter | null,
-    tree: JupyterFrontEnd.ITreeResolver | null,
-    labShell: ILabShell | null,
-    settingRegistry: ISettingRegistry | null
-  ): Promise<IDefaultFileBrowser> => {
-    const { commands } = app;
-
+  ): ICollaborativeDrive => {
     const trans = translator.load('jupyter_collaboration');
     const drive = new YDrive(app.serviceManager.user, trans);
     app.serviceManager.contents.addDrive(drive);
+    return drive;
+  }
+};
 
-    // Manually restore and load the default file browser.
-    const defaultBrowser = fileBrowserFactory.createFileBrowser('filebrowser', {
-      auto: false,
-      restore: false,
-      driveName: 'YDrive'
-    });
-    void Private.restoreBrowser(
-      defaultBrowser,
-      commands,
-      router,
-      tree,
-      labShell
-    );
+/**
+ * The default file browser factory provider.
+ */
+export const yfile: JupyterFrontEndPlugin<void> = {
+  id: '@jupyter/collaboration-extension:yfile',
+  autoStart: true,
+  requires: [ICollaborativeDrive],
+  optional: [],
+  activate: (
+    app: JupyterFrontEnd,
+    drive: ICollaborativeDrive,
+  ): void => {
+    const yFileFactory: SharedDocumentFactory = () => {
+      return new YFile();
+    };
+    drive.sharedModelFactory.registerDocumentFactory('file', yFileFactory);
+  }
+};
+
+/**
+ * The default file browser factory provider.
+ */
+export const ynotebook: JupyterFrontEndPlugin<void> = {
+  id: '@jupyter/collaboration-extension:ynotebook',
+  autoStart: true,
+  requires: [ICollaborativeDrive],
+  optional: [ISettingRegistry],
+  activate: (
+    app: JupyterFrontEnd,
+    drive: ICollaborativeDrive,
+    settingRegistry: ISettingRegistry | null
+  ): void => {
+    let disableDocumentWideUndoRedo: boolean = true;
 
     // Fetch settings if possible.
     if (settingRegistry) {
@@ -75,9 +95,7 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
               'experimentalEnableDocumentWideUndoRedo'
             ).composite as boolean;
 
-            drive.sharedModelFactory.setDocumentOptions('notebook', {
-              disableDocumentWideUndoRedo: !enableDocWideUndo ?? true
-            });
+            disableDocumentWideUndoRedo = !enableDocWideUndo ?? true;
           };
 
           updateSettings(settings);
@@ -86,6 +104,54 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
           );
         });
     }
+
+    const yNotebookFactory: SharedDocumentFactory = () => {
+      return new YNotebook({
+        disableDocumentWideUndoRedo
+      });
+    };
+    drive.sharedModelFactory.registerDocumentFactory('notebook', yNotebookFactory);
+  }
+};
+
+/**
+ * The default file browser factory provider.
+ */
+export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
+  id: '@jupyter/collaboration-extension:defaultFileBrowser',
+  provides: IDefaultFileBrowser,
+  requires: [ICollaborativeDrive, IFileBrowserFactory],
+  optional: [
+    IRouter,
+    JupyterFrontEnd.ITreeResolver,
+    ILabShell,
+    ISettingRegistry
+  ],
+  activate: async (
+    app: JupyterFrontEnd,
+    drive: ICollaborativeDrive,
+    fileBrowserFactory: IFileBrowserFactory,
+    router: IRouter | null,
+    tree: JupyterFrontEnd.ITreeResolver | null,
+    labShell: ILabShell | null
+  ): Promise<IDefaultFileBrowser> => {
+    const { commands } = app;
+
+    app.serviceManager.contents.addDrive(drive);
+
+    // Manually restore and load the default file browser.
+    const defaultBrowser = fileBrowserFactory.createFileBrowser('filebrowser', {
+      auto: false,
+      restore: false,
+      driveName: drive.name
+    });
+    void Private.restoreBrowser(
+      defaultBrowser,
+      commands,
+      router,
+      tree,
+      labShell
+    );
 
     return defaultBrowser;
   }

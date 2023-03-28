@@ -4,14 +4,13 @@
 import {
   DocumentChange,
   ISharedDocument,
-  YDocument,
-  YFile,
-  YNotebook
+  YDocument
 } from '@jupyter/ydoc';
 import { URLExt } from '@jupyterlab/coreutils';
 import { TranslationBundle } from '@jupyterlab/translation';
 import { Contents, Drive, User } from '@jupyterlab/services';
 import { WebSocketProvider } from './yprovider';
+import { ICollaborativeDrive, ISharedModelFactory, SharedDocumentFactory } from './tokens';
 
 /**
  * The url for the default drive service.
@@ -22,14 +21,14 @@ const DOCUMENT_PROVIDER_URL = 'api/collaboration/room';
  * A Collaborative implementation for an `IDrive`, talking to the
  * server using the Jupyter REST API and a WebSocket connection.
  */
-export class YDrive extends Drive {
+export class YDrive extends Drive implements ICollaborativeDrive {
   /**
    * Construct a new drive object.
    *
    * @param user - The user manager to add the identity to the awareness of documents.
    */
   constructor(user: User.IManager, translator: TranslationBundle) {
-    super({ name: 'YDrive' });
+    super({ name: 'RTC' });
     this._user = user;
     this._trans = translator;
     this._providers = new Map<string, WebSocketProvider>();
@@ -40,7 +39,7 @@ export class YDrive extends Drive {
   /**
    * SharedModel factory for the YDrive.
    */
-  readonly sharedModelFactory: SharedModelFactory;
+  readonly sharedModelFactory: ISharedModelFactory;
 
   /**
    * Dispose of the resources held by the manager.
@@ -156,8 +155,8 @@ export class YDrive extends Drive {
 /**
  * Yjs sharedModel factory for real-time collaboration.
  */
-class SharedModelFactory implements Contents.ISharedFactory {
-  private _documentOptions: Map<Contents.ContentType, Record<string, any>>;
+class SharedModelFactory implements ISharedModelFactory {
+  private _documentFactories: Map<Contents.ContentType, SharedDocumentFactory>;
 
   /**
    * Shared model factory constructor
@@ -170,10 +169,7 @@ class SharedModelFactory implements Contents.ISharedFactory {
       sharedModel: YDocument<DocumentChange>
     ) => void
   ) {
-    this._documentOptions = new Map();
-    this._documentOptions.set('notebook', {
-      disableDocumentWideUndoRedo: true
-    });
+    this._documentFactories = new Map();
   }
 
   /**
@@ -182,13 +178,13 @@ class SharedModelFactory implements Contents.ISharedFactory {
   readonly collaborative = true;
 
   /**
-   * Set shared document model options
+   * Register a SharedDocumentFactory.
    *
    * @param type Document type
-   * @param value Document options
+   * @param factory Document factory
    */
-  setDocumentOptions(type: Contents.ContentType, value: Record<string, any>) {
-    this._documentOptions.set(type, { ...value });
+  registerDocumentFactory(type: Contents.ContentType, factory: SharedDocumentFactory) {
+    this._documentFactories.set(type, factory);
   }
 
   /**
@@ -210,22 +206,13 @@ class SharedModelFactory implements Contents.ISharedFactory {
       return;
     }
 
-    let sharedModel: YDocument<DocumentChange> | undefined;
-    switch (options.contentType) {
-      case 'file':
-        sharedModel = new YFile();
-        break;
-      case 'notebook':
-        sharedModel = new YNotebook(this._documentOptions.get('notebook'));
-        break;
-      //default:
-      // FIXME we should request a registry for the proper sharedModel
-    }
-
-    if (sharedModel) {
+    if (this._documentFactories.has(options.contentType)) {
+      const factory = this._documentFactories.get(options.contentType)!;
+      const sharedModel = factory(options);
       this._onCreate(options, sharedModel);
+      return sharedModel;
     }
 
-    return sharedModel;
+    return;
   }
 }
