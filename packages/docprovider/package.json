@@ -42,8 +42,8 @@
   },
   "dependencies": {
     "@jupyter/ydoc": "^0.3.4",
-    "@jupyterlab/coreutils": "^6.0.0-alpha.22",
-    "@jupyterlab/services": "^7.0.0-alpha.22",
+    "@jupyterlab/coreutils": "^6.0.0-beta.0",
+    "@jupyterlab/services": "^7.0.0-beta.0",
     "@lumino/coreutils": "^2.0.0",
     "@lumino/disposable": "^2.0.0",
     "@lumino/signaling": "^2.0.0",
@@ -52,7 +52,7 @@
     "yjs": "^13.5.40"
   },
   "devDependencies": {
-    "@jupyterlab/testing": "^4.0.0-alpha.22",
+    "@jupyterlab/testing": "^4.0.0-beta.0",
     "@types/jest": "^29.2.0",
     "rimraf": "^4.1.2",
     "typescript": "~5.0.2"
