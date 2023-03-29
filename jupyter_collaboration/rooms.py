@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 from logging import Logger
 from typing import Any, Optional
@@ -20,9 +22,9 @@ class DocumentRoom(YRoom):
         file_format: str,
         file_type: str,
         file: FileLoader,
-        ystore: Optional[BaseYStore],
-        log: Optional[Logger],
-        save_delay: Optional[int] = None,
+        ystore: BaseYStore | None,
+        log: Logger | None,
+        save_delay: int | None = None,
     ):
         super().__init__(ready=False, ystore=ystore, log=log)
 
@@ -35,8 +37,8 @@ class DocumentRoom(YRoom):
         self._save_delay = save_delay
 
         self._lock = asyncio.Lock()
-        self._cleaner: Optional[asyncio.Task] = None
-        self._saving_document: Optional[asyncio.Task] = None
+        self._cleaner: asyncio.Task | None = None
+        self._saving_document: asyncio.Task | None = None
 
         # Listen for document changes
         self._document.observe(self._on_document_change)
@@ -47,7 +49,7 @@ class DocumentRoom(YRoom):
         return self._room_id
 
     @property
-    def cleaner(self) -> Optional[asyncio.Task]:
+    def cleaner(self) -> asyncio.Task | None:
         return self._cleaner
 
     @cleaner.setter
@@ -144,7 +146,7 @@ class DocumentRoom(YRoom):
 class TransientRoom(YRoom):
     """A Y room for sharing state (e.g. awareness)."""
 
-    def __init__(self, room_id: str, log: Optional[Logger]):
+    def __init__(self, room_id: str, log: Logger | None):
         super().__init__(log=log)
 
         self._room_id = room_id

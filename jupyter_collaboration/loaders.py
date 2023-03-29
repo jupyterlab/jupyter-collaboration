@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 from logging import Logger, getLogger
 from typing import Any, Callable, Coroutine, Dict, Optional
@@ -12,8 +14,8 @@ class FileLoader:
         file_format: str,
         file_type: str,
         contents_manager: Any,
-        log: Optional[Logger],
-        poll_interval: Optional[float] = None,
+        log: Logger | None,
+        poll_interval: float | None = None,
     ) -> None:
         self._path: str = path
         self._file_format: str = file_format
@@ -25,7 +27,7 @@ class FileLoader:
         self._contents_manager = contents_manager
 
         self._log = log or getLogger(__name__)
-        self._subscriptions: Dict[str, Callable[[str], Coroutine[Any, Any, None]]] = {}
+        self._subscriptions: dict[str, Callable[[str], Coroutine[Any, Any, None]]] = {}
 
         if self._poll_interval:
             self._watcher = asyncio.create_task(self.watch_file())
@@ -49,12 +51,12 @@ class FileLoader:
     def unobserve(self, id: str) -> None:
         del self._subscriptions[id]
 
-    async def load_content(self, format: str, file_type: str, content: bool) -> Dict[str, Any]:
+    async def load_content(self, format: str, file_type: str, content: bool) -> dict[str, Any]:
         return await ensure_async(
             self._contents_manager.get(self._path, format=format, type=file_type, content=content)
         )
 
-    async def save_content(self, model: Dict[str, Any]) -> None:
+    async def save_content(self, model: dict[str, Any]) -> None:
         async with self._lock:
             m = await self.load_content(model["format"], model["type"], False)
 
