@@ -52,15 +52,18 @@ class FileLoader:
         del self._subscriptions[id]
 
     async def load_content(self, format: str, file_type: str, content: bool) -> dict[str, Any]:
-        return await ensure_async(
-            self._contents_manager.get(self._path, format=format, type=file_type, content=content)
-        )
+        async with self._lock:
+            return await ensure_async(
+                self._contents_manager.get(
+                    self._path, format=format, type=file_type, content=content
+                )
+            )
 
     async def save_content(self, model: dict[str, Any]) -> None:
         async with self._lock:
             m = await self.load_content(model["format"], model["type"], False)
 
-            if self._last_modified is None or self._last_modified >= m["last_modified"]:
+            if self._last_modified is None or self._last_modified == m["last_modified"]:
                 self._log.info("Saving file: %s", self._path)
                 model = await ensure_async(self._contents_manager.save(model, self._path))
                 self._last_modified = model["last_modified"]
@@ -72,7 +75,7 @@ class FileLoader:
                 )
                 self._last_modified = model["last_modified"]
                 # Notify that the content changed on disk
-                for _, callback in self._subscriptions.items():
+                for callback in self._subscriptions.values():
                     await callback("changed")
 
     async def watch_file(self) -> None:
@@ -92,5 +95,5 @@ class FileLoader:
                 self._log.info("Notifying rooms. The file on disk changed: %s", self._path)
                 self._last_modified = model["last_modified"]
                 # Notify that the content changed on disk
-                for _, callback in self._subscriptions.items():
+                for callback in self._subscriptions.values():
                     await callback("changed")
