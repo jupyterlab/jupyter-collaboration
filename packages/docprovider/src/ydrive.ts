@@ -187,6 +187,9 @@ class SharedModelFactory implements ISharedModelFactory {
     type: Contents.ContentType,
     factory: SharedDocumentFactory
   ) {
+    if (this._documentFactories.has(type)) {
+      throw new Error(`The content type ${type} already exists`);
+    }
     this._documentFactories.set(type, factory);
   }
 
