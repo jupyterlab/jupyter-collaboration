@@ -85,15 +85,9 @@ def setup(app):
     # Build JavaScript Docs
     js = HERE.parent.parent
     js_docs = HERE / "ts" / "api"
-    collaboration = js_docs / "collaboration"
-    docprovider = js_docs / "docprovider"
-    extension = js_docs / "collaboration-extension"
+    if js_docs.exists():
+        shutil.rmtree(js_docs)
 
-    if collaboration.exists() and docprovider.exists() and extension.exists():
-        # avoid rebuilding docs because it takes forever
-        # `make clean` to force a rebuild
-        print(f"already have {js_docs!s}")
-    else:
-        print("Building JavaScript API docs")
-        check_call(["jlpm", "install"], cwd=str(js))
-        check_call(["jlpm", "run", "docs"], cwd=str(js))
+    print("Building JavaScript API docs")
+    check_call(["jlpm", "install"], cwd=str(js))
+    check_call(["jlpm", "run", "docs"], cwd=str(js))
