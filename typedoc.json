@@ -1,6 +1,53 @@
 {
   "entryPointStrategy": "packages",
   "entryPoints": ["packages/collaboration", "packages/docprovider"],
+  "externalSymbolLinkMappings": {
+    "@codemirror/state": {
+      "Extension": "https://codemirror.net/docs/ref/#state.Extension"
+    },
+    "@jupyter/ydoc": {
+      "DocumentChange": "https://jupyter-ydoc.readthedocs.io/en/latest/api/types/DocumentChange.html",
+      "YDocument": "https://jupyter-ydoc.readthedocs.io/en/latest/api/classes/YDocument-1.html"
+    },
+    "@jupyterlab/services": {
+      "Contents.IFetchOptions": "https://jupyterlab.readthedocs.io/en/latest/api/interfaces/services.Contents.IFetchOptions.html",
+      "Contents.IModel": "https://jupyterlab.readthedocs.io/en/latest/api/interfaces/services.Contents.IModel.html",
+      "Contents.ISharedFactory": "https://jupyterlab.readthedocs.io/en/latest/api/interfaces/services.Contents.ISharedFactory.html",
+      "Contents.ISharedFactoryOptions": "https://jupyterlab.readthedocs.io/en/latest/api/interfaces/services.Contents.ISharedFactoryOptions.html",
+      "Drive": "https://jupyterlab.readthedocs.io/en/latest/api/classes/services.Drive-1.html",
+      "User.IManager": "https://jupyterlab.readthedocs.io/en/latest/api/interfaces/services.User.IManager.html",
+      "User.IIdentity": "https://jupyterlab.readthedocs.io/en/latest/api/interfaces/services.User.IIdentity.html"
+    },
+    "@jupyterlab/translation": {
+      "TranslationBundle": "https://jupyterlab.readthedocs.io/en/latest/api/types/translation.TranslationBundle.html"
+    },
+    "@jupyterlab/ui-components": {
+      "ReactWidget": "https://jupyterlab.readthedocs.io/en/latest/api/modules/ui_components.html#ReactWidget"
+    },
+    "@lumino/coreutils": {
+      "Token": "https://lumino.readthedocs.io/en/latest/api/classes/coreutils.Token.html"
+    },
+    "@lumino/disposable": {
+      "IDisposable": "https://lumino.readthedocs.io/en/latest/api/interfaces/disposable.IDisposable.html"
+    },
+    "@lumino/virtualdom": {
+      "VirtualElement": "https://lumino.readthedocs.io/en/stable/api/modules/virtualdom.VirtualElement.html"
+    },
+    "@lumino/widgets": {
+      "Menu": "https://lumino.readthedocs.io/en/stable/api/classes/widgets.Menu-1.html",
+      "Menu.IItem": "https://lumino.readthedocs.io/en/stable/api/interfaces/widgets.Menu.IItem.html",
+      "Menu.IItemOptions": "https://lumino.readthedocs.io/en/stable/api/interfaces/widgets.Menu.IItemOptions.html",
+      "MenuBar.Renderer": "https://lumino.readthedocs.io/en/stable/api/classes/widgets.MenuBar.Renderer.html",
+      "MenuBar.IRenderData": "https://lumino.readthedocs.io/en/stable/api/interfaces/widgets.MenuBar.IRenderData.html",
+      "Panel": "https://lumino.readthedocs.io/en/stable/api/classes/widgets.Panel-1.html"
+    },
+    "y-protocols": {
+      "Awareness": "https://docs.yjs.dev/api/about-awareness"
+    },
+    "yjs": {
+      "Text": "https://docs.yjs.dev/api/shared-types/y.text"
+    }
+  },
   "githubPages": false,
   "navigationLinks": {
     "GitHub": "https://github.com/jupyterlab/jupyter_collaboration",
