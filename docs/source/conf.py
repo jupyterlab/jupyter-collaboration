@@ -87,7 +87,7 @@ def setup(app):
     js_docs = HERE / "ts" / "api"
     if js_docs.exists():
         shutil.rmtree(js_docs)
-    
+
     print("Building JavaScript API docs")
     check_call(["jlpm", "install"], cwd=str(js))
     check_call(["jlpm", "run", "docs"], cwd=str(js))
