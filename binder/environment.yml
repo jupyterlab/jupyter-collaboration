@@ -18,5 +18,5 @@ dependencies:
   # Use pip to get the the latest version
   - pip:
     - jupyter_server_fileid >=0.7.0
-    - jupyter_ydoc >=0.3.2
+    - jupyter_ydoc >=1.0.0
     - ypy-websocket >=0.8.3
