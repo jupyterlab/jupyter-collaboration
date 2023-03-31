@@ -30,10 +30,11 @@ namespace CommandIDs {
 }
 
 /**
- * The default file browser factory provider.
+ * The default collaborative drive provider.
  */
 export const drive: JupyterFrontEndPlugin<ICollaborativeDrive> = {
   id: '@jupyter/collaboration-extension:drive',
+  description: 'The default collaborative drive provider',
   provides: ICollaborativeDrive,
   requires: [ITranslator],
   optional: [],
@@ -49,10 +50,12 @@ export const drive: JupyterFrontEndPlugin<ICollaborativeDrive> = {
 };
 
 /**
- * The default file browser factory provider.
+ * Plugin to register the shared model factory for the content type 'file'.
  */
 export const yfile: JupyterFrontEndPlugin<void> = {
   id: '@jupyter/collaboration-extension:yfile',
+  description:
+    "Plugin to register the shared model factory for the content type 'file'",
   autoStart: true,
   requires: [ICollaborativeDrive],
   optional: [],
@@ -65,10 +68,12 @@ export const yfile: JupyterFrontEndPlugin<void> = {
 };
 
 /**
- * The default file browser factory provider.
+ * Plugin to register the shared model factory for the content type 'notebook'.
  */
 export const ynotebook: JupyterFrontEndPlugin<void> = {
   id: '@jupyter/collaboration-extension:ynotebook',
+  description:
+    "Plugin to register the shared model factory for the content type 'notebook'",
   autoStart: true,
   requires: [ICollaborativeDrive],
   optional: [ISettingRegistry],
@@ -116,6 +121,7 @@ export const ynotebook: JupyterFrontEndPlugin<void> = {
  */
 export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
   id: '@jupyter/collaboration-extension:defaultFileBrowser',
+  description: 'The default file browser factory provider',
   provides: IDefaultFileBrowser,
   requires: [ICollaborativeDrive, IFileBrowserFactory],
   optional: [
