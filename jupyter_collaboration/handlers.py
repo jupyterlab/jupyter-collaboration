@@ -7,6 +7,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, Optional, Set
 
+from jupyter_events import EventLogger
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.serverapp import ServerWebApplication
@@ -129,23 +130,24 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             if self._room_id.count(":") >= 2:
                 # DocumentRoom
                 file_format, file_type, file_id = decode_file_path(self._room_id)
-                self._path = file_id_manager.get_path(file_id)
+                path = file_id_manager.get_path(file_id)
 
                 # Instantiate the FileLoader if it doesn't exist yet
-                file = YDocWebSocketHandler.files.get(self._path)
+                file = YDocWebSocketHandler.files.get(file_id)
                 if file is None:
-                    self.log.info("Creating FileLoader for: %s", self._path)
+                    self.log.info("Creating FileLoader for: %s", path)
                     file = FileLoader(
-                        self._path,
+                        file_id,
                         file_format,
                         file_type,
+                        file_id_manager,
                         self.contents_manager,
                         self.log,
                         self.settings["collaborative_file_poll_interval"],
                     )
-                    self.files[self._path] = file
+                    self.files[file_id] = file
 
-                path = Path(self._path)
+                path = Path(path)
                 updates_file_path = str(path.parent / f".{file_type}:{path.name}.y")
                 ystore = ystore_class(path=updates_file_path, log=self.log)
                 self.room = DocumentRoom(
@@ -192,7 +194,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             raise web.HTTPError(403)
         return await super().get(*args, **kwargs)
 
-    async def open(self, path):
+    async def open(self, room_id):
         assert self.websocket_server is not None
 
         task = asyncio.create_task(self.websocket_server.serve(self))
@@ -281,11 +283,12 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self.log.info("Room %s deleted", self._room_id)
 
         # Clean the file loader if there are not rooms using it
-        file = self.files[self._path]
+        _, _, file_id = decode_file_path(self._room_id)
+        file = self.files[file_id]
         if file.number_of_subscriptions() == 0:
             self.log.info("Deleting file %s", file.path)
             file.clean()
-            del self.files[self._path]
+            del self.files[file_id]
 
     def check_origin(self, origin):
         return True
