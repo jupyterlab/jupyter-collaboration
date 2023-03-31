@@ -61,7 +61,11 @@ class FileLoader:
 
     async def save_content(self, model: dict[str, Any]) -> None:
         async with self._lock:
-            m = await self.load_content(model["format"], model["type"], False)
+            m = await ensure_async(
+                self._contents_manager.get(
+                    self._path, format=model["format"], type=model["type"], content=False
+                )
+            )
 
             if self._last_modified is None or self._last_modified == m["last_modified"]:
                 self._log.info("Saving file: %s", self._path)
@@ -88,7 +92,11 @@ class FileLoader:
 
     async def _maybe_load_document(self) -> None:
         async with self._lock:
-            model = await self.load_content(self._file_format, self._file_type, False)
+            model = await ensure_async(
+                self._contents_manager.get(
+                    self._path, format=self._file_format, type=self._file_type, content=False
+                )
+            )
 
             # do nothing if the file was saved by us
             if self._last_modified is not None and self._last_modified < model["last_modified"]:
