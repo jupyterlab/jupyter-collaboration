@@ -66,7 +66,7 @@ class DocumentRoom(YRoom):
 
     async def initialize(self) -> None:
         async with self._lock:
-            if self.ready: # type: ignore[has-type]
+            if self.ready:  # type: ignore[has-type]
                 return
 
             self.log.info("Initializing room %s", self._room_id)
