@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import asyncio
 from logging import Logger, getLogger
-from typing import Any, Callable, Coroutine, Dict, Optional
+from typing import Any, Callable, Coroutine
 
-from jupyter_events import EventLogger
 from jupyter_server.utils import ensure_async
 
 

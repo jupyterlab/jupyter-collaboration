@@ -7,7 +7,6 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, Optional, Set
 
-from jupyter_events import EventLogger
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.serverapp import ServerWebApplication

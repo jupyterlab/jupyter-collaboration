@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from logging import Logger
-from typing import Any, Optional
+from typing import Any
 
 from jupyter_ydoc import ydocs as YDOCS
 from ypy_websocket.websocket_server import YRoom
