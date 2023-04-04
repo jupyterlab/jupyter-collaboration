@@ -54,7 +54,7 @@ class JupyterWebsocketServer(WebsocketServer):
             self.ypatch_nb = 0
 
     def room_exists(self, path: str) -> bool:
-        return path in self.rooms.keys()
+        return path in self.rooms
 
     def add_room(self, path: str, room: YRoom) -> None:
         self.rooms[path] = room
