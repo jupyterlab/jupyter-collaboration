@@ -284,7 +284,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         # Clean the file loader if there are not rooms using it
         _, _, file_id = decode_file_path(self._room_id)
         file = self.files[file_id]
-        if file.number_of_subscriptions() == 0:
+        if file.number_of_subscriptions == 0:
             self.log.info("Deleting file %s", file.path)
             file.clean()
             del self.files[file_id]

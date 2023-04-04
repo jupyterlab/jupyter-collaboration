@@ -36,13 +36,14 @@ class FileLoader:
     @property
     def path(self) -> str:
         return self._file_id_manager.get_path(self._file_id)
-    
+
     @property
     def number_of_subscriptions(self) -> int:
         return len(self._subscriptions)
 
     def clean(self) -> None:
-        self._watcher.cancel()
+        if self._watcher is not None:
+            self._watcher.cancel()
 
     def observe(self, id: str, callback: Callable[[str], Coroutine[Any, Any, None]]) -> None:
         self._subscriptions[id] = callback
@@ -84,6 +85,9 @@ class FileLoader:
 
     async def _watch_file(self) -> None:
         self._log.info("Watching file: %s", self.path)
+
+        if self._poll_interval is None:
+            return
 
         while True:
             await asyncio.sleep(self._poll_interval)
