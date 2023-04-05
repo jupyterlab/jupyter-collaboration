@@ -8,6 +8,10 @@ from jupyter_server.utils import ensure_async
 
 
 class FileLoader:
+    """
+    A class to centralize all the operation on a file.
+    """
+
     def __init__(
         self,
         file_id: str,
@@ -35,23 +39,58 @@ class FileLoader:
 
     @property
     def path(self) -> str:
+        """
+        The file path.
+        """
         return self._file_id_manager.get_path(self._file_id)
 
     @property
     def number_of_subscriptions(self) -> int:
+        """
+        The number of rooms subscribed to this file.
+        """
         return len(self._subscriptions)
 
     def clean(self) -> None:
+        """
+        Clean up the file.
+
+        Stops the watch task.
+        """
         if self._watcher is not None:
             self._watcher.cancel()
 
     def observe(self, id: str, callback: Callable[[str], Coroutine[Any, Any, None]]) -> None:
+        """
+        Subscribe to the file to get notified on file changes.
+
+            Parameters:
+                    id (str): Room ID
+                    callback (Callable): Callback for notifying the room.
+        """
         self._subscriptions[id] = callback
 
     def unobserve(self, id: str) -> None:
+        """
+        Unsubscribe to the file.
+
+            Parameters:
+                id (str): Room ID
+        """
         del self._subscriptions[id]
 
     async def load_content(self, format: str, file_type: str, content: bool) -> dict[str, Any]:
+        """
+        Load the content of the file.
+
+            Parameters:
+                format (str): File format.
+                file_type (str): Content type.
+                content (bool): Whether to load the content or not.
+
+            Returns:
+                model (dict): A dictionary with the metadata and content of the file.
+        """
         async with self._lock:
             return await ensure_async(
                 self._contents_manager.get(
@@ -60,6 +99,12 @@ class FileLoader:
             )
 
     async def save_content(self, model: dict[str, Any]) -> None:
+        """
+        Save the content of the file.
+
+            Parameters:
+                model (dict): A dictionary with format, type, and content of the file.
+        """
         async with self._lock:
             path = self.path
             m = await ensure_async(
@@ -84,6 +129,9 @@ class FileLoader:
                     await callback("changed")
 
     async def _watch_file(self) -> None:
+        """
+        Async task for watching a file.
+        """
         self._log.info("Watching file: %s", self.path)
 
         if self._poll_interval is None:
@@ -94,6 +142,9 @@ class FileLoader:
             await self._maybe_load_document()
 
     async def _maybe_load_document(self) -> None:
+        """
+        Notifies subscribed rooms about changes on the content of the file.
+        """
         async with self._lock:
             path = self.path
             model = await ensure_async(

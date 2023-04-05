@@ -168,12 +168,17 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
     @property
     def path(self):
-        # needed to be compatible with WebsocketServer (websocket.path)
+        """
+        Returns the room id. It needs to be called 'path' for compatibility with
+        the WebsocketServer (websocket.path).
+        """
         return self._room_id
 
-    # Override max_message size to 1GB
     @property
     def max_message_size(self):
+        """
+        Override max_message size to 1GB
+        """
         return 1024 * 1024 * 1024
 
     def __aiter__(self):
@@ -188,12 +193,18 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         return message
 
     async def get(self, *args, **kwargs):
+        """
+        Overrides default behavior to check whether the client is authenticated or not.
+        """
         if self.get_current_user() is None:
             self.log.warning("Couldn't authenticate WebSocket connection")
             raise web.HTTPError(403)
         return await super().get(*args, **kwargs)
 
     async def open(self, room_id):
+        """
+        On connection open.
+        """
         assert self.websocket_server is not None
 
         task = asyncio.create_task(self.websocket_server.serve(self))
@@ -214,6 +225,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             await self.room.initialize()
 
     async def send(self, message):
+        """
+        Send a message to the client.
+        """
         # needed to be compatible with WebsocketServer (websocket.send)
         try:
             self.write_message(message, binary=True)
@@ -221,10 +235,16 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             self.log.debug("Failed to write message", exc_info=e)
 
     async def recv(self):
+        """
+        Receive a message from the client.
+        """
         message = await self._message_queue.get()
         return message
 
     def on_message(self, message):
+        """
+        On message receive.
+        """
         assert self.websocket_server is not None
         message_type = message[0]
         if message_type == YMessageType.AWARENESS:
@@ -256,15 +276,29 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self.websocket_server.ypatch_nb += 1
 
     def on_close(self) -> None:
+        """
+        On connection close.
+        """
         # stop serving this client
         self._message_queue.put_nowait(b"")
         if isinstance(self.room, DocumentRoom) and self.room.clients == [self]:
             # no client in this room after we disconnect
             # keep the document for a while in case someone reconnects
             self.log.info("Cleaning room: %s", self._room_id)
-            self.room.cleaner = asyncio.create_task(self.clean_room())
+            self.room.cleaner = asyncio.create_task(self._clean_room())
 
-    async def clean_room(self) -> None:
+    async def _clean_room(self) -> None:
+        """
+        Async task for cleaning up the resources.
+
+        When all the clients of a room leave, we setup a task to clean up the resources
+        after a certain amount of time. We need to wait a few seconds to clean up the room
+        because sometimes websockets unintentionally disconnect.
+
+        During the clean up, we need to delete the room to free resources since the room
+        contains a copy of the document. In addition, we remove the file if there is no rooms
+        subscribed to it.
+        """
         assert isinstance(self.room, DocumentRoom)
 
         if self._cleanup_delay is None:
@@ -290,10 +324,18 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             del self.files[file_id]
 
     def check_origin(self, origin):
+        """
+        Check origin
+        """
         return True
 
     @classmethod
     def clean_up(cls):
+        """
+        Class method to stop every coroutine.
+
+        Useful to clean up tasks on server shut down.
+        """
         assert cls.websocket_server is not None
         # Cancel tasks and clean up
         # TODO: should we wait for any save task?
@@ -308,11 +350,18 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
 
 class DocSessionHandler(APIHandler):
+    """
+    Jupyter Server's handler to retrieve the document's session.
+    """
+
     auth_resource = "contents"
 
     @web.authenticated
     @authorized
     async def put(self, path):
+        """
+        Creates a new session for a given document or returns an existing one.
+        """
         body = json.loads(self.request.body)
         format = body["format"]
         content_type = body["type"]

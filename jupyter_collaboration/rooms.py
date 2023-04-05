@@ -46,25 +46,40 @@ class DocumentRoom(YRoom):
 
     @property
     def room_id(self) -> str:
+        """
+        The room ID.
+        """
         return self._room_id
 
     @property
     def cleaner(self) -> asyncio.Task | None:
+        """
+        The task for cleaning up the resources.
+        """
         return self._cleaner
 
     @cleaner.setter
     def cleaner(self, value: asyncio.Task) -> None:
+        """
+        Setter for the clean up task.
+        """
         self._cleaner = value
 
-    def _clean(self) -> None:
-        super()._clean()
-        # TODO: Should we cancel or wait ?
-        if self._saving_document:
-            self._saving_document.cancel()
-        self._document.unobserve()
-        self._file.unobserve(self.room_id)
-
     async def initialize(self) -> None:
+        """
+        Initializes the room.
+
+        This method is thread safe so only one client can initialize the room.
+
+        To initialize the room, we check if the content was already in the store
+        as a Y updates and if it is up to date with the content on disk. In this
+        case, we load the Y updates from the store. Otherwise, we load the content
+        from disk.
+
+        ### Note:
+            It is important to set the ready property in the parent class (`self.ready = True`),
+            this setter will subscribe for updates on the shared document.
+        """
         async with self._lock:
             if self.ready:  # type: ignore[has-type]
                 return
@@ -109,7 +124,26 @@ class DocumentRoom(YRoom):
             self._document.dirty = False
             self.ready = True
 
+    def _clean(self) -> None:
+        """
+        Cleans the rooms.
+
+        Cancels the save task and unsubscribes from the file.
+        """
+        super()._clean()
+        # TODO: Should we cancel or wait ?
+        if self._saving_document:
+            self._saving_document.cancel()
+        self._document.unobserve()
+        self._file.unobserve(self.room_id)
+
     async def _on_content_change(self, event: str) -> None:
+        """
+        Called when the file changes.
+
+            Parameters:
+                event (str): Type of change.
+        """
         if event == "changed":
             self.log.info("Overwriting the content in room %s", self._room_id)
             model = await self._file.load_content(self._file_format, self._file_type, True)
@@ -117,6 +151,20 @@ class DocumentRoom(YRoom):
             self._document.dirty = False
 
     def _on_document_change(self, target: str, event: Any) -> None:
+        """
+        Called when the shared document changes.
+
+            Parameters:
+                target (str): The name of the changed attribute.
+                event (Any): Changes.
+
+        ### Note:
+            We auto save the content of the document every time there is a
+            change in it. Since we could receive a high amount of changes
+            in a short period of time, we need create a task for saving the
+            document. This tasks are debounced (60 seconds by default) so we
+            need to cancel previous tasks before creating a new one.
+        """
         if target == "state" and "dirty" in event.keys:
             dirty = event.keys["dirty"]["newValue"]
             if not dirty:
@@ -131,6 +179,14 @@ class DocumentRoom(YRoom):
         self._saving_document = asyncio.create_task(self._maybe_save_document())
 
     async def _maybe_save_document(self) -> None:
+        """
+        Saves the content of the document to disk.
+
+        ### Note:
+            There is a save delay to debounce the save since we could receive a high
+            amount of changes in a short period of time. This way we can cancel the
+            previous save.
+        """
         if self._save_delay is None:
             return
 
@@ -153,4 +209,7 @@ class TransientRoom(YRoom):
 
     @property
     def room_id(self) -> str:
+        """
+        The room ID.
+        """
         return self._room_id
