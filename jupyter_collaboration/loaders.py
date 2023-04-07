@@ -7,6 +7,10 @@ from typing import Any, Callable, Coroutine
 from jupyter_server.utils import ensure_async
 
 
+class OutOfBandChanges(Exception):
+    pass
+
+
 class FileLoader:
     """
     A class to centralize all the operation on a file.
@@ -25,7 +29,6 @@ class FileLoader:
         self._file_id: str = file_id
         self._file_format: str = file_format
         self._file_type: str = file_type
-        self._last_modified = None
 
         self._lock = asyncio.Lock()
         self._poll_interval = poll_interval
@@ -33,7 +36,9 @@ class FileLoader:
         self._contents_manager = contents_manager
 
         self._log = log or getLogger(__name__)
-        self._subscriptions: dict[str, Callable[[str], Coroutine[Any, Any, None]]] = {}
+        self._subscriptions: dict[
+            str, Callable[[str, dict[str, Any]], Coroutine[Any, Any, None]]
+        ] = {}
 
         self._watcher = asyncio.create_task(self._watch_file()) if self._poll_interval else None
 
@@ -60,7 +65,9 @@ class FileLoader:
         if self._watcher is not None:
             self._watcher.cancel()
 
-    def observe(self, id: str, callback: Callable[[str], Coroutine[Any, Any, None]]) -> None:
+    def observe(
+        self, id: str, callback: Callable[[str, dict[str, Any]], Coroutine[Any, Any, None]]
+    ) -> None:
         """
         Subscribe to the file to get notified on file changes.
 
@@ -98,12 +105,12 @@ class FileLoader:
                 )
             )
 
-    async def save_content(self, model: dict[str, Any]) -> None:
+    async def save_content(self, model: dict[str, Any]) -> dict[str, Any]:
         """
         Save the content of the file.
 
             Parameters:
-                model (dict): A dictionary with format, type, and content of the file.
+                model (dict): A dictionary with format, type, last_modified, and content of the file.
         """
         async with self._lock:
             path = self.path
@@ -113,20 +120,13 @@ class FileLoader:
                 )
             )
 
-            if self._last_modified is None or self._last_modified == m["last_modified"]:
+            if model["last_modified"] == m["last_modified"]:
                 self._log.info("Saving file: %s", path)
-                model = await ensure_async(self._contents_manager.save(model, path))
-                self._last_modified = model["last_modified"]
+                return await ensure_async(self._contents_manager.save(model, path))
 
             else:
-                # file changed on disk, let's revert
-                self._log.info(
-                    "Notifying rooms. Out-of-band changes while trying to save: %s", path
-                )
-                self._last_modified = model["last_modified"]
-                # Notify that the content changed on disk
-                for callback in self._subscriptions.values():
-                    await callback("changed")
+                # file changed on disk, raise an error
+                raise OutOfBandChanges
 
     async def _watch_file(self) -> None:
         """
@@ -153,10 +153,6 @@ class FileLoader:
                 )
             )
 
-            # do nothing if the file was saved by us
-            if self._last_modified is not None and self._last_modified < model["last_modified"]:
-                self._log.info("Notifying rooms. The file on disk changed: %s", path)
-                self._last_modified = model["last_modified"]
-                # Notify that the content changed on disk
-                for callback in self._subscriptions.values():
-                    await callback("changed")
+        # Notify that the content changed on disk
+        for callback in self._subscriptions.values():
+            await callback("metadata", model)

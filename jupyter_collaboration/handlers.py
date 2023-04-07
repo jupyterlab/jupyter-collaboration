@@ -4,6 +4,7 @@
 import asyncio
 import json
 import uuid
+from logging import getLogger
 from pathlib import Path
 from typing import Any, Dict, Optional, Set
 
@@ -369,16 +370,20 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
         Useful to clean up tasks on server shut down.
         """
-        assert cls.websocket_server is not None
-        # Cancel tasks and clean up
-        # TODO: should we wait for any save task?
-        rooms = list(cls.websocket_server.rooms.values())
-        for room in rooms:
-            cls.websocket_server.delete_room(room=room)
+        log = getLogger(__name__)
+        log.info("Cleaning up resources before server shut down.")
+        if cls.websocket_server is not None:
+            # Cancel tasks and clean up
+            # TODO: should we wait for any save task?
+            rooms = list(cls.websocket_server.rooms.values())
+            log.info("Deleting rooms.")
+            for room in rooms:
+                cls.websocket_server.delete_room(room=room)
 
         for file in cls.files.values():
             file.clean()
 
+        log.info("Deleting files.")
         cls.files.clear()
 
 

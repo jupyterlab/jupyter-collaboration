@@ -8,7 +8,7 @@ from jupyter_ydoc import ydocs as YDOCS
 from ypy_websocket.websocket_server import YRoom
 from ypy_websocket.ystore import BaseYStore, YDocNotFound
 
-from .loaders import FileLoader
+from .loaders import FileLoader, OutOfBandChanges
 
 YFILE = YDOCS["file"]
 
@@ -31,6 +31,7 @@ class DocumentRoom(YRoom):
         self._room_id: str = room_id
         self._file_format: str = file_format
         self._file_type: str = file_type
+        self._last_modified: str = None
         self._file: FileLoader = file
         self._document = YDOCS.get(self._file_type, YFILE)(self.ydoc)
 
@@ -121,6 +122,7 @@ class DocumentRoom(YRoom):
                 if self.ystore:
                     await self.ystore.encode_state_as_update(self.ydoc)
 
+            self._last_modified = model["last_modified"]
             self._document.dirty = False
             self.ready = True
 
@@ -137,18 +139,28 @@ class DocumentRoom(YRoom):
         self._document.unobserve()
         self._file.unobserve(self.room_id)
 
-    async def _on_content_change(self, event: str) -> None:
+    async def _on_content_change(self, event: str, args: dict[str, Any]) -> None:
         """
         Called when the file changes.
 
             Parameters:
                 event (str): Type of change.
         """
-        if event == "changed":
-            self.log.info("Overwriting the content in room %s", self._room_id)
+        if event == "metadata" and self._last_modified < args["last_modified"]:
             model = await self._file.load_content(self._file_format, self._file_type, True)
-            self._document.source = model["content"]
-            self._document.dirty = False
+
+            if self._document.source != model["content"]:
+                self.log.info(
+                    "Out-of-band changes. Overwriting the content in room %s", self._room_id
+                )
+                self._document.source = model["content"]
+                self._last_modified = model["last_modified"]
+                self._document.dirty = False
+
+            else:
+                # Update last_modify because this attribute changed on disk
+                # even though the content did not.
+                self._last_modified = model["last_modified"]
 
     def _on_document_change(self, target: str, event: Any) -> None:
         """
@@ -193,10 +205,25 @@ class DocumentRoom(YRoom):
         # save after X seconds of inactivity
         await asyncio.sleep(self._save_delay)
 
-        await self._file.save_content(
-            {"format": self._file_format, "type": self._file_type, "content": self._document.source}
-        )
-        self._document.dirty = False
+        try:
+            self.log.info("Saving the content from room %s", self._room_id)
+            model = await self._file.save_content(
+                {
+                    "format": self._file_format,
+                    "type": self._file_type,
+                    "last_modified": self._last_modified,
+                    "content": self._document.source,
+                }
+            )
+            self._last_modified = model["last_modified"]
+            self._document.dirty = False
+
+        except OutOfBandChanges:
+            self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
+            model = await self._file.load_content(self._file_format, self._file_type, True)
+            self._document.source = model["content"]
+            self._last_modified = model["last_modified"]
+            self._document.dirty = False
 
 
 class TransientRoom(YRoom):
