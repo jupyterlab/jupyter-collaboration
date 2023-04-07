@@ -31,7 +31,7 @@ class DocumentRoom(YRoom):
         self._room_id: str = room_id
         self._file_format: str = file_format
         self._file_type: str = file_type
-        self._last_modified: str = None
+        self._last_modified: Any = None
         self._file: FileLoader = file
         self._document = YDOCS.get(self._file_type, YFILE)(self.ydoc)
 
@@ -122,6 +122,8 @@ class DocumentRoom(YRoom):
                 if self.ystore:
                     await self.ystore.encode_state_as_update(self.ydoc)
 
+            print("INITIALIZE: last_modified", model["last_modified"])
+            print("INITIALIZE: ", model)
             self._last_modified = model["last_modified"]
             self._document.dirty = False
             self.ready = True
