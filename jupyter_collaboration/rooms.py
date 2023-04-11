@@ -194,7 +194,7 @@ class DocumentRoom(YRoom):
             document. This tasks are debounced (60 seconds by default) so we
             need to cancel previous tasks before creating a new one.
         """
-        if self._flag.updating == True:
+        if self._flag.updating:
             return
 
         if self._saving_document is not None and not self._saving_document.done():
