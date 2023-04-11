@@ -1,10 +1,13 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { DocumentChange, ISharedDocument, YDocument } from '@jupyter/ydoc';
+import { showDialog, Dialog } from '@jupyterlab/apputils';
 import { URLExt } from '@jupyterlab/coreutils';
 import { TranslationBundle } from '@jupyterlab/translation';
 import { Contents, Drive, User } from '@jupyterlab/services';
+
+import { DocumentChange, ISharedDocument, YDocument } from '@jupyter/ydoc';
+
 import { WebSocketProvider } from './yprovider';
 import {
   ICollaborativeDrive,
@@ -138,6 +141,23 @@ export class YDrive extends Drive implements ICollaborativeDrive {
           this._providers.delete(key);
         }
       });
+
+      for (const provider of this._providers.keys()) {
+        if (provider === key) {
+          continue;
+        }
+        const path = provider.split(':')[2];
+
+        if (options.path === path) {
+          showDialog({
+            title: this._trans.__('Warning'),
+            body: this._trans.__(
+              'Opening a document with multiple views simultaneously is not supported.Please, close one view otherwise, you might lose some of your changes.'
+            ),
+            buttons: [Dialog.okButton()]
+          });
+        }
+      }
     } catch (error) {
       // Falling back to the contents API if opening the websocket failed
       //  This may happen if the shared document is not a YDocument.

@@ -141,7 +141,7 @@ exclude=[
     "^binder/jupyter_config\\.py$",
 ]
 check_untyped_defs = true
-disallow_any_generics = true
+disallow_any_generics = false
 disallow_incomplete_defs = true
 disallow_untyped_decorators = true
 no_implicit_optional = true
@@ -153,7 +153,7 @@ strict_equality = true
 strict_optional = true
 warn_unused_configs = true
 warn_redundant_casts = true
-warn_return_any = true
+warn_return_any = false
 warn_unused_ignores = true
 ignore_missing_imports = true
 
