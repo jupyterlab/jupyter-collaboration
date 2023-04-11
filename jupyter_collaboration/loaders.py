@@ -149,7 +149,7 @@ class FileLoader:
                 await self._maybe_load_document()
 
             except Exception as e:
-                self._log.error("Error watching file: %s\n", self.path, e)
+                self._log.error("Error watching file: %s\n%s", self.path, e)
 
     async def _maybe_load_document(self) -> None:
         """
