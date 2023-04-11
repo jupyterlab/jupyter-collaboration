@@ -13,6 +13,25 @@ from .loaders import FileLoader, OutOfBandChanges
 YFILE = YDOCS["file"]
 
 
+class UpdateFlag:
+    """
+    A context manager for ignoring self updates in the document.
+    """
+
+    def __init__(self):
+        self._updating = False
+
+    def __enter__(self):
+        self._updating = True
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._updating = False
+
+    @property
+    def updating(self) -> bool:
+        return self._updating
+
+
 class DocumentRoom(YRoom):
     """A Y room for a possibly stored document (e.g. a notebook)."""
 
@@ -38,6 +57,7 @@ class DocumentRoom(YRoom):
         self._save_delay = save_delay
 
         self._lock = asyncio.Lock()
+        self._flag = UpdateFlag()
         self._cleaner: asyncio.Task | None = None
         self._saving_document: asyncio.Task | None = None
 
@@ -88,45 +108,44 @@ class DocumentRoom(YRoom):
             self.log.info("Initializing room %s", self._room_id)
             model = await self._file.load_content(self._file_format, self._file_type, True)
 
-            # try to apply Y updates from the YStore for this document
-            read_from_source = True
-            if self.ystore is not None:
-                try:
-                    await self.ystore.apply_updates(self.ydoc)
+            with self._flag:
+                # try to apply Y updates from the YStore for this document
+                read_from_source = True
+                if self.ystore is not None:
+                    try:
+                        await self.ystore.apply_updates(self.ydoc)
+                        self.log.info(
+                            "Content in room %s loaded from the ystore %s",
+                            self._room_id,
+                            self.ystore.__class__.__name__,
+                        )
+                        read_from_source = False
+                    except YDocNotFound:
+                        # YDoc not found in the YStore, create the document from the source file (no change history)
+                        pass
+
+                if not read_from_source:
+                    # if YStore updates and source file are out-of-sync, resync updates with source
+                    if self._document.source != model["content"]:
+                        self.log.info(
+                            "Content in file %s is out-of-sync with the ystore %s",
+                            self._file.path,
+                            self.ystore.__class__.__name__,
+                        )
+                        read_from_source = True
+
+                if read_from_source:
                     self.log.info(
-                        "Content in room %s loaded from the ystore %s",
-                        self._room_id,
-                        self.ystore.__class__.__name__,
+                        "Content in room %s loaded from file %s", self._room_id, self._file.path
                     )
-                    read_from_source = False
-                except YDocNotFound:
-                    # YDoc not found in the YStore, create the document from the source file (no change history)
-                    pass
+                    self._document.source = model["content"]
 
-            if not read_from_source:
-                # if YStore updates and source file are out-of-sync, resync updates with source
-                if self._document.source != model["content"]:
-                    self.log.info(
-                        "Content in file %s is out-of-sync with the ystore %s",
-                        self._file.path,
-                        self.ystore.__class__.__name__,
-                    )
-                    read_from_source = True
+                    if self.ystore:
+                        await self.ystore.encode_state_as_update(self.ydoc)
 
-            if read_from_source:
-                self.log.info(
-                    "Content in room %s loaded from file %s", self._room_id, self._file.path
-                )
-                self._document.source = model["content"]
-
-                if self.ystore:
-                    await self.ystore.encode_state_as_update(self.ydoc)
-
-            print("INITIALIZE: last_modified", model["last_modified"])
-            print("INITIALIZE: ", model)
-            self._last_modified = model["last_modified"]
-            self._document.dirty = False
-            self.ready = True
+                self._last_modified = model["last_modified"]
+                self._document.dirty = False
+                self.ready = True
 
     def _clean(self) -> None:
         """
@@ -138,6 +157,7 @@ class DocumentRoom(YRoom):
         # TODO: Should we cancel or wait ?
         if self._saving_document:
             self._saving_document.cancel()
+
         self._document.unobserve()
         self._file.unobserve(self.room_id)
 
@@ -147,22 +167,17 @@ class DocumentRoom(YRoom):
 
             Parameters:
                 event (str): Type of change.
+                args (dict): A dictionary with format, type, last_modified.
         """
         if event == "metadata" and self._last_modified < args["last_modified"]:
             model = await self._file.load_content(self._file_format, self._file_type, True)
 
-            if self._document.source != model["content"]:
-                self.log.info(
-                    "Out-of-band changes. Overwriting the content in room %s", self._room_id
-                )
+            self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
+
+            with self._flag:
                 self._document.source = model["content"]
                 self._last_modified = model["last_modified"]
                 self._document.dirty = False
-
-            else:
-                # Update last_modify because this attribute changed on disk
-                # even though the content did not.
-                self._last_modified = model["last_modified"]
 
     def _on_document_change(self, target: str, event: Any) -> None:
         """
@@ -179,11 +194,8 @@ class DocumentRoom(YRoom):
             document. This tasks are debounced (60 seconds by default) so we
             need to cancel previous tasks before creating a new one.
         """
-        if target == "state" and "dirty" in event.keys:
-            dirty = event.keys["dirty"]["newValue"]
-            if not dirty:
-                # we cleared the dirty flag, nothing to save
-                return
+        if self._flag.updating == True:
+            return
 
         if self._saving_document is not None and not self._saving_document.done():
             # the document is being saved, cancel that
@@ -218,14 +230,16 @@ class DocumentRoom(YRoom):
                 }
             )
             self._last_modified = model["last_modified"]
-            self._document.dirty = False
+            with self._flag:
+                self._document.dirty = False
 
         except OutOfBandChanges:
             self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
             model = await self._file.load_content(self._file_format, self._file_type, True)
-            self._document.source = model["content"]
-            self._last_modified = model["last_modified"]
-            self._document.dirty = False
+            with self._flag:
+                self._document.source = model["content"]
+                self._last_modified = model["last_modified"]
+                self._document.dirty = False
 
 
 class TransientRoom(YRoom):

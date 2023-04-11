@@ -111,6 +111,12 @@ class FileLoader:
 
             Parameters:
                 model (dict): A dictionary with format, type, last_modified, and content of the file.
+
+            Returns:
+                model (dict): A dictionary with the metadata and content of the file.
+
+        ### Note:
+            If there is changes on disk, this method will raise an OutOfBandChanges exception.
         """
         async with self._lock:
             path = self.path
@@ -139,7 +145,11 @@ class FileLoader:
 
         while True:
             await asyncio.sleep(self._poll_interval)
-            await self._maybe_load_document()
+            try:
+                await self._maybe_load_document()
+
+            except Exception as e:
+                self._log.error("Error watching file: %s\n", self.path, e)
 
     async def _maybe_load_document(self) -> None:
         """
