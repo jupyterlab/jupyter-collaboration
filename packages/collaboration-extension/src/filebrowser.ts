@@ -9,6 +9,7 @@ import {
   IDefaultFileBrowser,
   IFileBrowserFactory
 } from '@jupyterlab/filebrowser';
+import { showDialog, Dialog } from '@jupyterlab/apputils';
 import { ITranslator } from '@jupyterlab/translation';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
@@ -157,6 +158,42 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
     );
 
     return defaultBrowser;
+  }
+};
+
+/**
+ * The default collaborative drive provider.
+ */
+export const logger: JupyterFrontEndPlugin<void> = {
+  id: '@jupyter/collaboration-extension:logger',
+  description: 'A logging plugin for debugging purposes.',
+  autoStart: true,
+  requires: [ITranslator],
+  optional: [],
+  activate: (app: JupyterFrontEnd, translator: ITranslator): void => {
+    const trans = translator.load('jupyter_collaboration');
+
+    app.serviceManager.events.stream.connect((_, emission) => {
+      if (
+        emission.schema_id ===
+        'https://events.jupyter.org/jupyter_server/jupyter_collaboration/v1'
+      ) {
+        console.debug(
+          `[${emission.room}(${emission.path})] ${emission.action}: ${emission.msg}`
+        );
+
+        if (emission.warn === true) {
+          showDialog({
+            title: trans.__('Warning'),
+            body: trans.__(
+              `Two collaborative sessions are accessing the file ${emission.path} simultaneously.
+              \nOpening the same file using different views simultaneously is not supported. Please, close one view; otherwise, you might lose some of your progress.`
+            ),
+            buttons: [Dialog.okButton()]
+          });
+        }
+      }
+    });
   }
 };
 
