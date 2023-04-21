@@ -4,11 +4,13 @@ import asyncio
 from logging import Logger
 from typing import Any
 
+from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
 from ypy_websocket.websocket_server import YRoom
 from ypy_websocket.ystore import BaseYStore, YDocNotFound
 
 from .loaders import FileLoader, OutOfBandChanges
+from .utils import JUPYTER_COLLABORATION_EVENTS_URI
 
 YFILE = YDOCS["file"]
 
@@ -22,6 +24,7 @@ class DocumentRoom(YRoom):
         file_format: str,
         file_type: str,
         file: FileLoader,
+        logger: EventLogger,
         ystore: BaseYStore | None,
         log: Logger | None,
         save_delay: int | None = None,
@@ -35,6 +38,7 @@ class DocumentRoom(YRoom):
         self._file: FileLoader = file
         self._document = YDOCS.get(self._file_type, YFILE)(self.ydoc)
 
+        self._logger = logger
         self._save_delay = save_delay
 
         self._update_lock = asyncio.Lock()
@@ -95,6 +99,12 @@ class DocumentRoom(YRoom):
                 if self.ystore is not None:
                     try:
                         await self.ystore.apply_updates(self.ydoc)
+                        self._emit(
+                            "load",
+                            "Content loaded from the store %s".format(
+                                self.ystore.__class__.__name__
+                            ),
+                        )
                         self.log.info(
                             "Content in room %s loaded from the ystore %s",
                             self._room_id,
@@ -109,6 +119,7 @@ class DocumentRoom(YRoom):
                     # if YStore updates and source file are out-of-sync, resync updates with source
                     if self._document.source != model["content"]:
                         # TODO: Delete document from the store.
+                        self._emit("initialize", "The file is out-of-sync with the ystore.")
                         self.log.info(
                             "Content in file %s is out-of-sync with the ystore %s",
                             self._file.path,
@@ -117,6 +128,7 @@ class DocumentRoom(YRoom):
                         read_from_source = True
 
                 if read_from_source:
+                    self._emit("load", "Content loaded from disk.")
                     self.log.info(
                         "Content in room %s loaded from file %s", self._room_id, self._file.path
                     )
@@ -128,6 +140,19 @@ class DocumentRoom(YRoom):
                 self._last_modified = model["last_modified"]
                 self._document.dirty = False
                 self.ready = True
+                self._emit("initialize", "Room initialized")
+
+    def _emit(self, action: str, msg: str) -> None:
+        self._logger.emit(
+            schema_id=JUPYTER_COLLABORATION_EVENTS_URI,
+            data={
+                "room": self._room_id,
+                "path": self._file.path,
+                "action": action,
+                "warn": False,
+                "msg": msg,
+            },
+        )
 
     def _clean(self) -> None:
         """
@@ -155,6 +180,7 @@ class DocumentRoom(YRoom):
             model = await self._file.load_content(self._file_format, self._file_type, True)
 
             self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
+            self._emit("overwrite", "Out-of-band changes. Overwriting the room.")
 
             async with self._update_lock:
                 self._document.source = model["content"]
@@ -215,6 +241,8 @@ class DocumentRoom(YRoom):
             async with self._update_lock:
                 self._document.dirty = False
 
+            self._emit("save", "Content saved.")
+
         except OutOfBandChanges:
             self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
             model = await self._file.load_content(self._file_format, self._file_type, True)
@@ -222,6 +250,8 @@ class DocumentRoom(YRoom):
                 self._document.source = model["content"]
                 self._last_modified = model["last_modified"]
                 self._document.dirty = False
+
+            self._emit("overwrite", "Out-of-band changes while saving.")
 
 
 class TransientRoom(YRoom):

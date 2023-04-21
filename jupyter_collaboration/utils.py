@@ -1,4 +1,10 @@
+import pathlib
 from typing import Tuple
+
+JUPYTER_COLLABORATION_EVENTS_URI = (
+    "https://events.jupyter.org/jupyter_server/jupyter_collaboration/v1"
+)
+EVENTS_SCHEMA_PATH = pathlib.Path(__file__).parent / "events" / "session.yaml"
 
 
 def decode_file_path(path: str) -> Tuple[str, str, str]:
