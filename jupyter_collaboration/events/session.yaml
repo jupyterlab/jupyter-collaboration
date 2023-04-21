@@ -1,0 +1,50 @@
+"$id": https://events.jupyter.org/jupyter_server/jupyter_collaboration/v1
+version: 1
+title: Events during collaborative sessions
+personal-data: true
+description: |
+  Record the event that happen in the backend during a collaborative session.
+type: object
+required:
+  - room
+  - path
+  - action
+properties:
+  room:
+    type: string
+    description: |
+      Room Id. Usually composed by the file type, format and Id.
+  path:
+    type: string
+    description: |
+      File path.
+  action:
+    enum:
+      - initialize
+      - load
+      - save
+      - overwrite
+      - clean
+    description: |
+      Action performed in a room during a collaborative session.
+      Possible values:
+      1. initialize
+         Initialize a room by loading the content from disk or a store.
+      2. load
+         Load the content from disk.
+      3. save
+         Save the content to disk.
+      4. overwrite
+         Overwrite the content in a room with content from disk.
+         This could happen when multiple rooms access the same file or
+         when a user modifies the file with a different app.
+      5. clean
+         Clean the room once is empty.
+  warn:
+    type: boolean
+    description: |
+      Whether the event is a warning for the user.
+  msg:
+    type: string
+    description: |
+      Event message.

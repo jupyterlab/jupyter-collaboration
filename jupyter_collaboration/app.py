@@ -7,6 +7,7 @@ from ypy_websocket.ystore import BaseYStore
 
 from .handlers import DocSessionHandler, YDocWebSocketHandler
 from .stores import SQLiteYStore
+from .utils import EVENTS_SCHEMA_PATH
 
 
 class YDocExtension(ExtensionApp):
@@ -44,6 +45,10 @@ class YDocExtension(ExtensionApp):
         which stores Y updates in a '.jupyter_ystore.db' SQLite database in the current
         directory.""",
     )
+
+    def initialize(self):
+        super().initialize()
+        self.serverapp.event_logger.register_event_schema(EVENTS_SCHEMA_PATH)
 
     def initialize_settings(self):
         self.settings.update(
