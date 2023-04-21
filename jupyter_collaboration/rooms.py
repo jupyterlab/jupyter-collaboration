@@ -101,7 +101,7 @@ class DocumentRoom(YRoom):
                         await self.ystore.apply_updates(self.ydoc)
                         self._emit(
                             "load",
-                            "Content loaded from the store %s".format(
+                            "Content loaded from the store {}".format(
                                 self.ystore.__class__.__name__
                             ),
                         )
