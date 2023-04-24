@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.0.0alpha8
+
+([Full Changelog](https://github.com/jupyterlab/jupyter_collaboration/compare/@jupyter/collaboration-extension@1.0.0-alpha.7...2e5a6cc66961a5552e8a89c0850c7483c1e1acb2))
+
+### Enhancements made
+
+- Follow up #133 [#136](https://github.com/jupyterlab/jupyter_collaboration/pull/136) ([@hbcarlos](https://github.com/hbcarlos))
+- Creates a new FileLoader class to separate the logic of watching files [#121](https://github.com/jupyterlab/jupyter_collaboration/pull/121) ([@hbcarlos](https://github.com/hbcarlos))
+
+### Bugs fixed
+
+- Fix metadata [#138](https://github.com/jupyterlab/jupyter_collaboration/pull/138) ([@hbcarlos](https://github.com/hbcarlos))
+
+### Maintenance and upkeep improvements
+
+- Upgrade jupyter ydoc [#135](https://github.com/jupyterlab/jupyter_collaboration/pull/135) ([@fcollonval](https://github.com/fcollonval))
+
+### Documentation improvements
+
+- Upgrade jupyter ydoc [#135](https://github.com/jupyterlab/jupyter_collaboration/pull/135) ([@fcollonval](https://github.com/fcollonval))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter_collaboration/graphs/contributors?from=2023-03-29&to=2023-04-24&type=c))
+
+[@codecov-commenter](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Acodecov-commenter+updated%3A2023-03-29..2023-04-24&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Adavidbrochart+updated%3A2023-03-29..2023-04-24&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Afcollonval+updated%3A2023-03-29..2023-04-24&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Agithub-actions+updated%3A2023-03-29..2023-04-24&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Ahbcarlos+updated%3A2023-03-29..2023-04-24&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.0.0alpha7
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter_collaboration/compare/@jupyter/collaboration-extension@1.0.0-alpha.6...9d8475f5cc333e22b50160ec32e508a4e8c75c06))
@@ -21,8 +50,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter_collaboration/graphs/contributors?from=2023-03-27&to=2023-03-29&type=c))
 
 [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Agithub-actions+updated%3A2023-03-27..2023-03-29&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Ahbcarlos+updated%3A2023-03-27..2023-03-29&type=Issues) | [@trungleduc](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Atrungleduc+updated%3A2023-03-27..2023-03-29&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.0.0alpha6
 
