@@ -335,7 +335,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         _, _, file_id = decode_file_path(self._room_id)
         path = self._file_id_manager.get_path(file_id)
 
-        data = {"level": level, "room": self._room_id, "path": path}
+        data = {"level": level.value, "room": self._room_id, "path": path}
         if action:
             data["action"] = action
         if msg:

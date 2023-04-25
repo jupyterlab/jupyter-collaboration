@@ -10,8 +10,11 @@ import {
   IFileBrowserFactory
 } from '@jupyterlab/filebrowser';
 import { showDialog, Dialog } from '@jupyterlab/apputils';
-import { ITranslator } from '@jupyterlab/translation';
+import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import { ILogger, ILoggerRegistry } from '@jupyterlab/logconsole';
+import { INotebookTracker } from '@jupyterlab/notebook';
+import { IEditorTracker } from '@jupyterlab/fileeditor';
 
 import { CommandRegistry } from '@lumino/commands';
 
@@ -168,34 +171,94 @@ export const logger: JupyterFrontEndPlugin<void> = {
   id: '@jupyter/collaboration-extension:logger',
   description: 'A logging plugin for debugging purposes.',
   autoStart: true,
-  requires: [ITranslator],
-  optional: [],
-  activate: (app: JupyterFrontEnd, translator: ITranslator): void => {
-    const trans = translator.load('jupyter_collaboration');
+  optional: [ILoggerRegistry, INotebookTracker, IEditorTracker, ITranslator],
+  activate: (
+    app: JupyterFrontEnd,
+    loggerRegistry: ILoggerRegistry | null,
+    nbtracker: INotebookTracker | null,
+    editorTracker: IEditorTracker | null,
+    translator: ITranslator | null
+  ): void => {
+    const trans = (translator ?? nullTranslator).load('jupyter_collaboration');
+    const schemaID =
+      'https://events.jupyter.org/jupyter_server/jupyter_collaboration/v1';
 
-    app.serviceManager.events.stream.connect((_, emission) => {
-      if (
-        emission.schema_id ===
-        'https://events.jupyter.org/jupyter_server/jupyter_collaboration/v1'
-      ) {
-        console.debug(
-          `[${emission.room}(${emission.path})] ${emission.action ?? ''}: ${
-            emission.msg ?? ''
-          }`
-        );
+    if (!loggerRegistry) {
+      app.serviceManager.events.stream.connect((_, emission) => {
+        if (emission.schema_id === schemaID) {
+          console.debug(
+            `[${emission.room}(${emission.path})] ${emission.action ?? ''}: ${
+              emission.msg ?? ''
+            }`
+          );
 
-        if (emission.level === 'warn') {
-          showDialog({
-            title: trans.__('Warning'),
-            body: trans.__(
-              `Two collaborative sessions are accessing the file ${emission.path} simultaneously.
-              \nOpening the same file using different views simultaneously is not supported. Please, close one view; otherwise, you might lose some of your progress.`
-            ),
-            buttons: [Dialog.okButton()]
+          if (emission.level === 'WARNING') {
+            showDialog({
+              title: trans.__('Warning'),
+              body: trans.__(
+                `Two collaborative sessions are accessing the file ${emission.path} simultaneously.
+                \nOpening the same file using different views simultaneously is not supported. Please, close one view; otherwise, you might lose some of your progress.`
+              ),
+              buttons: [Dialog.okButton()]
+            });
+          }
+        }
+      });
+
+      return;
+    }
+
+    const loggers: Map<string, ILogger> = new Map();
+
+    if (nbtracker) {
+      nbtracker.widgetAdded.connect((sender, nb) => {
+        const logger = loggerRegistry.getLogger(nb.context.path);
+        loggers.set(nb.context.localPath, logger);
+
+        nb.disposed.connect(nb => {
+          loggers.delete(nb.context.localPath);
+        });
+      });
+    }
+
+    if (editorTracker) {
+      editorTracker.widgetAdded.connect((sender, editor) => {
+        const logger = loggerRegistry.getLogger(editor.context.path);
+        loggers.set(editor.context.localPath, logger);
+
+        editor.disposed.connect(editor => {
+          loggers.delete(editor.context.localPath);
+        });
+      });
+    }
+
+    void (async () => {
+      const { events } = app.serviceManager;
+      for await (const emission of events.stream) {
+        if (emission.schema_id === schemaID) {
+          const logger = loggers.get(emission.path as string);
+
+          logger?.log({
+            type: 'text',
+            level: (emission.level as string).toLowerCase() as any,
+            data: `[${emission.room}] ${emission.action ?? ''}: ${
+              emission.msg ?? ''
+            }`
           });
+
+          if (emission.level === 'WARNING') {
+            showDialog({
+              title: trans.__('Warning'),
+              body: trans.__(
+                `Two collaborative sessions are accessing the file ${emission.path} simultaneously.
+                \nOpening the same file using different views simultaneously is not supported. Please, close one view; otherwise, you might lose some of your progress.`
+              ),
+              buttons: [Dialog.okButton()]
+            });
+          }
         }
       }
-    });
+    })();
   }
 };
 

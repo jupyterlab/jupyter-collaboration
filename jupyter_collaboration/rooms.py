@@ -146,13 +146,13 @@ class DocumentRoom(YRoom):
                 self._emit(LogLevel.INFO, "initialize", "Room initialized")
 
     def _emit(self, level: LogLevel, action: str = None, msg: str = None) -> None:
-        data = {"level": level, "room": self._room_id, "path": self._file.path}
+        data = {"level": level.value, "room": self._room_id, "path": self._file.path}
         if action:
             data["action"] = action
         if msg:
             data["msg"] = msg
 
-        self.event_logger.emit(schema_id=JUPYTER_COLLABORATION_EVENTS_URI, data=data)
+        self._logger.emit(schema_id=JUPYTER_COLLABORATION_EVENTS_URI, data=data)
 
     def _clean(self) -> None:
         """
