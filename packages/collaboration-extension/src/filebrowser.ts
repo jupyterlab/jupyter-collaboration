@@ -179,10 +179,12 @@ export const logger: JupyterFrontEndPlugin<void> = {
         'https://events.jupyter.org/jupyter_server/jupyter_collaboration/v1'
       ) {
         console.debug(
-          `[${emission.room}(${emission.path})] ${emission.action}: ${emission.msg}`
+          `[${emission.room}(${emission.path})] ${emission.action ?? ''}: ${
+            emission.msg ?? ''
+          }`
         );
 
-        if (emission.warn === true) {
+        if (emission.level === 'warn') {
           showDialog({
             title: trans.__('Warning'),
             body: trans.__(

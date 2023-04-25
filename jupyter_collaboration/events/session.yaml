@@ -6,10 +6,18 @@ description: |
   Record the event that happen in the backend during a collaborative session.
 type: object
 required:
+  - level
   - room
   - path
-  - action
 properties:
+  level:
+    enum:
+      - info
+      - debug
+      - warn
+      - error
+    description: |
+      Message type.
   room:
     type: string
     description: |
@@ -40,10 +48,6 @@ properties:
          when a user modifies the file with a different app.
       5. clean
          Clean the room once is empty.
-  warn:
-    type: boolean
-    description: |
-      Whether the event is a warning for the user.
   msg:
     type: string
     description: |
