@@ -184,7 +184,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     self._emit(
                         "warn",
                         None,
-                        "There is another collaborative session accessing the same file.\nThe synchronization between rooms is not supported and you might lose some of your progress.",
+                        "There is another collaborative session accessing the same file.\nThe synchronization between rooms is not supported and you might lose some of your changes.",
                     )
 
                 path = Path(path)

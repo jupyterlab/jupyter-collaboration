@@ -1,9 +1,9 @@
 "$id": https://events.jupyter.org/jupyter_server/jupyter_collaboration/v1
 version: 1
-title: Events during collaborative sessions
+title: Collaborative session events
 personal-data: true
 description: |
-  Record the event that happen in the backend during a collaborative session.
+  Record the events that happen in the backend during a collaborative session.
 type: object
 required:
   - level
@@ -21,7 +21,7 @@ properties:
   room:
     type: string
     description: |
-      Room Id. Usually composed by the file type, format and Id.
+      Room ID. Usually composed by the file type, format and ID.
   path:
     type: string
     description: |
@@ -37,17 +37,17 @@ properties:
       Action performed in a room during a collaborative session.
       Possible values:
       1. initialize
-         Initialize a room by loading the content from disk or a store.
+         Initialize a room by loading the content from the contents manager or a store.
       2. load
-         Load the content from disk.
+         Load the content from the contents manager.
       3. save
-         Save the content to disk.
+         Save the content with the contents manager.
       4. overwrite
-         Overwrite the content in a room with content from disk.
-         This could happen when multiple rooms access the same file or
-         when a user modifies the file with a different app.
+         Overwrite the content in a room with content from the contents manager.
+         This can happen when multiple rooms access the same file or when an user
+         modifies the file outside Jupyter Server (e.g. using a different app).
       5. clean
-         Clean the room once is empty.
+         Clean the room once is empty (aka there is no more users connected to it).
   msg:
     type: string
     description: |
