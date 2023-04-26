@@ -3,7 +3,7 @@ version: 1
 title: Collaborative session events
 personal-data: true
 description: |
-  Record the events that happen in the backend during a collaborative session.
+  Events emitted server-side during a collaborative session.
 type: object
 required:
   - level
