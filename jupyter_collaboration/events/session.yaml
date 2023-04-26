@@ -1,4 +1,4 @@
-"$id": https://events.jupyter.org/jupyter_server/jupyter_collaboration/v1
+"$id": https://schema.jupyter.org/jupyter_collaboration/session/v1
 version: 1
 title: Collaborative session events
 personal-data: true
