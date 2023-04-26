@@ -238,7 +238,7 @@ export const logger: JupyterFrontEndPlugin<void> = {
               title: trans.__('Warning'),
               body: trans.__(
                 `Two collaborative sessions are accessing the file %1 simultaneously.
-                \nOpening the same file using different views simultaneously is not supported. Please, close one view; otherwise, you might lose some of your progress.`,
+                \n'Opening a document with multiple views simultaneously is not supported. Please close one view; otherwise, you might lose some of your progress.`,
                 emission.path
               ),
               buttons: [Dialog.warnButton({ label: trans.__('Ok') })]
