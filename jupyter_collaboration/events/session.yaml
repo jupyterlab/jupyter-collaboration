@@ -49,7 +49,7 @@ properties:
          Save the content with the contents manager.
       4. overwrite
          Overwrite the content in a room with content from the contents manager.
-         This can happen when multiple rooms access the same file or when an user
+         This can happen when multiple rooms access the same file or when a user
          modifies the file outside Jupyter Server (e.g. using a different app).
       5. clean
          Clean the room once is empty (aka there is no more users connected to it).
