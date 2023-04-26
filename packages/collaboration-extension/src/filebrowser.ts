@@ -14,7 +14,6 @@ import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { ILogger, ILoggerRegistry } from '@jupyterlab/logconsole';
 import { INotebookTracker } from '@jupyterlab/notebook';
-import { IEditorTracker } from '@jupyterlab/fileeditor';
 
 import { CommandRegistry } from '@lumino/commands';
 
@@ -171,12 +170,11 @@ export const logger: JupyterFrontEndPlugin<void> = {
   id: '@jupyter/collaboration-extension:logger',
   description: 'A logging plugin for debugging purposes.',
   autoStart: true,
-  optional: [ILoggerRegistry, INotebookTracker, IEditorTracker, ITranslator],
+  optional: [ILoggerRegistry, INotebookTracker, ITranslator],
   activate: (
     app: JupyterFrontEnd,
     loggerRegistry: ILoggerRegistry | null,
     nbtracker: INotebookTracker | null,
-    editorTracker: IEditorTracker | null,
     translator: ITranslator | null
   ): void => {
     const trans = (translator ?? nullTranslator).load('jupyter_collaboration');
@@ -217,17 +215,6 @@ export const logger: JupyterFrontEndPlugin<void> = {
 
         nb.disposed.connect(nb => {
           loggers.delete(nb.context.localPath);
-        });
-      });
-    }
-
-    if (editorTracker) {
-      editorTracker.widgetAdded.connect((sender, editor) => {
-        const logger = loggerRegistry.getLogger(editor.context.path);
-        loggers.set(editor.context.localPath, logger);
-
-        editor.disposed.connect(editor => {
-          loggers.delete(editor.context.localPath);
         });
       });
     }

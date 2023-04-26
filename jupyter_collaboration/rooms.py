@@ -145,7 +145,7 @@ class DocumentRoom(YRoom):
                 self.ready = True
                 self._emit(LogLevel.INFO, "initialize", "Room initialized")
 
-    def _emit(self, level: LogLevel, action: str = None, msg: str = None) -> None:
+    def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:
         data = {"level": level.value, "room": self._room_id, "path": self._file.path}
         if action:
             data["action"] = action

@@ -331,7 +331,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             self.log.info("Cleaning room: %s", self._room_id)
             self.room.cleaner = asyncio.create_task(self._clean_room())
 
-    def _emit(self, level: LogLevel, action: str = None, msg: str = None) -> None:
+    def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:
         _, _, file_id = decode_file_path(self._room_id)
         path = self._file_id_manager.get_path(file_id)
 
