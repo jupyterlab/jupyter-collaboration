@@ -179,7 +179,7 @@ export const logger: JupyterFrontEndPlugin<void> = {
   ): void => {
     const trans = (translator ?? nullTranslator).load('jupyter_collaboration');
     const schemaID =
-      'https://events.jupyter.org/jupyter_server/jupyter_collaboration/v1';
+      'https://schema.jupyter.org/jupyter_collaboration/session/v1';
 
     if (!loggerRegistry) {
       app.serviceManager.events.stream.connect((_, emission) => {
@@ -237,10 +237,11 @@ export const logger: JupyterFrontEndPlugin<void> = {
             showDialog({
               title: trans.__('Warning'),
               body: trans.__(
-                `Two collaborative sessions are accessing the file ${emission.path} simultaneously.
-                \nOpening the same file using different views simultaneously is not supported. Please, close one view; otherwise, you might lose some of your progress.`
+                `Two collaborative sessions are accessing the file %1 simultaneously.
+                \nOpening the same file using different views simultaneously is not supported. Please, close one view; otherwise, you might lose some of your progress.`,
+                emission.path
               ),
-              buttons: [Dialog.okButton()]
+              buttons: [Dialog.warnButton({ label: trans.__('Ok') })]
             });
           }
         }

@@ -2,9 +2,7 @@ import pathlib
 from enum import Enum
 from typing import Tuple
 
-JUPYTER_COLLABORATION_EVENTS_URI = (
-    "https://events.jupyter.org/jupyter_server/jupyter_collaboration/v1"
-)
+JUPYTER_COLLABORATION_EVENTS_URI = "https://schema.jupyter.org/jupyter_collaboration/session/v1"
 EVENTS_SCHEMA_PATH = pathlib.Path(__file__).parent / "events" / "session.yaml"
 
 
