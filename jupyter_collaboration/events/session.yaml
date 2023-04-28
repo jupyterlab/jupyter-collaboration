@@ -1,0 +1,60 @@
+"$id": https://schema.jupyter.org/jupyter_collaboration/session/v1
+"$schema": "http://json-schema.org/draft-07/schema"
+version: 1
+title: Collaborative session events
+personal-data: true
+description: |
+  Events emitted server-side during a collaborative session.
+type: object
+required:
+  - level
+  - room
+  - path
+properties:
+  level:
+    enum:
+      - INFO
+      - DEBUG
+      - WARNING
+      - ERROR
+      - CRITICAL
+    description: |
+      Message type.
+  room:
+    type: string
+    description: |
+      Room ID. Usually composed by the file type, format and ID.
+  path:
+    type: string
+    description: |
+      File path.
+  store:
+    type: string
+    description: |
+      The store used to track the document history.
+  action:
+    enum:
+      - initialize
+      - load
+      - save
+      - overwrite
+      - clean
+    description: |
+      Action performed in a room during a collaborative session.
+      Possible values:
+      1. initialize
+         Initialize a room by loading the content from the contents manager or a store.
+      2. load
+         Load the content from the contents manager.
+      3. save
+         Save the content with the contents manager.
+      4. overwrite
+         Overwrite the content in a room with content from the contents manager.
+         This can happen when multiple rooms access the same file or when a user
+         modifies the file outside Jupyter Server (e.g. using a different app).
+      5. clean
+         Clean the room once is empty (aka there is no more users connected to it).
+  msg:
+    type: string
+    description: |
+      Event message.

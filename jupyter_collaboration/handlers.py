@@ -20,7 +20,7 @@ from ypy_websocket.yutils import YMessageType
 
 from .loaders import FileLoader
 from .rooms import DocumentRoom, TransientRoom
-from .utils import decode_file_path
+from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, decode_file_path
 
 YFILE = YDOCS["file"]
 
@@ -131,7 +131,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         super().__init__(app, request, **kwargs)
 
         # CONFIG
-        file_id_manager = self.settings["file_id_manager"]
+        self._file_id_manager = self.settings["file_id_manager"]
         ystore_class = self.settings["collaborative_ystore_class"]
         self._cleanup_delay = self.settings["collaborative_document_cleanup_delay"]
         # self.settings["collaborative_file_poll_interval"]
@@ -163,7 +163,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             if self._room_id.count(":") >= 2:
                 # DocumentRoom
                 file_format, file_type, file_id = decode_file_path(self._room_id)
-                path = file_id_manager.get_path(file_id)
+                path = self._file_id_manager.get_path(file_id)
 
                 # Instantiate the FileLoader if it doesn't exist yet
                 file = YDocWebSocketHandler.files.get(file_id)
@@ -173,12 +173,19 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                         file_id,
                         file_format,
                         file_type,
-                        file_id_manager,
+                        self._file_id_manager,
                         self.contents_manager,
                         self.log,
                         self.settings["collaborative_file_poll_interval"],
                     )
                     self.files[file_id] = file
+
+                else:
+                    self._emit(
+                        LogLevel.WARNING,
+                        None,
+                        "There is another collaborative session accessing the same file.\nThe synchronization between rooms is not supported and you might lose some of your changes.",
+                    )
 
                 path = Path(path)
                 updates_file_path = str(path.parent / f".{file_type}:{path.name}.y")
@@ -188,6 +195,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     file_format,
                     file_type,
                     file,
+                    self.event_logger,
                     ystore,
                     self.log,
                     self.settings["collaborative_document_save_delay"],
@@ -258,6 +266,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             # Initialize the room
             await self.room.initialize()
 
+            self._emit(LogLevel.INFO, "initialize", "New client connected.")
+
     async def send(self, message):
         """
         Send a message to the client.
@@ -321,6 +331,18 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             self.log.info("Cleaning room: %s", self._room_id)
             self.room.cleaner = asyncio.create_task(self._clean_room())
 
+    def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:
+        _, _, file_id = decode_file_path(self._room_id)
+        path = self._file_id_manager.get_path(file_id)
+
+        data = {"level": level.value, "room": self._room_id, "path": path}
+        if action:
+            data["action"] = action
+        if msg:
+            data["msg"] = msg
+
+        self.event_logger.emit(schema_id=JUPYTER_COLLABORATION_EVENTS_URI, data=data)
+
     async def _clean_room(self) -> None:
         """
         Async task for cleaning up the resources.
@@ -348,6 +370,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         # Clean room
         del self.room
         self.log.info("Room %s deleted", self._room_id)
+        self._emit(LogLevel.INFO, "clean", "Room deleted.")
 
         # Clean the file loader if there are not rooms using it
         _, _, file_id = decode_file_path(self._room_id)
@@ -356,6 +379,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             self.log.info("Deleting file %s", file.path)
             file.clean()
             del self.files[file_id]
+            self._emit(LogLevel.INFO, "clean", "Loader deleted.")
 
     def check_origin(self, origin):
         """

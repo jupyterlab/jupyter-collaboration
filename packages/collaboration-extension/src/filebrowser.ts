@@ -9,8 +9,11 @@ import {
   IDefaultFileBrowser,
   IFileBrowserFactory
 } from '@jupyterlab/filebrowser';
-import { ITranslator } from '@jupyterlab/translation';
+import { showDialog, Dialog } from '@jupyterlab/apputils';
+import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import { ILogger, ILoggerRegistry } from '@jupyterlab/logconsole';
+import { INotebookTracker } from '@jupyterlab/notebook';
 
 import { CommandRegistry } from '@lumino/commands';
 
@@ -157,6 +160,93 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
     );
 
     return defaultBrowser;
+  }
+};
+
+/**
+ * The default collaborative drive provider.
+ */
+export const logger: JupyterFrontEndPlugin<void> = {
+  id: '@jupyter/collaboration-extension:logger',
+  description: 'A logging plugin for debugging purposes.',
+  autoStart: true,
+  optional: [ILoggerRegistry, INotebookTracker, ITranslator],
+  activate: (
+    app: JupyterFrontEnd,
+    loggerRegistry: ILoggerRegistry | null,
+    nbtracker: INotebookTracker | null,
+    translator: ITranslator | null
+  ): void => {
+    const trans = (translator ?? nullTranslator).load('jupyter_collaboration');
+    const schemaID =
+      'https://schema.jupyter.org/jupyter_collaboration/session/v1';
+
+    if (!loggerRegistry) {
+      app.serviceManager.events.stream.connect((_, emission) => {
+        if (emission.schema_id === schemaID) {
+          console.debug(
+            `[${emission.room}(${emission.path})] ${emission.action ?? ''}: ${
+              emission.msg ?? ''
+            }`
+          );
+
+          if (emission.level === 'WARNING') {
+            showDialog({
+              title: trans.__('Warning'),
+              body: trans.__(
+                `Two collaborative sessions are accessing the file ${emission.path} simultaneously.
+                \nOpening the same file using different views simultaneously is not supported. Please, close one view; otherwise, you might lose some of your progress.`
+              ),
+              buttons: [Dialog.okButton()]
+            });
+          }
+        }
+      });
+
+      return;
+    }
+
+    const loggers: Map<string, ILogger> = new Map();
+
+    if (nbtracker) {
+      nbtracker.widgetAdded.connect((sender, nb) => {
+        const logger = loggerRegistry.getLogger(nb.context.path);
+        loggers.set(nb.context.localPath, logger);
+
+        nb.disposed.connect(nb => {
+          loggers.delete(nb.context.localPath);
+        });
+      });
+    }
+
+    void (async () => {
+      const { events } = app.serviceManager;
+      for await (const emission of events.stream) {
+        if (emission.schema_id === schemaID) {
+          const logger = loggers.get(emission.path as string);
+
+          logger?.log({
+            type: 'text',
+            level: (emission.level as string).toLowerCase() as any,
+            data: `[${emission.room}] ${emission.action ?? ''}: ${
+              emission.msg ?? ''
+            }`
+          });
+
+          if (emission.level === 'WARNING') {
+            showDialog({
+              title: trans.__('Warning'),
+              body: trans.__(
+                `Two collaborative sessions are accessing the file %1 simultaneously.
+                \nOpening the same file using different views simultaneously is not supported. Please, close one view; otherwise, you might lose some of your progress.`,
+                emission.path
+              ),
+              buttons: [Dialog.warnButton({ label: trans.__('Ok') })]
+            });
+          }
+        }
+      }
+    })();
   }
 };
 

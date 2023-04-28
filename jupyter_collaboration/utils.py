@@ -1,4 +1,17 @@
+import pathlib
+from enum import Enum
 from typing import Tuple
+
+JUPYTER_COLLABORATION_EVENTS_URI = "https://schema.jupyter.org/jupyter_collaboration/session/v1"
+EVENTS_SCHEMA_PATH = pathlib.Path(__file__).parent / "events" / "session.yaml"
+
+
+class LogLevel(Enum):
+    INFO = "INFO"
+    DEBUG = "DEBUG"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
 
 
 def decode_file_path(path: str) -> Tuple[str, str, str]:
