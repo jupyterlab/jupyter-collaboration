@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-const jestJupyterLab = require('@jupyterlab/testutils/lib/jest-config');
+const jestJupyterLab = require('@jupyterlab/testing/lib/jest-config');
 
 const esModules = ['@jupyterlab/'].join('|');
 
