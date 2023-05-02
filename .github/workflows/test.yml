@@ -12,7 +12,7 @@ jobs:
   pre-commit:
     name: Run pre-commit hook
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -37,8 +37,30 @@ jobs:
           echo "    pre-commit run"
           echo "or after-the-fact on already committed files with"
           echo "    pre-commit run --all-files --hook-stage=manual"
+      - name: Lint frontend
+        run: |
+          jlpm run lint:check
 
-  test:
+  test-js:
+    name: Test JavaScript
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v3
+      - name: Install dependencies
+        run: |
+          pip install jupyterlab --pre
+          pip install -e .
+          jlpm
+      - name: Run Tests
+        run: |
+          set -eux
+          jlpm run test
+
+  test-py:
+    name: Test Python
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
@@ -47,12 +69,8 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.8", "3.11"]
         include:
-          - os: windows-latest
-            python-version: "3.10"
           - os: ubuntu-latest
             python-version: "pypy-3.8"
-          - os: macos-latest
-            python-version: "3.10"
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -77,6 +95,14 @@ jobs:
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(runner.os, 'Windows') }}
         run: |
           codecov
+      - name: Build the extension
+        run: |
+          set -eux
+          jupyter server extension list
+          jupyter server extension list 2>&1 | grep -ie "jupyter_collaboration.*OK"
+          jupyter labextension list
+          jupyter labextension list 2>&1 | grep -ie "@jupyter/collaboration-extension.*OK"
+          python -m jupyterlab.browser_check
 
   test_minimum_versions:
     name: Test Minimum Versions
@@ -88,7 +114,7 @@ jobs:
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
           python_version: "3.11"
-      - name: Install miniumum versions
+      - name: Install minimum versions
         uses: jupyterlab/maintainer-tools/.github/actions/install-minimums@v1
       - name: Run the unit tests
         run: |
@@ -130,9 +156,34 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-      - uses: jupyterlab/maintainer-tools/.github/actions/test-sdist@v1
-        with:
-          extra_test: 'jupyter server extension list 2>&1 | grep -ie "jupyter_collaboration.*OK"'
+      - name: Download sdist
+        uses: actions/download-artifact@v3
+      - name: Install From SDist
+        shell: bash
+        run: |
+          echo "::group::Install from SDist"
+          set -ex
+          cd sdist
+          mkdir test
+          tar --strip-components=1 -zxvf *.tar.gz -C ./test
+          cd test
+          python -m pip install ".[test]"
+          python -m pip install --pre jupyterlab
+          echo "::endgroup::"
+      - name: Run Test
+        shell: bash
+        run: |
+          echo "::group::Run test"
+          set -ex
+          cd sdist/test
+          python -m pytest -vv -raXxs --durations 10 --color=yes
+
+          jupyter server extension list
+          jupyter server extension list 2>&1 | grep -ie "jupyter_collaboration.*OK"
+          jupyter labextension list
+          jupyter labextension list 2>&1 | grep -ie "@jupyter/collaboration-extension.*OK"
+          python -m jupyterlab.browser_check --no-browser-test
+          echo "::endgroup::"
 
   check_links:
     runs-on: ubuntu-latest
