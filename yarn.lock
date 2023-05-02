@@ -2025,7 +2025,9 @@ __metadata:
     "@jupyterlab/builder": ^4.0.0-rc.0
     "@jupyterlab/codemirror": ^4.0.0-rc.0
     "@jupyterlab/coreutils": ^6.0.0-rc.0
+    "@jupyterlab/docregistry": ^4.0.0-rc.0
     "@jupyterlab/filebrowser": ^4.0.0-rc.0
+    "@jupyterlab/fileeditor": ^4.0.0-rc.0
     "@jupyterlab/logconsole": ^4.0.0-rc.0
     "@jupyterlab/notebook": ^4.0.0-rc.0
     "@jupyterlab/services": ^7.0.0-rc.0
@@ -2444,6 +2446,30 @@ __metadata:
   checksum: 9ce98e059792e02984b142d009314ee56331156f2b09bc11787322188ec99412acb8b04ada1f40e815f5b37031da48a8e1fe88b91e42f99052bc005850518ae6
   languageName: node
   linkType: hard
+
+"@jupyterlab/fileeditor@portal:/home/fcollonval/projects/jupyterlab/packages/fileeditor::locator=%40jupyter%2Freal-time-collaboration%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@jupyterlab/fileeditor@portal:/home/fcollonval/projects/jupyterlab/packages/fileeditor::locator=%40jupyter%2Freal-time-collaboration%40workspace%3A."
+  dependencies:
+    "@jupyterlab/apputils": ^4.0.0-rc.0
+    "@jupyterlab/codeeditor": ^4.0.0-rc.0
+    "@jupyterlab/codemirror": ^4.0.0-rc.0
+    "@jupyterlab/coreutils": ^6.0.0-rc.0
+    "@jupyterlab/docregistry": ^4.0.0-rc.0
+    "@jupyterlab/documentsearch": ^4.0.0-rc.0
+    "@jupyterlab/lsp": ^4.0.0-rc.0
+    "@jupyterlab/statusbar": ^4.0.0-rc.0
+    "@jupyterlab/toc": ^6.0.0-rc.0
+    "@jupyterlab/translation": ^4.0.0-rc.0
+    "@jupyterlab/ui-components": ^4.0.0-rc.0
+    "@lumino/commands": ^2.1.1
+    "@lumino/coreutils": ^2.1.1
+    "@lumino/messaging": ^2.0.0
+    "@lumino/widgets": ^2.1.1
+    react: ^18.2.0
+    regexp-match-indices: ^1.0.2
+  languageName: node
+  linkType: soft
 
 "@jupyterlab/logconsole@npm:^4.0.0-rc.0":
   version: 4.0.0-rc.0
@@ -11733,6 +11759,24 @@ __metadata:
   dependencies:
     "@babel/runtime": ^7.8.4
   checksum: 2d15bdeadbbfb1d12c93f5775493d85874dbe1d405bec323da5c61ec6e701bc9eea36167483e1a5e752de9b2df59ab9a2dfff6bf3784f2b28af2279a673d29a4
+  languageName: node
+  linkType: hard
+
+"regexp-match-indices@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "regexp-match-indices@npm:1.0.2"
+  dependencies:
+    regexp-tree: ^0.1.11
+  checksum: 8cc779f6cf8f404ead828d09970a7d4bd66bd78d43ab9eb2b5e65f2ef2ba1ed53536f5b5fa839fb90b350365fb44b6a851c7f16289afc3f37789c113ab2a7916
+  languageName: node
+  linkType: hard
+
+"regexp-tree@npm:^0.1.11":
+  version: 0.1.27
+  resolution: "regexp-tree@npm:0.1.27"
+  bin:
+    regexp-tree: bin/regexp-tree
+  checksum: 129aebb34dae22d6694ab2ac328be3f99105143737528ab072ef624d599afecbcfae1f5c96a166fa9e5f64fa1ecf30b411c4691e7924c3e11bbaf1712c260c54
   languageName: node
   linkType: hard
 
