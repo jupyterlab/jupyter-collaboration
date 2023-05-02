@@ -97,6 +97,7 @@ jobs:
         run: |
           codecov
       - name: Build the extension
+        shell: bash
         run: |
           set -eux
           jupyter server extension list
