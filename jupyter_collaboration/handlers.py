@@ -1,12 +1,14 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from __future__ import annotations
+
 import asyncio
 import json
 import uuid
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Dict, Optional, Set
+from typing import Any
 
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
@@ -32,10 +34,10 @@ class RoomNotFound(Exception):
 
 
 class JupyterWebsocketServer(WebsocketServer):
-    rooms: Dict[str, YRoom]
+    rooms: dict[str, YRoom]
     ypatch_nb: int
-    connected_user: Dict[int, str]
-    background_tasks: Set[asyncio.Task[Any]]
+    connected_user: dict[int, str]
+    background_tasks: set[asyncio.Task[Any]]
 
     def __init__(self, *args, **kwargs):
         self.ystore_class = kwargs.pop("ystore_class")
@@ -121,12 +123,12 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
        receiving a message.
     """
 
-    files: Dict[str, FileLoader] = {}
-    websocket_server: Optional[JupyterWebsocketServer] = None
-    _message_queue: "asyncio.Queue[Any]"
+    files: dict[str, FileLoader] = {}
+    websocket_server: JupyterWebsocketServer | None = None
+    _message_queue: asyncio.Queue[Any]
 
     def __init__(
-        self, app: ServerWebApplication, request: HTTPServerRequest, **kwargs: Dict[str, Any]
+        self, app: ServerWebApplication, request: HTTPServerRequest, **kwargs: dict[str, Any]
     ):
         super().__init__(app, request, **kwargs)
 
