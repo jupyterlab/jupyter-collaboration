@@ -6,8 +6,10 @@ from traitlets import Float, Int, Type
 from ypy_websocket.ystore import BaseYStore
 
 from .handlers import DocSessionHandler, YDocWebSocketHandler
+from .loaders import FileLoaderMapping
 from .stores import SQLiteYStore
 from .utils import EVENTS_SCHEMA_PATH
+from .websocketserver import JupyterWebsocketServer
 
 
 class YDocExtension(ExtensionApp):
@@ -50,6 +52,19 @@ class YDocExtension(ExtensionApp):
         super().initialize()
         self.serverapp.event_logger.register_event_schema(EVENTS_SCHEMA_PATH)
 
+        # Set configurable parameters to YStore class
+        for k, v in self.config.get(self.ystore_class.__name__, {}).items():
+            setattr(self.ystore_class, k, v)
+
+        self.websocket_server = JupyterWebsocketServer(
+            rooms_ready=False,
+            auto_clean_rooms=False,
+            ystore_class=self.ystore_class,
+            log=self.log,
+        )
+        
+        self.file_loaders: FileLoaderMapping = None
+
     def initialize_settings(self):
         self.settings.update(
             {
@@ -61,12 +76,32 @@ class YDocExtension(ExtensionApp):
         )
 
     def initialize_handlers(self):
+        file_id_manager = self.settings["file_id_manager"]
+        self.file_loaders = FileLoaderMapping(
+            file_id_manager,
+            self.settings["contents_manager"],
+            self.log,
+            self.file_poll_interval
+        )
+
         self.handlers.extend(
             [
-                (r"/api/collaboration/room/(.*)", YDocWebSocketHandler),
+                (
+                    r"/api/collaboration/room/(.*)",
+                    YDocWebSocketHandler,
+                    {
+                        "document_cleanup_delay": self.document_cleanup_delay,
+                        "document_save_delay": self.document_save_delay,
+                        "file_id_manager": file_id_manager,
+                        "file_loaders": self.file_loaders,
+                        "websocket_server": self.websocket_server,
+                        "ystore_class": self.ystore_class
+                    },
+                ),
                 (r"/api/collaboration/session/(.*)", DocSessionHandler),
             ]
         )
 
     async def stop_extension(self):
-        YDocWebSocketHandler.clean_up()
+        # Cancel tasks and clean up
+        del self.websocket_server

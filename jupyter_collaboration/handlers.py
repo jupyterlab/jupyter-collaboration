@@ -8,8 +8,9 @@ import json
 import uuid
 from logging import getLogger
 from pathlib import Path
-from typing import Any
+from typing import Any, Type
 
+from jupyter_server_fileid.manager import BaseFileIdManager
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.serverapp import ServerWebApplication
@@ -17,90 +18,18 @@ from jupyter_ydoc import ydocs as YDOCS
 from tornado import web
 from tornado.httputil import HTTPServerRequest
 from tornado.websocket import WebSocketHandler
-from ypy_websocket.websocket_server import WebsocketServer, YRoom
+from ypy_websocket.websocket_server import YRoom
+from ypy_websocket.ystore import BaseYStore
 from ypy_websocket.yutils import YMessageType
 
-from .loaders import FileLoader
+from .loaders import FileLoaderMapping
 from .rooms import DocumentRoom, TransientRoom
 from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, decode_file_path
+from .websocketserver import JupyterWebsocketServer
 
 YFILE = YDOCS["file"]
 
 SERVER_SESSION = str(uuid.uuid4())
-
-
-class RoomNotFound(Exception):
-    pass
-
-
-class JupyterWebsocketServer(WebsocketServer):
-    rooms: dict[str, YRoom]
-    ypatch_nb: int
-    connected_user: dict[int, str]
-    background_tasks: set[asyncio.Task[Any]]
-
-    def __init__(self, *args, **kwargs):
-        self.ystore_class = kwargs.pop("ystore_class")
-        self.log = kwargs["log"]
-        super().__init__(*args, **kwargs)
-        self.ypatch_nb = 0
-        self.connected_users = {}
-        self.background_tasks = set()
-        self.monitor_task = asyncio.create_task(self._monitor())
-
-    def room_exists(self, path: str) -> bool:
-        """
-        Returns true is the room exist or false otherwise.
-
-            Parameters:
-                path (str): Room ID.
-
-            Returns:
-                exists (bool): Whether the room exists or not.
-        """
-        return path in self.rooms
-
-    def add_room(self, path: str, room: YRoom) -> None:
-        """
-        Adds a new room.
-
-            Parameters:
-                path (str): Room ID.
-                room (YRoom): A room.
-        """
-        self.rooms[path] = room
-
-    def get_room(self, path: str) -> YRoom:
-        """
-        Returns the room for the specified room ID or raises a RoomNotFound
-        error if the room doesn't exist.
-
-            Parameters:
-                path (str): Room ID.
-
-            Returns:
-                room (YRoom): The room.
-        """
-        if path not in self.rooms:
-            # Document rooms need a file
-            raise RoomNotFound
-
-        return self.rooms[path]
-
-    async def _monitor(self):
-        """
-        An infinite loop with a 60 seconds delay for counting the number
-        of patches processed in a minute and how many clients are connected.
-
-        #### Note:
-            This method runs in a coroutine for debugging purposes.
-        """
-        while True:
-            await asyncio.sleep(60)
-            clients_nb = sum(len(room.clients) for room in self.rooms.values())
-            self.log.info("Processed %s Y patches in one minute", self.ypatch_nb)
-            self.log.info("Connected Y users: %s", clients_nb)
-            self.ypatch_nb = 0
 
 
 class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
@@ -122,73 +51,44 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
     - Although it's currently not used in ypy-websocket, ``recv()`` is an async method for
        receiving a message.
     """
-
-    files: dict[str, FileLoader] = {}
-    websocket_server: JupyterWebsocketServer | None = None
     _message_queue: asyncio.Queue[Any]
 
-    def __init__(
-        self, app: ServerWebApplication, request: HTTPServerRequest, **kwargs: dict[str, Any]
+    def initialize(
+        self,
+        websocket_server: JupyterWebsocketServer,
+        file_id_manager: BaseFileIdManager,
+        file_loaders: FileLoaderMapping,
+        ystore_class: Type[BaseYStore],
+        document_cleanup_delay: int | None = 60,
+        document_save_delay: int | None = 1
     ):
-        super().__init__(app, request, **kwargs)
-
         # CONFIG
-        self._file_id_manager = self.settings["file_id_manager"]
-        ystore_class = self.settings["collaborative_ystore_class"]
-        self._cleanup_delay = self.settings["collaborative_document_cleanup_delay"]
-        # self.settings["collaborative_file_poll_interval"]
-        # self.settings["collaborative_document_save_delay"]
+        self._file_id_manager = file_id_manager
+        self._file_loaders = file_loaders
+        self._cleanup_delay = document_cleanup_delay
+        self._websocket_server = websocket_server
 
-        # Instantiate the JupyterWebsocketServer as a Class property
-        # if it doesn't exist yet
-        if self.websocket_server is None:
-            for k, v in self.config.get(ystore_class.__name__, {}).items():
-                setattr(ystore_class, k, v)
-
-            YDocWebSocketHandler.websocket_server = JupyterWebsocketServer(
-                rooms_ready=False,
-                auto_clean_rooms=False,
-                ystore_class=ystore_class,
-                log=self.log,
-            )
-
-        assert self.websocket_server is not None
         self._message_queue = asyncio.Queue()
 
         # Get room
-        self._room_id: str = request.path.split("/")[-1]
+        self._room_id: str = self.request.path.split("/")[-1]
 
-        if self.websocket_server.room_exists(self._room_id):
-            self.room: YRoom = self.websocket_server.get_room(self._room_id)
+        if self._websocket_server.room_exists(self._room_id):
+            self.room: YRoom = self._websocket_server.get_room(self._room_id)
 
         else:
             if self._room_id.count(":") >= 2:
                 # DocumentRoom
                 file_format, file_type, file_id = decode_file_path(self._room_id)
-                path = self._file_id_manager.get_path(file_id)
-
-                # Instantiate the FileLoader if it doesn't exist yet
-                file = YDocWebSocketHandler.files.get(file_id)
-                if file is None:
-                    self.log.info("Creating FileLoader for: %s", path)
-                    file = FileLoader(
-                        file_id,
-                        file_format,
-                        file_type,
-                        self._file_id_manager,
-                        self.contents_manager,
-                        self.log,
-                        self.settings["collaborative_file_poll_interval"],
-                    )
-                    self.files[file_id] = file
-
-                else:
+                if self._file_loaders.get_loaders_from_file_id(file_id):
                     self._emit(
                         LogLevel.WARNING,
                         None,
                         "There is another collaborative session accessing the same file.\nThe synchronization between rooms is not supported and you might lose some of your changes.",
                     )
 
+                file = self._file_loaders[self._room_id]
+                path = self._file_id_manager.get_path(file_id)
                 path = Path(path)
                 updates_file_path = str(path.parent / f".{file_type}:{path.name}.y")
                 ystore = ystore_class(path=updates_file_path, log=self.log)
@@ -200,7 +100,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     self.event_logger,
                     ystore,
                     self.log,
-                    self.settings["collaborative_document_save_delay"],
+                    document_save_delay,
                 )
 
             else:
@@ -208,7 +108,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 # it is a transient document (e.g. awareness)
                 self.room = TransientRoom(self._room_id, self.log)
 
-            self.websocket_server.add_room(self._room_id, self.room)
+            self._websocket_server.add_room(self._room_id, self.room)
 
     @property
     def path(self):
@@ -249,11 +149,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         On connection open.
         """
-        assert self.websocket_server is not None
-
-        task = asyncio.create_task(self.websocket_server.serve(self))
-        self.websocket_server.background_tasks.add(task)
-        task.add_done_callback(self.websocket_server.background_tasks.discard)
+        task = asyncio.create_task(self._websocket_server.serve(self))
+        self._websocket_server.background_tasks.add(task)
+        task.add_done_callback(self._websocket_server.background_tasks.discard)
 
         if isinstance(self.room, DocumentRoom):
             # Close the connection if the document session expired
@@ -291,7 +189,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         On message receive.
         """
-        assert self.websocket_server is not None
         message_type = message[0]
         if message_type == YMessageType.AWARENESS:
             # awareness
@@ -303,12 +200,12 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 u = changes["states"][i]
                 if "user" in u:
                     name = u["user"]["name"]
-                    self.websocket_server.connected_users[user] = name
+                    self._websocket_server.connected_users[user] = name
                     self.log.debug("Y user joined: %s", name)
             for user in removed_users:
-                if user in self.websocket_server.connected_users:
-                    name = self.websocket_server.connected_users[user]
-                    del self.websocket_server.connected_users[user]
+                if user in self._websocket_server.connected_users:
+                    name = self._websocket_server.connected_users[user]
+                    del self._websocket_server.connected_users[user]
                     self.log.debug("Y user left: %s", name)
             # filter out message depending on changes
             if skip:
@@ -319,7 +216,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 return skip
 
         self._message_queue.put_nowait(message)
-        self.websocket_server.ypatch_nb += 1
+        self._websocket_server.ypatch_nb += 1
 
     def on_close(self) -> None:
         """
@@ -365,9 +262,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         await asyncio.sleep(self._cleanup_delay)
 
         # Remove the room from the websocket server
-        assert self.websocket_server is not None
         self.log.info("Deleting Y document from memory: %s", self.room.room_id)
-        self.websocket_server.delete_room(room=self.room)
+        self._websocket_server.delete_room(room=self.room)
 
         # Clean room
         del self.room
@@ -375,12 +271,10 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self._emit(LogLevel.INFO, "clean", "Room deleted.")
 
         # Clean the file loader if there are not rooms using it
-        _, _, file_id = decode_file_path(self._room_id)
-        file = self.files[file_id]
+        file = self._file_loaders[self._room_id]
         if file.number_of_subscriptions == 0:
             self.log.info("Deleting file %s", file.path)
-            file.clean()
-            del self.files[file_id]
+            del self.files[self._room_id]
             self._emit(LogLevel.INFO, "clean", "Loader deleted.")
 
     def check_origin(self, origin):
@@ -388,29 +282,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         Check origin
         """
         return True
-
-    @classmethod
-    def clean_up(cls):
-        """
-        Class method to stop every coroutine.
-
-        Useful to clean up tasks on server shut down.
-        """
-        log = getLogger(__name__)
-        log.info("Cleaning up resources before server shut down.")
-        if cls.websocket_server is not None:
-            # Cancel tasks and clean up
-            # TODO: should we wait for any save task?
-            rooms = list(cls.websocket_server.rooms.values())
-            log.info("Deleting rooms.")
-            for room in rooms:
-                cls.websocket_server.delete_room(room=room)
-
-        for file in cls.files.values():
-            file.clean()
-
-        log.info("Deleting files.")
-        cls.files.clear()
 
 
 class DocSessionHandler(APIHandler):

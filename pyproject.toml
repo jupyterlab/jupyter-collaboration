@@ -46,6 +46,7 @@ test = [
     "jupyter_server[test]>=2.0.0",
     "pytest>=7.0",
     "pytest-cov",
+    "pytest-asyncio"
 ]
 docs = [
     "jupyterlab>=4.0.0",
