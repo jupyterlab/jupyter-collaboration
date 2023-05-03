@@ -51,6 +51,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
     - Although it's currently not used in ypy-websocket, ``recv()`` is an async method for
        receiving a message.
     """
+
     _message_queue: asyncio.Queue[Any]
 
     def initialize(
@@ -59,8 +60,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         file_id_manager: BaseFileIdManager,
         file_loaders: FileLoaderMapping,
         ystore_class: Type[BaseYStore],
-        document_cleanup_delay: int | None = 60,
-        document_save_delay: int | None = 1
+        document_cleanup_delay: float | None = 60.0,
+        document_save_delay: float | None = 1.0,
     ):
         # CONFIG
         self._file_id_manager = file_id_manager
@@ -80,7 +81,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             if self._room_id.count(":") >= 2:
                 # DocumentRoom
                 file_format, file_type, file_id = decode_file_path(self._room_id)
-                if self._file_loaders.get_loaders_from_file_id(file_id):
+                if file_id in self._file_loaders:
                     self._emit(
                         LogLevel.WARNING,
                         None,

@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import asyncio
-from logging import Logger, LogLevel, getLogger
+from logging import WARNING, Logger, getLogger
 from typing import Any, Callable, Coroutine
 
 from jupyter_server_fileid.manager import BaseFileIdManager
@@ -26,16 +26,12 @@ class FileLoader:
     def __init__(
         self,
         file_id: str,
-        file_format: str,
-        file_type: str,
         file_id_manager: BaseFileIdManager,
         contents_manager: AsyncContentsManager | ContentsManager,
-        log: Logger | None,
+        log: Logger | None = None,
         poll_interval: float | None = None,
     ) -> None:
         self._file_id: str = file_id
-        self._file_format: str = file_format
-        self._file_type: str = file_type
 
         self._lock = asyncio.Lock()
         self._poll_interval = poll_interval
@@ -48,10 +44,6 @@ class FileLoader:
         ] = {}
 
         self._watcher = asyncio.create_task(self._watch_file()) if self._poll_interval else None
-
-    def __del__(self):
-        """Clean the loader resources"""
-        self.clean()
 
     @property
     def file_format(self) -> str:
@@ -82,14 +74,16 @@ class FileLoader:
         """
         return len(self._subscriptions)
 
-    def clean(self) -> None:
+    async def clean(self) -> None:
         """
         Clean up the file.
 
         Stops the watch task.
         """
-        if self._watcher is not None and self._watcher.cancelling == 0:
-            self._watcher.cancel()
+        if self._watcher is not None:
+            if not self._watcher.cancelled():
+                self._watcher.cancel()
+            await self._watcher
 
     def observe(
         self, id: str, callback: Callable[[str, dict[str, Any]], Coroutine[Any, Any, None]]
@@ -141,6 +135,9 @@ class FileLoader:
             Returns:
                 model (dict): A dictionary with the metadata and content of the file.
 
+            Raises:
+                OutOfBandChanges: if the file was modified at a latter time than the model
+
         ### Note:
             If there is changes on disk, this method will raise an OutOfBandChanges exception.
         """
@@ -170,26 +167,24 @@ class FileLoader:
             return
 
         while True:
-            await asyncio.sleep(self._poll_interval)
             try:
-                await self._maybe_load_document()
+                await asyncio.sleep(self._poll_interval)
+                try:
+                    await self.notify()
+                except Exception as e:
+                    self._log.error(f"Error watching file: {self.path}\n{e!r}", exc_info=e)
+            except asyncio.CancelledError:
+                break
 
-            except Exception as e:
-                self._log.error("Error watching file: %s\n%s", self.path, e)
-
-    async def _maybe_load_document(self) -> None:
+    async def notify(self) -> None:
         """
         Notifies subscribed rooms about changes on the content of the file.
         """
         async with self._lock:
             path = self.path
-            model = await ensure_async(
-                self._contents_manager.get(
-                    path, format=self._file_format, type=self._file_type, content=False
-                )
-            )
+            # Get model metadata; format and type are not need
+            model = await ensure_async(self._contents_manager.get(path, content=False))
 
-        # TODO why is there no test this contradict the help
         # Notify that the content changed on disk
         for callback in self._subscriptions.values():
             await callback("metadata", model)
@@ -202,68 +197,62 @@ class FileLoaderMapping:
         self,
         file_id_manager: BaseFileIdManager,
         contents_manager: AsyncContentsManager | ContentsManager,
-        log: Logger,
-        file_poll_interval: int = 1,
+        log: Logger | None = None,
+        file_poll_interval: float | None = None,
     ) -> None:
+        """
+        Arguments:
+            file_id_manager: Server file ID manager
+            contents_manager: Server contents manager
+            log: [optional] Server log; default to local logger
+            file_poll_interval: [optional] Interval between room notification; default the loader won't poll
+        """
         self.__dict: dict[str, FileLoader] = {}
         self._file_id_manager = file_id_manager
         self._contents_manager = contents_manager
-        self.log = log
+        self.log = log or getLogger(__name__)
         self.file_poll_interval = file_poll_interval
 
-    def __del__(self) -> None:
-        for id in self.__dict:
-            loader = self.__dict.pop(id)
-            loader.clean()
+    def __contains__(self, file_id: str) -> bool:
+        """Test if a file as a loader."""
+        return file_id in self.__dict
 
-    def __contains__(self, room_id: str) -> bool:
-        """Test if a room as a loader."""
-        return room_id in self.__dict
-
-    def __getitem__(self, room_id: str) -> FileLoader:
-        """Get the loader for a given room.
+    def __getitem__(self, file_id: str) -> FileLoader:
+        """Get the loader for a given file.
 
         If there is none, create one.
         """
-        file_format, file_type, file_id = decode_file_path(room_id)
         path = self._file_id_manager.get_path(file_id)
 
         # Instantiate the FileLoader if it doesn't exist yet
-        file = self.__dict.get(room_id) # TODO I switch for room_id instead of file_id ... current code breaks multiple view isn't it?
+        file = self.__dict.get(file_id)
         if file is None:
             self.log.info("Creating FileLoader for: %s", path)
             file = FileLoader(
                 file_id,
-                file_format,
-                file_type,
                 self._file_id_manager,
                 self._contents_manager,
                 self.log,
                 self.file_poll_interval,
             )
-            self.__dict[room_id] = file
-
-        else:
-            self.log(
-                LogLevel.WARNING,
-                None,
-                "There is another collaborative session accessing the same file.\nThe synchronization between rooms is not supported and you might lose some of your changes.",
-            )
+            self.__dict[file_id] = file
 
         return file
 
-    def __delitem__(self, room_id: str) -> None:
-        """Delete a loader for a given room."""
-        loader = self.__dict.pop(room_id)
-        loader.clean()
-        self.log(LogLevel.INFO, "clean", "Loader deleted.")
+    def __delitem__(self, file_id: str) -> None:
+        """Delete a loader for a given file."""
+        self.remove(file_id)
 
-    def get_loaders_from_file_id(self, file_id: str) -> list(FileLoader):
-        """Returns the file loaders for a given file ID.
+    async def clear(self) -> None:
+        """Clear all loaders."""
+        tasks = list()
+        for id in list(self.__dict):
+            loader = self.__dict.pop(id)
+            tasks.append(loader.clean())
 
-        Arguments:
-            file_id: File ID
-        Returns:
-            List of FileLoader handling the file.
-        """
-        return [filter(lambda loader: loader.file_id == file_id, self.__dict.values())]
+        await asyncio.gather(*tasks)
+
+    async def remove(self, file_id: str) -> None:
+        """Remove the loader for a given file."""
+        loader = self.__dict.pop(file_id)
+        await loader.clean()

@@ -15,7 +15,7 @@ from .websocketserver import JupyterWebsocketServer
 class YDocExtension(ExtensionApp):
     name = "jupyter_collaboration"
 
-    file_poll_interval = Int(
+    file_poll_interval = Float(
         1,
         config=True,
         help="""The period in seconds to check for file changes on disk.
@@ -23,7 +23,7 @@ class YDocExtension(ExtensionApp):
         saving changes from the front-end.""",
     )
 
-    document_cleanup_delay = Int(
+    document_cleanup_delay = Float(
         60,
         allow_none=True,
         config=True,
