@@ -1,5 +1,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from __future__ import annotations
+
 
 from jupyter_server.extension.application import ExtensionApp
 from traitlets import Float, Int, Type
@@ -48,22 +50,13 @@ class YDocExtension(ExtensionApp):
         directory.""",
     )
 
+    # @property
+    # def ywebsocket_server(self) -> JupyterWebsocketServer | None:
+    #     return self.settings.get("ywebsocket_server")
+
     def initialize(self):
         super().initialize()
         self.serverapp.event_logger.register_event_schema(EVENTS_SCHEMA_PATH)
-
-        # Set configurable parameters to YStore class
-        for k, v in self.config.get(self.ystore_class.__name__, {}).items():
-            setattr(self.ystore_class, k, v)
-
-        self.websocket_server = JupyterWebsocketServer(
-            rooms_ready=False,
-            auto_clean_rooms=False,
-            ystore_class=self.ystore_class,
-            log=self.log,
-        )
-        
-        self.file_loaders: FileLoaderMapping = None
 
     def initialize_settings(self):
         self.settings.update(
@@ -76,12 +69,23 @@ class YDocExtension(ExtensionApp):
         )
 
     def initialize_handlers(self):
-        file_id_manager = self.settings["file_id_manager"]
-        self.file_loaders = FileLoaderMapping(
-            file_id_manager,
-            self.settings["contents_manager"],
-            self.log,
-            self.file_poll_interval
+
+        # Set configurable parameters to YStore class
+        for k, v in self.config.get(self.ystore_class.__name__, {}).items():
+            setattr(self.ystore_class, k, v)
+
+        self.ywebsocket_server = JupyterWebsocketServer(
+            rooms_ready=False,
+            auto_clean_rooms=False,
+            ystore_class=self.ystore_class,
+            log=self.log,
+        )
+
+        # self.settings is local to the ExtensionApp but here we need
+        # the global app settings in which the file id manager will later
+        # register itself.
+        file_loaders = FileLoaderMapping(
+            self.serverapp.web_app.settings, self.log, self.file_poll_interval
         )
 
         self.handlers.extend(
@@ -92,10 +96,9 @@ class YDocExtension(ExtensionApp):
                     {
                         "document_cleanup_delay": self.document_cleanup_delay,
                         "document_save_delay": self.document_save_delay,
-                        "file_id_manager": file_id_manager,
-                        "file_loaders": self.file_loaders,
-                        "websocket_server": self.websocket_server,
-                        "ystore_class": self.ystore_class
+                        "file_loaders": file_loaders,
+                        "ystore_class": self.ystore_class,
+                        "ywebsocket_server": self.ywebsocket_server
                     },
                 ),
                 (r"/api/collaboration/session/(.*)", DocSessionHandler),
@@ -104,4 +107,5 @@ class YDocExtension(ExtensionApp):
 
     async def stop_extension(self):
         # Cancel tasks and clean up
-        del self.websocket_server
+        # if hasattr(self, "ywebsocket_server"):
+        await self.ywebsocket_server.clean()

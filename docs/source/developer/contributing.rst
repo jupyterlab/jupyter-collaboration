@@ -32,12 +32,16 @@ Installing JupyterLab Real-Time Collaboration
 The development version of the server requires `node <https://nodejs.org/en/download/>`_ and `pip <https://pip.pypa.io/en/stable/installing/>`_.
 
 Once you have installed the dependencies mentioned above, use the following
-steps::
+steps:
+
+.. code-block:: shell
 
     pip install --upgrade pip
     git clone https://github.com/jupyterlab/jupyter_collaboration
     cd jupyter_collaboration
-    pip install -e .
+    pip install -e ".[dev,test]"
+    jupyter labextension develop --overwrite .
+
 
 If you are using a system-wide Python installation and you only want to install the server for you,
 you can add ``--user`` to the install commands.
@@ -97,7 +101,7 @@ Running Tests
 
 Install dependencies::
 
-    pip install -e .[test]
+    pip install -e .[dev,test]
     pip install -e examples/simple  # to test the examples
 
 To run the Python tests, use::

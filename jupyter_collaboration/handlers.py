@@ -6,17 +6,13 @@ from __future__ import annotations
 import asyncio
 import json
 import uuid
-from logging import getLogger
 from pathlib import Path
 from typing import Any, Type
 
-from jupyter_server_fileid.manager import BaseFileIdManager
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
-from jupyter_server.serverapp import ServerWebApplication
 from jupyter_ydoc import ydocs as YDOCS
 from tornado import web
-from tornado.httputil import HTTPServerRequest
 from tornado.websocket import WebSocketHandler
 from ypy_websocket.websocket_server import YRoom
 from ypy_websocket.ystore import BaseYStore
@@ -56,18 +52,17 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
     def initialize(
         self,
-        websocket_server: JupyterWebsocketServer,
-        file_id_manager: BaseFileIdManager,
+        ywebsocket_server: JupyterWebsocketServer,
         file_loaders: FileLoaderMapping,
         ystore_class: Type[BaseYStore],
         document_cleanup_delay: float | None = 60.0,
         document_save_delay: float | None = 1.0,
     ):
-        # CONFIG
-        self._file_id_manager = file_id_manager
+        # File ID manager cannot be passed as argument as the extension may load after this one
+        self._file_id_manager = self.settings["file_id_manager"]
         self._file_loaders = file_loaders
         self._cleanup_delay = document_cleanup_delay
-        self._websocket_server = websocket_server
+        self._websocket_server = ywebsocket_server
 
         self._message_queue = asyncio.Queue()
 
@@ -88,7 +83,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                         "There is another collaborative session accessing the same file.\nThe synchronization between rooms is not supported and you might lose some of your changes.",
                     )
 
-                file = self._file_loaders[self._room_id]
+                file = self._file_loaders[file_id]
                 path = self._file_id_manager.get_path(file_id)
                 path = Path(path)
                 updates_file_path = str(path.parent / f".{file_type}:{path.name}.y")
@@ -272,10 +267,11 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self._emit(LogLevel.INFO, "clean", "Room deleted.")
 
         # Clean the file loader if there are not rooms using it
-        file = self._file_loaders[self._room_id]
+        _,_, file_id = decode_file_path(self._room_id)
+        file = self._file_loaders[file_id]
         if file.number_of_subscriptions == 0:
             self.log.info("Deleting file %s", file.path)
-            del self.files[self._room_id]
+            del self.files[file_id]
             self._emit(LogLevel.INFO, "clean", "Loader deleted.")
 
     def check_origin(self, origin):

@@ -46,26 +46,19 @@ class FileLoader:
         self._watcher = asyncio.create_task(self._watch_file()) if self._poll_interval else None
 
     @property
-    def file_format(self) -> str:
-        """File format"""
-        return self._file_format
-
-    @property
     def file_id(self) -> str:
         """File ID"""
         return self._file_id
-
-    @property
-    def file_type(self) -> str:
-        """File type"""
-        return self._file_type
 
     @property
     def path(self) -> str:
         """
         The file path.
         """
-        return self._file_id_manager.get_path(self._file_id)
+        path = self._file_id_manager.get_path(self.file_id)
+        if path is None:
+            raise RuntimeError(f"No path found for file ID '{self.file_id}")
+        return path
 
     @property
     def number_of_subscriptions(self) -> int:
@@ -195,23 +188,28 @@ class FileLoaderMapping:
 
     def __init__(
         self,
-        file_id_manager: BaseFileIdManager,
-        contents_manager: AsyncContentsManager | ContentsManager,
+        settings: dict,
         log: Logger | None = None,
         file_poll_interval: float | None = None,
     ) -> None:
         """
         Arguments:
-            file_id_manager: Server file ID manager
-            contents_manager: Server contents manager
+            settings: Server settings
             log: [optional] Server log; default to local logger
             file_poll_interval: [optional] Interval between room notification; default the loader won't poll
         """
+        self._settings = settings
         self.__dict: dict[str, FileLoader] = {}
-        self._file_id_manager = file_id_manager
-        self._contents_manager = contents_manager
         self.log = log or getLogger(__name__)
         self.file_poll_interval = file_poll_interval
+
+    @property
+    def contents_manager(self) -> AsyncContentsManager | ContentsManager:
+        return self._settings["contents_manager"]
+
+    @property
+    def file_id_manager(self) -> BaseFileIdManager:
+        return self._settings["file_id_manager"]
 
     def __contains__(self, file_id: str) -> bool:
         """Test if a file as a loader."""
@@ -222,7 +220,7 @@ class FileLoaderMapping:
 
         If there is none, create one.
         """
-        path = self._file_id_manager.get_path(file_id)
+        path = self.file_id_manager.get_path(file_id)
 
         # Instantiate the FileLoader if it doesn't exist yet
         file = self.__dict.get(file_id)
@@ -230,8 +228,8 @@ class FileLoaderMapping:
             self.log.info("Creating FileLoader for: %s", path)
             file = FileLoader(
                 file_id,
-                self._file_id_manager,
-                self._contents_manager,
+                self.file_id_manager,
+                self.contents_manager,
                 self.log,
                 self.file_poll_interval,
             )

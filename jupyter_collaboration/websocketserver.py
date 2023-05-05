@@ -6,33 +6,69 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
+from tornado.websocket import WebSocketHandler
 from ypy_websocket.websocket_server import WebsocketServer, YRoom
-
+from ypy_websocket.ystore import BaseYStore
 
 class RoomNotFound(LookupError):
     pass
 
 
 class JupyterWebsocketServer(WebsocketServer):
-    rooms: dict[str, YRoom]
+    """YPy websocket server.
+    
+    It communicates the document updates to all clients for each rooms.
+    """
+
     ypatch_nb: int
     connected_user: dict[int, str]
-    background_tasks: set[asyncio.Task[Any]]
 
-    def __init__(self, *args, **kwargs):
-        self.ystore_class = kwargs.pop("ystore_class")
-        self.log = kwargs["log"]
-        super().__init__(*args, **kwargs)
+    def __init__(self, ystore_class: BaseYStore, rooms_ready: bool = True, auto_clean_rooms: bool = True, log=None):
+        super().__init__(rooms_ready, auto_clean_rooms, log)
+        self.ystore_class = ystore_class
         self.ypatch_nb = 0
         self.connected_users = {}
-        self.background_tasks = set()
-        self.monitor_task = asyncio.create_task(self._monitor())
+        # Async loop is not yet ready at the object instatiation
+        self.monitor_task: asyncio.Task | None = None
 
-    def __del__(self):
+    async def clean(self):
         # TODO: should we wait for any save task?
         self.log.info("Deleting all rooms.")
-        for room in self.websocket_server.rooms:
-            self.websocket_server.delete_room(room=room)
+        # FIXME some clean up should be upstreamed
+        room_tasks = list()
+        for name, room in list(self.rooms.items()):
+            for task in self.background_tasks:
+                task.cancel()  # FIXME should be upstreamed
+                room_tasks.append(task)
+        if room_tasks:
+            _, pending = await asyncio.wait(room_tasks, timeout=3)
+            if pending:
+                msg = f"{len(pending)} room task(s) are pending."
+                self.log.warning(msg)
+                self.log.debug("Pending tasks: %r", pending)
+
+        tasks = list()
+        for name, room in list(self.rooms.items()):
+            try:
+                self.delete_room(room=name)
+            except Exception as e:  # Capture exception as room may be auto clean
+                msg = f"Failed to delete room {name}"
+                self.log.debug(msg, exc_info=e)
+            else:
+                tasks.append(room._broadcast_task)  # FIXME should be upstreamed
+        if self.monitor_task is not None:
+            self.monitor_task.cancel()
+            tasks.append(self.monitor_task)
+        for task in self.background_tasks:
+            task.cancel()  # FIXME should be upstreamed
+            tasks.append(task)
+
+        if tasks:
+            _, pending = await asyncio.wait(tasks, timeout=3)
+            if pending:
+                msg = f"{len(pending)} task(s) are pending."
+                self.log.warning(msg)
+                self.log.debug("Pending tasks: %r", pending)
 
     def room_exists(self, path: str) -> bool:
         """
@@ -75,6 +111,20 @@ class JupyterWebsocketServer(WebsocketServer):
             raise RoomNotFound
 
         return self.rooms[path]
+    
+    async def serve(self, websocket: WebSocketHandler) -> None:
+        # start monitoring here as the event loop is not yet available when initializing the object
+        if self.monitor_task is None:
+            self.monitor_task = asyncio.create_task(self._monitor())
+        
+        await super().serve(websocket)
+
+    async def _broadcast_updates(self):
+        # FIXME should be upstreamed
+        try:
+            await super()._broadcast_updates()
+        except asyncio.CancelledError:
+            pass
 
     async def _monitor(self):
         """
@@ -85,7 +135,10 @@ class JupyterWebsocketServer(WebsocketServer):
             This method runs in a coroutine for debugging purposes.
         """
         while True:
-            await asyncio.sleep(60)
+            try:
+                await asyncio.sleep(60)
+            except asyncio.CancelledError:
+                break
             clients_nb = sum(len(room.clients) for room in self.rooms.values())
             self.log.info("Processed %s Y patches in one minute", self.ypatch_nb)
             self.log.info("Connected Y users: %s", clients_nb)
