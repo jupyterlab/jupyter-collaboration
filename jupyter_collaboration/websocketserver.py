@@ -34,18 +34,19 @@ class JupyterWebsocketServer(WebsocketServer):
     async def clean(self):
         # TODO: should we wait for any save task?
         self.log.info("Deleting all rooms.")
-        # FIXME some clean up should be upstreamed
-        room_tasks = list()
-        for name, room in list(self.rooms.items()):
-            for task in self.background_tasks:
-                task.cancel()  # FIXME should be upstreamed
-                room_tasks.append(task)
-        if room_tasks:
-            _, pending = await asyncio.wait(room_tasks, timeout=3)
-            if pending:
-                msg = f"{len(pending)} room task(s) are pending."
-                self.log.warning(msg)
-                self.log.debug("Pending tasks: %r", pending)
+        # FIXME some clean up should be upstreamed and the following does not work
+        # It results in hanging process
+        # room_tasks = list()
+        # for name, room in list(self.rooms.items()):
+        #     for task in room.background_tasks:
+        #         task.cancel()  # FIXME should be upstreamed
+        #         room_tasks.append(task)
+        # if room_tasks:
+        #     _, pending = await asyncio.wait(room_tasks, timeout=3)
+        #     if pending:
+        #         msg = f"{len(pending)} room task(s) are pending."
+        #         self.log.warning(msg)
+        #         self.log.debug("Pending tasks: %r", pending)
 
         tasks = list()
         for name, room in list(self.rooms.items()):
