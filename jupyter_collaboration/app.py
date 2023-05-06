@@ -69,7 +69,6 @@ class YDocExtension(ExtensionApp):
         )
 
     def initialize_handlers(self):
-
         # Set configurable parameters to YStore class
         for k, v in self.config.get(self.ystore_class.__name__, {}).items():
             setattr(self.ystore_class, k, v)
@@ -98,7 +97,7 @@ class YDocExtension(ExtensionApp):
                         "document_save_delay": self.document_save_delay,
                         "file_loaders": file_loaders,
                         "ystore_class": self.ystore_class,
-                        "ywebsocket_server": self.ywebsocket_server
+                        "ywebsocket_server": self.ywebsocket_server,
                     },
                 ),
                 (r"/api/collaboration/session/(.*)", DocSessionHandler),

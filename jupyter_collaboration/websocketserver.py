@@ -10,20 +10,27 @@ from tornado.websocket import WebSocketHandler
 from ypy_websocket.websocket_server import WebsocketServer, YRoom
 from ypy_websocket.ystore import BaseYStore
 
+
 class RoomNotFound(LookupError):
     pass
 
 
 class JupyterWebsocketServer(WebsocketServer):
     """YPy websocket server.
-    
+
     It communicates the document updates to all clients for each rooms.
     """
 
     ypatch_nb: int
     connected_user: dict[int, str]
 
-    def __init__(self, ystore_class: BaseYStore, rooms_ready: bool = True, auto_clean_rooms: bool = True, log=None):
+    def __init__(
+        self,
+        ystore_class: BaseYStore,
+        rooms_ready: bool = True,
+        auto_clean_rooms: bool = True,
+        log=None,
+    ):
         super().__init__(rooms_ready, auto_clean_rooms, log)
         self.ystore_class = ystore_class
         self.ypatch_nb = 0
@@ -34,8 +41,10 @@ class JupyterWebsocketServer(WebsocketServer):
     async def clean(self):
         # TODO: should we wait for any save task?
         self.log.info("Deleting all rooms.")
-        # FIXME some clean up should be upstreamed and the following does not work
-        # It results in hanging process
+        # FIXME some clean up should be upstreamed and the following does not
+        # prevent hanging stop process - it also requires some thinking about
+        # should the ystore write action be cancelled; I guess not as it could
+        # results in corrupted data.
         # room_tasks = list()
         # for name, room in list(self.rooms.items()):
         #     for task in room.background_tasks:
@@ -112,12 +121,12 @@ class JupyterWebsocketServer(WebsocketServer):
             raise RoomNotFound
 
         return self.rooms[path]
-    
+
     async def serve(self, websocket: WebSocketHandler) -> None:
         # start monitoring here as the event loop is not yet available when initializing the object
         if self.monitor_task is None:
             self.monitor_task = asyncio.create_task(self._monitor())
-        
+
         await super().serve(websocket)
 
     async def _broadcast_updates(self):

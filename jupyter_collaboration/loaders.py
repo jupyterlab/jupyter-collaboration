@@ -193,7 +193,7 @@ class FileLoaderMapping:
         file_poll_interval: float | None = None,
     ) -> None:
         """
-        Arguments:
+        Args:
             settings: Server settings
             log: [optional] Server log; default to local logger
             file_poll_interval: [optional] Interval between room notification; default the loader won't poll

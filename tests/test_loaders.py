@@ -116,8 +116,7 @@ async def test_FileLoaderMapping_with_watcher():
     cm = FakeContentsManager({"last_modified": datetime.now()})
 
     map = FileLoaderMapping(
-        FakeFileIDManager(paths),
-        cm,
+        {"contents_manager": cm, "file_id_manager": FakeFileIDManager(paths)},
         file_poll_interval=1.0,
     )
 
