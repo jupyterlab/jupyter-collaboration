@@ -2,9 +2,10 @@
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
 
+import asyncio
 
 from jupyter_server.extension.application import ExtensionApp
-from traitlets import Float, Int, Type
+from traitlets import Float, Type
 from ypy_websocket.ystore import BaseYStore
 
 from .handlers import DocSessionHandler, YDocWebSocketHandler
@@ -50,10 +51,6 @@ class YDocExtension(ExtensionApp):
         directory.""",
     )
 
-    # @property
-    # def ywebsocket_server(self) -> JupyterWebsocketServer | None:
-    #     return self.settings.get("ywebsocket_server")
-
     def initialize(self):
         super().initialize()
         self.serverapp.event_logger.register_event_schema(EVENTS_SCHEMA_PATH)
@@ -81,9 +78,9 @@ class YDocExtension(ExtensionApp):
         )
 
         # self.settings is local to the ExtensionApp but here we need
-        # the global app settings in which the file id manager will later
-        # register itself.
-        file_loaders = FileLoaderMapping(
+        # the global app settings in which the file id manager will register
+        # itself maybe at a later time.
+        self.file_loaders = FileLoaderMapping(
             self.serverapp.web_app.settings, self.log, self.file_poll_interval
         )
 
@@ -95,7 +92,7 @@ class YDocExtension(ExtensionApp):
                     {
                         "document_cleanup_delay": self.document_cleanup_delay,
                         "document_save_delay": self.document_save_delay,
-                        "file_loaders": file_loaders,
+                        "file_loaders": self.file_loaders,
                         "ystore_class": self.ystore_class,
                         "ywebsocket_server": self.ywebsocket_server,
                     },
@@ -106,5 +103,5 @@ class YDocExtension(ExtensionApp):
 
     async def stop_extension(self):
         # Cancel tasks and clean up
-        # if hasattr(self, "ywebsocket_server"):
-        await self.ywebsocket_server.clean()
+        await asyncio.wait({self.ywebsocket_server.clean(), self.file_loaders.clear()}, timeout=3)
+        # self.log.debug("All pending tasks:\n  %s", "\n  ".join(map(lambda t: repr(t), asyncio.all_tasks())))

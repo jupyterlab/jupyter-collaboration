@@ -60,7 +60,7 @@ class JupyterWebsocketServer(WebsocketServer):
         tasks = list()
         for name, room in list(self.rooms.items()):
             try:
-                self.delete_room(room=name)
+                self.delete_room(name=name)
             except Exception as e:  # Capture exception as room may be auto clean
                 msg = f"Failed to delete room {name}"
                 self.log.debug(msg, exc_info=e)
