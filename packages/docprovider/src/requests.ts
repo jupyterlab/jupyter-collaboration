@@ -12,10 +12,25 @@ import { ServerConnection, Contents } from '@jupyterlab/services';
  */
 const DOC_SESSION_URL = 'api/collaboration/session';
 
+/**
+ * Document session model
+ */
 export interface ISessionModel {
+  /**
+   * Document format; 'text', 'base64',...
+   */
   format: Contents.FileFormat;
+  /**
+   * Document type
+   */
   type: Contents.ContentType;
+  /**
+   * File unique identifier
+   */
   fileId: string;
+  /**
+   * Server session identifier
+   */
   sessionId: string;
 }
 
