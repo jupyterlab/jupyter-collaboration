@@ -9,7 +9,7 @@ import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
-import { DOMUtils } from '@jupyterlab/apputils';
+import { DOMUtils, IToolbarWidgetRegistry } from '@jupyterlab/apputils';
 import {
   EditorExtensionRegistry,
   IEditorExtensionRegistry
@@ -54,12 +54,15 @@ export const userMenuPlugin: JupyterFrontEndPlugin<IUserMenu> = {
  * Jupyter plugin adding the IUserMenu to the menu bar if collaborative flag enabled.
  */
 export const menuBarPlugin: JupyterFrontEndPlugin<void> = {
-  id: '@jupyter/collaboration-extension:userMenuBar',
+  id: '@jupyter/collaboration-extension:user-menu-bar',
   description: 'Add user menu to the interface.',
   autoStart: true,
-  requires: [IUserMenu],
-  activate: async (app: JupyterFrontEnd, menu: IUserMenu): Promise<void> => {
-    const { shell } = app;
+  requires: [IUserMenu, IToolbarWidgetRegistry],
+  activate: async (
+    app: JupyterFrontEnd,
+    menu: IUserMenu,
+    toolbarRegistry: IToolbarWidgetRegistry
+  ): Promise<void> => {
     const { user } = app.serviceManager;
 
     const menuBar = new MenuBar({
@@ -72,7 +75,8 @@ export const menuBarPlugin: JupyterFrontEndPlugin<void> = {
     menuBar.id = 'jp-UserMenu';
     user.userChanged.connect(() => menuBar.update());
     menuBar.addMenu(menu as Menu);
-    shell.add(menuBar, 'top', { rank: 1000 });
+
+    toolbarRegistry.addFactory('TopBar', 'user-menu', () => menuBar);
   }
 };
 
