@@ -21,6 +21,7 @@ import {
   rtcPanelPlugin,
   userEditorCursors
 } from './collaboration';
+import { sharedLink } from './sharedlink';
 
 /**
  * Export the plugins as default.
@@ -35,6 +36,7 @@ const plugins: JupyterFrontEndPlugin<any>[] = [
   menuBarPlugin,
   rtcGlobalAwarenessPlugin,
   rtcPanelPlugin,
+  sharedLink,
   userEditorCursors
 ];
 
