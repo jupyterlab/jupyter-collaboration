@@ -16,7 +16,7 @@ import { DocumentChange, YDocument } from '@jupyter/ydoc';
 import { Awareness } from 'y-protocols/awareness';
 import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
 
-import { ISessionModel, requestDocSession } from './requests';
+import { requestDocSession } from './requests';
 
 /**
  * An interface for a document provider.
@@ -60,7 +60,7 @@ export class WebSocketProvider implements IDocumentProvider {
       .catch(e => console.error(e));
     user.userChanged.connect(this._onUserChanged, this);
 
-    this._connect();
+    this._connect().catch(e => console.warn(e));
   }
 
   /**
@@ -86,31 +86,31 @@ export class WebSocketProvider implements IDocumentProvider {
     }
     this._isDisposed = true;
     this._yWebsocketProvider?.off('connection-close', this._onConnectionClosed);
+    this._yWebsocketProvider?.off('sync', this._onSync);
     this._yWebsocketProvider?.destroy();
     Signal.clearData(this);
   }
 
-  private _connect(): void {
-    requestDocSession(this._format, this._contentType, this._path)
-      .then((session: ISessionModel) => {
-        this._yWebsocketProvider = new YWebsocketProvider(
-          this._serverUrl,
-          `${session.format}:${session.type}:${session.fileId}`,
-          this._sharedModel.ydoc,
-          {
-            disableBc: true,
-            params: { sessionId: session.sessionId },
-            awareness: this._awareness
-          }
-        );
+  private async _connect(): Promise<void> {
+    const session = await requestDocSession(
+      this._format,
+      this._contentType,
+      this._path
+    );
 
-        this._yWebsocketProvider.on(
-          'connection-close',
-          this._onConnectionClosed
-        );
-      })
-      .then(r => this._ready.resolve())
-      .catch(e => console.warn(e));
+    this._yWebsocketProvider = new YWebsocketProvider(
+      this._serverUrl,
+      `${session.format}:${session.type}:${session.fileId}`,
+      this._sharedModel.ydoc,
+      {
+        disableBc: true,
+        params: { sessionId: session.sessionId },
+        awareness: this._awareness
+      }
+    );
+
+    this._yWebsocketProvider.on('sync', this._onSync);
+    this._yWebsocketProvider.on('connection-close', this._onConnectionClosed);
   }
 
   private _onUserChanged(user: User.IManager): void {
@@ -138,6 +138,14 @@ export class WebSocketProvider implements IDocumentProvider {
       // Dispose shared model immediately. Better break the document model,
       // than overriding data on disk.
       this._sharedModel.dispose();
+    }
+  };
+
+  private _onSync = (isSynced: boolean) => {
+    console.log(`_onSync ${isSynced}`);
+    if (isSynced) {
+      this._ready.resolve();
+      this._yWebsocketProvider?.off('sync', this._onSync);
     }
   };
 
