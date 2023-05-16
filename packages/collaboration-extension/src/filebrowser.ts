@@ -9,26 +9,24 @@ import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
+import { Dialog, showDialog } from '@jupyterlab/apputils';
+import { IDocumentWidget } from '@jupyterlab/docregistry';
 import {
   FileBrowser,
   IDefaultFileBrowser,
   IFileBrowserFactory
 } from '@jupyterlab/filebrowser';
-import { showDialog, Dialog } from '@jupyterlab/apputils';
-import { ITranslator, nullTranslator } from '@jupyterlab/translation';
-import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import { IEditorTracker } from '@jupyterlab/fileeditor';
 import { ILogger, ILoggerRegistry } from '@jupyterlab/logconsole';
 import { INotebookTracker } from '@jupyterlab/notebook';
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 
 import { CommandRegistry } from '@lumino/commands';
 
 import { YFile, YNotebook } from '@jupyter/ydoc';
 
-import {
-  ICollaborativeDrive,
-  SharedDocumentFactory,
-  YDrive
-} from '@jupyter/docprovider';
+import { ICollaborativeDrive, YDrive } from '@jupyter/docprovider';
 
 /**
  * The command IDs used by the file browser plugin.
@@ -68,7 +66,7 @@ export const yfile: JupyterFrontEndPlugin<void> = {
   requires: [ICollaborativeDrive],
   optional: [],
   activate: (app: JupyterFrontEnd, drive: ICollaborativeDrive): void => {
-    const yFileFactory: SharedDocumentFactory = () => {
+    const yFileFactory = () => {
       return new YFile();
     };
     drive.sharedModelFactory.registerDocumentFactory('file', yFileFactory);
@@ -112,7 +110,7 @@ export const ynotebook: JupyterFrontEndPlugin<void> = {
         });
     }
 
-    const yNotebookFactory: SharedDocumentFactory = () => {
+    const yNotebookFactory = () => {
       return new YNotebook({
         disableDocumentWideUndoRedo
       });
@@ -175,11 +173,12 @@ export const logger: JupyterFrontEndPlugin<void> = {
   id: '@jupyter/collaboration-extension:logger',
   description: 'A logging plugin for debugging purposes.',
   autoStart: true,
-  optional: [ILoggerRegistry, INotebookTracker, ITranslator],
+  optional: [ILoggerRegistry, IEditorTracker, INotebookTracker, ITranslator],
   activate: (
     app: JupyterFrontEnd,
     loggerRegistry: ILoggerRegistry | null,
-    nbtracker: INotebookTracker | null,
+    fileTracker: IEditorTracker | null,
+    nbTracker: INotebookTracker | null,
     translator: ITranslator | null
   ): void => {
     const trans = (translator ?? nullTranslator).load('jupyter_collaboration');
@@ -213,15 +212,21 @@ export const logger: JupyterFrontEndPlugin<void> = {
 
     const loggers: Map<string, ILogger> = new Map();
 
-    if (nbtracker) {
-      nbtracker.widgetAdded.connect((sender, nb) => {
-        const logger = loggerRegistry.getLogger(nb.context.path);
-        loggers.set(nb.context.localPath, logger);
+    const addLogger = (sender: unknown, document: IDocumentWidget) => {
+      const logger = loggerRegistry.getLogger(document.context.path);
+      loggers.set(document.context.localPath, logger);
 
-        nb.disposed.connect(nb => {
-          loggers.delete(nb.context.localPath);
-        });
+      document.disposed.connect(document => {
+        loggers.delete(document.context.localPath);
       });
+    };
+
+    if (fileTracker) {
+      fileTracker.widgetAdded.connect(addLogger);
+    }
+
+    if (nbTracker) {
+      nbTracker.widgetAdded.connect(addLogger);
     }
 
     void (async () => {
