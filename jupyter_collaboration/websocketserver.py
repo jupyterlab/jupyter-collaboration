@@ -35,7 +35,7 @@ class JupyterWebsocketServer(WebsocketServer):
         self.ystore_class = ystore_class
         self.ypatch_nb = 0
         self.connected_users = {}
-        # Async loop is not yet ready at the object instatiation
+        # Async loop is not yet ready at the object instantiation
         self.monitor_task: asyncio.Task | None = None
 
     async def clean(self):
