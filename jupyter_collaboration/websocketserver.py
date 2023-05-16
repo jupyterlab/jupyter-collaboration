@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import asyncio
+from logging import Logger
 from typing import Any
 
 from tornado.websocket import WebSocketHandler
@@ -29,12 +30,12 @@ class JupyterWebsocketServer(WebsocketServer):
         ystore_class: BaseYStore,
         rooms_ready: bool = True,
         auto_clean_rooms: bool = True,
-        log=None,
+        log: Logger | None = None,
     ):
         super().__init__(rooms_ready, auto_clean_rooms, log)
         self.ystore_class = ystore_class
         self.ypatch_nb = 0
-        self.connected_users = {}
+        self.connected_users: dict[Any, Any] = {}
         # Async loop is not yet ready at the object instantiation
         self.monitor_task: asyncio.Task | None = None
 
@@ -57,7 +58,7 @@ class JupyterWebsocketServer(WebsocketServer):
         #         self.log.warning(msg)
         #         self.log.debug("Pending tasks: %r", pending)
 
-        tasks = list()
+        tasks = []
         for name, room in list(self.rooms.items()):
             try:
                 self.delete_room(name=name)
@@ -128,13 +129,6 @@ class JupyterWebsocketServer(WebsocketServer):
             self.monitor_task = asyncio.create_task(self._monitor())
 
         await super().serve(websocket)
-
-    async def _broadcast_updates(self):
-        # FIXME should be upstreamed
-        try:
-            await super()._broadcast_updates()
-        except asyncio.CancelledError:
-            pass
 
     async def _monitor(self):
         """

@@ -30,7 +30,7 @@ class DocumentRoom(YRoom):
         logger: EventLogger,
         ystore: BaseYStore | None,
         log: Logger | None,
-        save_delay: int | None = None,
+        save_delay: float | None = None,
     ):
         super().__init__(ready=False, ystore=ystore, log=log)
 
@@ -171,6 +171,13 @@ class DocumentRoom(YRoom):
         self._document.unobserve()
         self._file.unobserve(self.room_id)
 
+    async def _broadcast_updates(self):
+        # FIXME should be upstreamed
+        try:
+            await super()._broadcast_updates()
+        except asyncio.CancelledError:
+            pass
+
     async def _on_content_change(self, event: str, args: dict[str, Any]) -> None:
         """
         Called when the file changes.
@@ -271,3 +278,10 @@ class TransientRoom(YRoom):
         The room ID.
         """
         return self._room_id
+
+    async def _broadcast_updates(self):
+        # FIXME should be upstreamed
+        try:
+            await super()._broadcast_updates()
+        except asyncio.CancelledError:
+            pass

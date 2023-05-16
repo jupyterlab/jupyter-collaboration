@@ -4,14 +4,15 @@
 from __future__ import annotations
 
 import asyncio
-from logging import WARNING, Logger, getLogger
+from logging import Logger, getLogger
 from typing import Any, Callable, Coroutine
 
-from jupyter_server_fileid.manager import BaseFileIdManager
-from jupyter_server.services.contents.manager import AsyncContentsManager, ContentsManager
+from jupyter_server.services.contents.manager import (
+    AsyncContentsManager,
+    ContentsManager,
+)
 from jupyter_server.utils import ensure_async
-
-from .utils import decode_file_path
+from jupyter_server_fileid.manager import BaseFileIdManager
 
 
 class OutOfBandChanges(Exception):
@@ -237,13 +238,13 @@ class FileLoaderMapping:
 
         return file
 
-    def __delitem__(self, file_id: str) -> None:
+    async def __delitem__(self, file_id: str) -> None:
         """Delete a loader for a given file."""
-        self.remove(file_id)
+        await self.remove(file_id)
 
     async def clear(self) -> None:
         """Clear all loaders."""
-        tasks = list()
+        tasks = []
         for id in list(self.__dict):
             loader = self.__dict.pop(id)
             tasks.append(loader.clean())

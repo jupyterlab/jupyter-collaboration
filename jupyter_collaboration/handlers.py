@@ -7,7 +7,7 @@ import asyncio
 import json
 import uuid
 from pathlib import Path
-from typing import Any, Type
+from typing import Any
 
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
@@ -54,10 +54,10 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self,
         ywebsocket_server: JupyterWebsocketServer,
         file_loaders: FileLoaderMapping,
-        ystore_class: Type[BaseYStore],
+        ystore_class: type[BaseYStore],
         document_cleanup_delay: float | None = 60.0,
         document_save_delay: float | None = 1.0,
-    ):
+    ) -> None:
         # File ID manager cannot be passed as argument as the extension may load after this one
         self._file_id_manager = self.settings["file_id_manager"]
         self._file_loaders = file_loaders
@@ -271,7 +271,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         file = self._file_loaders[file_id]
         if file.number_of_subscriptions == 0:
             self.log.info("Deleting file %s", file.path)
-            del self.files[file_id]
+            del self._file_loaders[file_id]
             self._emit(LogLevel.INFO, "clean", "Loader deleted.")
 
     def check_origin(self, origin):

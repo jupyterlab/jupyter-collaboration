@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime
+from typing import Any
 
 import pytest
 from jupyter_server import _tz as tz
@@ -36,11 +37,11 @@ class FakeContentsManager:
         self.model.update(model)
 
     def get(
-        self, path, content: bool = True, format: str | None = None, type: str | None = None
+        self, path: str, content: bool = True, format: str | None = None, type: str | None = None
     ) -> dict:
         return self.model
 
-    def save_content(self, model, path) -> dict:
+    def save_content(self, model: dict[str, Any], path: str) -> dict:
         return self.model
 
 
