@@ -57,7 +57,7 @@ class FileLoader:
         """
         path = self._file_id_manager.get_path(self.file_id)
         if path is None:
-            raise RuntimeError(f"No path found for file ID '{self.file_id}")
+            raise RuntimeError(f"No path found for file ID '{self.file_id}'")
         return path
 
     @property
