@@ -212,7 +212,7 @@ class FileLoaderMapping:
         return self._settings["file_id_manager"]
 
     def __contains__(self, file_id: str) -> bool:
-        """Test if a file as a loader."""
+        """Test if a file has a loader."""
         return file_id in self.__dict
 
     def __getitem__(self, file_id: str) -> FileLoader:
