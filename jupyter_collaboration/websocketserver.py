@@ -16,9 +16,9 @@ class RoomNotFound(LookupError):
 
 
 class JupyterWebsocketServer(WebsocketServer):
-    """YPy websocket server.
+    """Ypy websocket server.
 
-    It communicates the document updates to all clients for each rooms.
+    It communicates the document updates to all clients for each room.
     """
 
     ypatch_nb: int
