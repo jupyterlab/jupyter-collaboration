@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-python@v4
       - name: Install dependencies
         run: |
-          pip install jupyterlab --pre
+          pip install jupyterlab
           pip install -e .
           jlpm
       - name: Run pre-commit
@@ -51,7 +51,7 @@ jobs:
         uses: actions/setup-python@v4
       - name: Install dependencies
         run: |
-          pip install --pre jupyterlab
+          pip install jupyterlab
           pip install -e .
           jlpm
       - name: Run Tests
@@ -79,7 +79,7 @@ jobs:
       - name: Install the Python dependencies
         run: |
           pip install -e ".[test]" codecov
-          python -m pip install --pre jupyterlab
+          python -m pip install jupyterlab
       - name: List installed packages
         run: |
           pip freeze
@@ -171,7 +171,7 @@ jobs:
           tar --strip-components=1 -zxvf *.tar.gz -C ./test
           cd test
           python -m pip install ".[test]"
-          python -m pip install --pre jupyterlab
+          python -m pip install jupyterlab
           echo "::endgroup::"
       - name: Run Test
         shell: bash

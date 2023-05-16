@@ -3,7 +3,7 @@
 
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling>=1.4.0", "hatch-nodejs-version", "jupyterlab>=4.0.0rc0"]
+requires = ["hatchling>=1.4.0", "hatch-nodejs-version", "jupyterlab>=4.0.0"]
 
 [project]
 name = "jupyter_collaboration"
@@ -48,7 +48,7 @@ test = [
     "pytest-cov",
 ]
 docs = [
-    "jupyterlab>=4.0.0rc0",
+    "jupyterlab>=4.0.0",
     "sphinx",
     "myst-parser",
     "pydata-sphinx-theme"
@@ -114,7 +114,7 @@ before-build-python = [
     "jlpm clean:lib"
 ]
 before-bump-version = [
-    "python -m pip install --pre -U jupyterlab",
+    "python -m pip install -U jupyterlab",
     "jlpm"
 ]
 
