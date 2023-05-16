@@ -1,0 +1,16 @@
+{
+  "title": "Shared link",
+  "description": "Shared link settings",
+  "jupyter.lab.toolbars": {
+    "TopBar": [
+      {
+        "name": "@jupyter/collaboration:shared-link",
+        "command": "collaboration:shared-link",
+        "rank": 99
+      }
+    ]
+  },
+  "properties": {},
+  "additionalProperties": false,
+  "type": "object"
+}

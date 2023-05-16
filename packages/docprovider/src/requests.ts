@@ -39,24 +39,37 @@ export async function requestDocSession(
   type: string,
   path: string
 ): Promise<ISessionModel> {
-  const { makeSettings, makeRequest, ResponseError } = ServerConnection;
-
-  const settings = makeSettings();
+  const settings = ServerConnection.makeSettings();
   const url = URLExt.join(
     settings.baseUrl,
     DOC_SESSION_URL,
     encodeURIComponent(path)
   );
-  const data = {
+  const body = {
     method: 'PUT',
     body: JSON.stringify({ format, type })
   };
 
-  const response = await makeRequest(url, data, settings);
-
-  if (response.status !== 200 && response.status !== 201) {
-    throw new ResponseError(response);
+  let response: Response;
+  try {
+    response = await ServerConnection.makeRequest(url, body, settings);
+  } catch (error) {
+    throw new ServerConnection.NetworkError(error as Error);
   }
 
-  return response.json();
+  let data: any = await response.text();
+
+  if (data.length > 0) {
+    try {
+      data = JSON.parse(data);
+    } catch (error) {
+      console.log('Not a JSON response body.', response);
+    }
+  }
+
+  if (!response.ok) {
+    throw new ServerConnection.ResponseError(response, data.message || data);
+  }
+
+  return data;
 }
