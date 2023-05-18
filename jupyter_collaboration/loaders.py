@@ -7,7 +7,12 @@ import asyncio
 from logging import Logger, getLogger
 from typing import Any, Callable, Coroutine
 
+from jupyter_server.services.contents.manager import (
+    AsyncContentsManager,
+    ContentsManager,
+)
 from jupyter_server.utils import ensure_async
+from jupyter_server_fileid.manager import BaseFileIdManager
 
 
 class OutOfBandChanges(Exception):
@@ -22,16 +27,12 @@ class FileLoader:
     def __init__(
         self,
         file_id: str,
-        file_format: str,
-        file_type: str,
-        file_id_manager: Any,
-        contents_manager: Any,
-        log: Logger | None,
+        file_id_manager: BaseFileIdManager,
+        contents_manager: AsyncContentsManager | ContentsManager,
+        log: Logger | None = None,
         poll_interval: float | None = None,
     ) -> None:
         self._file_id: str = file_id
-        self._file_format: str = file_format
-        self._file_type: str = file_type
 
         self._lock = asyncio.Lock()
         self._poll_interval = poll_interval
@@ -46,11 +47,19 @@ class FileLoader:
         self._watcher = asyncio.create_task(self._watch_file()) if self._poll_interval else None
 
     @property
+    def file_id(self) -> str:
+        """File ID"""
+        return self._file_id
+
+    @property
     def path(self) -> str:
         """
         The file path.
         """
-        return self._file_id_manager.get_path(self._file_id)
+        path = self._file_id_manager.get_path(self.file_id)
+        if path is None:
+            raise RuntimeError(f"No path found for file ID '{self.file_id}'")
+        return path
 
     @property
     def number_of_subscriptions(self) -> int:
@@ -59,14 +68,16 @@ class FileLoader:
         """
         return len(self._subscriptions)
 
-    def clean(self) -> None:
+    async def clean(self) -> None:
         """
         Clean up the file.
 
         Stops the watch task.
         """
         if self._watcher is not None:
-            self._watcher.cancel()
+            if not self._watcher.cancelled():
+                self._watcher.cancel()
+            await self._watcher
 
     def observe(
         self, id: str, callback: Callable[[str, dict[str, Any]], Coroutine[Any, Any, None]]
@@ -118,6 +129,9 @@ class FileLoader:
             Returns:
                 model (dict): A dictionary with the metadata and content of the file.
 
+            Raises:
+                OutOfBandChanges: if the file was modified at a latter time than the model
+
         ### Note:
             If there is changes on disk, this method will raise an OutOfBandChanges exception.
         """
@@ -147,25 +161,97 @@ class FileLoader:
             return
 
         while True:
-            await asyncio.sleep(self._poll_interval)
             try:
-                await self._maybe_load_document()
+                await asyncio.sleep(self._poll_interval)
+                try:
+                    await self.notify()
+                except Exception as e:
+                    self._log.error(f"Error watching file: {self.path}\n{e!r}", exc_info=e)
+            except asyncio.CancelledError:
+                break
 
-            except Exception as e:
-                self._log.error("Error watching file: %s\n%s", self.path, e)
-
-    async def _maybe_load_document(self) -> None:
+    async def notify(self) -> None:
         """
         Notifies subscribed rooms about changes on the content of the file.
         """
         async with self._lock:
             path = self.path
-            model = await ensure_async(
-                self._contents_manager.get(
-                    path, format=self._file_format, type=self._file_type, content=False
-                )
-            )
+            # Get model metadata; format and type are not need
+            model = await ensure_async(self._contents_manager.get(path, content=False))
 
         # Notify that the content changed on disk
         for callback in self._subscriptions.values():
             await callback("metadata", model)
+
+
+class FileLoaderMapping:
+    """Map rooms to file loaders."""
+
+    def __init__(
+        self,
+        settings: dict,
+        log: Logger | None = None,
+        file_poll_interval: float | None = None,
+    ) -> None:
+        """
+        Args:
+            settings: Server settings
+            log: [optional] Server log; default to local logger
+            file_poll_interval: [optional] Interval between room notification; default the loader won't poll
+        """
+        self._settings = settings
+        self.__dict: dict[str, FileLoader] = {}
+        self.log = log or getLogger(__name__)
+        self.file_poll_interval = file_poll_interval
+
+    @property
+    def contents_manager(self) -> AsyncContentsManager | ContentsManager:
+        return self._settings["contents_manager"]
+
+    @property
+    def file_id_manager(self) -> BaseFileIdManager:
+        return self._settings["file_id_manager"]
+
+    def __contains__(self, file_id: str) -> bool:
+        """Test if a file has a loader."""
+        return file_id in self.__dict
+
+    def __getitem__(self, file_id: str) -> FileLoader:
+        """Get the loader for a given file.
+
+        If there is none, create one.
+        """
+        path = self.file_id_manager.get_path(file_id)
+
+        # Instantiate the FileLoader if it doesn't exist yet
+        file = self.__dict.get(file_id)
+        if file is None:
+            self.log.info("Creating FileLoader for: %s", path)
+            file = FileLoader(
+                file_id,
+                self.file_id_manager,
+                self.contents_manager,
+                self.log,
+                self.file_poll_interval,
+            )
+            self.__dict[file_id] = file
+
+        return file
+
+    async def __delitem__(self, file_id: str) -> None:
+        """Delete a loader for a given file."""
+        await self.remove(file_id)
+
+    async def clear(self) -> None:
+        """Clear all loaders."""
+        tasks = []
+        for id in list(self.__dict):
+            loader = self.__dict.pop(id)
+            tasks.append(loader.clean())
+
+        await asyncio.gather(*tasks)
+
+    async def remove(self, file_id: str) -> None:
+        """Remove the loader for a given file."""
+        loader = self.__dict.pop(file_id)
+        await loader.clean()
