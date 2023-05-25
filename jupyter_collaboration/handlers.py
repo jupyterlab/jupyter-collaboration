@@ -153,14 +153,25 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             # Close the connection if the document session expired
             session_id = self.get_query_argument("sessionId", "")
             if SERVER_SESSION != session_id:
-                self.close(1003, f"Document session {session_id} expired")
+                self.close(
+                    1003,
+                    f"Document session {session_id} expired. You need to reload this browser tab.",
+                )
 
             # cancel the deletion of the room if it was scheduled
             if self.room.cleaner is not None:
                 self.room.cleaner.cancel()
 
-            # Initialize the room
-            await self.room.initialize()
+            try:
+                # Initialize the room
+                await self.room.initialize()
+            except Exception as e:
+                _, _, file_id = decode_file_path(self._room_id)
+                file = self._file_loaders[file_id]
+                self.log.error(f"Error initializing: {file.path}\n{e!r}", exc_info=e)
+                self.close(
+                    1003, f"Error initializing: {file.path}. You need to close the document."
+                )
 
             self._emit(LogLevel.INFO, "initialize", "New client connected.")
 

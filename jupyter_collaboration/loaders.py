@@ -14,9 +14,7 @@ from jupyter_server.services.contents.manager import (
 from jupyter_server.utils import ensure_async
 from jupyter_server_fileid.manager import BaseFileIdManager
 
-
-class OutOfBandChanges(Exception):
-    pass
+from .utils import OutOfBandChanges
 
 
 class FileLoader:
@@ -113,14 +111,11 @@ class FileLoader:
                 model (dict): A dictionary with the metadata and content of the file.
         """
         async with self._lock:
-            try:
-                return await ensure_async(
-                    self._contents_manager.get(
-                        self.path, format=format, type=file_type, content=content
-                    )
+            return await ensure_async(
+                self._contents_manager.get(
+                    self.path, format=format, type=file_type, content=content
                 )
-            except Exception as e:
-                self._log.error(f"Error loading file: {self.path}\n{e!r}", exc_info=e)
+            )
 
     async def save_content(self, model: dict[str, Any]) -> dict[str, Any]:
         """
@@ -144,22 +139,16 @@ class FileLoader:
                 # fall back to file if unknown type, the content manager only knows
                 # how to handle these types
                 model["type"] = "file"
-            
-            try:
-                m = await ensure_async(
-                    self._contents_manager.get(
-                        path, format=model["format"], type=model["type"], content=False
-                    )
+
+            m = await ensure_async(
+                self._contents_manager.get(
+                    path, format=model["format"], type=model["type"], content=False
                 )
-            except Exception as e:
-                self._log.error(f"Error loading metadata from file: {self.path}\n{e!r}", exc_info=e)
+            )
 
             if model["last_modified"] == m["last_modified"]:
                 self._log.info("Saving file: %s", path)
-                try:
-                    return await ensure_async(self._contents_manager.save(model, path))
-                except Exception as e:
-                    self._log.error(f"Error saving file: {self.path}\n{e!r}", exc_info=e)
+                return await ensure_async(self._contents_manager.save(model, path))
 
             else:
                 # file changed on disk, raise an error
@@ -191,10 +180,7 @@ class FileLoader:
         async with self._lock:
             path = self.path
             # Get model metadata; format and type are not need
-            try:
-                model = await ensure_async(self._contents_manager.get(path, content=False))
-            except Exception as e:
-                self._log.error(f"Error loading metadata from file: {self.path}\n{e!r}", exc_info=e)
+            model = await ensure_async(self._contents_manager.get(path, content=False))
 
         # Notify that the content changed on disk
         for callback in self._subscriptions.values():

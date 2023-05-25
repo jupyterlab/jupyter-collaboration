@@ -12,8 +12,8 @@ from jupyter_ydoc import ydocs as YDOCS
 from ypy_websocket.websocket_server import YRoom
 from ypy_websocket.ystore import BaseYStore, YDocNotFound
 
-from .loaders import FileLoader, OutOfBandChanges
-from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel
+from .loaders import FileLoader
+from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, OutOfBandChanges
 
 YFILE = YDOCS["file"]
 
@@ -94,6 +94,7 @@ class DocumentRoom(YRoom):
                 return
 
             self.log.info("Initializing room %s", self._room_id)
+
             model = await self._file.load_content(self._file_format, self._file_type, True)
 
             async with self._update_lock:
@@ -187,10 +188,16 @@ class DocumentRoom(YRoom):
                 args (dict): A dictionary with format, type, last_modified.
         """
         if event == "metadata" and self._last_modified < args["last_modified"]:
-            model = await self._file.load_content(self._file_format, self._file_type, True)
-
             self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
             self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes. Overwriting the room.")
+
+            try:
+                model = await self._file.load_content(self._file_format, self._file_type, True)
+            except Exception as e:
+                msg = f"Error loading content from file: {self._file.path}\n{e!r}"
+                self.log.error(msg, exc_info=e)
+                self._emit(LogLevel.ERROR, None, msg)
+                return None
 
             async with self._update_lock:
                 self._document.source = model["content"]
@@ -255,13 +262,25 @@ class DocumentRoom(YRoom):
 
         except OutOfBandChanges:
             self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
-            model = await self._file.load_content(self._file_format, self._file_type, True)
+            try:
+                model = await self._file.load_content(self._file_format, self._file_type, True)
+            except Exception as e:
+                msg = f"Error loading content from file: {self._file.path}\n{e!r}"
+                self.log.error(msg, exc_info=e)
+                self._emit(LogLevel.ERROR, None, msg)
+                return None
+
             async with self._update_lock:
                 self._document.source = model["content"]
                 self._last_modified = model["last_modified"]
                 self._document.dirty = False
 
             self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes while saving.")
+
+        except Exception as e:
+            msg = f"Error saving file: {self._file.path}\n{e!r}"
+            self.log.error(msg, exc_info=e)
+            self._emit(LogLevel.ERROR, None, msg)
 
 
 class TransientRoom(YRoom):
