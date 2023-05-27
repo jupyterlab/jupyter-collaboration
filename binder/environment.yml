@@ -6,6 +6,7 @@ dependencies:
   - jupyterlab >=4.0.0
   - nodejs >=18,<19
   - python >=3.11,<3.12
+  - yarn >=3,<4
   # build
   - hatchling >=1.5.0
   - hatch-jupyter-builder >=0.3.2
