@@ -13,7 +13,7 @@ import {
 import { DOMUtils } from '@jupyterlab/apputils';
 import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 
-import { ChatPanel } from '@jupyter/chat';
+import { chatIcon, ChatPanel } from '@jupyter/chat';
 
 /**
  * The default collaborative chat panel.
@@ -34,6 +34,7 @@ export const chat: JupyterFrontEndPlugin<void> = {
     const panel = new ChatPanel({ translator, currentUser: user });
     panel.id = DOMUtils.createDomID();
     panel.title.caption = trans.__('Collaboration');
+    panel.title.icon = chatIcon;
     app.shell.add(panel, 'right', { rank: 300 });
 
     restorer.add(panel, 'chat-panel');

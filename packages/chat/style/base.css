@@ -43,6 +43,8 @@
   border: solid 1px;
   min-height: 1em;
   padding: 3px;
+  margin-left: 3px;
+  border-radius: 5px;
 }
 
 /* .jp-ChatPanel-promptPlaceholder:empty:not(:focus):before {

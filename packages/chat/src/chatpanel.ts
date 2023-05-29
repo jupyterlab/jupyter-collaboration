@@ -6,6 +6,16 @@ import { ITranslator } from '@jupyterlab/translation';
 import { LabIcon, SidePanel, caretRightIcon } from '@jupyterlab/ui-components';
 import { Panel, Widget } from '@lumino/widgets';
 
+import chatSvgstr from '../style/icons/chat.svg';
+
+/**
+ * The icon for the chat panel.
+ */
+export const chatIcon = new LabIcon({
+  name: 'collaboration:chat',
+  svgstr: chatSvgstr
+});
+
 /**
  * The chat panel widget.
  */
