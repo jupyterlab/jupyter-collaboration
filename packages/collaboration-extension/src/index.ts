@@ -22,11 +22,13 @@ import {
   userEditorCursors
 } from './collaboration';
 import { sharedLink } from './sharedlink';
+import { chat } from './chat';
 
 /**
  * Export the plugins as default.
  */
 const plugins: JupyterFrontEndPlugin<any>[] = [
+  chat,
   drive,
   yfile,
   ynotebook,

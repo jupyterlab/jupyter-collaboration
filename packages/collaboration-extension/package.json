@@ -108,6 +108,10 @@
         "bundled": false,
         "singleton": true
       },
+      "@jupyter/chat": {
+        "bundled": true,
+        "singleton": true
+      },
       "@jupyter/collaboration": {
         "bundled": true,
         "singleton": true

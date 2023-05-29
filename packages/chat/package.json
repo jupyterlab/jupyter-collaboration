@@ -1,0 +1,61 @@
+{
+  "name": "@jupyter/chat",
+  "version": "1.0.0-alpha.8",
+  "description": "JupyterLab - Chat Widgets",
+  "homepage": "https://github.com/jupyterlab/jupyter_collaboration",
+  "bugs": {
+    "url": "https://github.com/jupyterlab/jupyter_collaboration/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jupyterlab/jupyter_collaboration.git"
+  },
+  "license": "BSD-3-Clause",
+  "author": "Project Jupyter",
+  "sideEffects": [
+    "style/*.css",
+    "style/index.js"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "style": "style/index.css",
+  "directories": {
+    "lib": "lib/"
+  },
+  "files": [
+    "lib/*.d.ts",
+    "lib/*.js.map",
+    "lib/*.js",
+    "style/*.css",
+    "style/index.js"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "build:prod": "jlpm run build",
+    "clean": "rimraf lib tsconfig.tsbuildinfo",
+    "clean:lib": "jlpm run clean:all",
+    "clean:all": "rimraf lib tsconfig.tsbuildinfo node_modules",
+    "install:extension": "jlpm run build",
+    "watch": "tsc -b --watch"
+  },
+  "dependencies": {
+    "@jupyterlab/services": "^7.0.0",
+    "@jupyterlab/translation": "^4.0.0",
+    "@jupyterlab/ui-components": "^4.0.0",
+    "@lumino/widgets": "^2.1.0"
+  },
+  "devDependencies": {
+    "rimraf": "^4.1.2",
+    "typescript": "~5.0.4"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "typedoc": {
+    "entryPoint": "./src/index.ts",
+    "readmeFile": "./README.md",
+    "displayName": "@jupyter/chat",
+    "tsconfig": "./tsconfig.json"
+  },
+  "styleModule": "style/index.js"
+}
