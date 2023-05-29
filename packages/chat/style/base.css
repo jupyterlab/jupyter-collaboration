@@ -3,3 +3,55 @@
 | Distributed under the terms of the Modified BSD License.
 |---------------------------------------------------------------------------- */
 
+.jp-ChatPanel .jp-SidePanel-content {
+  display: flex;
+  flex-direction: column;
+  padding: 5px 0px;
+}
+
+.jp-ChatPanel-messages {
+  flex-grow: 1;
+}
+
+.jp-ChatPanel-message {
+  margin: 5px 2px;
+}
+
+.jp-ChatPanel-messageDate {
+  color: var(--jp-content-font-color3);
+  font-size: var(--jp-ui-font-size0);
+}
+
+.jp-ChatPanel-messageContent {
+  background: var(--jp-layout-color2);
+  padding: 3px;
+  border-radius: 5px;
+  display: inline-block;
+}
+
+.jp-ChatPanel-prompt {
+  display: flex;
+  width: 100%;
+  max-height: 20%;
+}
+
+.jp-ChatPanel-prompt div[role="textarea"] {
+  font-size: var(--jp-ui-font-size1);
+  flex-grow: 1;
+  resize: none;
+  overflow: auto;
+  border: solid 1px;
+  min-height: 1em;
+  padding: 3px;
+}
+
+/* .jp-ChatPanel-promptPlaceholder:empty:not(:focus):before {
+  content: attr(placeholder);
+  color: var(--jp-ui-font-color2);
+  font-style: italic;
+} */
+
+.jp-ChatPanel-promptButton {
+  display: flex;
+  align-items: flex-end;
+}

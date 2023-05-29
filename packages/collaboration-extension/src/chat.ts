@@ -6,6 +6,7 @@
  */
 
 import {
+  ILayoutRestorer,
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
@@ -20,10 +21,13 @@ import { ChatPanel } from '@jupyter/chat';
 export const chat: JupyterFrontEndPlugin<void> = {
   id: '@jupyter/collaboration-extension:chat',
   description: 'The default chat panel',
-  requires: [ITranslator],
-  optional: [],
+  optional: [ITranslator, ILayoutRestorer],
   autoStart: true,
-  activate: (app: JupyterFrontEnd, translator: ITranslator): void => {
+  activate: (
+    app: JupyterFrontEnd,
+    translator: ITranslator,
+    restorer: ILayoutRestorer
+  ): void => {
     const { user } = app.serviceManager;
     const trans = (translator ?? nullTranslator).load('jupyter_collaboration');
 
@@ -31,5 +35,7 @@ export const chat: JupyterFrontEndPlugin<void> = {
     panel.id = DOMUtils.createDomID();
     panel.title.caption = trans.__('Collaboration');
     app.shell.add(panel, 'right', { rank: 300 });
+
+    restorer.add(panel, 'chat-panel');
   }
 };

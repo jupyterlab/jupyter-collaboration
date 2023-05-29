@@ -4,3 +4,4 @@
 |----------------------------------------------------------------------------*/
 
 import '@jupyter/collaboration/style/index.js';
+import '@jupyter/chat/style/index.js';
