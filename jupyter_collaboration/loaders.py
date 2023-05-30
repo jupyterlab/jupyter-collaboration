@@ -14,9 +14,7 @@ from jupyter_server.services.contents.manager import (
 from jupyter_server.utils import ensure_async
 from jupyter_server_fileid.manager import BaseFileIdManager
 
-
-class OutOfBandChanges(Exception):
-    pass
+from .utils import OutOfBandChanges
 
 
 class FileLoader:
@@ -137,6 +135,11 @@ class FileLoader:
         """
         async with self._lock:
             path = self.path
+            if model["type"] not in {"directory", "file", "notebook"}:
+                # fall back to file if unknown type, the content manager only knows
+                # how to handle these types
+                model["type"] = "file"
+
             m = await ensure_async(
                 self._contents_manager.get(
                     path, format=model["format"], type=model["type"], content=False

@@ -121,19 +121,9 @@ export class WebSocketProvider implements IDocumentProvider {
     if (event.code === 1003) {
       console.error('Document provider closed:', event.reason);
 
-      showErrorMessage(
-        this._trans.__('Session expired'),
-        this._trans.__(
-          'The document session expired. You need to reload this browser tab.'
-        ),
-        [Dialog.okButton({ label: this._trans.__('Reload') })]
-      )
-        .then((r: any) => {
-          if (r.button.accept) {
-            window.location.reload();
-          }
-        })
-        .catch(e => window.location.reload());
+      showErrorMessage(this._trans.__('Document session error'), event.reason, [
+        Dialog.okButton()
+      ]);
 
       // Dispose shared model immediately. Better break the document model,
       // than overriding data on disk.
@@ -142,7 +132,6 @@ export class WebSocketProvider implements IDocumentProvider {
   };
 
   private _onSync = (isSynced: boolean) => {
-    console.log(`_onSync ${isSynced}`);
     if (isSynced) {
       this._ready.resolve();
       this._yWebsocketProvider?.off('sync', this._onSync);

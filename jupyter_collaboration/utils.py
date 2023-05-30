@@ -17,6 +17,18 @@ class LogLevel(Enum):
     CRITICAL = "CRITICAL"
 
 
+class OutOfBandChanges(Exception):
+    pass
+
+
+class ReadError(Exception):
+    pass
+
+
+class WriteError(Exception):
+    pass
+
+
 def decode_file_path(path: str) -> Tuple[str, str, str]:
     """
     Decodes a file path. The file path is composed by the format,
