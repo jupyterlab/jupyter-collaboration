@@ -35,11 +35,21 @@ export class ChatPanel extends SidePanel {
 
   /**
    * Add a new message in the list.
-   * @param message - Content and metadata of the message.
+   * @param messageContent - Content and metadata of the message.
    */
-  onMessageReceived(message: ChatPanel.IMessage): void {
-    console.log(message);
-    this._messages.addWidget(new ChatMessage(message, this._user));
+  onMessageReceived(messageContent: ChatPanel.IMessage): void {
+    let index = this._messages.widgets.length;
+    for (const msg of this._messages.widgets.slice(1).reverse()) {
+      if (messageContent.date > (msg as ChatMessage).date) {
+        break;
+      }
+      index -= 1;
+    }
+
+    this._messages.insertWidget(
+      index,
+      new ChatMessage(messageContent, this._user)
+    );
   }
 
   /**
@@ -122,6 +132,13 @@ class ChatMessage extends Widget {
   }
 
   /**
+   * Get the date of the message.
+   */
+  get date(): Date {
+    return this._message.date;
+  }
+
+  /**
    * Build the header of the message.
    * @param currentUser - The current connected user.
    * @returns - The div element containing the header.
@@ -138,7 +155,7 @@ class ChatMessage extends Widget {
 
     const date = document.createElement('div');
     date.classList.add('jp-ChatPanel-messageDate');
-    date.innerText = this._message.date.toDateString();
+    date.innerText = `${this._message.date.toLocaleDateString()} ${this._message.date.toLocaleTimeString()}`;
     header.append(date);
     return header;
   }
