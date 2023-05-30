@@ -4,6 +4,41 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.0.0alpha9
+
+([Full Changelog](https://github.com/jupyterlab/jupyter_collaboration/compare/@jupyter/collaboration-extension@1.0.0-alpha.8...fbae4ff5054bf98507ac87429e0322c22be6b830))
+
+### Enhancements made
+
+- Add share link feature [#150](https://github.com/jupyterlab/jupyter_collaboration/pull/150) ([@fcollonval](https://github.com/fcollonval))
+- Improve code architecture [#146](https://github.com/jupyterlab/jupyter_collaboration/pull/146) ([@fcollonval](https://github.com/fcollonval))
+- Add logger for file editor [#145](https://github.com/jupyterlab/jupyter_collaboration/pull/145) ([@fcollonval](https://github.com/fcollonval))
+- Emit events for collaborative sessions [#139](https://github.com/jupyterlab/jupyter_collaboration/pull/139) ([@hbcarlos](https://github.com/hbcarlos))
+
+### Bugs fixed
+
+- Support file types [#154](https://github.com/jupyterlab/jupyter_collaboration/pull/154) ([@hbcarlos](https://github.com/hbcarlos))
+- Fix injecting user menu bar in top bar. [#149](https://github.com/jupyterlab/jupyter_collaboration/pull/149) ([@fcollonval](https://github.com/fcollonval))
+- Wait for the document to be synced [#148](https://github.com/jupyterlab/jupyter_collaboration/pull/148) ([@fcollonval](https://github.com/fcollonval))
+- Fix asyncio.Task type for python\<=3.8 [#143](https://github.com/jupyterlab/jupyter_collaboration/pull/143) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Maintenance and upkeep improvements
+
+- Fix binder env [#152](https://github.com/jupyterlab/jupyter_collaboration/pull/152) ([@fcollonval](https://github.com/fcollonval))
+- Add license to files automatically [#147](https://github.com/jupyterlab/jupyter_collaboration/pull/147) ([@fcollonval](https://github.com/fcollonval))
+- Add JavaScript and lab extension test in CI [#144](https://github.com/jupyterlab/jupyter_collaboration/pull/144) ([@fcollonval](https://github.com/fcollonval))
+- Fix asyncio.Task type for python\<=3.8 [#143](https://github.com/jupyterlab/jupyter_collaboration/pull/143) ([@davidbrochart](https://github.com/davidbrochart))
+- Update lab [#141](https://github.com/jupyterlab/jupyter_collaboration/pull/141) ([@hbcarlos](https://github.com/hbcarlos))
+- Fix typo and punctuation [#140](https://github.com/jupyterlab/jupyter_collaboration/pull/140) ([@krassowski](https://github.com/krassowski))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter_collaboration/graphs/contributors?from=2023-04-24&to=2023-05-30&type=c))
+
+[@codecov-commenter](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Acodecov-commenter+updated%3A2023-04-24..2023-05-30&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Adavidbrochart+updated%3A2023-04-24..2023-05-30&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Afcollonval+updated%3A2023-04-24..2023-05-30&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Agithub-actions+updated%3A2023-04-24..2023-05-30&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Ahbcarlos+updated%3A2023-04-24..2023-05-30&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Akrassowski+updated%3A2023-04-24..2023-05-30&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Awelcome+updated%3A2023-04-24..2023-05-30&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.0.0alpha8
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter_collaboration/compare/@jupyter/collaboration-extension@1.0.0-alpha.7...2e5a6cc66961a5552e8a89c0850c7483c1e1acb2))
@@ -30,8 +65,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter_collaboration/graphs/contributors?from=2023-03-29&to=2023-04-24&type=c))
 
 [@codecov-commenter](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Acodecov-commenter+updated%3A2023-03-29..2023-04-24&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Adavidbrochart+updated%3A2023-03-29..2023-04-24&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Afcollonval+updated%3A2023-03-29..2023-04-24&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Agithub-actions+updated%3A2023-03-29..2023-04-24&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter_collaboration+involves%3Ahbcarlos+updated%3A2023-03-29..2023-04-24&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.0.0alpha7
 
