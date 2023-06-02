@@ -215,6 +215,7 @@ jobs:
         run: |
           cd ui-tests
           jlpm install
+          jlpm playwright install chromium
       - name: run tests
         run: |
           cd ui-tests
