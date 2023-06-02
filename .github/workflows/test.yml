@@ -197,3 +197,32 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/check-links@v1
         with:
           ignore_links: "../api/*.* ./api/* .*/images/[\\w-]+.png https://docs.github.com/en/.* https://mybinder.org/v2/gh/jupyterlab/jupyter_collaboration/.*"
+
+  ui-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+      - name: Install dependencies
+        run: |
+          pip install jupyterlab
+          pip install -e .
+          jlpm
+      - name: Install playwright
+        run: |
+          cd ui-tests
+          jlpm install
+      -name: run tests
+        run: |
+          cd ui-tests
+          jlpm test
+      - name: Upload Playwright Test report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: jupyter-collaboration_playwright-report
+          path: |
+            ui-tests/playwright-report
