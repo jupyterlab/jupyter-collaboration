@@ -1,3 +1,6 @@
+# Copyright (c) Jupyter Development Team.
+# Distributed under the terms of the Modified BSD License.
+
 """Server configuration for integration tests.
 
 !! Never use this configuration in production because it
