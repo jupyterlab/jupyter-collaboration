@@ -3,11 +3,11 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { IJupyterLabPageFixture, expect, test, galata } from '@jupyterlab/galata';
+import { IJupyterLabPageFixture, expect, test } from '@jupyterlab/galata';
 import { Locator } from '@playwright/test';
 
 test.use( {
-  permissions: ["clipboard-read"]
+  permissions: ['clipboard-read']
 });
 
 const openDialog = async (page: IJupyterLabPageFixture): Promise<Locator> => {
