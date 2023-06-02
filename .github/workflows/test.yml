@@ -215,7 +215,7 @@ jobs:
         run: |
           cd ui-tests
           jlpm install
-      -name: run tests
+      - name: run tests
         run: |
           cd ui-tests
           jlpm test
