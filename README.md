@@ -12,13 +12,13 @@ To install the latest release locally, make sure you have
 [pip installed](https://pip.readthedocs.io/en/stable/installing/) and run:
 
 ```bash
-pip install jupyter_collaboration
+pip install jupyter-collaboration
 ```
 
 Or using ``conda``/``mamba``:
 
 ```bash
-conda install jupyter_collaboration
+conda install jupyter-collaboration
 ```
 
 ### Testing
