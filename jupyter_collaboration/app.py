@@ -103,10 +103,5 @@ class YDocExtension(ExtensionApp):
 
     async def stop_extension(self):
         # Cancel tasks and clean up
-        await asyncio.wait(
-            [
-                asyncio.create_task(self.ywebsocket_server.clean()),
-                asyncio.create_task(self.file_loaders.clear()),
-            ],
-            timeout=3,
-        )
+        await self.ywebsocket_server.clean()
+        await self.file_loaders.clean()

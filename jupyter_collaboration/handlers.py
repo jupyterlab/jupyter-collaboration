@@ -20,7 +20,7 @@ from ypy_websocket.yutils import YMessageType
 
 from .loaders import FileLoaderMapping
 from .rooms import DocumentRoom, TransientRoom
-from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, decode_file_path
+from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, decode_file_path, cancel_task
 from .websocketserver import JupyterWebsocketServer
 
 YFILE = YDOCS["file"]
@@ -127,7 +127,10 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
     async def __anext__(self):
         # needed to be compatible with WebsocketServer (async for message in websocket)
-        message = await self._message_queue.get()
+        try:
+            message = await self._message_queue.get()
+        except asyncio.CancelledError:
+            message = None
         if not message:
             raise StopAsyncIteration()
         return message
@@ -160,7 +163,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
             # cancel the deletion of the room if it was scheduled
             if self.room.cleaner is not None:
-                self.room.cleaner.cancel()
+                await cancel_task(self.room.cleaner)
 
             try:
                 # Initialize the room
@@ -189,8 +192,11 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         Receive a message from the client.
         """
-        message = await self._message_queue.get()
-        return message
+        try:
+            message = await self._message_queue.get()
+            return message
+        except asyncio.CancelledError:
+            return None
 
     def on_message(self, message):
         """
