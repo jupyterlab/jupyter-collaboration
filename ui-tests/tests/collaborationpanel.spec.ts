@@ -8,22 +8,14 @@ import { Locator, Page } from '@playwright/test';
 
 const openPanel = async (page: Page): Promise<Locator> => {
   const panel = await page.$('.jp-SidePanel.jp-RTCPanel');
-  if (!panel?.isVisible()) {
+
+  if (!(await panel?.isVisible())) {
     const collaborationIcon = page.locator('.jp-SideBar.jp-mod-left ul li[title="Collaboration"]');
     await collaborationIcon.click();
     await expect(page.locator('.jp-SidePanel.jp-RTCPanel')).toBeVisible();
   }
   return page.locator('.jp-SidePanel.jp-RTCPanel').first();
 };
-
-const closePanel = async (page: Page): Promise<void> => {
-  const panel = await page.$('.jp-SidePanel.jp-RTCPanel');
-  if (panel?.isVisible()) {
-    const collaborationIcon = page.locator('.jp-SideBar.jp-mod-left ul li[title="Collaboration"]');
-    await collaborationIcon.click();
-    await expect(page.locator('.jp-SidePanel.jp-RTCPanel')).toBeVisible();
-  }
-}
 
 test('should contain the collaboration panel icon', async ({ page }) => {
   const collaborationIcon = page.locator('.jp-SideBar.jp-mod-left ul li[title="Collaboration"]');
@@ -51,7 +43,7 @@ test('collaboration panel should contains two items', async ({ page }) => {
 
   // Opens the collaborators list and expect it empty.
   await accordionTitles.last().click();
-  expect(panel.locator('.jp-CollaboratorsList').first().locator('jp-Collaborator')).toHaveCount(0);
+  expect(panel.locator('.jp-CollaboratorsList .jp-Collaborator')).toHaveCount(0);
 });
 
 test('collaborators list should be updated', async ({ page, browser }) => {
@@ -67,19 +59,18 @@ test('collaborators list should be updated', async ({ page, browser }) => {
   }
 
   // Expect the collaborators list to be empty.
-  const collaboratorsList = panel.locator('.jp-CollaboratorsList').first();
-  await expect(collaboratorsList.locator('.jp-Collaborator')).toHaveCount(0);
+  await expect(panel.locator('.jp-CollaboratorsList .jp-Collaborator')).toHaveCount(0);
 
   // Open a new page and expect the collaborators list to contain 1 element.
   const newPage = await browser.newPage();
   await newPage.goto(page.url());
-  await expect(collaboratorsList.locator('.jp-Collaborator')).toHaveCount(1);
+  await expect(panel.locator('.jp-CollaboratorsList .jp-Collaborator')).toHaveCount(1);
 
   // Log out the collaborator and expect the collaborators list to be empty.
   await newPage.click('.lm-MenuBar-itemLabel:text("File")');
   await newPage.click('.lm-Menu-itemLabel:text("Log Out")');
   await newPage.close();
-  await expect(collaboratorsList.locator('.jp-Collaborator')).toHaveCount(0);
+  await expect(panel.locator('collaboratorsList .jp-Collaborator')).toHaveCount(0);
 });
 
 test('clicking on collaborator should open to its current document', async ({ page, browser }) => {
@@ -94,16 +85,11 @@ test('clicking on collaborator should open to its current document', async ({ pa
   ) {
     await accordionTitles.last().click();
   }
-  const collaboratorsList = panel.locator('.jp-CollaboratorsList').first();
 
-  // Need to close the panel to update the collaborators list in the other page.
-  // TODO: fix it
-  await openPanel(page);
-  await closePanel(page);
   await openPanel(page);
 
   // Expect the collaborators list to contain one collaborator.
-  await expect(collaboratorsList.locator('.jp-Collaborator')).toHaveCount(1);
+  await expect(panel.locator('.jp-CollaboratorsList .jp-Collaborator')).toHaveCount(1);
 
   const notebookName = await page.notebook.createNew() || '';
 
@@ -113,7 +99,7 @@ test('clicking on collaborator should open to its current document', async ({ pa
   await expect(dockTabs.locator('li.lm-mod-current > .lm-TabBar-tabLabel')).toHaveText('Launcher');
 
   // Click on collaborator should open the current notebook of this collaborator.
-  await collaboratorsList.locator('.jp-Collaborator').first().click();
+  await panel.locator('.jp-CollaboratorsList .jp-Collaborator').first().click();
   await expect(dockTabs.locator('li')).toHaveCount(2);
   await expect(dockTabs.locator('li.lm-mod-current > .lm-TabBar-tabLabel')).toHaveText(notebookName);
 });
