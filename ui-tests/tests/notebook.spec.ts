@@ -40,12 +40,12 @@ import {
 
     return true;
   }
-  
+
   test.describe('Initialization', () => {
     const pathUntitled = 'Untitled.ipynb';
     const exampleNotebook = 'OutputExamples.ipynb';
     let guestPage: IJupyterLabPageFixture;
-  
+
     test.beforeEach(
       async ({
         page,
@@ -63,7 +63,7 @@ import {
           ),
           `${tmpPath}/${exampleNotebook}`
         );
-  
+
         // Create a new client
         const user: Partial<User.IUser> = {
           identity: {
@@ -82,7 +82,7 @@ import {
           waitForApplication
         });
         guestPage = newPage;
-  
+
         await guestPage.evaluate(() => {
           // Acknowledge any dialog
           window.galataip.on('dialog', d => {
@@ -91,7 +91,7 @@ import {
         });
       }
     );
-  
+
     test.afterEach(async ({ page, request, tmpPath }) => {
       const contents = galata.newContentsHelper(request);
       await contents.deleteFile(`${tmpPath}/${exampleNotebook}`);
@@ -100,66 +100,66 @@ import {
       await guestPage.close();
       await page.close();
     });
-  
+
     test('Create a notebook', async ({ page, request, tmpPath }) => {
       // Renaming does not work
       await page.notebook.createNew();
       await page.notebook.activate(pathUntitled);
       await guestPage.filebrowser.refresh();
       await guestPage.notebook.open(pathUntitled);
-  
+
       const nbPanel = await page.notebook.getNotebookInPanel();
       expect(await nbPanel?.screenshot()).toMatchSnapshot(
         'initialization-create-notebook-host.png'
       );
-  
+
       const nbPanelGuest = await guestPage.notebook.getNotebookInPanel();
       expect(await nbPanelGuest?.screenshot()).toMatchSnapshot(
         'initialization-create-notebook-guest.png'
       );
-  
+
       await page.notebook.close(true);
       await guestPage.notebook.close(true);
       const contents = galata.newContentsHelper(request);
       await contents.deleteFile(`${tmpPath}/${pathUntitled}`);
     });
-  
+
     test('Open a notebook', async ({ page }) => {
       await page.filebrowser.refresh();
       await page.notebook.open(exampleNotebook);
       await page.notebook.activate(exampleNotebook);
-  
+
       await guestPage.filebrowser.refresh();
       await guestPage.notebook.open(exampleNotebook);
-  
+
       const nbPanel = await page.notebook.getNotebookInPanel();
       expect(await nbPanel?.screenshot()).toMatchSnapshot(
         'initialization-open-notebook-host.png'
       );
-  
+
       const nbPanelGuest = await guestPage.notebook.getNotebookInPanel();
       expect(await nbPanelGuest?.screenshot()).toMatchSnapshot(
         'initialization-open-notebook-guest.png'
       );
-  
+
       await page.notebook.close(true);
       await guestPage.notebook.close(true);
     });
   });
-  
+
   test.describe('Ten clients', () => {
     test.setTimeout(120000);
-  
+
     const numClients = 10;
     const pathUntitled = 'Untitled.ipynb';
     let guestPages: Array<IJupyterLabPageFixture> = [];
-  
+
     test.beforeEach(
       async ({ page, baseURL, browser, tmpPath, waitForApplication }) => {
-  
+
         // Renaming does not work
         await page.notebook.createNew();
-  
+
         for (let i = 0; i < numClients; i++) {
           // Create a new client
           const user: Partial<User.IUser> = {
@@ -178,7 +178,7 @@ import {
             tmpPath,
             waitForApplication
           });
-  
+
           await guestPage.evaluate(() => {
             // Acknowledge any dialog
             window.galataip.on('dialog', d => {
@@ -187,14 +187,14 @@ import {
           });
           guestPages.push(guestPage);
         }
-  
+
         // FIXME instantiating multiple page at once does not work.
         // guestPages = (
         //   await Promise.all(
         //     new Array(numClients).fill(0).map(async (v, i) => {
         //       // Needs delay between pages otherwise instatiation crashes
         //       await page.waitForTimeout(i * 500);
-  
+
         //       // Create a new client
         //       const user: Partial<User.IUser> = {
         //         identity: {
@@ -217,7 +217,7 @@ import {
         // ).map(({ page }) => page);
       }
     );
-  
+
     test.afterEach(async ({ request, tmpPath }) => {
       const contents = galata.newContentsHelper(request);
       await contents.deleteFile(`${tmpPath}/${pathUntitled}`);
@@ -226,12 +226,12 @@ import {
       await Promise.all(guestPages.map(guestPage => guestPage.close()));
       guestPages = [];
     });
-  
+
     test('Adds a new cell', async ({ page }) => {
       await page.filebrowser.refresh();
       await page.notebook.open(pathUntitled);
       const numCells = await page.notebook.getCellCount();
-  
+
       await Promise.all(
         guestPages.map(async p => {
           await p.filebrowser.refresh();
@@ -239,32 +239,32 @@ import {
           await p.notebook.clickToolbarItem('insert');
         })
       );
-  
+
       await page.waitForCondition(
         async () => (await page.notebook.getCellCount()) === numCells + numClients
       );
-  
+
       const nbPanel = await page.notebook.getNotebookInPanel();
       expect(await nbPanel?.screenshot()).toMatchSnapshot(
         'ten-clients-add-a-new-cell.png'
       );
     });
-  
+
     test('Creates a cell and write on it', async ({ page }) => {
       await page.filebrowser.refresh();
       await page.notebook.open(pathUntitled);
-  
+
       await Promise.all(
         guestPages.map(async (p, i) => {
           await p.filebrowser.refresh();
           await p.notebook.open(pathUntitled);
           await p.notebook.clickToolbarItem('insert');
           await writeCell(p, i, `Guest client ${i}`);
-  
+
           await page.waitForSelector(`text=Guest client ${i}`);
         })
       );
-  
+
       await expect.soft(page.locator('.jp-Cell')).toHaveCount(guestPages.length + 1)
       const count = await page.getByText('Guest client').count();
       // Some client may override the cell of other clients => we don't check for strict equality
@@ -275,7 +275,7 @@ import {
     test('Sets the first cell', async ({ page }) => {
       await page.filebrowser.refresh();
       await page.notebook.open(pathUntitled);
-  
+
       await Promise.all(
         guestPages.map(async (p, i) => {
           await p.filebrowser.refresh();
@@ -283,14 +283,14 @@ import {
           await p.locator('.jp-Cell >> .cm-editor').first().click();
           await p.keyboard.press('Enter');
           await p.keyboard.type(`Guest client ${i}`);
-  
+
           await p.locator(`text=Guest client ${i}`).waitFor();
         })
       );
-  
+
       // Wait for all update to reach the master page
       await page.waitForTimeout(2000);
-  
+
       await Promise.all(
         guestPages.map((p, i) =>
           expect(page.locator('.jp-Cell >> nth=0 >> .cm-editor')).toHaveText(
@@ -300,4 +300,4 @@ import {
       );
     });
   });
-  
+
