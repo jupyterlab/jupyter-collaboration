@@ -10,6 +10,8 @@ const baseConfig = require('@jupyterlab/galata/lib/playwright-config');
 
 module.exports = {
   ...baseConfig,
+  // Force one worker as global awareness will contaminate parallel tests.
+  workers: 1,
   webServer: {
     command: 'jlpm start',
     url: 'http://localhost:8888/lab',

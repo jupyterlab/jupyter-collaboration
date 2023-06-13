@@ -187,7 +187,7 @@ class DocumentRoom(YRoom):
                 event (str): Type of change.
                 args (dict): A dictionary with format, type, last_modified.
         """
-        if event == "metadata" and self._last_modified < args["last_modified"]:
+        if event == "metadata" and (self._last_modified is None or self._last_modified < args["last_modified"]):
             self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
             self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes. Overwriting the room.")
 

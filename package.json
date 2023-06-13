@@ -21,11 +21,9 @@
     "name": "Jupyter Development Team",
     "email": "jupyter@googlegroups.com"
   },
-  "workspaces": {
-    "packages": [
-      "packages/*"
-    ]
-  },
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "build": "lerna run build",
     "build:prod": "lerna run build:prod",

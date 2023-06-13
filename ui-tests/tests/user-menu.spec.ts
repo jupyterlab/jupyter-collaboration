@@ -4,7 +4,7 @@
  */
 
 import { IJupyterLabPageFixture, expect, test } from '@jupyterlab/galata';
-import { Locator } from '@playwright/test';
+import type { Locator } from '@playwright/test';
 
 test.use( {
   permissions: ['clipboard-read']
