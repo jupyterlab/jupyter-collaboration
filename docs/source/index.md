@@ -16,13 +16,13 @@ Editors are not collaborative by default; to activate it, install the extension
 Installation using mamba/conda:
 
 ```sh
-mamba install -c conda-forge jupyter_collaboration
+mamba install -c conda-forge jupyter-collaboration
 ```
 
 Installation using pip:
 
 ```sh
-pip install jupyter_collaboration
+pip install jupyter-collaboration
 ```
 
 To share a document with other users, you can copy the URL and send it, or you
