@@ -13,7 +13,7 @@ from ypy_websocket.websocket_server import YRoom
 from ypy_websocket.ystore import BaseYStore, YDocNotFound
 
 from .loaders import FileLoader
-from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, OutOfBandChanges
+from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, OutOfBandChanges, cancel_task
 
 YFILE = YDOCS["file"]
 
@@ -158,19 +158,22 @@ class DocumentRoom(YRoom):
 
         self._logger.emit(schema_id=JUPYTER_COLLABORATION_EVENTS_URI, data=data)
 
-    def _clean(self) -> None:
+    async def _clean(self) -> None:
         """
         Cleans the rooms.
 
         Cancels the save task and unsubscribes from the file.
         """
-        super()._clean()
-        # TODO: Should we cancel or wait ?
-        if self._saving_document:
-            self._saving_document.cancel()
+        await super()._clean()
 
         self._document.unobserve()
         self._file.unobserve(self.room_id)
+
+        if self.cleaner:
+            await cancel_task(self.cleaner)
+
+        if self._saving_document:
+            await cancel_task(self._saving_document)
 
     async def _broadcast_updates(self):
         # FIXME should be upstreamed

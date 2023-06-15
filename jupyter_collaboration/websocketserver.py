@@ -11,6 +11,8 @@ from tornado.websocket import WebSocketHandler
 from ypy_websocket.websocket_server import WebsocketServer, YRoom
 from ypy_websocket.ystore import BaseYStore
 
+from .utils import cancel_task
+
 
 class RoomNotFound(LookupError):
     pass
@@ -40,46 +42,10 @@ class JupyterWebsocketServer(WebsocketServer):
         self.monitor_task: asyncio.Task | None = None
 
     async def clean(self):
-        # TODO: should we wait for any save task?
-        self.log.info("Deleting all rooms.")
-        # FIXME some clean up should be upstreamed and the following does not
-        # prevent hanging stop process - it also requires some thinking about
-        # should the ystore write action be cancelled; I guess not as it could
-        # results in corrupted data.
-        # room_tasks = list()
-        # for name, room in list(self.rooms.items()):
-        #     for task in room.background_tasks:
-        #         task.cancel()  # FIXME should be upstreamed
-        #         room_tasks.append(task)
-        # if room_tasks:
-        #     _, pending = await asyncio.wait(room_tasks, timeout=3)
-        #     if pending:
-        #         msg = f"{len(pending)} room task(s) are pending."
-        #         self.log.warning(msg)
-        #         self.log.debug("Pending tasks: %r", pending)
+        await super().clean()
 
-        tasks = []
-        for name, room in list(self.rooms.items()):
-            try:
-                self.delete_room(name=name)
-            except Exception as e:  # Capture exception as room may be auto clean
-                msg = f"Failed to delete room {name}"
-                self.log.debug(msg, exc_info=e)
-            else:
-                tasks.append(room._broadcast_task)  # FIXME should be upstreamed
         if self.monitor_task is not None:
-            self.monitor_task.cancel()
-            tasks.append(self.monitor_task)
-        for task in self.background_tasks:
-            task.cancel()  # FIXME should be upstreamed
-            tasks.append(task)
-
-        if tasks:
-            _, pending = await asyncio.wait(tasks, timeout=3)
-            if pending:
-                msg = f"{len(pending)} task(s) are pending."
-                self.log.warning(msg)
-                self.log.debug("Pending tasks: %r", pending)
+            await cancel_task(self.monitor_task)
 
     def room_exists(self, path: str) -> bool:
         """
@@ -139,10 +105,7 @@ class JupyterWebsocketServer(WebsocketServer):
             This method runs in a coroutine for debugging purposes.
         """
         while True:
-            try:
-                await asyncio.sleep(60)
-            except asyncio.CancelledError:
-                break
+            await asyncio.sleep(60)
             clients_nb = sum(len(room.clients) for room in self.rooms.values())
             self.log.info("Processed %s Y patches in one minute", self.ypatch_nb)
             self.log.info("Connected Y users: %s", clients_nb)

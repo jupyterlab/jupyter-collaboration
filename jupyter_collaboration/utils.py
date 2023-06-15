@@ -1,6 +1,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+import asyncio
 import pathlib
 from enum import Enum
 from typing import Tuple
@@ -59,3 +60,11 @@ def encode_file_path(format: str, file_type: str, file_id: str) -> str:
             path (str): File path.
     """
     return f"{format}:{file_type}:{file_id}"
+
+
+async def cancel_task(task: asyncio.Task):
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass

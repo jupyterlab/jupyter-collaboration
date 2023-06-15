@@ -14,7 +14,7 @@ from jupyter_server.services.contents.manager import (
 from jupyter_server.utils import ensure_async
 from jupyter_server_fileid.manager import BaseFileIdManager
 
-from .utils import OutOfBandChanges
+from .utils import OutOfBandChanges, cancel_task
 
 
 class FileLoader:
@@ -73,9 +73,7 @@ class FileLoader:
         Stops the watch task.
         """
         if self._watcher is not None:
-            if not self._watcher.cancelled():
-                self._watcher.cancel()
-            await self._watcher
+            await cancel_task(self._watcher)
 
     def observe(
         self, id: str, callback: Callable[[str, dict[str, Any]], Coroutine[Any, Any, None]]
@@ -241,18 +239,16 @@ class FileLoaderMapping:
 
         return file
 
-    async def __delitem__(self, file_id: str) -> None:
+    def __delitem__(self, file_id: str) -> None:
         """Delete a loader for a given file."""
-        await self.remove(file_id)
+        self.remove(file_id)
 
-    async def clear(self) -> None:
+    async def clean(self) -> None:
         """Clear all loaders."""
         tasks = []
         for id in list(self.__dict):
             loader = self.__dict.pop(id)
-            tasks.append(loader.clean())
-
-        await asyncio.gather(*tasks)
+            await loader.clean()
 
     async def remove(self, file_id: str) -> None:
         """Remove the loader for a given file."""
