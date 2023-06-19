@@ -32,6 +32,8 @@ import { IStateDB, StateDB } from '@jupyterlab/statedb';
 import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 
 import * as Y from 'yjs';
+import * as decoding from 'lib0/decoding';
+import * as encoding from 'lib0/encoding';
 import { Awareness } from 'y-protocols/awareness';
 import { WebsocketProvider } from 'y-websocket';
 
@@ -97,9 +99,28 @@ export const rtcGlobalAwarenessPlugin: JupyterFrontEndPlugin<IAwareness> = {
     const server = ServerConnection.makeSettings();
     const url = URLExt.join(server.wsUrl, 'api/collaboration/room');
 
-    new WebsocketProvider(url, 'JupyterLab:globalAwareness', ydoc, {
+    const ws = new WebsocketProvider(url, 'JupyterLab:globalAwareness', ydoc, {
       awareness: awareness
     });
+
+    ws.messageHandlers[125] = (
+      encoder,
+      decoder,
+      provider,
+      emitSynced,
+      messageType
+    ) => {
+      const content = decoding.readVarString(decoder);
+      console.debug("Chat:", content);
+    };
+
+    ws.ws!.onopen = () => {
+      console.debug("open:");
+      const encoder = encoding.createEncoder();
+      encoding.writeVarUint(encoder, 125);
+      encoding.writeVarString(encoder, "Helloo");
+      ws.ws?.send(encoding.toUint8Array(encoder));
+    };
 
     const userChanged = () => {
       awareness.setLocalStateField('user', user.identity);
