@@ -89,7 +89,7 @@ export const rtcGlobalAwarenessPlugin: JupyterFrontEndPlugin<IAwareness> = {
   provides: IGlobalAwareness,
   activate: (app: JupyterFrontEnd, state: StateDB): IAwareness => {
     const { user } = app.serviceManager;
-    
+
     const ydoc = new Y.Doc();
     const awareness = new Awareness(ydoc);
 

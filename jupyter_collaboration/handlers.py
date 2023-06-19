@@ -20,7 +20,12 @@ from ypy_websocket.yutils import YMessageType, write_var_uint
 
 from .loaders import FileLoaderMapping
 from .rooms import DocumentRoom, TransientRoom
-from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, decode_file_path, MessageType
+from .utils import (
+    JUPYTER_COLLABORATION_EVENTS_URI,
+    LogLevel,
+    MessageType,
+    decode_file_path,
+)
 from .websocketserver import JupyterWebsocketServer
 
 YFILE = YDOCS["file"]
@@ -223,14 +228,16 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     YMessageType(message_type).name,
                 )
                 return skip
-        
+
         if message_type == MessageType.CHAT:
             msg = message[2:].decode("utf-8")
             user = self.get_current_user()
-            data = json.dumps({"username": user.username, "msg": msg}).encode('utf8')
+            data = json.dumps({"username": user.username, "msg": msg}).encode("utf8")
             for client in self.room.clients:
-                if client != self :
-                    task = asyncio.create_task(client.send(bytes([MessageType.CHAT]) + write_var_uint(len(data)) + data))
+                if client != self:
+                    task = asyncio.create_task(
+                        client.send(bytes([MessageType.CHAT]) + write_var_uint(len(data)) + data)
+                    )
                     self._websocket_server.background_tasks.add(task)
                     task.add_done_callback(self._websocket_server.background_tasks.discard)
 

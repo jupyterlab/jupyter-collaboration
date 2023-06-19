@@ -23,8 +23,6 @@ export const IGlobalAwareness = new Token<IAwareness>(
   '@jupyter/collaboration:IGlobalAwareness'
 );
 
-
-
 /**
  * An interface describing the user menu.
  */

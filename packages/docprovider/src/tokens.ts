@@ -54,7 +54,7 @@ export interface ISharedModelFactory extends Contents.ISharedFactory {
 
 /**
  * The awareness interface.
- * 
+ *
  * TODO: Move to @jupyter/YDoc
  */
 export type IAwareness = Awareness;
@@ -63,15 +63,14 @@ export type IAwareness = Awareness;
  * A provider interface for global awareness features.
  */
 export interface IAwarenessProvider {
-
   /**
    * A signal to subscribe for incoming messages.
    */
   get chatMessage(): ISignal<this, IChatMessage>;
-  
+
   /**
    * Send a message to every collaborator.
-   * 
+   *
    * @param msg message
    */
   sendMessage(msg: string): void;

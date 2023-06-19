@@ -8,10 +8,12 @@ from typing import Tuple
 JUPYTER_COLLABORATION_EVENTS_URI = "https://schema.jupyter.org/jupyter_collaboration/session/v1"
 EVENTS_SCHEMA_PATH = pathlib.Path(__file__).parent / "events" / "session.yaml"
 
+
 class MessageType(IntEnum):
     SYNC = 0
     AWARENESS = 1
     CHAT = 125
+
 
 class LogLevel(Enum):
     INFO = "INFO"
