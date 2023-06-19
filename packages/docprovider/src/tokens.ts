@@ -3,7 +3,13 @@
 
 import { DocumentChange, YDocument } from '@jupyter/ydoc';
 import { Contents } from '@jupyterlab/services';
+
 import { Token } from '@lumino/coreutils';
+import { ISignal } from '@lumino/signaling';
+
+import type { Awareness } from 'y-protocols/awareness';
+
+import { IChatMessage } from './awareness';
 
 /**
  * The collaborative drive.
@@ -44,4 +50,29 @@ export interface ISharedModelFactory extends Contents.ISharedFactory {
     type: Contents.ContentType,
     factory: SharedDocumentFactory
   ): void;
+}
+
+/**
+ * The awareness interface.
+ * 
+ * TODO: Move to @jupyter/YDoc
+ */
+export type IAwareness = Awareness;
+
+/**
+ * A provider interface for global awareness features.
+ */
+export interface IAwarenessProvider {
+
+  /**
+   * A signal to subscribe for incoming messages.
+   */
+  get chatMessage(): ISignal<this, IChatMessage>;
+  
+  /**
+   * Send a message to every collaborator.
+   * 
+   * @param msg message
+   */
+  sendMessage(msg: string): void;
 }

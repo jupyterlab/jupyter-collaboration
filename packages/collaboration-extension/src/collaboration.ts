@@ -16,7 +16,6 @@ import {
 } from '@jupyterlab/codemirror';
 import {
   CollaboratorsPanel,
-  IAwareness,
   IGlobalAwareness,
   IUserMenu,
   remoteUserCursors,
@@ -24,6 +23,7 @@ import {
   UserInfoPanel,
   UserMenu
 } from '@jupyter/collaboration';
+import { IAwareness, WebSocketAwarenessProvider } from '@jupyter/docprovider';
 import { SidePanel, usersIcon } from '@jupyterlab/ui-components';
 import { Menu, MenuBar } from '@lumino/widgets';
 import { URLExt } from '@jupyterlab/coreutils';
@@ -32,10 +32,7 @@ import { IStateDB, StateDB } from '@jupyterlab/statedb';
 import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 
 import * as Y from 'yjs';
-import * as decoding from 'lib0/decoding';
-import * as encoding from 'lib0/encoding';
 import { Awareness } from 'y-protocols/awareness';
-import { WebsocketProvider } from 'y-websocket';
 
 /**
  * Jupyter plugin providing the IUserMenu.
@@ -92,44 +89,19 @@ export const rtcGlobalAwarenessPlugin: JupyterFrontEndPlugin<IAwareness> = {
   provides: IGlobalAwareness,
   activate: (app: JupyterFrontEnd, state: StateDB): IAwareness => {
     const { user } = app.serviceManager;
+    
     const ydoc = new Y.Doc();
-
     const awareness = new Awareness(ydoc);
 
     const server = ServerConnection.makeSettings();
     const url = URLExt.join(server.wsUrl, 'api/collaboration/room');
 
-    const ws = new WebsocketProvider(url, 'JupyterLab:globalAwareness', ydoc, {
-      awareness: awareness
+    new WebSocketAwarenessProvider({
+      url: url,
+      roomID: 'JupyterLab:globalAwareness',
+      awareness: awareness,
+      user: user
     });
-
-    ws.messageHandlers[125] = (
-      encoder,
-      decoder,
-      provider,
-      emitSynced,
-      messageType
-    ) => {
-      const content = decoding.readVarString(decoder);
-      console.debug("Chat:", content);
-    };
-
-    ws.ws!.onopen = () => {
-      console.debug("open:");
-      const encoder = encoding.createEncoder();
-      encoding.writeVarUint(encoder, 125);
-      encoding.writeVarString(encoder, "Helloo");
-      ws.ws?.send(encoding.toUint8Array(encoder));
-    };
-
-    const userChanged = () => {
-      awareness.setLocalStateField('user', user.identity);
-    };
-    if (user.isReady) {
-      userChanged();
-    }
-    user.ready.then(userChanged).catch(e => console.error(e));
-    user.userChanged.connect(userChanged);
 
     state.changed.connect(async () => {
       const data: any = await state.toJSON();

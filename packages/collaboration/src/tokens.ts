@@ -3,7 +3,7 @@
 
 import type { Menu } from '@lumino/widgets';
 import { Token } from '@lumino/coreutils';
-import type { Awareness } from 'y-protocols/awareness';
+import { IAwareness } from '@jupyter/docprovider';
 import type { User } from '@jupyterlab/services';
 
 /**
@@ -23,10 +23,7 @@ export const IGlobalAwareness = new Token<IAwareness>(
   '@jupyter/collaboration:IGlobalAwareness'
 );
 
-/**
- * The awareness interface.
- */
-export type IAwareness = Awareness;
+
 
 /**
  * An interface describing the user menu.
