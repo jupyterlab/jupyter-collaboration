@@ -49,6 +49,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
     """
 
     _message_queue: asyncio.Queue[Any]
+    _background_tasks: set[asyncio.Task]
 
     def create_task(self, aw):
         task = asyncio.create_task(aw)
