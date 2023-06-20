@@ -16,7 +16,6 @@ import {
 } from '@jupyterlab/codemirror';
 import {
   CollaboratorsPanel,
-  IAwareness,
   IGlobalAwareness,
   IUserMenu,
   remoteUserCursors,
@@ -24,6 +23,7 @@ import {
   UserInfoPanel,
   UserMenu
 } from '@jupyter/collaboration';
+import { IAwareness, WebSocketAwarenessProvider } from '@jupyter/docprovider';
 import { SidePanel, usersIcon } from '@jupyterlab/ui-components';
 import { Menu, MenuBar } from '@lumino/widgets';
 import { URLExt } from '@jupyterlab/coreutils';
@@ -33,7 +33,6 @@ import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 
 import * as Y from 'yjs';
 import { Awareness } from 'y-protocols/awareness';
-import { WebsocketProvider } from 'y-websocket';
 
 /**
  * Jupyter plugin providing the IUserMenu.
@@ -90,25 +89,19 @@ export const rtcGlobalAwarenessPlugin: JupyterFrontEndPlugin<IAwareness> = {
   provides: IGlobalAwareness,
   activate: (app: JupyterFrontEnd, state: StateDB): IAwareness => {
     const { user } = app.serviceManager;
-    const ydoc = new Y.Doc();
 
+    const ydoc = new Y.Doc();
     const awareness = new Awareness(ydoc);
 
     const server = ServerConnection.makeSettings();
     const url = URLExt.join(server.wsUrl, 'api/collaboration/room');
 
-    new WebsocketProvider(url, 'JupyterLab:globalAwareness', ydoc, {
-      awareness: awareness
+    new WebSocketAwarenessProvider({
+      url: url,
+      roomID: 'JupyterLab:globalAwareness',
+      awareness: awareness,
+      user: user
     });
-
-    const userChanged = () => {
-      awareness.setLocalStateField('user', user.identity);
-    };
-    if (user.isReady) {
-      userChanged();
-    }
-    user.ready.then(userChanged).catch(e => console.error(e));
-    user.userChanged.connect(userChanged);
 
     state.changed.connect(async () => {
       const data: any = await state.toJSON();
