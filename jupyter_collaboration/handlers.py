@@ -50,27 +50,21 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
     _message_queue: asyncio.Queue[Any]
 
-    def initialize(
-        self,
-        ywebsocket_server: JupyterWebsocketServer,
-        file_loaders: FileLoaderMapping,
-        ystore_class: type[BaseYStore],
-        document_cleanup_delay: float | None = 60.0,
-        document_save_delay: float | None = 1.0,
-    ) -> None:
-        # File ID manager cannot be passed as argument as the extension may load after this one
-        self._file_id_manager = self.settings["file_id_manager"]
-        self._file_loaders = file_loaders
-        self._cleanup_delay = document_cleanup_delay
-        self._websocket_server = ywebsocket_server
+    def create_task(self, aw):
+        task = asyncio.create_task(aw)
+        self._background_tasks.add(task)
+        task.add_done_callback(self._background_tasks.discard)
 
-        self._message_queue = asyncio.Queue()
+    async def prepare(self):
+        if not self._websocket_server.started.is_set():
+            self.create_task(self._websocket_server.start())
+            await self._websocket_server.started.wait()
 
         # Get room
         self._room_id: str = self.request.path.split("/")[-1]
 
         if self._websocket_server.room_exists(self._room_id):
-            self.room: YRoom = self._websocket_server.get_room(self._room_id)
+            self.room: YRoom = await self._websocket_server.get_room(self._room_id)
 
         else:
             if self._room_id.count(":") >= 2:
@@ -87,7 +81,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 path = self._file_id_manager.get_path(file_id)
                 path = Path(path)
                 updates_file_path = str(path.parent / f".{file_type}:{path.name}.y")
-                ystore = ystore_class(path=updates_file_path, log=self.log)
+                ystore = self._ystore_class(path=updates_file_path, log=self.log)
                 self.room = DocumentRoom(
                     self._room_id,
                     file_format,
@@ -96,7 +90,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     self.event_logger,
                     ystore,
                     self.log,
-                    document_save_delay,
+                    self._document_save_delay,
                 )
 
             else:
@@ -104,7 +98,28 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 # it is a transient document (e.g. awareness)
                 self.room = TransientRoom(self._room_id, self.log)
 
+            await self._websocket_server.start_room(self.room)
             self._websocket_server.add_room(self._room_id, self.room)
+
+        return await super().prepare()
+
+    def initialize(
+        self,
+        ywebsocket_server: JupyterWebsocketServer,
+        file_loaders: FileLoaderMapping,
+        ystore_class: type[BaseYStore],
+        document_cleanup_delay: float | None = 60.0,
+        document_save_delay: float | None = 1.0,
+    ) -> None:
+        self._background_tasks = set()
+        # File ID manager cannot be passed as argument as the extension may load after this one
+        self._file_id_manager = self.settings["file_id_manager"]
+        self._file_loaders = file_loaders
+        self._ystore_class = ystore_class
+        self._cleanup_delay = document_cleanup_delay
+        self._document_save_delay = document_save_delay
+        self._websocket_server = ywebsocket_server
+        self._message_queue = asyncio.Queue()
 
     @property
     def path(self):
@@ -145,9 +160,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         On connection open.
         """
-        task = asyncio.create_task(self._websocket_server.serve(self))
-        self._websocket_server.background_tasks.add(task)
-        task.add_done_callback(self._websocket_server.background_tasks.discard)
+        self.create_task(self._websocket_server.serve(self))
 
         if isinstance(self.room, DocumentRoom):
             # Close the connection if the document session expired
