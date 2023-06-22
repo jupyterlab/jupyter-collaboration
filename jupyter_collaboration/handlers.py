@@ -24,6 +24,7 @@ from .utils import (
     JUPYTER_COLLABORATION_EVENTS_URI,
     LogLevel,
     MessageType,
+    RoomMessages,
     decode_file_path,
 )
 from .websocketserver import JupyterWebsocketServer
@@ -209,7 +210,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         message = await self._message_queue.get()
         return message
 
-    def on_message(self, message):
+    async def on_message(self, message):
         """
         On message receive.
         """
@@ -239,6 +240,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     YMessageType(message_type).name,
                 )
                 return skip
+
+        if message_type == MessageType.ROOM:
+            await self.room.handle_msg(message[1:])
 
         if message_type == MessageType.CHAT:
             msg = message[2:].decode("utf-8")

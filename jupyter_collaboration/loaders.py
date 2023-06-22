@@ -126,6 +126,26 @@ class FileLoader:
 
             Returns:
                 model (dict): A dictionary with the metadata and content of the file.
+        """
+        async with self._lock:
+            path = self.path
+            if model["type"] not in {"directory", "file", "notebook"}:
+                # fall back to file if unknown type, the content manager only knows
+                # how to handle these types
+                model["type"] = "file"
+
+            self._log.info("Saving file: %s", path)
+            return await ensure_async(self._contents_manager.save(model, path))
+
+    async def maybe_save_content(self, model: dict[str, Any]) -> dict[str, Any]:
+        """
+        Save the content of the file.
+
+            Parameters:
+                model (dict): A dictionary with format, type, last_modified, and content of the file.
+
+            Returns:
+                model (dict): A dictionary with the metadata and content of the file.
 
             Raises:
                 OutOfBandChanges: if the file was modified at a latter time than the model
@@ -147,8 +167,7 @@ class FileLoader:
             )
 
             if model["last_modified"] == m["last_modified"]:
-                self._log.info("Saving file: %s", path)
-                return await ensure_async(self._contents_manager.save(model, path))
+                return await self.save_content(model)
 
             else:
                 # file changed on disk, raise an error

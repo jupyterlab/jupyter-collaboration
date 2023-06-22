@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import asyncio
+import uuid
 from logging import Logger
 from typing import Any
 
@@ -11,9 +12,16 @@ from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
 from ypy_websocket.websocket_server import YRoom
 from ypy_websocket.ystore import BaseYStore, YDocNotFound
+from ypy_websocket.yutils import write_var_uint
 
 from .loaders import FileLoader
-from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, OutOfBandChanges
+from .utils import (
+    JUPYTER_COLLABORATION_EVENTS_URI,
+    LogLevel,
+    MessageType,
+    OutOfBandChanges,
+    RoomMessages,
+)
 
 YFILE = YDOCS["file"]
 
@@ -48,6 +56,7 @@ class DocumentRoom(YRoom):
         self._initialization_lock = asyncio.Lock()
         self._cleaner: asyncio.Task | None = None
         self._saving_document: asyncio.Task | None = None
+        self._messages: dict[str, asyncio.Lock] = {}
 
         # Listen for document changes
         self._document.observe(self._on_document_change)
@@ -149,6 +158,40 @@ class DocumentRoom(YRoom):
                 self.ready = True
                 self._emit(LogLevel.INFO, "initialize", "Room initialized")
 
+    async def handle_msg(self, data: bytes) -> None:
+        msg_type = data[0]
+        msg_id = data[1:].decode()
+
+        # Use a lock to prevent handling responses from multiple clients
+        # at the same time
+        async with self._messages[msg_id]:
+            # Check whether the previous client resolved the conflict
+            if msg_id not in self._messages:
+                return
+
+            try:
+                ans = None
+                if msg_type == RoomMessages.RESTORE:
+                    # Restore the room with the content from disk
+                    await self._restore()
+                    ans = RoomMessages.DOC_OVERWRITTEN
+
+                elif msg_type == RoomMessages.OVERWRITE:
+                    # Overwrite the file with content from the room
+                    await self._save_document()
+                    ans = RoomMessages.FILE_OVERWRITTEN
+
+                if ans is not None:
+                    # Remove the lock and broadcast the resolution
+                    self._messages.pop(msg_id)
+                    data = msg_id.encode()
+                    self._broadcast_msg(
+                        bytes([MessageType.ROOM, ans]) + write_var_uint(len(data)) + data
+                    )
+
+            except Exception:
+                return
+
     def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:
         data = {"level": level.value, "room": self._room_id, "path": self._file.path}
         if action:
@@ -193,18 +236,14 @@ class DocumentRoom(YRoom):
             self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
             self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes. Overwriting the room.")
 
-            try:
-                model = await self._file.load_content(self._file_format, self._file_type, True)
-            except Exception as e:
-                msg = f"Error loading content from file: {self._file.path}\n{e!r}"
-                self.log.error(msg, exc_info=e)
-                self._emit(LogLevel.ERROR, None, msg)
-                return None
-
-            async with self._update_lock:
-                self._document.source = model["content"]
-                self._last_modified = model["last_modified"]
-                self._document.dirty = False
+            msg_id = str(uuid.uuid4())
+            self._messages[msg_id] = asyncio.Lock()
+            data = msg_id.encode()
+            self._broadcast_msg(
+                bytes([MessageType.ROOM, RoomMessages.FILE_CHANGED])
+                + write_var_uint(len(data))
+                + data
+            )
 
     def _on_document_change(self, target: str, event: Any) -> None:
         """
@@ -231,6 +270,45 @@ class DocumentRoom(YRoom):
 
         self._saving_document = asyncio.create_task(self._maybe_save_document())
 
+    async def _restore(self) -> None:
+        try:
+            model = await self._file.load_content(self._file_format, self._file_type, True)
+        except Exception as e:
+            msg = f"Error loading content from file: {self._file.path}\n{e!r}"
+            self.log.error(msg, exc_info=e)
+            self._emit(LogLevel.ERROR, None, msg)
+            return None
+
+        async with self._update_lock:
+            self._document.source = model["content"]
+            self._last_modified = model["last_modified"]
+            self._document.dirty = False
+
+    async def _save_document(self) -> None:
+        """
+        Saves the content of the document to disk.
+        """
+        try:
+            self.log.info("Saving the content from room %s", self._room_id)
+            model = await self._file.save_content(
+                {
+                    "format": self._file_format,
+                    "type": self._file_type,
+                    "last_modified": self._last_modified,
+                    "content": self._document.source,
+                }
+            )
+            self._last_modified = model["last_modified"]
+            async with self._update_lock:
+                self._document.dirty = False
+
+            self._emit(LogLevel.INFO, "save", "Content saved.")
+
+        except Exception as e:
+            msg = f"Error saving file: {self._file.path}\n{e!r}"
+            self.log.error(msg, exc_info=e)
+            self._emit(LogLevel.ERROR, None, msg)
+
     async def _maybe_save_document(self) -> None:
         """
         Saves the content of the document to disk.
@@ -248,7 +326,7 @@ class DocumentRoom(YRoom):
 
         try:
             self.log.info("Saving the content from room %s", self._room_id)
-            model = await self._file.save_content(
+            model = await self._file.maybe_save_content(
                 {
                     "format": self._file_format,
                     "type": self._file_type,
@@ -283,6 +361,10 @@ class DocumentRoom(YRoom):
             msg = f"Error saving file: {self._file.path}\n{e!r}"
             self.log.error(msg, exc_info=e)
             self._emit(LogLevel.ERROR, None, msg)
+
+    def _broadcast_msg(self, msg) -> None:
+        for client in self.clients:
+            client.send(msg)
 
 
 class TransientRoom(YRoom):
