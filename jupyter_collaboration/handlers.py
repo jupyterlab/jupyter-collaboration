@@ -24,7 +24,6 @@ from .utils import (
     JUPYTER_COLLABORATION_EVENTS_URI,
     LogLevel,
     MessageType,
-    RoomMessages,
     decode_file_path,
 )
 from .websocketserver import JupyterWebsocketServer
@@ -320,7 +319,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         file = self._file_loaders[file_id]
         if file.number_of_subscriptions == 0:
             self.log.info("Deleting file %s", file.path)
-            del self._file_loaders[file_id]
+            await self._file_loaders.remove(file_id)
             self._emit(LogLevel.INFO, "clean", "Loader deleted.")
 
     def check_origin(self, origin):

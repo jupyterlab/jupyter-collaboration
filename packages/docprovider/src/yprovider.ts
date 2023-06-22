@@ -13,10 +13,13 @@ import { Signal } from '@lumino/signaling';
 
 import { DocumentChange, YDocument } from '@jupyter/ydoc';
 
+import * as decoding from 'lib0/decoding';
+import * as encoding from 'lib0/encoding';
 import { Awareness } from 'y-protocols/awareness';
 import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
 
 import { requestDocSession } from './requests';
+import { MessageType, RoomMessage } from './utils';
 
 /**
  * An interface for a document provider.
@@ -111,6 +114,18 @@ export class WebSocketProvider implements IDocumentProvider {
 
     this._yWebsocketProvider.on('sync', this._onSync);
     this._yWebsocketProvider.on('connection-close', this._onConnectionClosed);
+
+    this._yWebsocketProvider.messageHandlers[MessageType.ROOM] = (
+      encoder,
+      decoder,
+      provider,
+      emitSynced,
+      messageType
+    ) => {
+      const msgType = decoding.readVarUint(decoder);
+      const data = decoding.readVarString(decoder);
+      this._handleRoomMessage(msgType, data);
+    };
   }
 
   private _onUserChanged(user: User.IManager): void {
@@ -138,6 +153,59 @@ export class WebSocketProvider implements IDocumentProvider {
     }
   };
 
+  private _handleRoomMessage(type: number, data: string): void {
+    switch (type) {
+      case RoomMessage.FILE_CHANGED:
+        this._handleFileChanged(data);
+        break;
+
+      case RoomMessage.DOC_OVERWRITTEN:
+      case RoomMessage.FILE_OVERWRITTEN:
+        if (this._dialog) {
+          this._dialog.close();
+          this._dialog = null;
+        }
+        break;
+    }
+  }
+
+  private _handleFileChanged(data: string): void {
+    this._dialog = new Dialog({
+      title: this._trans.__('File changed'),
+      body: this._trans.__('Do you want to overwrite the file or reload it?'),
+      buttons: [
+        Dialog.okButton({ label: 'Reload' }),
+        Dialog.warnButton({ label: 'Overwrite' })
+      ],
+      hasClose: false
+    });
+
+    this._dialog.launch().then(resp => {
+      if (resp.button.label === 'Reload') {
+        this._sendReloadMsg(data);
+      } else if (resp.button.label === 'Overwrite') {
+        this._sendOverwriteMsg(data);
+      }
+    });
+  }
+
+  private _sendReloadMsg(data: string): void {
+    const encoder = encoding.createEncoder();
+    encoding.writeVarUint(encoder, MessageType.ROOM);
+    encoding.writeVarUint(encoder, RoomMessage.RELOAD);
+    encoding.writeVarString(encoder, data);
+    this._yWebsocketProvider?.ws!.send(encoding.toUint8Array(encoder));
+  }
+
+  private _sendOverwriteMsg(data: string): void {
+    const encoder = encoding.createEncoder();
+    encoding.writeVarUint(encoder, MessageType.ROOM);
+    encoding.writeVarUint(encoder, RoomMessage.OVERWRITE);
+    encoding.writeVarString(encoder, data);
+    this._yWebsocketProvider?.ws!.send(encoding.toUint8Array(encoder));
+  }
+
+  private _dialog: Dialog<any> | null = null;
   private _awareness: Awareness;
   private _contentType: string;
   private _format: string;

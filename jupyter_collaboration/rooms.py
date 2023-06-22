@@ -53,6 +53,7 @@ class DocumentRoom(YRoom):
         self._save_delay = save_delay
 
         self._update_lock = asyncio.Lock()
+        self._outofband_lock = asyncio.Lock()
         self._initialization_lock = asyncio.Lock()
         self._cleaner: asyncio.Task | None = None
         self._saving_document: asyncio.Task | None = None
@@ -160,7 +161,7 @@ class DocumentRoom(YRoom):
 
     async def handle_msg(self, data: bytes) -> None:
         msg_type = data[0]
-        msg_id = data[1:].decode()
+        msg_id = data[2:].decode()
 
         # Use a lock to prevent handling responses from multiple clients
         # at the same time
@@ -171,9 +172,9 @@ class DocumentRoom(YRoom):
 
             try:
                 ans = None
-                if msg_type == RoomMessages.RESTORE:
+                if msg_type == RoomMessages.RELOAD:
                     # Restore the room with the content from disk
-                    await self._restore()
+                    await self._load_document()
                     ans = RoomMessages.DOC_OVERWRITTEN
 
                 elif msg_type == RoomMessages.OVERWRITE:
@@ -185,7 +186,8 @@ class DocumentRoom(YRoom):
                     # Remove the lock and broadcast the resolution
                     self._messages.pop(msg_id)
                     data = msg_id.encode()
-                    self._broadcast_msg(
+                    self._outofband_lock.release()
+                    await self._broadcast_msg(
                         bytes([MessageType.ROOM, ans]) + write_var_uint(len(data)) + data
                     )
 
@@ -230,6 +232,9 @@ class DocumentRoom(YRoom):
                 event (str): Type of change.
                 args (dict): A dictionary with format, type, last_modified.
         """
+        if self._outofband_lock.locked():
+            return
+        
         if event == "metadata" and (
             self._last_modified is None or self._last_modified < args["last_modified"]
         ):
@@ -238,8 +243,9 @@ class DocumentRoom(YRoom):
 
             msg_id = str(uuid.uuid4())
             self._messages[msg_id] = asyncio.Lock()
+            await self._outofband_lock.acquire()
             data = msg_id.encode()
-            self._broadcast_msg(
+            await self._broadcast_msg(
                 bytes([MessageType.ROOM, RoomMessages.FILE_CHANGED])
                 + write_var_uint(len(data))
                 + data
@@ -270,7 +276,7 @@ class DocumentRoom(YRoom):
 
         self._saving_document = asyncio.create_task(self._maybe_save_document())
 
-    async def _restore(self) -> None:
+    async def _load_document(self) -> None:
         try:
             model = await self._file.load_content(self._file_format, self._file_type, True)
         except Exception as e:
@@ -362,9 +368,9 @@ class DocumentRoom(YRoom):
             self.log.error(msg, exc_info=e)
             self._emit(LogLevel.ERROR, None, msg)
 
-    def _broadcast_msg(self, msg) -> None:
+    async def _broadcast_msg(self, msg: bytes) -> None:
         for client in self.clients:
-            client.send(msg)
+            await client.send(msg)
 
 
 class TransientRoom(YRoom):

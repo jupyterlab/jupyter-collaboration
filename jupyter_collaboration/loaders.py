@@ -167,7 +167,8 @@ class FileLoader:
             )
 
             if model["last_modified"] == m["last_modified"]:
-                return await self.save_content(model)
+                self._log.info("Saving file: %s", path)
+                return await ensure_async(self._contents_manager.save(model, path))
 
             else:
                 # file changed on disk, raise an error

@@ -14,11 +14,8 @@ import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
 import { WebsocketProvider } from 'y-websocket';
 
+import { MessageType } from './utils';
 import { IAwarenessProvider } from './tokens';
-
-export enum MessageType {
-  CHAT = 125
-}
 
 export interface IContent {
   type: string;

@@ -17,7 +17,7 @@ class MessageType(IntEnum):
 
 
 class RoomMessages(IntEnum):
-    RESTORE = 0
+    RELOAD = 0
     OVERWRITE = 1
     FILE_CHANGED = 2
     FILE_OVERWRITTEN = 3
