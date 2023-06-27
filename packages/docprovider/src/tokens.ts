@@ -5,7 +5,7 @@ import { DocumentChange, YDocument } from '@jupyter/ydoc';
 import { Contents } from '@jupyterlab/services';
 
 import { Token } from '@lumino/coreutils';
-import { ISignal } from '@lumino/signaling';
+import { IStream } from '@lumino/signaling';
 
 import type { Awareness } from 'y-protocols/awareness';
 
@@ -66,7 +66,7 @@ export interface IAwarenessProvider {
   /**
    * A signal to subscribe for incoming messages.
    */
-  get chatMessage(): ISignal<this, IChatMessage>;
+  readonly messageStream: IStream<this, IChatMessage>;
 
   /**
    * Send a message to every collaborator.
