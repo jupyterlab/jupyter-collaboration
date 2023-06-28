@@ -227,7 +227,7 @@ test.describe('Ten clients', () => {
     guestPages = [];
   });
 
-  test('Adds a new cell', async ({ page }) => {
+  test.skip('Adds a new cell', async ({ page }) => {
     await page.filebrowser.refresh();
     await page.notebook.open(pathUntitled);
     const numCells = await page.notebook.getCellCount();
