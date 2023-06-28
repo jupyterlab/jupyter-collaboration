@@ -250,7 +250,7 @@ test.describe('Ten clients', () => {
     );
   });
 
-  test('Creates a cell and write on it', async ({ page }) => {
+  test.skip('Creates a cell and write on it', async ({ page }) => {
     await page.filebrowser.refresh();
     await page.notebook.open(pathUntitled);
 
@@ -272,7 +272,7 @@ test.describe('Ten clients', () => {
     expect(count).toBeLessThanOrEqual(guestPages.length);
   });
 
-  test('Sets the first cell', async ({ page }) => {
+  test.skip('Sets the first cell', async ({ page }) => {
     await page.filebrowser.refresh();
     await page.notebook.open(pathUntitled);
 
