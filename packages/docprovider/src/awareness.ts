@@ -8,11 +8,13 @@ import { User } from '@jupyterlab/services';
 import { IDisposable } from '@lumino/disposable';
 import { IStream, Stream } from '@lumino/signaling';
 
+import { IAwareness } from '@jupyter/ydoc';
+
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
 import { WebsocketProvider } from 'y-websocket';
 
-import { IAwareness, IAwarenessProvider } from './tokens';
+import { IAwarenessProvider } from './tokens';
 
 export enum MessageType {
   CHAT = 125

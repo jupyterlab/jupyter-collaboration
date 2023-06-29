@@ -7,8 +7,6 @@ import { Contents } from '@jupyterlab/services';
 import { Token } from '@lumino/coreutils';
 import { IStream } from '@lumino/signaling';
 
-import type { Awareness } from 'y-protocols/awareness';
-
 import { IChatMessage } from './awareness';
 
 /**
@@ -51,13 +49,6 @@ export interface ISharedModelFactory extends Contents.ISharedFactory {
     factory: SharedDocumentFactory
   ): void;
 }
-
-/**
- * The awareness interface.
- *
- * TODO: Move to @jupyter/YDoc
- */
-export type IAwareness = Awareness;
 
 /**
  * A provider interface for global awareness features.
