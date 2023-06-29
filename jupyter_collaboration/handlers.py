@@ -84,9 +84,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     )
 
                 file = self._file_loaders[file_id]
-                path = self._file_id_manager.get_path(file_id)
-                path = Path(path)
-                updates_file_path = str(path.parent / f".{file_type}:{path.name}.y")
+                path = Path(self._file_id_manager.get_path(file_id))
+                updates_file_path = str(path.parent / f".{file_type}:{file_id}.y")
                 ystore = self._ystore_class(path=updates_file_path, log=self.log)
                 self.room = DocumentRoom(
                     self._room_id,
