@@ -1,6 +1,6 @@
 {
   "name": "@jupyter/docprovider",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "JupyterLab - Document Provider",
   "homepage": "https://github.com/jupyterlab/jupyter_collaboration",
   "bugs": {
