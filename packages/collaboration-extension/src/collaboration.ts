@@ -9,7 +9,7 @@ import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
-import { DOMUtils, IToolbarWidgetRegistry } from '@jupyterlab/apputils';
+import { IToolbarWidgetRegistry } from '@jupyterlab/apputils';
 import {
   EditorExtensionRegistry,
   IEditorExtensionRegistry
@@ -139,7 +139,7 @@ export const rtcPanelPlugin: JupyterFrontEndPlugin<void> = {
     const userPanel = new SidePanel({
       alignment: 'justify'
     });
-    userPanel.id = DOMUtils.createDomID();
+    userPanel.id = 'jp-collaboration-panel';
     userPanel.title.icon = usersIcon;
     userPanel.title.caption = trans.__('Collaboration');
     userPanel.addClass('jp-RTCPanel');

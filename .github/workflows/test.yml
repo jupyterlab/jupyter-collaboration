@@ -109,6 +109,7 @@ jobs:
 
   test_minimum_versions:
     name: Test Minimum Versions
+    needs: [pre-commit, test-js, test-py]
     timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
@@ -125,6 +126,7 @@ jobs:
 
   test_prereleases:
     name: Test Prereleases
+    needs: [pre-commit, test-js, test-py]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -145,6 +147,7 @@ jobs:
 
   make_sdist:
     name: Make SDist
+    needs: [pre-commit, test-js, test-py]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -197,3 +200,44 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/check-links@v1
         with:
           ignore_links: "../api/*.* ./api/* .*/images/[\\w-]+.png https://docs.github.com/en/.* https://mybinder.org/v2/gh/jupyterlab/jupyter_collaboration/.*"
+
+  ui_tests:
+    runs-on: ubuntu-latest
+    needs: [pre-commit, test-js]
+    timeout-minutes: 30
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/pw-browsers
+    steps:
+      - uses: actions/checkout@v3
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - name: Install dependencies
+        run: |
+          pip install jupyterlab .
+      - name: Install playwright
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+        run: |
+          jlpm install
+        working-directory: ui-tests
+      - name: Set up browser cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ github.workspace }}/pw-browsers
+          key: ${{ runner.os }}-${{ hashFiles('ui-tests/yarn.lock') }}
+      - name: Install browser
+        run: jlpm playwright install chromium
+        working-directory: ui-tests
+
+      - name: run tests
+        working-directory: ui-tests
+        run: |
+          jlpm test
+      - name: Upload Playwright Test report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: jupyter-collaboration-playwright-report
+          path: |
+            ui-tests/test-results
+            ui-tests/playwright-report
