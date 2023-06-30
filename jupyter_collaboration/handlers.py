@@ -182,13 +182,27 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             try:
                 # Initialize the room
                 await self.room.initialize()
+            except web.HTTPError as e:
+                _, _, file_id = decode_file_path(self._room_id)
+                file = self._file_loaders[file_id]
+                # Close websocket and propagate error.
+                self.log.error(f"File {file.path} not found.\n{e!r}", exc_info=e)
+                self.close(1004, f"File {file.path} not found.")
+                # Clean up the room and delete the file loader
+                self._cleanup_delay = 0
+                self._clean_room()
+
             except Exception as e:
                 _, _, file_id = decode_file_path(self._room_id)
                 file = self._file_loaders[file_id]
+                # Close websocket and propagate error.
                 self.log.error(f"Error initializing: {file.path}\n{e!r}", exc_info=e)
                 self.close(
                     1003, f"Error initializing: {file.path}. You need to close the document."
                 )
+                # Clean up the room and delete the file loader
+                self._cleanup_delay = 0
+                self._clean_room()
 
             self._emit(LogLevel.INFO, "initialize", "New client connected.")
 

@@ -78,9 +78,15 @@ export class YDrive extends Drive implements ICollaborativeDrive {
       const provider = this._providers.get(key);
 
       if (provider) {
-        const model = super.get(localPath, { ...options, content: false });
-        await provider.ready;
-        return model;
+        // If the document does't exist, `super.get` will reject with an
+        // error and the provider will never be resolved.
+        // Use `Promise.all` to reject as soon as possible. The Context will
+        // show a dialog to the user.
+        const resp = await Promise.all([
+          super.get(localPath, { ...options, content: false }),
+          provider.ready
+        ]);
+        return resp[0];
       }
     }
 
