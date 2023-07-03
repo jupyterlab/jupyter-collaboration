@@ -2537,16 +2537,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glue-lab-ui-tests@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "glue-lab-ui-tests@workspace:."
-  dependencies:
-    "@jupyterlab/galata": ^5.0.0
-    "@jupyterlab/services": ^7.0.0
-    "@playwright/test": ^1.35.0
-  languageName: unknown
-  linkType: soft
-
 "graceful-fs@npm:^4.1.6, graceful-fs@npm:^4.2.0, graceful-fs@npm:^4.2.6":
   version: 4.2.11
   resolution: "graceful-fs@npm:4.2.11"
@@ -2789,6 +2779,16 @@ __metadata:
   checksum: 0b40f712900ad0c846681ea2db23b6684b9d5eedf55807b4708c656f5894b63507d0e28ae10aa1bddbea551241035afe62b6df0800fc94c2e2806a7f3adecd7c
   languageName: node
   linkType: hard
+
+"jupyter-collaboration-ui-tests@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "jupyter-collaboration-ui-tests@workspace:."
+  dependencies:
+    "@jupyterlab/galata": ^5.0.0
+    "@jupyterlab/services": ^7.0.0
+    "@playwright/test": ^1.35.0
+  languageName: unknown
+  linkType: soft
 
 "lib0@npm:^0.2.42, lib0@npm:^0.2.74":
   version: 0.2.74
