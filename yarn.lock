@@ -2021,6 +2021,7 @@ __metadata:
   dependencies:
     "@jupyter/collaboration": ^1.0.1
     "@jupyter/docprovider": ^1.0.1
+    "@jupyter/ydoc": ^1.1.0-a0
     "@jupyterlab/application": ^4.0.0
     "@jupyterlab/apputils": ^4.0.0
     "@jupyterlab/builder": ^4.0.0
@@ -2075,7 +2076,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@jupyter/docprovider@workspace:packages/docprovider"
   dependencies:
-    "@jupyter/ydoc": ^1.0.2
+    "@jupyter/ydoc": ^1.1.0-a0
     "@jupyterlab/coreutils": ^6.0.0
     "@jupyterlab/services": ^7.0.0
     "@jupyterlab/testing": ^4.0.0
@@ -2126,6 +2127,20 @@ __metadata:
     y-protocols: ^1.0.5
     yjs: ^13.5.40
   checksum: 739f9630940466b3cfcd7b742dd06479f81772ca13f863d057af0bbb5e318829506969066ab72977e7c721644982b5c8f88cf44e1ae81955ed1c27e87632d1f2
+  languageName: node
+  linkType: hard
+
+"@jupyter/ydoc@npm:^1.1.0-a0":
+  version: 1.1.0-a0
+  resolution: "@jupyter/ydoc@npm:1.1.0-a0"
+  dependencies:
+    "@jupyterlab/nbformat": ^3.0.0 || ^4.0.0-alpha.21 || ^4.0.0
+    "@lumino/coreutils": ^1.11.0 || ^2.0.0
+    "@lumino/disposable": ^1.10.0 || ^2.0.0
+    "@lumino/signaling": ^1.10.0 || ^2.0.0
+    y-protocols: ^1.0.5
+    yjs: ^13.5.40
+  checksum: 0099bacb2884a460867658e7f5a944e4d6eca7c4d3d68a6b31102be77d8fc9b6ba162af55c20f81c70f7fef4e9d9329eee4da32063c0caa0c6e3f10a488f95b5
   languageName: node
   linkType: hard
 

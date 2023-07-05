@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 import uuid
 from pathlib import Path
 from typing import Any
@@ -216,7 +217,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         On message receive.
         """
         message_type = message[0]
-        print("message type:", message_type)
 
         if message_type == YMessageType.AWARENESS:
             # awareness
@@ -245,8 +245,12 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
         if message_type == MessageType.CHAT:
             msg = message[2:].decode("utf-8")
+
             user = self.get_current_user()
-            data = json.dumps({"username": user.username, "msg": msg}).encode("utf8")
+            data = json.dumps(
+                {"sender": user.username, "timestamp": time.time(), "content": json.loads(msg)}
+            ).encode("utf8")
+
             for client in self.room.clients:
                 if client != self:
                     task = asyncio.create_task(

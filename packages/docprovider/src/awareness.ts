@@ -6,21 +6,29 @@
 import { User } from '@jupyterlab/services';
 
 import { IDisposable } from '@lumino/disposable';
-import { ISignal, Signal } from '@lumino/signaling';
+import { IStream, Stream } from '@lumino/signaling';
+
+import { IAwareness } from '@jupyter/ydoc';
 
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
 import { WebsocketProvider } from 'y-websocket';
 
-import { IAwareness, IAwarenessProvider } from './tokens';
+import { IAwarenessProvider } from './tokens';
 
 export enum MessageType {
   CHAT = 125
 }
 
+export interface IContent {
+  type: string;
+  body: string;
+}
+
 export interface IChatMessage {
-  username: string;
-  msg: string;
+  sender: string;
+  timestamp: number;
+  content: IContent;
 }
 
 /**
@@ -45,13 +53,13 @@ export class WebSocketAwarenessProvider
 
     this._awareness = options.awareness;
 
-    const user = options.user;
-    user.ready
-      .then(() => this._onUserChanged(user))
+    this._user = options.user;
+    this._user.ready
+      .then(() => this._onUserChanged(this._user))
       .catch(e => console.error(e));
-    user.userChanged.connect(this._onUserChanged, this);
+    this._user.userChanged.connect(this._onUserChanged, this);
 
-    this._chatMessage = new Signal(this);
+    this._messageStream = new Stream(this);
 
     this.messageHandlers[MessageType.CHAT] = (
       encoder,
@@ -62,8 +70,7 @@ export class WebSocketAwarenessProvider
     ) => {
       const content = decoding.readVarString(decoder);
       const data = JSON.parse(content) as IChatMessage;
-      console.debug('Chat:', data);
-      this._chatMessage.emit(data);
+      this._messageStream.emit(data);
     };
   }
 
@@ -74,8 +81,8 @@ export class WebSocketAwarenessProvider
   /**
    * A signal to subscribe for incoming messages.
    */
-  get chatMessage(): ISignal<this, IChatMessage> {
-    return this._chatMessage;
+  get messageStream(): IStream<this, IChatMessage> {
+    return this._messageStream;
   }
 
   dispose(): void {
@@ -83,8 +90,9 @@ export class WebSocketAwarenessProvider
       return;
     }
 
-    this.destroy();
+    this._user.userChanged.disconnect(this._onUserChanged, this);
     this._isDisposed = true;
+    this.destroy();
   }
 
   /**
@@ -93,10 +101,13 @@ export class WebSocketAwarenessProvider
    * @param msg message
    */
   sendMessage(msg: string): void {
-    console.debug('Send message:', msg);
+    const data: IContent = {
+      type: 'text',
+      body: msg
+    };
     const encoder = encoding.createEncoder();
     encoding.writeVarUint(encoder, MessageType.CHAT);
-    encoding.writeVarString(encoder, msg);
+    encoding.writeVarString(encoder, JSON.stringify(data));
     this.ws!.send(encoding.toUint8Array(encoder));
   }
 
@@ -105,9 +116,10 @@ export class WebSocketAwarenessProvider
   }
 
   private _isDisposed = false;
+  private _user: User.IManager;
   private _awareness: IAwareness;
 
-  private _chatMessage: Signal<this, IChatMessage>;
+  private _messageStream: Stream<this, IChatMessage>;
 }
 
 /**

@@ -14,6 +14,17 @@ import {
   EditorExtensionRegistry,
   IEditorExtensionRegistry
 } from '@jupyterlab/codemirror';
+import { WebSocketAwarenessProvider } from '@jupyter/docprovider';
+import { SidePanel, usersIcon } from '@jupyterlab/ui-components';
+import { URLExt } from '@jupyterlab/coreutils';
+import { ServerConnection } from '@jupyterlab/services';
+import { IStateDB, StateDB } from '@jupyterlab/statedb';
+import { ITranslator, nullTranslator } from '@jupyterlab/translation';
+
+import { Menu, MenuBar } from '@lumino/widgets';
+
+import { IAwareness } from '@jupyter/ydoc';
+
 import {
   CollaboratorsPanel,
   IGlobalAwareness,
@@ -23,13 +34,6 @@ import {
   UserInfoPanel,
   UserMenu
 } from '@jupyter/collaboration';
-import { IAwareness, WebSocketAwarenessProvider } from '@jupyter/docprovider';
-import { SidePanel, usersIcon } from '@jupyterlab/ui-components';
-import { Menu, MenuBar } from '@lumino/widgets';
-import { URLExt } from '@jupyterlab/coreutils';
-import { ServerConnection } from '@jupyterlab/services';
-import { IStateDB, StateDB } from '@jupyterlab/statedb';
-import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 
 import * as Y from 'yjs';
 import { Awareness } from 'y-protocols/awareness';
