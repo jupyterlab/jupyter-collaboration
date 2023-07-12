@@ -82,11 +82,11 @@ export class YDrive extends Drive implements ICollaborativeDrive {
         // error and the provider will never be resolved.
         // Use `Promise.all` to reject as soon as possible. The Context will
         // show a dialog to the user.
-        const resp = await Promise.all([
+        const [model] = await Promise.all([
           super.get(localPath, { ...options, content: false }),
           provider.ready
         ]);
-        return resp[0];
+        return model;
       }
     }
 
