@@ -209,7 +209,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         message = await self._message_queue.get()
         return message
 
-    def on_message(self, message):
+    async def on_message(self, message):
         """
         On message receive.
         """
@@ -239,6 +239,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     YMessageType(message_type).name,
                 )
                 return skip
+
+        if message_type == MessageType.ROOM:
+            await self.room.handle_msg(message[1:])
 
         if message_type == MessageType.CHAT:
             msg = message[2:].decode("utf-8")
@@ -316,7 +319,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         file = self._file_loaders[file_id]
         if file.number_of_subscriptions == 0:
             self.log.info("Deleting file %s", file.path)
-            del self._file_loaders[file_id]
+            await self._file_loaders.remove(file_id)
             self._emit(LogLevel.INFO, "clean", "Loader deleted.")
 
     def check_origin(self, origin):

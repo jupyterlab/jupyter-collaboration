@@ -12,7 +12,16 @@ EVENTS_SCHEMA_PATH = pathlib.Path(__file__).parent / "events" / "session.yaml"
 class MessageType(IntEnum):
     SYNC = 0
     AWARENESS = 1
+    ROOM = 124
     CHAT = 125
+
+
+class RoomMessages(IntEnum):
+    RELOAD = 0
+    OVERWRITE = 1
+    FILE_CHANGED = 2
+    FILE_OVERWRITTEN = 3
+    DOC_OVERWRITTEN = 4
 
 
 class LogLevel(Enum):
