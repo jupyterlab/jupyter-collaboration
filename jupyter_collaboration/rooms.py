@@ -234,7 +234,7 @@ class DocumentRoom(YRoom):
         """
         if self._outofband_lock.locked():
             return
-        
+
         if event == "metadata" and (
             self._last_modified is None or self._last_modified < args["last_modified"]
         ):
