@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 
 from jupyter_server.extension.application import ExtensionApp
-from traitlets import Float, Type
+from traitlets import Bool, Float, Type
 from ypy_websocket.ystore import BaseYStore
 
 from .handlers import DocSessionHandler, YDocWebSocketHandler
@@ -17,6 +17,12 @@ from .websocketserver import JupyterWebsocketServer
 
 class YDocExtension(ExtensionApp):
     name = "jupyter_collaboration"
+    app_name = "Collaboration"
+    description = """
+    Enables Real Time Collaboration in JupyterLab
+    """
+
+    disable_rtc = Bool(False, config=True, help="Whether to disable real time collaboration.")
 
     file_poll_interval = Float(
         1,
@@ -66,6 +72,10 @@ class YDocExtension(ExtensionApp):
         )
 
     def initialize_handlers(self):
+        self.serverapp.web_app.settings.setdefault(
+            "page_config_data", {"disableRTC": self.disable_rtc}
+        )
+
         # Set configurable parameters to YStore class
         for k, v in self.config.get(self.ystore_class.__name__, {}).items():
             setattr(self.ystore_class, k, v)
