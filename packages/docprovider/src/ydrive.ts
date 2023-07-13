@@ -1,7 +1,7 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { URLExt } from '@jupyterlab/coreutils';
+import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 import { TranslationBundle } from '@jupyterlab/translation';
 import { Contents, Drive, User } from '@jupyterlab/services';
 
@@ -13,6 +13,9 @@ import {
   ISharedModelFactory,
   SharedDocumentFactory
 } from './tokens';
+
+const DISABLE_RTC =
+  PageConfig.getOption('disableRTC') === 'true' ? true : false;
 
 /**
  * The url for the default drive service.
@@ -177,7 +180,7 @@ class SharedModelFactory implements ISharedModelFactory {
   /**
    * Whether the IDrive supports real-time collaboration or not.
    */
-  readonly collaborative = true;
+  readonly collaborative = !DISABLE_RTC;
 
   /**
    * Register a SharedDocumentFactory.
@@ -208,7 +211,7 @@ class SharedModelFactory implements ISharedModelFactory {
       return;
     }
 
-    if (!options.collaborative) {
+    if (!this.collaborative || !options.collaborative) {
       // Bail if the document model does not support collaboration
       // the `sharedModel` will be the default one.
       return;
