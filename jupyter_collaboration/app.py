@@ -33,7 +33,7 @@ class YDocExtension(ExtensionApp):
     )
 
     document_cleanup_delay = Float(
-        10,
+        60,
         allow_none=True,
         config=True,
         help="""The delay in seconds to keep a document in memory in the back-end after all clients
