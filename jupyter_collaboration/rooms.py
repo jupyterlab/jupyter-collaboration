@@ -205,7 +205,7 @@ class DocumentRoom(YRoom):
 
     def stop(self) -> None:
         """
-        Cleans the rooms.
+        Stop the room.
 
         Cancels the save task and unsubscribes from the file.
         """
