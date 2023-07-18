@@ -203,13 +203,13 @@ class DocumentRoom(YRoom):
 
         self._logger.emit(schema_id=JUPYTER_COLLABORATION_EVENTS_URI, data=data)
 
-    def _clean(self) -> None:
+    def stop(self) -> None:
         """
-        Cleans the rooms.
+        Stop the room.
 
         Cancels the save task and unsubscribes from the file.
         """
-        super()._clean()
+        super().stop()
         # TODO: Should we cancel or wait ?
         if self._saving_document:
             self._saving_document.cancel()
