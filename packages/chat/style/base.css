@@ -6,7 +6,7 @@
 .jp-ChatPanel .jp-SidePanel-content {
   display: flex;
   flex-direction: column;
-  padding: 5px 0px;
+  padding: 5px 0;
 }
 
 .jp-ChatPanel-messages {
