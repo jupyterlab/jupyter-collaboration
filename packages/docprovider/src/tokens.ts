@@ -1,7 +1,7 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { DocumentChange, YDocument } from '@jupyter/ydoc';
+import { IAwareness, DocumentChange, YDocument } from '@jupyter/ydoc';
 import { Contents } from '@jupyterlab/services';
 
 import { Token } from '@lumino/coreutils';
@@ -14,6 +14,13 @@ import { IChatMessage } from './awareness';
  */
 export const ICollaborativeDrive = new Token<ICollaborativeDrive>(
   '@jupyter/collaboration-extension:ICollaborativeDrive'
+);
+
+/**
+ * The awareness provider.
+ */
+export const IAwarenessProvider = new Token<IAwarenessProvider>(
+  '@jupyter/docprovider:IAwarenessProvider'
 );
 
 /**
@@ -54,6 +61,11 @@ export interface ISharedModelFactory extends Contents.ISharedFactory {
  * A provider interface for global awareness features.
  */
 export interface IAwarenessProvider {
+  /**
+   * The awareness object.
+   */
+  readonly awareness: IAwareness;
+
   /**
    * A signal to subscribe for incoming messages.
    */

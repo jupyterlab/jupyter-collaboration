@@ -14,7 +14,7 @@ import {
   EditorExtensionRegistry,
   IEditorExtensionRegistry
 } from '@jupyterlab/codemirror';
-import { WebSocketAwarenessProvider } from '@jupyter/docprovider';
+import { IAwarenessProvider, WebSocketAwarenessProvider } from '@jupyter/docprovider';
 import { SidePanel, usersIcon } from '@jupyterlab/ui-components';
 import { URLExt } from '@jupyterlab/coreutils';
 import { ServerConnection } from '@jupyterlab/services';
@@ -37,6 +37,47 @@ import {
 
 import * as Y from 'yjs';
 import { Awareness } from 'y-protocols/awareness';
+
+/**
+ * Jupyter plugin providing the awareness provider.
+ */
+export const awarenessProviderPlugin: JupyterFrontEndPlugin<IAwarenessProvider> =
+  {
+    id: '@jupyter/collaboration-extension:awarenessProvider',
+    description: 'A global provider for awareness.',
+    autoStart: true,
+    requires: [IStateDB],
+    provides: IAwarenessProvider,
+    activate: (app: JupyterFrontEnd, state: StateDB): IAwarenessProvider => {
+      const { user } = app.serviceManager;
+
+      const ydoc = new Y.Doc();
+      const awareness = new Awareness(ydoc);
+
+      const server = ServerConnection.makeSettings();
+      const url = URLExt.join(server.wsUrl, 'api/collaboration/room');
+
+      const provider = new WebSocketAwarenessProvider({
+        url: url,
+        roomID: 'JupyterLab:globalAwareness',
+        awareness: awareness,
+        user: user
+      });
+
+      state.changed.connect(async () => {
+        const data: any = await state.toJSON();
+        const current = data['layout-restorer:data']?.main?.current || '';
+
+        if (current.startsWith('editor') || current.startsWith('notebook')) {
+          awareness.setLocalStateField('current', current);
+        } else {
+          awareness.setLocalStateField('current', null);
+        }
+      });
+
+      return provider;
+    }
+  };
 
 /**
  * Jupyter plugin providing the IUserMenu.
@@ -85,40 +126,20 @@ export const menuBarPlugin: JupyterFrontEndPlugin<void> = {
 
 /**
  * Jupyter plugin creating a global awareness for RTC.
+ *
+ * @deprecated Will be removed in v2.0.
+ *    Note: Moved to IAwarenessProvider token.
  */
 export const rtcGlobalAwarenessPlugin: JupyterFrontEndPlugin<IAwareness> = {
   id: '@jupyter/collaboration-extension:rtcGlobalAwareness',
   description: 'Add global awareness to share working document of users.',
-  requires: [IStateDB],
+  requires: [IAwarenessProvider],
   provides: IGlobalAwareness,
-  activate: (app: JupyterFrontEnd, state: StateDB): IAwareness => {
-    const { user } = app.serviceManager;
-
-    const ydoc = new Y.Doc();
-    const awareness = new Awareness(ydoc);
-
-    const server = ServerConnection.makeSettings();
-    const url = URLExt.join(server.wsUrl, 'api/collaboration/room');
-
-    new WebSocketAwarenessProvider({
-      url: url,
-      roomID: 'JupyterLab:globalAwareness',
-      awareness: awareness,
-      user: user
-    });
-
-    state.changed.connect(async () => {
-      const data: any = await state.toJSON();
-      const current = data['layout-restorer:data']?.main?.current || '';
-
-      if (current.startsWith('editor') || current.startsWith('notebook')) {
-        awareness.setLocalStateField('current', current);
-      } else {
-        awareness.setLocalStateField('current', null);
-      }
-    });
-
-    return awareness;
+  activate: (
+    app: JupyterFrontEnd,
+    provider: IAwarenessProvider
+  ): IAwareness => {
+    return provider.awareness;
   }
 };
 

@@ -4,7 +4,10 @@
 import { User } from '@jupyterlab/services';
 import { ITranslator } from '@jupyterlab/translation';
 import { LabIcon, SidePanel, caretRightIcon } from '@jupyterlab/ui-components';
+
 import { Panel, Widget } from '@lumino/widgets';
+
+import { IAwarenessProvider, IChatMessage } from '@jupyter/docprovider';
 
 import chatSvgstr from '../style/icons/chat.svg';
 
@@ -26,30 +29,59 @@ export class ChatPanel extends SidePanel {
   constructor(options: ChatPanel.IOptions) {
     super({ content: new Panel(), translator: options.translator });
     this._user = options.currentUser;
+    this._provider = options.provider;
     this.addClass('jp-ChatPanel');
 
     this._messages.addClass('jp-ChatPanel-messages');
     this.addWidget(this._messages);
     this.addWidget(new Widget({ node: this._prompt }));
+
+    this._provider.messageStream.connect(this.onMessageReceived, this);
+  }
+
+  dispose(): void {
+    if (this.isDisposed) {
+      return;
+    }
+    this._provider.messageStream.disconnect(this.onMessageReceived, this);
+    super.dispose();
   }
 
   /**
    * Add a new message in the list.
    * @param messageContent - Content and metadata of the message.
    */
-  onMessageReceived(messageContent: ChatPanel.IMessage): void {
+  onMessageReceived(sender: IAwarenessProvider, msg: IChatMessage): void {
+    const state = sender.awareness.getStates();
+    let user: User.IIdentity | undefined = undefined;
+    state.forEach((value: any) => {
+      const u: User.IIdentity = value.user;
+      if (u.username === msg.sender) {
+        user = u;
+      }
+    });
+
+    const message: ChatPanel.IMessage = {
+      user: user ?? {
+        name: msg.sender,
+        username: msg.sender,
+        display_name: msg.sender,
+        initials: '',
+        color: ''
+      },
+      date: new Date(),
+      content: msg.content.body
+    };
+
     let index = this._messages.widgets.length;
     for (const msg of this._messages.widgets.slice(1).reverse()) {
-      if (messageContent.date > (msg as ChatMessage).date) {
+      if (message.date > (msg as ChatMessage).date) {
         break;
       }
       index -= 1;
     }
 
-    this._messages.insertWidget(
-      index,
-      new ChatMessage(messageContent, this._user)
-    );
+    this._messages.insertWidget(index, new ChatMessage(message, this._user));
   }
 
   /**
@@ -60,7 +92,18 @@ export class ChatPanel extends SidePanel {
     if (!message) {
       return;
     }
-    console.log(this._user, message);
+
+    const msg: ChatPanel.IMessage = {
+      user: this._user.identity!,
+      date: new Date(),
+      content: message
+    };
+    this._provider.sendMessage(message);
+
+    this._messages.insertWidget(
+      this._messages.widgets.length,
+      new ChatMessage(msg, this._user)
+    );
   };
 
   /**
@@ -112,6 +155,7 @@ export class ChatPanel extends SidePanel {
 
   private _user: User.IManager;
   private _messages = new Panel();
+  private _provider: IAwarenessProvider;
 }
 
 /**
@@ -147,10 +191,10 @@ class ChatMessage extends Widget {
     const header = document.createElement('div');
     const user = document.createElement('div');
     user.innerText =
-      currentUser.identity?.username === this._message.user.identity?.username
+      currentUser.identity?.username === this._message.user.username
         ? 'You'
-        : this._message.user.identity?.display_name || '???';
-    user.style.color = this._message.user.identity?.color || 'inherit';
+        : this._message.user.display_name || '???';
+    user.style.color = this._message.user.color || 'inherit';
     header.append(user);
 
     const date = document.createElement('div');
@@ -182,6 +226,7 @@ export namespace ChatPanel {
    * Options to use when building the chat panel.
    */
   export interface IOptions {
+    provider: IAwarenessProvider;
     currentUser: User.IManager;
     translator?: ITranslator;
   }
@@ -190,7 +235,7 @@ export namespace ChatPanel {
    * The message content.
    */
   export interface IMessage {
-    user: User.IManager;
+    user: User.IIdentity;
     date: Date;
     content: string;
   }

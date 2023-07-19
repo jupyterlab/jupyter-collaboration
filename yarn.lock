@@ -2033,6 +2033,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@jupyter/chat@workspace:packages/chat"
   dependencies:
+    "@jupyter/docprovider": ^1.0.1
     "@jupyterlab/services": ^7.0.0
     "@jupyterlab/translation": ^4.0.0
     "@jupyterlab/ui-components": ^4.0.0
