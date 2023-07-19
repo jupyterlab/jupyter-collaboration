@@ -256,7 +256,13 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
         if message_type == MessageType.CHAT:
             user = self.current_user
-            msg = message[2:].decode("utf-8")
+
+            # The fist bytes are the length of the message
+            pos = 1
+            while message[pos] >= 128:
+                pos += 1
+            pos += 1
+            msg = message[pos:].decode("utf-8")
 
             data = json.loads(msg)
             data["sender"] = user.username

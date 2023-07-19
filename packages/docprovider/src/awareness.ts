@@ -122,11 +122,11 @@ export class WebSocketAwarenessProvider
         body: msg
       }
     };
-
     const encoder = encoding.createEncoder();
     encoding.writeVarUint(encoder, MessageType.CHAT);
     encoding.writeVarString(encoder, JSON.stringify(message));
-    this.ws!.send(encoding.toUint8Array(encoder));
+    const data = encoding.toUint8Array(encoder);
+    this.ws!.send(data);
 
     return { ...message, sender: this._user };
   }

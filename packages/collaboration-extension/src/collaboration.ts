@@ -14,7 +14,10 @@ import {
   EditorExtensionRegistry,
   IEditorExtensionRegistry
 } from '@jupyterlab/codemirror';
-import { IAwarenessProvider, WebSocketAwarenessProvider } from '@jupyter/docprovider';
+import {
+  IAwarenessProvider,
+  WebSocketAwarenessProvider
+} from '@jupyter/docprovider';
 import { SidePanel, usersIcon } from '@jupyterlab/ui-components';
 import { URLExt } from '@jupyterlab/coreutils';
 import { ServerConnection } from '@jupyterlab/services';
