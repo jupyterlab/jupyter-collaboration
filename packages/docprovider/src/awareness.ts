@@ -6,7 +6,7 @@
 import { User } from '@jupyterlab/services';
 
 import { IDisposable } from '@lumino/disposable';
-import { IStream, Stream } from '@lumino/signaling';
+import { IStream, Signal, Stream } from '@lumino/signaling';
 
 import { IAwareness } from '@jupyter/ydoc';
 
@@ -23,9 +23,17 @@ export interface IContent {
 }
 
 export interface IChatMessage {
-  sender: string;
+  sender: User.IIdentity;
   timestamp: number;
-  content: IContent;
+  server_ts?: number;
+  content: {
+    type: string;
+    body: string;
+  };
+}
+
+interface IMessage extends Omit<IChatMessage, 'sender'> {
+  sender: string;
 }
 
 /**
@@ -48,13 +56,12 @@ export class WebSocketAwarenessProvider
       awareness: options.awareness
     });
 
-    this._awareness = options.awareness;
-
-    this._user = options.user;
-    this._user.ready
-      .then(() => this._onUserChanged(this._user))
+    const user = options.user;
+    this._user = Private.getUser(user);
+    user.ready
+      .then(() => this._onUserChanged(user))
       .catch(e => console.error(e));
-    this._user.userChanged.connect(this._onUserChanged, this);
+    user.userChanged.connect(this._onUserChanged, this);
 
     this._messageStream = new Stream(this);
 
@@ -66,7 +73,16 @@ export class WebSocketAwarenessProvider
       messageType
     ) => {
       const content = decoding.readVarString(decoder);
-      const data = JSON.parse(content) as IChatMessage;
+      const data = JSON.parse(content);
+
+      const state = this.awareness.getStates();
+      state.forEach((value: any) => {
+        const u: User.IIdentity = value.user;
+        if (u.username === data.sender) {
+          data.sender = u;
+        }
+      });
+
       this._messageStream.emit(data);
     };
   }
@@ -87,7 +103,7 @@ export class WebSocketAwarenessProvider
       return;
     }
 
-    this._user.userChanged.disconnect(this._onUserChanged, this);
+    Signal.clearData(this);
     this._isDisposed = true;
     this.destroy();
   }
@@ -97,24 +113,31 @@ export class WebSocketAwarenessProvider
    *
    * @param msg message
    */
-  sendMessage(msg: string): void {
-    const data: IContent = {
-      type: 'text',
-      body: msg
+  sendMessage(msg: string): IChatMessage {
+    const message: IMessage = {
+      sender: this._user.username,
+      timestamp: Date.now(),
+      content: {
+        type: 'text/plain',
+        body: msg
+      }
     };
+
     const encoder = encoding.createEncoder();
     encoding.writeVarUint(encoder, MessageType.CHAT);
-    encoding.writeVarString(encoder, JSON.stringify(data));
+    encoding.writeVarString(encoder, JSON.stringify(message));
     this.ws!.send(encoding.toUint8Array(encoder));
+
+    return { ...message, sender: this._user };
   }
 
   private _onUserChanged(user: User.IManager): void {
-    this._awareness.setLocalStateField('user', user.identity);
+    this._user = Private.getUser(user);
+    this.awareness.setLocalStateField('user', user.identity);
   }
 
   private _isDisposed = false;
-  private _user: User.IManager;
-  private _awareness: IAwareness;
+  private _user: User.IIdentity;
 
   private _messageStream: Stream<this, IChatMessage>;
 }
@@ -146,5 +169,21 @@ export namespace WebSocketAwarenessProvider {
      * The user data
      */
     user: User.IManager;
+  }
+}
+
+namespace Private {
+  export function getUser(user: User.IManager): User.IIdentity {
+    if (user.identity) {
+      return user.identity;
+    } else {
+      return {
+        name: 'Antonymous',
+        username: 'Antonymous',
+        display_name: 'Antonymous',
+        initials: 'A',
+        color: '#FFFFFF'
+      };
+    }
   }
 }

@@ -255,20 +255,19 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 return skip
 
         if message_type == MessageType.CHAT:
+            user = self.current_user
             msg = message[2:].decode("utf-8")
 
-            user = self.current_user
-            data = json.dumps(
-                {"sender": user.username, "timestamp": time.time(), "content": json.loads(msg)}
-            ).encode("utf8")
+            data = json.loads(msg)
+            data["sender"] = user.username
+            data["server_ts"] = time.time()
+            data = json.dumps(data).encode("utf8")
 
             for client in self.room.clients:
                 if client != self:
-                    task = asyncio.create_task(
+                    self.create_task(
                         client.send(bytes([MessageType.CHAT]) + write_var_uint(len(data)) + data)
                     )
-                    self._websocket_server.background_tasks.add(task)
-                    task.add_done_callback(self._websocket_server.background_tasks.discard)
 
         self._message_queue.put_nowait(message)
         self._websocket_server.ypatch_nb += 1

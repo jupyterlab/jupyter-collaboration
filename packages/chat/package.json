@@ -39,10 +39,10 @@
     "watch": "tsc -b --watch"
   },
   "dependencies": {
-    "@jupyter/docprovider": "^1.0.1",
-    "@jupyterlab/services": "^7.0.0",
-    "@jupyterlab/translation": "^4.0.0",
-    "@jupyterlab/ui-components": "^4.0.0",
+    "@jupyter/docprovider": "^2.0.1",
+    "@jupyterlab/services": "^7.0.5",
+    "@jupyterlab/translation": "^4.0.5",
+    "@jupyterlab/ui-components": "^4.0.5",
     "@lumino/widgets": "^2.1.0"
   },
   "devDependencies": {

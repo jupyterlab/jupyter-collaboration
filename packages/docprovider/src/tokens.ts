@@ -76,5 +76,5 @@ export interface IAwarenessProvider {
    *
    * @param msg message
    */
-  sendMessage(msg: string): void;
+  sendMessage(msg: string): IChatMessage;
 }

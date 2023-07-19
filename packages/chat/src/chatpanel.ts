@@ -51,31 +51,10 @@ export class ChatPanel extends SidePanel {
    * Add a new message in the list.
    * @param messageContent - Content and metadata of the message.
    */
-  onMessageReceived(sender: IAwarenessProvider, msg: IChatMessage): void {
-    const state = sender.awareness.getStates();
-    let user: User.IIdentity | undefined = undefined;
-    state.forEach((value: any) => {
-      const u: User.IIdentity = value.user;
-      if (u.username === msg.sender) {
-        user = u;
-      }
-    });
-
-    const message: ChatPanel.IMessage = {
-      user: user ?? {
-        name: msg.sender,
-        username: msg.sender,
-        display_name: msg.sender,
-        initials: '',
-        color: ''
-      },
-      date: new Date(),
-      content: msg.content.body
-    };
-
+  onMessageReceived(sender: IAwarenessProvider, message: IChatMessage): void {
     let index = this._messages.widgets.length;
     for (const msg of this._messages.widgets.slice(1).reverse()) {
-      if (message.date > (msg as ChatMessage).date) {
+      if (new Date(message.timestamp) > (msg as ChatMessage).date) {
         break;
       }
       index -= 1;
@@ -93,12 +72,7 @@ export class ChatPanel extends SidePanel {
       return;
     }
 
-    const msg: ChatPanel.IMessage = {
-      user: this._user.identity!,
-      date: new Date(),
-      content: message
-    };
-    this._provider.sendMessage(message);
+    const msg = this._provider.sendMessage(message);
 
     this._messages.insertWidget(
       this._messages.widgets.length,
@@ -167,7 +141,7 @@ class ChatMessage extends Widget {
    * @param message - Content and metadata of the message.
    * @param user - The current connected user.
    */
-  constructor(message: ChatPanel.IMessage, user: User.IManager) {
+  constructor(message: IChatMessage, user: User.IManager) {
     super();
     this._message = message;
     this.addClass('jp-ChatPanel-message');
@@ -179,7 +153,7 @@ class ChatMessage extends Widget {
    * Get the date of the message.
    */
   get date(): Date {
-    return this._message.date;
+    return new Date(this._message.timestamp);
   }
 
   /**
@@ -191,15 +165,15 @@ class ChatMessage extends Widget {
     const header = document.createElement('div');
     const user = document.createElement('div');
     user.innerText =
-      currentUser.identity?.username === this._message.user.username
+      currentUser.identity?.username === this._message.sender.username
         ? 'You'
-        : this._message.user.display_name || '???';
-    user.style.color = this._message.user.color || 'inherit';
+        : this._message.sender.display_name || '???';
+    user.style.color = this._message.sender.color || 'inherit';
     header.append(user);
 
     const date = document.createElement('div');
     date.classList.add('jp-ChatPanel-messageDate');
-    date.innerText = `${this._message.date.toLocaleDateString()} ${this._message.date.toLocaleTimeString()}`;
+    date.innerText = `${this.date.toLocaleDateString()} ${this.date.toLocaleTimeString()}`;
     header.append(date);
     return header;
   }
@@ -211,11 +185,11 @@ class ChatMessage extends Widget {
   private _content(): HTMLDivElement {
     const message = document.createElement('div');
     message.classList.add('jp-ChatPanel-messageContent');
-    message.innerText = this._message.content;
+    message.innerText = this._message.content.body;
     return message;
   }
 
-  private _message: ChatPanel.IMessage;
+  private _message: IChatMessage;
 }
 
 /**
@@ -229,14 +203,5 @@ export namespace ChatPanel {
     provider: IAwarenessProvider;
     currentUser: User.IManager;
     translator?: ITranslator;
-  }
-
-  /**
-   * The message content.
-   */
-  export interface IMessage {
-    user: User.IIdentity;
-    date: Date;
-    content: string;
   }
 }
