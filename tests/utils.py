@@ -1,14 +1,16 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from __future__ import annotations
+
 from datetime import datetime
-from typing import Any, Callable, Coroutine
+from typing import Any
 
 from jupyter_server import _tz as tz
 
 
 class FakeFileIDManager:
-    def __init__(self, mapping: dict[str, str]):
+    def __init__(self, mapping: dict):
         self.mapping = mapping
 
     def get_path(self, id: str) -> str:
@@ -30,7 +32,7 @@ class FakeContentsManager:
         }
         self.model.update(model)
 
-        self.actions = []
+        self.actions: list[str] = []
 
     def get(
         self, path: str, content: bool = True, format: str | None = None, type: str | None = None
