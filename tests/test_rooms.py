@@ -114,7 +114,7 @@ async def test_should_reload_content_from_disk():
 
     await loader.notify()
 
-    msg_id = list(room._messages.keys())[0].encode("utf8")
+    msg_id = next(iter(room._messages)).encode("utf8")
     await room.handle_msg(bytes([RoomMessages.RELOAD]) + write_var_uint(len(msg_id)) + msg_id)
 
     assert room._document.source == content
