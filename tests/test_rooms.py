@@ -69,7 +69,7 @@ async def test_defined_save_delay_should_save_content_after_document_change():
 
 
 @pytest.mark.asyncio
-async def test_should_not_save_content_after_document_change():
+async def test_undefined_save_delay_should_not_save_content_after_document_change():
     id = "test-id"
     content = "test"
     paths = {id: "test.txt"}
