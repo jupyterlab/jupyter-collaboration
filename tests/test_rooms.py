@@ -86,6 +86,7 @@ async def test_should_not_save_content_after_document_change():
     await room.initialize()
     room._document.source = "Test 2"
 
+    # Wait for a bit more than the poll_interval
     await asyncio.sleep(0.15)
 
     assert "save" not in cm.actions
