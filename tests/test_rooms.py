@@ -45,7 +45,7 @@ async def test_should_initialize_document_room_from_store():
 
 
 @pytest.mark.asyncio
-async def test_should_save_content_after_document_change():
+async def test_defined_save_delay_should_save_content_after_document_change():
     id = "test-id"
     content = "test"
     paths = {id: "test.txt"}
