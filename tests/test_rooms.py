@@ -96,8 +96,9 @@ async def test_undefined_save_delay_should_not_save_content_after_document_chang
 async def test_should_reload_content_from_disk():
     id = "test-id"
     content = "test"
-    paths = {id: "test.txt"}
-    cm = FakeContentsManager({"last_modified": datetime.now(), "content": "whatever"})
+    paths = { id: "test.txt" }
+    last_modified = datetime.now()
+    cm = FakeContentsManager({"last_modified": last_modified, "content": "whatever"})
     loader = FileLoader(
         id,
         FakeFileIDManager(paths),
@@ -109,7 +110,8 @@ async def test_should_reload_content_from_disk():
 
     await room.initialize()
 
-    cm.model["last_modified"] = datetime.now()
+    # Make sure the time increases
+    cm.model["last_modified"] = datetime.fromtimestamp(last_modified.timestamp() + 1)
     cm.model["content"] = content
 
     await loader.notify()
@@ -125,6 +127,7 @@ async def test_should_not_reload_content_from_disk():
     id = "test-id"
     content = "test"
     paths = {id: "test.txt"}
+    last_modified = datetime.now()
     cm = FakeContentsManager({"last_modified": datetime.now(), "content": content})
     loader = FileLoader(
         id,
@@ -137,7 +140,8 @@ async def test_should_not_reload_content_from_disk():
 
     await room.initialize()
 
-    cm.model["last_modified"] = datetime.now()
+    # Make sure the time increases
+    cm.model["last_modified"] = datetime.fromtimestamp(last_modified.timestamp() + 1)
     cm.model["content"] = "whatever"
 
     await loader.notify()
