@@ -96,7 +96,7 @@ async def test_undefined_save_delay_should_not_save_content_after_document_chang
 async def test_should_reload_content_from_disk():
     id = "test-id"
     content = "test"
-    paths = { id: "test.txt" }
+    paths = {id: "test.txt"}
     last_modified = datetime.now()
     cm = FakeContentsManager({"last_modified": last_modified, "content": "whatever"})
     loader = FileLoader(
