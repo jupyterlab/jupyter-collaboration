@@ -155,7 +155,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         Overrides default behavior to check whether the client is authenticated or not.
         """
-        if self.get_current_user() is None:
+        if self.current_user is None:
             self.log.warning("Couldn't authenticate WebSocket connection")
             raise web.HTTPError(403)
         return await super().get(*args, **kwargs)
@@ -258,7 +258,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         if message_type == MessageType.CHAT:
             msg = message[2:].decode("utf-8")
 
-            user = self.get_current_user()
+            user = self.current_user
             data = json.dumps(
                 {"sender": user.username, "timestamp": time.time(), "content": json.loads(msg)}
             ).encode("utf8")
