@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from asyncio import Event, sleep
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 import nbformat
@@ -20,10 +19,7 @@ from jupyter_collaboration.stores import SQLiteYStore
 
 from .utils import FakeContentsManager, FakeEventLogger, FakeFileIDManager
 
-pytest_plugins = ["jupyter_server.pytest_plugin"]
-
-HERE = Path(__file__).parent.resolve()
-RESOURCES_PATH = f"{HERE}/resources"
+pytest_plugins = ["jupyter_server.pytest_plugin", "jupyter_server_fileid.pytest_plugin"]
 
 
 @pytest.fixture
@@ -36,6 +32,11 @@ def jp_server_config(jp_root_dir, jp_server_config):
             "disable_check_xsrf": True,
         },
         "SQLiteYStore": {"db_path": str(jp_root_dir.joinpath(".rtc_test.db"))},
+        "BaseFileIdManager": {
+            "root_dir": str(jp_root_dir),
+            "db_path": str(jp_root_dir.joinpath(".fid_test.db")),
+            "db_journal_mode": "OFF",
+        },
     }
 
 

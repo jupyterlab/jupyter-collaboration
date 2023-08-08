@@ -16,19 +16,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+
       - name: Install dependencies
         run: |
-          pip install jupyterlab
+          pip install "jupyterlab>=4.0.0,<5"
           pip install -e .
           jlpm
+
       - name: Run pre-commit
         uses: pre-commit/action@v2.0.0
         with:
           extra_args: --all-files --hook-stage=manual
+
       - name: Help message if pre-commit fail
         if: ${{ failure() }}
         run: |
@@ -39,6 +46,7 @@ jobs:
           echo "    pre-commit run"
           echo "or after-the-fact on already committed files with"
           echo "    pre-commit run --all-files --hook-stage=manual"
+
       - name: Lint frontend
         run: |
           jlpm run lint:check
@@ -49,15 +57,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+
       - name: Install dependencies
         run: |
-          pip install jupyterlab
+          pip install "jupyterlab>=4.0.0,<5"
           pip install -e .
           jlpm
+
       - name: Run Tests
         run: |
           set -eux
@@ -78,28 +92,35 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+
       - name: Install the Python dependencies
         run: |
+          python -m pip install "jupyterlab>=4.0.0,<5"
           pip install -e ".[test]" codecov
-          python -m pip install jupyterlab
+
       - name: List installed packages
         run: |
           pip freeze
           pip check
+
       - name: Run the tests with Coverage
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(runner.os, 'Windows') }}
         run: |
           python -m pytest -vv --cov jupyter_collaboration --cov-branch --cov-report term-missing:skip-covered
+
       - name: Run the tests on pypy and Windows
         if: ${{ startsWith(matrix.python-version, 'pypy') || startsWith(runner.os, 'Windows') }}
         run: |
           python -W ignore::ImportWarning -m pytest -vv
+
       - name: Coverage
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(runner.os, 'Windows') }}
         run: |
           codecov
+
       - name: Build the extension
         if: ${{ !startsWith(matrix.python-version, 'pypy') }}
         shell: bash
@@ -118,12 +139,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
           python_version: "3.11"
+
       - name: Install minimum versions
         uses: jupyterlab/maintainer-tools/.github/actions/install-minimums@v1
+
       - name: Run the unit tests
         run: |
           pytest -vv -W default || pytest -vv -W default --lf
@@ -136,15 +160,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+
       - name: Install the Python dependencies
         run: |
           pip install --pre -e ".[test]"
+
       - name: List installed packages
         run: |
           pip freeze
           pip check
+
       - name: Run the tests
         run: |
           pytest -vv -W default || pytest -vv --lf
@@ -166,8 +194,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+
       - name: Download sdist
         uses: actions/download-artifact@v3
+
       - name: Install From SDist
         shell: bash
         run: |
@@ -177,9 +207,10 @@ jobs:
           mkdir test
           tar --strip-components=1 -zxvf *.tar.gz -C ./test
           cd test
+          python -m pip install "jupyterlab>=4.0.0,<5"
           python -m pip install ".[test]"
-          python -m pip install jupyterlab
           echo "::endgroup::"
+
       - name: Run Test
         shell: bash
         run: |
