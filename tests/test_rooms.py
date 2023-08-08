@@ -7,57 +7,59 @@ import asyncio
 from datetime import datetime
 
 import pytest
-from ypy_websocket.yutils import write_var_uint
+from jupyter_ydoc import YUnicode
 
-from jupyter_collaboration.loaders import FileLoader
-from jupyter_collaboration.rooms import DocumentRoom
-from jupyter_collaboration.utils import RoomMessages
-
-from .utils import FakeContentsManager, FakeEventLogger, FakeFileIDManager
+from .utils import overite_msg, reload_msg
 
 
 @pytest.mark.asyncio
-async def test_should_initialize_document_room_without_store():
-    id = "test-id"
+async def test_should_initialize_document_room_without_store(rtc_create_mock_document_room):
     content = "test"
-    paths = {id: "test.txt"}
-    cm = FakeContentsManager({"content": content})
-    loader = FileLoader(
-        id,
-        FakeFileIDManager(paths),
-        cm,
-        poll_interval=0.1,
-    )
-
-    room = DocumentRoom("test-room", "text", "file", loader, FakeEventLogger(), None, None)
+    _, _, room = rtc_create_mock_document_room("test-id", "test.txt", content)
 
     await room.initialize()
     assert room._document.source == content
 
 
 @pytest.mark.asyncio
-async def test_should_initialize_document_room_from_store():
-    """
-    We need to create test files with Y updates to simulate
-    a store.
-    """
-    pass
+async def test_should_initialize_document_room_from_store(
+    rtc_create_SQLite_store, rtc_create_mock_document_room
+):
+    # TODO: We don't know for sure if it is taking the content from the store.
+    # If the content from the store is different than the content from disk,
+    # the room will initialize with the content from disk and overwrite the document
+
+    id = "test-id"
+    content = "test"
+    store = await rtc_create_SQLite_store("file", id, content)
+    _, _, room = rtc_create_mock_document_room("test-id", "test.txt", content, store=store)
+
+    await room.initialize()
+    assert room._document.source == content
 
 
 @pytest.mark.asyncio
-async def test_defined_save_delay_should_save_content_after_document_change():
+async def test_should_overwrite_the_store(rtc_create_SQLite_store, rtc_create_mock_document_room):
     id = "test-id"
     content = "test"
-    paths = {id: "test.txt"}
-    cm = FakeContentsManager({"content": content})
-    loader = FileLoader(
-        id,
-        FakeFileIDManager(paths),
-        cm,
-        poll_interval=0.1,
-    )
+    store = await rtc_create_SQLite_store("file", id, "whatever")
+    _, _, room = rtc_create_mock_document_room("test-id", "test.txt", content, store=store)
 
-    room = DocumentRoom("test-room", "text", "file", loader, FakeEventLogger(), None, None, 0.01)
+    await room.initialize()
+    assert room._document.source == content
+
+    doc = YUnicode()
+    await store.apply_updates(doc.ydoc)
+
+    assert doc.source == content
+
+
+@pytest.mark.asyncio
+async def test_defined_save_delay_should_save_content_after_document_change(
+    rtc_create_mock_document_room,
+):
+    content = "test"
+    cm, _, room = rtc_create_mock_document_room("test-id", "test.txt", content, save_delay=0.01)
 
     await room.initialize()
     room._document.source = "Test 2"
@@ -69,19 +71,11 @@ async def test_defined_save_delay_should_save_content_after_document_change():
 
 
 @pytest.mark.asyncio
-async def test_undefined_save_delay_should_not_save_content_after_document_change():
-    id = "test-id"
+async def test_undefined_save_delay_should_not_save_content_after_document_change(
+    rtc_create_mock_document_room,
+):
     content = "test"
-    paths = {id: "test.txt"}
-    cm = FakeContentsManager({"content": content})
-    loader = FileLoader(
-        id,
-        FakeFileIDManager(paths),
-        cm,
-        poll_interval=0.1,
-    )
-
-    room = DocumentRoom("test-room", "text", "file", loader, FakeEventLogger(), None, None, None)
+    cm, _, room = rtc_create_mock_document_room("test-id", "test.txt", content, save_delay=None)
 
     await room.initialize()
     room._document.source = "Test 2"
@@ -93,20 +87,13 @@ async def test_undefined_save_delay_should_not_save_content_after_document_chang
 
 
 @pytest.mark.asyncio
-async def test_should_reload_content_from_disk():
-    id = "test-id"
+async def test_should_reload_content_from_disk(rtc_create_mock_document_room):
     content = "test"
-    paths = {id: "test.txt"}
     last_modified = datetime.now()
-    cm = FakeContentsManager({"last_modified": last_modified, "content": "whatever"})
-    loader = FileLoader(
-        id,
-        FakeFileIDManager(paths),
-        cm,
-        poll_interval=0.1,
-    )
 
-    room = DocumentRoom("test-room", "text", "file", loader, FakeEventLogger(), None, None, None)
+    cm, loader, room = rtc_create_mock_document_room(
+        "test-id", "test.txt", "whatever", last_modified
+    )
 
     await room.initialize()
 
@@ -117,26 +104,17 @@ async def test_should_reload_content_from_disk():
     await loader.notify()
 
     msg_id = next(iter(room._messages)).encode("utf8")
-    await room.handle_msg(bytes([RoomMessages.RELOAD]) + write_var_uint(len(msg_id)) + msg_id)
+    await room.handle_msg(reload_msg(msg_id))
 
     assert room._document.source == content
 
 
 @pytest.mark.asyncio
-async def test_should_not_reload_content_from_disk():
-    id = "test-id"
+async def test_should_not_reload_content_from_disk(rtc_create_mock_document_room):
     content = "test"
-    paths = {id: "test.txt"}
     last_modified = datetime.now()
-    cm = FakeContentsManager({"last_modified": datetime.now(), "content": content})
-    loader = FileLoader(
-        id,
-        FakeFileIDManager(paths),
-        cm,
-        poll_interval=0.1,
-    )
 
-    room = DocumentRoom("test-room", "text", "file", loader, FakeEventLogger(), None, None, None)
+    cm, loader, room = rtc_create_mock_document_room("test-id", "test.txt", content, last_modified)
 
     await room.initialize()
 
@@ -147,6 +125,6 @@ async def test_should_not_reload_content_from_disk():
     await loader.notify()
 
     msg_id = list(room._messages.keys())[0].encode("utf8")
-    await room.handle_msg(bytes([RoomMessages.OVERWRITE]) + write_var_uint(len(msg_id)) + msg_id)
+    await room.handle_msg(overite_msg(msg_id))
 
     assert room._document.source == content

@@ -9,7 +9,7 @@ from jupyter_collaboration.stores import SQLiteYStore, TempFileYStore
 def test_default_settings(jp_serverapp):
     settings = jp_serverapp.web_app.settings["jupyter_collaboration_config"]
 
-    assert settings["disable_rtc"] == False
+    assert settings["disable_rtc"] is False
     assert settings["file_poll_interval"] == 1
     assert settings["document_cleanup_delay"] == 60
     assert settings["document_save_delay"] == 1
@@ -22,7 +22,7 @@ def test_settings_should_disable_rtc(jp_configurable_serverapp):
     app = jp_configurable_serverapp(argv=argv)
     settings = app.web_app.settings["jupyter_collaboration_config"]
 
-    assert settings["disable_rtc"] == True
+    assert settings["disable_rtc"] is True
 
 
 def test_settings_should_change_file_poll(jp_configurable_serverapp):
