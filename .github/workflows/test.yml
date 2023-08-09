@@ -86,9 +86,11 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.8", "3.11"]
-        include:
-          - os: ubuntu-latest
-            python-version: "pypy-3.8"
+        # PyPy is not supported because we use the file_id_manager. See:
+        # https://github.com/jupyter-server/jupyter_server_fileid/issues/44
+        #include:
+        #  - os: ubuntu-latest
+        #    python-version: "pypy-3.8"
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -111,15 +113,19 @@ jobs:
         run: |
           python -m pytest -vv --cov jupyter_collaboration --cov-branch --cov-report term-missing:skip-covered
 
-      - name: Run the tests on pypy and Windows
-        if: ${{ startsWith(matrix.python-version, 'pypy') || startsWith(runner.os, 'Windows') }}
-        run: |
-          python -W ignore::ImportWarning -m pytest -vv
+      #- name: Run the tests on pypy
+      #  if: ${{ startsWith(matrix.python-version, 'pypy') }}
+      #  run: |
+          # PyPy is not supported because we use the file_id_manager. See:
+          # https://github.com/jupyter-server/jupyter_server_fileid/issues/44
+          # python -W ignore::ImportWarning -m pytest -vv
 
-      - name: Coverage
-        if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(runner.os, 'Windows') }}
+      - name: Run the tests on Windows
+        if: ${{ startsWith(runner.os, 'Windows') }}
         run: |
-          codecov
+          python -W ignore::ImportWarning -m pytest -vv --cov jupyter_collaboration --cov-branch --cov-report term-missing:skip-covered
+
+      - uses: jupyterlab/maintainer-tools/.github/actions/upload-coverage@v1
 
       - name: Build the extension
         if: ${{ !startsWith(matrix.python-version, 'pypy') }}
