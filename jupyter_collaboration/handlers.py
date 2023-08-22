@@ -216,7 +216,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         On message receive.
         """
         message_type = message[0]
-        print("message type:", message_type)
 
         if message_type == YMessageType.AWARENESS:
             # awareness
