@@ -31,7 +31,7 @@ dependencies = [
     "jupyter_ydoc>=1.1.0a0,<2.0.0",
     "ypy-websocket>=0.12.1,<0.13.0",
     "jupyter_events>=0.7.0",
-    "jupyter_server_fileid>=0.6.0,<1",
+    "jupyter_server_fileid>=0.7.0,<1",
     "jsonschema>=4.18.0"
 ]
 dynamic = ["version", "description", "authors", "urls", "keywords"]
