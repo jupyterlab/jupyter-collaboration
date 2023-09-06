@@ -45,9 +45,11 @@ dev = [
 test = [
     "coverage",
     "jupyter_server[test]>=2.0.0",
+    "jupyter_server_fileid[test]",
     "pytest>=7.0",
     "pytest-cov",
-    "pytest-asyncio"
+    "pytest-asyncio",
+    "websockets"
 ]
 docs = [
     "jupyterlab>=4.0.0",
