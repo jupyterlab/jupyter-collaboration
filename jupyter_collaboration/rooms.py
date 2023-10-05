@@ -10,8 +10,8 @@ from typing import Any
 
 from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
+from ypy_websocket.stores import BaseYStore
 from ypy_websocket.websocket_server import YRoom
-from ypy_websocket.ystore import BaseYStore, YDocNotFound
 from ypy_websocket.yutils import write_var_uint
 
 from .loaders import FileLoader
@@ -104,36 +104,28 @@ class DocumentRoom(YRoom):
                 return
 
             self.log.info("Initializing room %s", self._room_id)
-
             model = await self._file.load_content(self._file_format, self._file_type, True)
 
             async with self._update_lock:
                 # try to apply Y updates from the YStore for this document
-                read_from_source = True
-                if self.ystore is not None:
-                    try:
-                        await self.ystore.apply_updates(self.ydoc)
-                        self._emit(
-                            LogLevel.INFO,
-                            "load",
-                            "Content loaded from the store {}".format(
-                                self.ystore.__class__.__qualname__
-                            ),
-                        )
-                        self.log.info(
-                            "Content in room %s loaded from the ystore %s",
-                            self._room_id,
-                            self.ystore.__class__.__name__,
-                        )
-                        read_from_source = False
-                    except YDocNotFound:
-                        # YDoc not found in the YStore, create the document from the source file (no change history)
-                        pass
+                if self.ystore is not None and await self.ystore.exists(self._room_id):
+                    # Load the content from the store
+                    await self.ystore.apply_updates(self._room_id, self.ydoc)
+                    self._emit(
+                        LogLevel.INFO,
+                        "load",
+                        "Content loaded from the store {}".format(
+                            self.ystore.__class__.__qualname__
+                        ),
+                    )
+                    self.log.info(
+                        "Content in room %s loaded from the ystore %s",
+                        self._room_id,
+                        self.ystore.__class__.__name__,
+                    )
 
-                if not read_from_source:
                     # if YStore updates and source file are out-of-sync, resync updates with source
                     if self._document.source != model["content"]:
-                        # TODO: Delete document from the store.
                         self._emit(
                             LogLevel.INFO, "initialize", "The file is out-of-sync with the ystore."
                         )
@@ -142,17 +134,26 @@ class DocumentRoom(YRoom):
                             self._file.path,
                             self.ystore.__class__.__name__,
                         )
-                        read_from_source = True
 
-                if read_from_source:
+                        doc = await self.ystore.get(self._room_id)
+                        await self.ystore.remove(self._room_id)
+                        version = 0
+                        if "version" in doc:
+                            version = doc["version"] + 1
+
+                        await self.ystore.create(self._room_id, version)
+                        await self.ystore.encode_state_as_update(self._room_id, self.ydoc)
+
+                else:
                     self._emit(LogLevel.INFO, "load", "Content loaded from disk.")
                     self.log.info(
                         "Content in room %s loaded from file %s", self._room_id, self._file.path
                     )
                     self._document.source = model["content"]
 
-                    if self.ystore:
-                        await self.ystore.encode_state_as_update(self.ydoc)
+                    if self.ystore is not None:
+                        await self.ystore.create(self._room_id, 0)
+                        await self.ystore.encode_state_as_update(self._room_id, self.ydoc)
 
                 self._last_modified = model["last_modified"]
                 self._document.dirty = False

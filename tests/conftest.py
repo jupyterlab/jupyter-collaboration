@@ -170,8 +170,10 @@ def rtc_create_SQLite_store(jp_serverapp):
         setattr(SQLiteYStore, k, v)
 
     async def _inner(type: str, path: str, content: str) -> DocumentRoom:
-        db = SQLiteYStore(path=f"{type}:{path}")
+        room_id = f"{type}:{path}"
+        db = SQLiteYStore()
         await db.start()
+        await db.initialize()
 
         if type == "notebook":
             doc = YNotebook()
@@ -179,7 +181,9 @@ def rtc_create_SQLite_store(jp_serverapp):
             doc = YUnicode()
 
         doc.source = content
-        await db.encode_state_as_update(doc.ydoc)
+
+        await db.create(room_id, 0)
+        await db.encode_state_as_update(room_id, doc.ydoc)
 
         return db
 

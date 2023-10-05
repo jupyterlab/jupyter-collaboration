@@ -6,7 +6,7 @@ import asyncio
 
 from jupyter_server.extension.application import ExtensionApp
 from traitlets import Bool, Float, Type
-from ypy_websocket.ystore import BaseYStore
+from ypy_websocket.stores import BaseYStore
 
 from .handlers import DocSessionHandler, YDocWebSocketHandler
 from .loaders import FileLoaderMapping
@@ -21,6 +21,8 @@ class YDocExtension(ExtensionApp):
     description = """
     Enables Real Time Collaboration in JupyterLab
     """
+
+    _store: BaseYStore = None
 
     disable_rtc = Bool(False, config=True, help="Whether to disable real time collaboration.")
 
@@ -80,10 +82,12 @@ class YDocExtension(ExtensionApp):
         for k, v in self.config.get(self.ystore_class.__name__, {}).items():
             setattr(self.ystore_class, k, v)
 
+        # Instantiate the store
+        self._store = self.ystore_class(log=self.log)
+
         self.ywebsocket_server = JupyterWebsocketServer(
             rooms_ready=False,
             auto_clean_rooms=False,
-            ystore_class=self.ystore_class,
             log=self.log,
         )
 
@@ -103,7 +107,7 @@ class YDocExtension(ExtensionApp):
                         "document_cleanup_delay": self.document_cleanup_delay,
                         "document_save_delay": self.document_save_delay,
                         "file_loaders": self.file_loaders,
-                        "ystore_class": self.ystore_class,
+                        "store": self._store,
                         "ywebsocket_server": self.ywebsocket_server,
                     },
                 ),
@@ -120,3 +124,6 @@ class YDocExtension(ExtensionApp):
             ],
             timeout=3,
         )
+
+        if self._store is not None and self._store.started.is_set():
+            self._store.stop()
