@@ -14,8 +14,8 @@ from ypy_websocket.stores import BaseYStore
 from ypy_websocket.websocket_server import YRoom
 from ypy_websocket.yutils import write_var_uint
 
-from .loaders import FileLoader
-from .utils import (
+from ..loaders import FileLoader
+from ..utils import (
     JUPYTER_COLLABORATION_EVENTS_URI,
     LogLevel,
     MessageType,
@@ -372,26 +372,3 @@ class DocumentRoom(YRoom):
     async def _broadcast_msg(self, msg: bytes) -> None:
         for client in self.clients:
             await client.send(msg)
-
-
-class TransientRoom(YRoom):
-    """A Y room for sharing state (e.g. awareness)."""
-
-    def __init__(self, room_id: str, log: Logger | None):
-        super().__init__(log=log)
-
-        self._room_id = room_id
-
-    @property
-    def room_id(self) -> str:
-        """
-        The room ID.
-        """
-        return self._room_id
-
-    async def _broadcast_updates(self):
-        # FIXME should be upstreamed
-        try:
-            await super()._broadcast_updates()
-        except asyncio.CancelledError:
-            pass
