@@ -14,12 +14,12 @@ from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_ydoc import ydocs as YDOCS
 from tornado import web
 from tornado.websocket import WebSocketHandler
-from ypy_websocket.stores import BaseYStore
 from ypy_websocket.websocket_server import YRoom
 from ypy_websocket.yutils import YMessageType, write_var_uint
 
 from .loaders import FileLoaderMapping
 from .rooms import DocumentRoom, TransientRoom
+from .stores import BaseYStore
 from .utils import (
     JUPYTER_COLLABORATION_EVENTS_URI,
     LogLevel,
@@ -67,8 +67,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         # is done.
         # We are temporarily initializing the store here because `start``
         # is an async function
-        if self._store is not None and not self._store.started.is_set():
-            await self._store.start()
+        if self._store is not None and not self._store.initialized:
             await self._store.initialize()
 
         if not self._websocket_server.started.is_set():

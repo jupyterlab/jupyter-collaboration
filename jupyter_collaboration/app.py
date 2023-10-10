@@ -6,11 +6,10 @@ import asyncio
 
 from jupyter_server.extension.application import ExtensionApp
 from traitlets import Bool, Float, Type
-from ypy_websocket.stores import BaseYStore
 
 from .handlers import DocSessionHandler, YDocWebSocketHandler
 from .loaders import FileLoaderMapping
-from .stores import SQLiteYStore
+from .stores import BaseYStore, SQLiteYStore
 from .utils import EVENTS_SCHEMA_PATH
 from .websocketserver import JupyterWebsocketServer
 
@@ -124,6 +123,3 @@ class YDocExtension(ExtensionApp):
             ],
             timeout=3,
         )
-
-        if self._store is not None and self._store.started.is_set():
-            self._store.stop()

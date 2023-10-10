@@ -7,8 +7,9 @@ from logging import Logger
 
 from traitlets import Int, Unicode
 from traitlets.config import LoggingConfigurable
-from ypy_websocket.stores import FileYStore
-from ypy_websocket.stores import SQLiteYStore as _SQLiteYStore
+
+from .file_store import FileYStore
+from .sqlite_store import SQLiteYStore as _SQLiteYStore
 
 
 class TempFileYStore(FileYStore):
