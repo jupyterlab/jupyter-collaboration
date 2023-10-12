@@ -11,7 +11,6 @@ from typing import Any
 from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
 from ypy_websocket.stores import BaseYStore
-from ypy_websocket.websocket_server import YRoom
 from ypy_websocket.yutils import write_var_uint
 
 from ..loaders import FileLoader
@@ -22,11 +21,12 @@ from ..utils import (
     OutOfBandChanges,
     RoomMessages,
 )
+from .base import BaseRoom
 
 YFILE = YDOCS["file"]
 
 
-class DocumentRoom(YRoom):
+class DocumentRoom(BaseRoom):
     """A Y room for a possibly stored document (e.g. a notebook)."""
 
     def __init__(
@@ -36,13 +36,12 @@ class DocumentRoom(YRoom):
         file_type: str,
         file: FileLoader,
         logger: EventLogger,
-        ystore: BaseYStore | None,
+        store: BaseYStore | None,
         log: Logger | None,
         save_delay: float | None = None,
     ):
-        super().__init__(ready=False, ystore=ystore, log=log)
+        super().__init__(room_id=room_id, store=store, log=log)
 
-        self._room_id: str = room_id
         self._file_format: str = file_format
         self._file_type: str = file_type
         self._last_modified: Any = None
@@ -55,34 +54,12 @@ class DocumentRoom(YRoom):
         self._update_lock = asyncio.Lock()
         self._outofband_lock = asyncio.Lock()
         self._initialization_lock = asyncio.Lock()
-        self._cleaner: asyncio.Task | None = None
         self._saving_document: asyncio.Task | None = None
         self._messages: dict[str, asyncio.Lock] = {}
 
         # Listen for document changes
         self._document.observe(self._on_document_change)
         self._file.observe(self.room_id, self._on_content_change)
-
-    @property
-    def room_id(self) -> str:
-        """
-        The room ID.
-        """
-        return self._room_id
-
-    @property
-    def cleaner(self) -> asyncio.Task | None:
-        """
-        The task for cleaning up the resources.
-        """
-        return self._cleaner
-
-    @cleaner.setter
-    def cleaner(self, value: asyncio.Task) -> None:
-        """
-        Setter for the clean up task.
-        """
-        self._cleaner = value
 
     async def initialize(self) -> None:
         """
@@ -134,6 +111,9 @@ class DocumentRoom(YRoom):
                             self._file.path,
                             self.ystore.__class__.__name__,
                         )
+
+                        # Update the content
+                        self._document.source = model["content"]
 
                         doc = await self.ystore.get(self._room_id)
                         await self.ystore.remove(self._room_id)
@@ -188,7 +168,7 @@ class DocumentRoom(YRoom):
                     self._messages.pop(msg_id)
                     data = msg_id.encode()
                     self._outofband_lock.release()
-                    await self._broadcast_msg(
+                    self.broadcast_msg(
                         bytes([MessageType.ROOM, ans]) + write_var_uint(len(data)) + data
                     )
 
@@ -210,20 +190,14 @@ class DocumentRoom(YRoom):
 
         Cancels the save task and unsubscribes from the file.
         """
-        super().stop()
+        self._document.unobserve()
+        self._file.unobserve(self.room_id)
+
         # TODO: Should we cancel or wait ?
         if self._saving_document:
             self._saving_document.cancel()
 
-        self._document.unobserve()
-        self._file.unobserve(self.room_id)
-
-    async def _broadcast_updates(self):
-        # FIXME should be upstreamed
-        try:
-            await super()._broadcast_updates()
-        except asyncio.CancelledError:
-            pass
+        return super().stop()
 
     async def _on_content_change(self, event: str, args: dict[str, Any]) -> None:
         """
@@ -246,7 +220,7 @@ class DocumentRoom(YRoom):
             self._messages[msg_id] = asyncio.Lock()
             await self._outofband_lock.acquire()
             data = msg_id.encode()
-            await self._broadcast_msg(
+            self.broadcast_msg(
                 bytes([MessageType.ROOM, RoomMessages.FILE_CHANGED])
                 + write_var_uint(len(data))
                 + data
@@ -368,7 +342,3 @@ class DocumentRoom(YRoom):
             msg = f"Error saving file: {self._file.path}\n{e!r}"
             self.log.error(msg, exc_info=e)
             self._emit(LogLevel.ERROR, None, msg)
-
-    async def _broadcast_msg(self, msg: bytes) -> None:
-        for client in self.clients:
-            await client.send(msg)
