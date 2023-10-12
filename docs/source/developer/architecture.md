@@ -4,6 +4,15 @@
 
 COMING...
 
+### Opening a document
+![initialization](../images/initialization_diagram.png)
+
+### Autosave
+![autosave](../images/autosave_diagram.png)
+
+### Conflict
+![autosave](../images/conflict_diagram.png)
+
 ## Early attempts
 
 Prior to the current implementation based on [Yjs](https://docs.yjs.dev/), other attempts using

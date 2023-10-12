@@ -4,15 +4,13 @@
 from __future__ import annotations
 
 import struct
-import tempfile
 import time
 from logging import Logger, getLogger
 from pathlib import Path
-from typing import AsyncIterator, Awaitable, Callable
+from typing import Any, AsyncIterator, Awaitable, Callable
 
 import anyio
 from anyio import Event, Lock
-from deprecated import deprecated
 from ypy_websocket.yutils import Decoder, get_new_path, write_var_uint
 
 from .base_store import BaseYStore
@@ -235,7 +233,7 @@ class FileYStore(BaseYStore):
         except Exception:
             raise YDocNotFound(f"File {str(path)} not found.")
 
-    async def _decode_data(self, data) -> AsyncIterator[tuple[bytes, bytes, float]]:
+    async def _decode_data(self, data: Any) -> AsyncIterator[tuple[bytes, bytes, float]]:
         i = 0
         for d in Decoder(data).read_messages():
             if i == 0:
@@ -249,60 +247,3 @@ class FileYStore(BaseYStore):
 
     def _get_document_path(self, path: str) -> Path:
         return Path(self._store_path, path + ".y")
-
-
-@deprecated(reason="Use FileYStore instead")
-class TempFileYStore(FileYStore):
-    """
-    A YStore which uses the system's temporary directory.
-    Files are writen under a common directory.
-    To prefix the directory name (e.g. /tmp/my_prefix_b4whmm7y/):
-
-    ```py
-    class PrefixTempFileYStore(TempFileYStore):
-        prefix_dir = "my_prefix_"
-    ```
-
-    ## Note:
-    This class is deprecated. Use FileYStore and pass the tmp folder
-    as path argument. For example:
-
-    ```py
-    tmp_dir = tempfile.mkdtemp(prefix="prefix/directory/")
-    store = FileYStore(tmp_dir)
-    ```
-    """
-
-    prefix_dir: str | None = None
-    base_dir: str | None = None
-
-    def __init__(
-        self,
-        path: str,
-        metadata_callback: Callable[[], Awaitable[bytes] | bytes] | None = None,
-        log: Logger | None = None,
-    ):
-        """Initialize the object.
-
-        Arguments:
-            path: The file path used to store the updates.
-            metadata_callback: An optional callback to call to get the metadata.
-            log: An optional logger.
-        """
-        full_path = str(Path(self.get_base_dir()) / path)
-        super().__init__(full_path, metadata_callback=metadata_callback, log=log)
-
-    def get_base_dir(self) -> str:
-        """Get the base directory where the update file is written.
-
-        Returns:
-            The base directory path.
-        """
-        if self.base_dir is None:
-            self.make_directory()
-        assert self.base_dir is not None
-        return self.base_dir
-
-    def make_directory(self):
-        """Create the base directory where the update file is written."""
-        type(self).base_dir = tempfile.mkdtemp(prefix=self.prefix_dir)

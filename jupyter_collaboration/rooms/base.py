@@ -23,6 +23,12 @@ class BaseRoom(YRoom):
         """
         return self._room_id
 
+    async def initialize(self) -> None:
+        return
+
+    async def handle_msg(self, data: bytes) -> None:
+        return
+
     def broadcast_msg(self, msg: bytes) -> None:
         for client in self.clients:
             self._task_group.start_soon(client.send, msg)

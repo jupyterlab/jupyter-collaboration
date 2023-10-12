@@ -12,7 +12,6 @@ from .loaders import FileLoaderMapping
 from .rooms import RoomManager
 from .stores import BaseYStore, SQLiteYStore
 from .utils import EVENTS_SCHEMA_PATH
-from .websocketserver import JupyterWebsocketServer
 
 
 class YDocExtension(ExtensionApp):
@@ -80,14 +79,7 @@ class YDocExtension(ExtensionApp):
         for k, v in self.config.get(self.ystore_class.__name__, {}).items():
             setattr(self.ystore_class, k, v)
 
-        # NOTE: Initialize in the ExtensionApp.start_extension once
-        # https://github.com/jupyter-server/jupyter_server/issues/1329
-        # is done.
-        # We are temporarily initializing the store here because the
-        # initialization is async
         self.store = self.ystore_class(log=self.log)
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.store.initialize())
 
         # self.settings is local to the ExtensionApp but here we need
         # the global app settings in which the file id manager will register
@@ -111,6 +103,7 @@ class YDocExtension(ExtensionApp):
                     YDocWebSocketHandler,
                     {
                         "document_cleanup_delay": self.document_cleanup_delay,
+                        "store": self.store,
                         "room_manager": self.room_manager,
                     },
                 ),

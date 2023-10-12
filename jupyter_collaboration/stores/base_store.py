@@ -143,7 +143,7 @@ class BaseYStore(ABC):
             path: The document name/path.
             ydoc: The YDoc from which to store the state.
         """
-        update = Y.encode_state_as_update(ydoc)  # type: ignore
+        update = Y.encode_state_as_update(ydoc)
         await self.write(path, update)
 
     async def apply_updates(self, path: str, ydoc: Y.YDoc) -> None:
@@ -154,4 +154,4 @@ class BaseYStore(ABC):
             ydoc: The YDoc on which to apply the updates.
         """
         async for update, *rest in self.read(path):  # type: ignore
-            Y.apply_update(ydoc, update)  # type: ignore
+            Y.apply_update(ydoc, update)

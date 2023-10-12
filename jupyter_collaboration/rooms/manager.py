@@ -43,7 +43,7 @@ class RoomManager:
         """Test if an id has a room."""
         return room_id in self._rooms
 
-    async def get_room(self, room_id: str) -> BaseRoom | None:
+    async def get_room(self, room_id: str) -> BaseRoom:
         """
         Get the room for a given id.
 
@@ -75,9 +75,12 @@ class RoomManager:
             if not room.started.is_set():
                 self._room_tasks[room_id] = asyncio.create_task(room.start())
 
+            if not room.ready:
+                await room.initialize()
+
             return room
 
-    async def remove(self, room_id: str, delay: float = 0) -> None:
+    async def remove_room(self, room_id: str, delay: float = 0) -> None:
         """Remove the room for a given id."""
         # Use lock to make sure while a client is creating the
         # clean up task, no one else is accessing the room or trying to
@@ -86,6 +89,8 @@ class RoomManager:
             if room_id in self._clean_up_tasks:
                 return
 
+            # NOTE: Should we check if there is only one client?
+            # if len(self._rooms[room_id].clients) <= 1:
             self._clean_up_tasks[room_id] = asyncio.create_task(self._clean_up_room(room_id, delay))
 
     async def clear(self) -> None:
@@ -118,7 +123,7 @@ class RoomManager:
             self._document_save_delay,
         )
 
-    async def _clean_up_room(self, room_id: str, delay: float):
+    async def _clean_up_room(self, room_id: str, delay: float) -> None:
         """
         Async task for cleaning up the resources.
 

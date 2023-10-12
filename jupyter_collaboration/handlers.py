@@ -17,7 +17,8 @@ from tornado.ioloop import IOLoop
 from tornado.websocket import WebSocketHandler
 from ypy_websocket.yutils import write_var_uint
 
-from .rooms import DocumentRoom, RoomManager
+from .rooms import BaseRoom, RoomManager
+from .stores import BaseYStore
 from .utils import (
     JUPYTER_COLLABORATION_EVENTS_URI,
     LogLevel,
@@ -50,28 +51,37 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
        receiving a message.
     """
 
-    _serve_task: asyncio.Task
+    _room_id: str
+    room: BaseRoom
+    _serve_task: asyncio.Task | None
     _message_queue: asyncio.Queue[Any]
 
-    async def prepare(self):
-        # Get room
-        self._room_id: str = self.request.path.split("/")[-1]
-        self.room = await self._room_manager.get_room(self._room_id)
-        return await super().prepare()
-
     def initialize(
-        self, room_manager: RoomManager, document_cleanup_delay: float | None = 60.0
+        self,
+        store: BaseYStore,
+        room_manager: RoomManager,
+        document_cleanup_delay: float | None = 60.0,
     ) -> None:
         # File ID manager cannot be passed as argument as the extension may load after this one
         self._file_id_manager = self.settings["file_id_manager"]
 
+        self._store = store
         self._room_manager = room_manager
         self._cleanup_delay = document_cleanup_delay
 
-        self._room_id = None
-        self.room = None
-        self._serve_task = None
+        self._serve_task: asyncio.Task | None = None
         self._message_queue = asyncio.Queue()
+
+    async def prepare(self):
+        # NOTE: Initialize in the ExtensionApp.start_extension once
+        # https://github.com/jupyter-server/jupyter_server/issues/1329
+        # is done.
+        # We are temporarily initializing the store here because the
+        # initialization is async
+        if not self._store.initialized:
+            await self._store.initialize()
+
+        return await super().prepare()
 
     @property
     def path(self):
@@ -112,46 +122,42 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         On connection open.
         """
-        # Start processing messages in the room
-        self._serve_task = asyncio.create_task(self.room.serve(self))
+        self._room_id = self.request.path.split("/")[-1]
 
-        if isinstance(self.room, DocumentRoom):
-            # Close the connection if the document session expired
-            session_id = self.get_query_argument("sessionId", "")
-            if SERVER_SESSION != session_id:
-                self.close(
-                    1003,
-                    f"Document session {session_id} expired. You need to reload this browser tab.",
-                )
+        # Close the connection if the document session expired
+        session_id = self.get_query_argument("sessionId", None)
+        if session_id and SERVER_SESSION != session_id:
+            self.close(
+                1003,
+                f"Document session {session_id} expired. You need to reload this browser tab.",
+            )
+        try:
+            # Get room
+            self.room = await self._room_manager.get_room(self._room_id)
 
-            # TODO: Move initialization to RoomManager to make sure only one
-            # client calls initialize
-            try:
-                # Initialize the room
-                await self.room.initialize()
-            except Exception as e:
-                _, _, file_id = decode_file_path(self._room_id)
-                path = self._file_id_manager.get_path(file_id)
+        except Exception as e:
+            _, _, file_id = decode_file_path(self._room_id)
+            path = self._file_id_manager.get_path(file_id)
 
-                # Close websocket and propagate error.
-                if isinstance(e, web.HTTPError):
-                    self.log.error(f"File {path} not found.\n{e!r}", exc_info=e)
-                    self.close(1004, f"File {path} not found.")
-                else:
-                    self.log.error(f"Error initializing: {path}\n{e!r}", exc_info=e)
-                    self.close(1003, f"Error initializing: {path}. You need to close the document.")
+            # Close websocket and propagate error.
+            if isinstance(e, web.HTTPError):
+                self.log.error(f"File {path} not found.\n{e!r}", exc_info=e)
+                self.close(1004, f"File {path} not found.")
+            else:
+                self.log.error(f"Error initializing: {path}\n{e!r}", exc_info=e)
+                self.close(1003, f"Error initializing: {path}. You need to close the document.")
 
-                # Clean up the room and delete the file loader
-                if (
-                    self.room is not None
-                    and len(self.room.clients) == 0
-                    or self.room.clients == [self]
-                ):
-                    self._message_queue.put_nowait(b"")
+            # Clean up the room and delete the file loader
+            if self.room is not None and len(self.room.clients) == 0 or self.room.clients == [self]:
+                self._message_queue.put_nowait(b"")
+                if self._serve_task:
                     self._serve_task.cancel()
-                    await self._room_manager.remove(self._room_id)
+                await self._room_manager.remove_room(self._room_id)
 
             self._emit(LogLevel.INFO, "initialize", "New client connected.")
+
+        # Start processing messages in the room
+        self._serve_task = asyncio.create_task(self.room.serve(self))
 
     async def send(self, message):
         """
@@ -201,15 +207,11 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         if self._serve_task is not None and not self._serve_task.cancelled():
             self._serve_task.cancel()
 
-        if (
-            self.room is not None
-            and isinstance(self.room, DocumentRoom)
-            and self.room.clients == [self]
-        ):
+        if self.room is not None and self.room.clients == [self]:
             # no client in this room after we disconnect
             # Remove the room with a delay in case someone reconnects
             IOLoop.current().add_callback(
-                self._room_manager.remove, self._room_id, self._cleanup_delay
+                self._room_manager.remove_room, self._room_id, self._cleanup_delay
             )
 
     def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:

@@ -10,10 +10,10 @@ from typing import Any
 
 from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
-from ypy_websocket.stores import BaseYStore
 from ypy_websocket.yutils import write_var_uint
 
 from ..loaders import FileLoader
+from ..stores import BaseYStore
 from ..utils import (
     JUPYTER_COLLABORATION_EVENTS_URI,
     LogLevel,

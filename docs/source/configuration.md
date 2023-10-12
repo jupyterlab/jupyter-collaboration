@@ -26,6 +26,6 @@ jupyter lab --YDocExtension.file_poll_interval=2
 # If None, the document will be kept in memory forever.
 jupyter lab --YDocExtension.document_cleanup_delay=100
 
-# The YStore class to use for storing Y updates (default: JupyterSQLiteYStore).
-jupyter lab --YDocExtension.ystore_class=ypy_websocket.ystore.TempFileYStore
+# The Store class used for storing Y updates (default: SQLiteYStore).
+jupyter lab --YDocExtension.ystore_class=jupyter_collaboration.stores.FileYStore
 ```
