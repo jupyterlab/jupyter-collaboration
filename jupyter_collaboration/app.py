@@ -9,9 +9,9 @@ from traitlets import Bool, Float, Type
 
 from .handlers import DocSessionHandler, YDocWebSocketHandler
 from .loaders import FileLoaderMapping
+from .rooms import RoomManager
 from .stores import BaseYStore, SQLiteYStore
 from .utils import EVENTS_SCHEMA_PATH
-from .websocketserver import JupyterWebsocketServer
 
 
 class YDocExtension(ExtensionApp):
@@ -20,8 +20,6 @@ class YDocExtension(ExtensionApp):
     description = """
     Enables Real Time Collaboration in JupyterLab
     """
-
-    _store: BaseYStore = None
 
     disable_rtc = Bool(False, config=True, help="Whether to disable real time collaboration.")
 
@@ -81,20 +79,21 @@ class YDocExtension(ExtensionApp):
         for k, v in self.config.get(self.ystore_class.__name__, {}).items():
             setattr(self.ystore_class, k, v)
 
-        # Instantiate the store
-        self._store = self.ystore_class(log=self.log)
-
-        self.ywebsocket_server = JupyterWebsocketServer(
-            rooms_ready=False,
-            auto_clean_rooms=False,
-            log=self.log,
-        )
+        self.store = self.ystore_class(log=self.log)
 
         # self.settings is local to the ExtensionApp but here we need
         # the global app settings in which the file id manager will register
         # itself maybe at a later time.
         self.file_loaders = FileLoaderMapping(
             self.serverapp.web_app.settings, self.log, self.file_poll_interval
+        )
+
+        self.room_manager = RoomManager(
+            self.store,
+            self.file_loaders,
+            self.serverapp.event_logger,
+            self.document_save_delay,
+            self.log,
         )
 
         self.handlers.extend(
@@ -104,10 +103,8 @@ class YDocExtension(ExtensionApp):
                     YDocWebSocketHandler,
                     {
                         "document_cleanup_delay": self.document_cleanup_delay,
-                        "document_save_delay": self.document_save_delay,
-                        "file_loaders": self.file_loaders,
-                        "store": self._store,
-                        "ywebsocket_server": self.ywebsocket_server,
+                        "store": self.store,
+                        "room_manager": self.room_manager,
                     },
                 ),
                 (r"/api/collaboration/session/(.*)", DocSessionHandler),
@@ -118,7 +115,7 @@ class YDocExtension(ExtensionApp):
         # Cancel tasks and clean up
         await asyncio.wait(
             [
-                asyncio.create_task(self.ywebsocket_server.clean()),
+                asyncio.create_task(self.room_manager.clear()),
                 asyncio.create_task(self.file_loaders.clear()),
             ],
             timeout=3,

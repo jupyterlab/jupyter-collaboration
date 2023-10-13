@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from asyncio import Event, sleep
 from datetime import datetime
+from logging import getLogger
 from typing import Any
 
 import nbformat
@@ -170,9 +171,7 @@ def rtc_create_SQLite_store(jp_serverapp):
         setattr(SQLiteYStore, k, v)
 
     async def _inner(type: str, path: str, content: str) -> DocumentRoom:
-        room_id = f"{type}:{path}"
-        db = SQLiteYStore()
-        await db.start()
+        db = SQLiteYStore(log=getLogger(__name__))
         await db.initialize()
 
         if type == "notebook":
@@ -182,8 +181,8 @@ def rtc_create_SQLite_store(jp_serverapp):
 
         doc.source = content
 
-        await db.create(room_id, 0)
-        await db.encode_state_as_update(room_id, doc.ydoc)
+        await db.create(path, 0)
+        await db.encode_state_as_update(path, doc.ydoc)
 
         return db
 
@@ -193,14 +192,15 @@ def rtc_create_SQLite_store(jp_serverapp):
 @pytest.fixture
 def rtc_create_mock_document_room():
     def _inner(
-        id: str,
+        room_id: str,
+        path_id: str,
         path: str,
         content: str,
         last_modified: datetime | None = None,
         save_delay: float | None = None,
         store: SQLiteYStore | None = None,
     ) -> tuple[FakeContentsManager, FileLoader, DocumentRoom]:
-        paths = {id: path}
+        paths = {path_id: path}
 
         if last_modified is None:
             cm = FakeContentsManager({"content": content})
@@ -208,7 +208,7 @@ def rtc_create_mock_document_room():
             cm = FakeContentsManager({"last_modified": datetime.now(), "content": content})
 
         loader = FileLoader(
-            id,
+            path_id,
             FakeFileIDManager(paths),
             cm,
             poll_interval=0.1,
@@ -218,7 +218,7 @@ def rtc_create_mock_document_room():
             cm,
             loader,
             DocumentRoom(
-                "test-room", "text", "file", loader, FakeEventLogger(), store, None, save_delay
+                room_id, "text", "file", loader, FakeEventLogger(), store, None, save_delay
             ),
         )
 
