@@ -4,6 +4,9 @@
 
 COMING...
 
+### Class diagram
+![classes](../images/class_diagram.png)
+
 ### Opening a document
 ![initialization](../images/initialization_diagram.png)
 
