@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import asyncio
+import uuid
 from logging import Logger
 
 from ypy_websocket.websocket_server import YRoom
@@ -15,6 +16,7 @@ class BaseRoom(YRoom):
     def __init__(self, room_id: str, store: BaseYStore | None = None, log: Logger | None = None):
         super().__init__(ready=False, ystore=store, log=log)
         self._room_id = room_id
+        self._session_id: str = str(uuid.uuid4())
 
     @property
     def room_id(self) -> str:
@@ -22,6 +24,18 @@ class BaseRoom(YRoom):
         The room ID.
         """
         return self._room_id
+
+    @property
+    def session_id(self) -> str:
+        """
+        A unique identifier for the updates.
+
+        NOTE: The session id, is a unique identifier for the updates
+        that compose the Y document. If this document is destroyed, every
+        client connected must replace its content with new updates otherwise
+        once we initialize a new Y document, the content will be duplicated.
+        """
+        return self._session_id
 
     async def initialize(self) -> None:
         return

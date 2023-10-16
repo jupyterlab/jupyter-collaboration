@@ -32,7 +32,7 @@ class YDocExtension(ExtensionApp):
     )
 
     document_cleanup_delay = Float(
-        60,
+        5,
         allow_none=True,
         config=True,
         help="""The delay in seconds to keep a document in memory in the back-end after all clients
@@ -107,7 +107,14 @@ class YDocExtension(ExtensionApp):
                         "room_manager": self.room_manager,
                     },
                 ),
-                (r"/api/collaboration/session/(.*)", DocSessionHandler),
+                (
+                    r"/api/collaboration/session/(.*)",
+                    DocSessionHandler,
+                    {
+                        "store": self.store,
+                        "room_manager": self.room_manager,
+                    },
+                ),
             ]
         )
 

@@ -150,18 +150,23 @@ class RoomManager:
         self._emit(room_id, LogLevel.INFO, "clean", "Room deleted.")
 
         # Clean the file loader if there are not rooms using it
-        _, _, file_id = decode_file_path(room_id)
-        file = self._file_loaders[file_id]
-        if file.number_of_subscriptions == 0:
-            await self._file_loaders.remove(file_id)
-            self.log.info("Loader %s deleted", file.path)
-            self._emit(room_id, LogLevel.INFO, "clean", "Loader deleted.")
+        if room_id.count(":") >= 2:
+            _, _, file_id = decode_file_path(room_id)
+            file = self._file_loaders[file_id]
+            if file.number_of_subscriptions == 0:
+                await self._file_loaders.remove(file_id)
+                self.log.info("Loader %s deleted", file.path)
+                self._emit(room_id, LogLevel.INFO, "clean", "Loader deleted.")
 
-        del self._clean_up_tasks[room_id]
+        if room_id in self._clean_up_tasks:
+            del self._clean_up_tasks[room_id]
 
     def _emit(
         self, room_id: str, level: LogLevel, action: str | None = None, msg: str | None = None
     ) -> None:
+        if room_id.count(":") < 2:
+            return
+
         _, _, file_id = decode_file_path(room_id)
         path = self._file_loaders.file_id_manager.get_path(file_id)
 
