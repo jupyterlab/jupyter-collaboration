@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.0alpha0
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@1.0.1...0dc369b46e5a44fbfda16736e26c8b758e5e1bce))
+
+### Enhancements made
+
+- Improves document sessions [#204](https://github.com/jupyterlab/jupyter-collaboration/pull/204) ([@hbcarlos](https://github.com/hbcarlos))
+- Rooms [#201](https://github.com/jupyterlab/jupyter-collaboration/pull/201) ([@hbcarlos](https://github.com/hbcarlos))
+
+### Bugs fixed
+
+- Migrate to latest stores [#200](https://github.com/jupyterlab/jupyter-collaboration/pull/200) ([@hbcarlos](https://github.com/hbcarlos))
+
+### Documentation improvements
+
+- Adds diagrams [#203](https://github.com/jupyterlab/jupyter-collaboration/pull/203) ([@hbcarlos](https://github.com/hbcarlos))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2023-06-29&to=2023-10-17&type=c))
+
+[@fcollonval](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Afcollonval+updated%3A2023-06-29..2023-10-17&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2023-06-29..2023-10-17&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ahbcarlos+updated%3A2023-06-29..2023-10-17&type=Issues) | [@SylvainCorlay](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ASylvainCorlay+updated%3A2023-06-29..2023-10-17&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Awelcome+updated%3A2023-06-29..2023-10-17&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.0.1
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@1.0.0...e97855f7ad4160cc4e6f5dbe9361806d6b9f3c31))
@@ -29,8 +54,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2023-06-02&to=2023-06-29&type=c))
 
 [@codecov-commenter](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Acodecov-commenter+updated%3A2023-06-02..2023-06-29&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2023-06-02..2023-06-29&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Afcollonval+updated%3A2023-06-02..2023-06-29&type=Issues) | [@fperez](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Afperez+updated%3A2023-06-02..2023-06-29&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2023-06-02..2023-06-29&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ahbcarlos+updated%3A2023-06-02..2023-06-29&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.0.0
 
