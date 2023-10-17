@@ -121,6 +121,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         On connection open.
         """
         self._room_id = self.request.path.split("/")[-1]
+        self.log.info("New client connecting to room: %s", self._room_id)
 
         try:
             # Get room
