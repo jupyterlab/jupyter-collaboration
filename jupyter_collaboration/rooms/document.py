@@ -77,7 +77,7 @@ class DocumentRoom(BaseRoom):
             this setter will subscribe for updates on the shared document.
         """
         async with self._initialization_lock:
-            if self.ready:  # type: ignore[has-type]
+            if self.ready:
                 return
 
             self.log.info("Initializing room %s", self._room_id)
@@ -88,7 +88,9 @@ class DocumentRoom(BaseRoom):
                 if self.ystore is not None and await self.ystore.exists(self._room_id):
                     # Load the content from the store
                     doc = await self.ystore.get(self._room_id)
+                    assert doc
                     self._session_id = doc["session_id"]
+
                     await self.ystore.apply_updates(self._room_id, self.ydoc)
                     self._emit(
                         LogLevel.INFO,

@@ -44,7 +44,7 @@ class BaseRoom(YRoom):
 
     def broadcast_msg(self, msg: bytes) -> None:
         for client in self.clients:
-            self._task_group.start_soon(client.send, msg)
+            self._task_group.start_soon(client.send, msg)  # type: ignore[union-attr]
 
     async def _broadcast_updates(self):
         # FIXME should be upstreamed
