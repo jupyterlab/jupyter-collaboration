@@ -133,8 +133,14 @@ def rtc_connect_doc_client(jp_http_port, jp_base_url, rtc_fetch_session):
     async def _inner(format: str, type: str, path: str) -> Any:
         resp = await rtc_fetch_session(format, type, path)
         data = json.loads(resp.body.decode("utf-8"))
+        if "sessionId" in data and data["sessionId"] is not None:
+            params = f"?sessionId={data['sessionId']}"
+        else:
+            params = ""
+
         return connect(
-            f"ws://127.0.0.1:{jp_http_port}{jp_base_url}api/collaboration/room/{data['format']}:{data['type']}:{data['fileId']}?sessionId={data['sessionId']}"
+            f"ws://127.0.0.1:{jp_http_port}{jp_base_url}api/collaboration/room/{data['format']}:{data['type']}:{data['fileId']}"
+            + params
         )
 
     return _inner
@@ -181,7 +187,7 @@ def rtc_create_SQLite_store(jp_serverapp):
 
         doc.source = content
 
-        await db.create(path, 0)
+        await db.create(path, "0")
         await db.encode_state_as_update(path, doc.ydoc)
 
         return db
