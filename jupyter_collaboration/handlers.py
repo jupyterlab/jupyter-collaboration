@@ -137,7 +137,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 self.close(1004, f"File {path} not found.")
             else:
                 self.log.error(f"Error initializing: {path}\n{e!r}", exc_info=e)
-                self.close(1003, f"Error initializing: {path}. You need to close the document.")
+                self.close(1005, f"Error initializing: {path}. You need to close the document.")
 
             # Clean up the room and delete the file loader
             if self.room is not None and len(self.room.clients) == 0 or self.room.clients == [self]:
