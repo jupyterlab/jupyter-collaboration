@@ -115,7 +115,7 @@ class YRoom:
         return self._on_message
 
     @on_message.setter
-    def on_message(self, value: Callable[[bytes], Awaitable[bool] | bool] | None):
+    def on_message(self, value: Callable[[bytes], Awaitable[bool] | bool] | None) -> None:
         """
         Arguments:
             value: An optional callback to call when a message is received. If the callback returns True, the message is skipped.
@@ -125,17 +125,17 @@ class YRoom:
     async def _broadcast_updates(self):
         async with self._update_receive_stream:
             async for update in self._update_receive_stream:
-                if self._task_group.cancel_scope.cancel_called:
+                if self._task_group.cancel_scope.cancel_called:  # type: ignore[union-attr]
                     return
                 # broadcast internal ydoc's update to all clients, that includes changes from the
                 # clients and changes from the backend (out-of-band changes)
                 for client in self.clients:
                     self.log.debug("Sending Y update to client with endpoint: %s", client.path)
                     message = create_update_message(update)
-                    self._task_group.start_soon(client.send, message)
+                    self._task_group.start_soon(client.send, message)  # type: ignore[union-attr]
                 if self.ystore:
                     self.log.debug("Writing Y update to YStore")
-                    self._task_group.start_soon(self.ystore.write, client.path, update)
+                    self._task_group.start_soon(self.ystore.write, client.path, update)  # type: ignore[union-attr]
 
     async def __aenter__(self) -> YRoom:
         if self._task_group is not None:
@@ -158,7 +158,7 @@ class YRoom:
         self._task_group = None
         return await self._exit_stack.__aexit__(exc_type, exc_value, exc_tb)
 
-    async def start(self, *, task_status: TaskStatus[None] = TASK_STATUS_IGNORED):
+    async def start(self, *, task_status: TaskStatus[None] = TASK_STATUS_IGNORED) -> None:
         """Start the room.
 
         Arguments:
@@ -178,7 +178,7 @@ class YRoom:
             self._starting = False
             task_status.started()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the room."""
         if self._task_group is None:
             raise RuntimeError("YRoom not running")
@@ -186,7 +186,7 @@ class YRoom:
         self._task_group.cancel_scope.cancel()
         self._task_group = None
 
-    async def serve(self, websocket: Websocket):
+    async def serve(self, websocket: Websocket) -> None:
         """Serve a client.
 
         Arguments:

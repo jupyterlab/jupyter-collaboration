@@ -77,7 +77,7 @@ class DocumentRoom(BaseRoom):
             this setter will subscribe for updates on the shared document.
         """
         async with self._initialization_lock:
-            if self.ready:  # type: ignore[has-type]
+            if self.ready:
                 return
 
             self.log.info("Initializing room %s", self._room_id)
@@ -88,7 +88,9 @@ class DocumentRoom(BaseRoom):
                 if self.ystore is not None and await self.ystore.exists(self._room_id):
                     # Load the content from the store
                     doc = await self.ystore.get(self._room_id)
+                    assert doc
                     self._session_id = doc["session_id"]
+
                     await self.ystore.apply_updates(self._room_id, self.ydoc)
                     self._emit(
                         LogLevel.INFO,
@@ -207,18 +209,7 @@ class DocumentRoom(BaseRoom):
         if event == "metadata" and (
             self._last_modified is None or self._last_modified < args["last_modified"]
         ):
-            self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
-            self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes. Overwriting the room.")
-
-            msg_id = str(uuid.uuid4())
-            self._messages[msg_id] = asyncio.Lock()
-            await self._outofband_lock.acquire()
-            data = msg_id.encode()
-            self.broadcast_msg(
-                bytes([MessageType.ROOM, RoomMessages.FILE_CHANGED])
-                + write_var_uint(len(data))
-                + data
-            )
+            await self._send_confict_msg()
 
     def _on_document_change(self, target: str, event: Any) -> None:
         """
@@ -247,17 +238,17 @@ class DocumentRoom(BaseRoom):
 
     async def _load_document(self) -> None:
         try:
-            model = await self._file.load_content(self._file_format, self._file_type, True)
+            async with self._update_lock:
+                model = await self._file.load_content(self._file_format, self._file_type, True)
+                self._document.source = model["content"]
+                self._last_modified = model["last_modified"]
+                self._document.dirty = False
+
         except Exception as e:
             msg = f"Error loading content from file: {self._file.path}\n{e!r}"
             self.log.error(msg, exc_info=e)
             self._emit(LogLevel.ERROR, None, msg)
             return None
-
-        async with self._update_lock:
-            self._document.source = model["content"]
-            self._last_modified = model["last_modified"]
-            self._document.dirty = False
 
     async def _save_document(self) -> None:
         """
@@ -265,16 +256,17 @@ class DocumentRoom(BaseRoom):
         """
         try:
             self.log.info("Saving the content from room %s", self._room_id)
-            model = await self._file.save_content(
-                {
-                    "format": self._file_format,
-                    "type": self._file_type,
-                    "last_modified": self._last_modified,
-                    "content": self._document.source,
-                }
-            )
-            self._last_modified = model["last_modified"]
+
             async with self._update_lock:
+                model = await self._file.save_content(
+                    {
+                        "format": self._file_format,
+                        "type": self._file_type,
+                        "last_modified": self._last_modified,
+                        "content": self._document.source,
+                    }
+                )
+                self._last_modified = model["last_modified"]
                 self._document.dirty = False
 
             self._emit(LogLevel.INFO, "save", "Content saved.")
@@ -299,40 +291,41 @@ class DocumentRoom(BaseRoom):
         # save after X seconds of inactivity
         await asyncio.sleep(self._save_delay)
 
+        if self._outofband_lock.locked():
+            return
+
         try:
             self.log.info("Saving the content from room %s", self._room_id)
-            model = await self._file.maybe_save_content(
-                {
-                    "format": self._file_format,
-                    "type": self._file_type,
-                    "last_modified": self._last_modified,
-                    "content": self._document.source,
-                }
-            )
-            self._last_modified = model["last_modified"]
             async with self._update_lock:
+                model = await self._file.maybe_save_content(
+                    {
+                        "format": self._file_format,
+                        "type": self._file_type,
+                        "last_modified": self._last_modified,
+                        "content": self._document.source,
+                    }
+                )
+                self._last_modified = model["last_modified"]
                 self._document.dirty = False
 
             self._emit(LogLevel.INFO, "save", "Content saved.")
 
         except OutOfBandChanges:
-            self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
-            try:
-                model = await self._file.load_content(self._file_format, self._file_type, True)
-            except Exception as e:
-                msg = f"Error loading content from file: {self._file.path}\n{e!r}"
-                self.log.error(msg, exc_info=e)
-                self._emit(LogLevel.ERROR, None, msg)
-                return None
-
-            async with self._update_lock:
-                self._document.source = model["content"]
-                self._last_modified = model["last_modified"]
-                self._document.dirty = False
-
-            self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes while saving.")
+            await self._send_confict_msg()
 
         except Exception as e:
             msg = f"Error saving file: {self._file.path}\n{e!r}"
             self.log.error(msg, exc_info=e)
             self._emit(LogLevel.ERROR, None, msg)
+
+    async def _send_confict_msg(self) -> None:
+        self.log.info("Out-of-band changes in room %s", self._room_id)
+        self._emit(LogLevel.INFO, "overwrite", f"Out-of-band changes in room {self._room_id}")
+
+        msg_id = str(uuid.uuid4())
+        self._messages[msg_id] = asyncio.Lock()
+        await self._outofband_lock.acquire()
+        data = msg_id.encode()
+        self.broadcast_msg(
+            bytes([MessageType.ROOM, RoomMessages.FILE_CHANGED]) + write_var_uint(len(data)) + data
+        )
