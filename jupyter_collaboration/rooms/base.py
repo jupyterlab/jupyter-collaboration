@@ -7,9 +7,8 @@ import asyncio
 import uuid
 from logging import Logger
 
-from ypy_websocket.websocket_server import YRoom
-
 from ..stores import BaseYStore
+from .yroom import YRoom
 
 
 class BaseRoom(YRoom):
