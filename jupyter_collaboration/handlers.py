@@ -304,7 +304,7 @@ class DocSessionHandler(APIHandler):
 
         if await self._store.exists(room_id):
             doc = await self._store.get(room_id)
-            if "session_id" in doc:
+            if doc is not None and "session_id" in doc:
                 return doc["session_id"]
 
         return None
