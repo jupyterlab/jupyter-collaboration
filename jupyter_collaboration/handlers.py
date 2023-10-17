@@ -6,7 +6,6 @@ from __future__ import annotations
 import asyncio
 import json
 import time
-import uuid
 from typing import Any
 
 from jupyter_server.auth import authorized
@@ -27,8 +26,6 @@ from .utils import (
 )
 
 YFILE = YDOCS["file"]
-
-SERVER_SESSION = str(uuid.uuid4())
 
 
 class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
@@ -62,6 +59,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         room_manager: RoomManager,
         document_cleanup_delay: float | None = 60.0,
     ) -> None:
+        super().initialize()
         # File ID manager cannot be passed as argument as the extension may load after this one
         self._file_id_manager = self.settings["file_id_manager"]
 
@@ -124,13 +122,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         self._room_id = self.request.path.split("/")[-1]
 
-        # Close the connection if the document session expired
-        session_id = self.get_query_argument("sessionId", None)
-        if session_id and SERVER_SESSION != session_id:
-            self.close(
-                1003,
-                f"Document session {session_id} expired. You need to reload this browser tab.",
-            )
         try:
             # Get room
             self.room = await self._room_manager.get_room(self._room_id)
@@ -154,10 +145,22 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     self._serve_task.cancel()
                 await self._room_manager.remove_room(self._room_id)
 
-            self._emit(LogLevel.INFO, "initialize", "New client connected.")
+            return
+
+        # Close the connection if the document session expired
+        session_id = self.get_query_argument("sessionId", None)
+        if session_id and session_id != self.room.session_id:
+            self.log.error(
+                f"Client tried to connect to {self._room_id} with an expired session ID {session_id}."
+            )
+            self.close(
+                1003,
+                f"Document session {session_id} expired. You need to reload this browser tab.",
+            )
 
         # Start processing messages in the room
         self._serve_task = asyncio.create_task(self.room.serve(self))
+        self._emit(LogLevel.INFO, "initialize", "New client connected.")
 
     async def send(self, message):
         """
@@ -207,14 +210,20 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         if self._serve_task is not None and not self._serve_task.cancelled():
             self._serve_task.cancel()
 
-        if self.room is not None and self.room.clients == [self]:
-            # no client in this room after we disconnect
-            # Remove the room with a delay in case someone reconnects
-            IOLoop.current().add_callback(
-                self._room_manager.remove_room, self._room_id, self._cleanup_delay
-            )
+        if self.room is not None:
+            # Remove it self from the list of clients
+            self.room.clients.remove(self)
+            if len(self.room.clients) == 0:
+                # no client in this room after we disconnect
+                # Remove the room with a delay in case someone reconnects
+                IOLoop.current().add_callback(
+                    self._room_manager.remove_room, self._room_id, self._cleanup_delay
+                )
 
     def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:
+        if self._room_id.count(":") < 2:
+            return
+
         _, _, file_id = decode_file_path(self._room_id)
         path = self._file_id_manager.get_path(file_id)
 
@@ -240,6 +249,22 @@ class DocSessionHandler(APIHandler):
 
     auth_resource = "contents"
 
+    def initialize(self, store: BaseYStore, room_manager: RoomManager) -> None:
+        super().initialize()
+        self._store = store
+        self._room_manager = room_manager
+
+    async def prepare(self):
+        # NOTE: Initialize in the ExtensionApp.start_extension once
+        # https://github.com/jupyter-server/jupyter_server/issues/1329
+        # is done.
+        # We are temporarily initializing the store here because the
+        # initialization is async
+        if not self._store.initialized:
+            await self._store.initialize()
+
+        return await super().prepare()
+
     @web.authenticated
     @authorized
     async def put(self, path):
@@ -251,26 +276,35 @@ class DocSessionHandler(APIHandler):
         content_type = body["type"]
         file_id_manager = self.settings["file_id_manager"]
 
+        status = 200
         idx = file_id_manager.get_id(path)
-        if idx is not None:
-            # index already exists
-            self.log.info("Request for Y document '%s' with room ID: %s", path, idx)
-            data = json.dumps(
-                {"format": format, "type": content_type, "fileId": idx, "sessionId": SERVER_SESSION}
-            )
-            self.set_status(200)
-            return self.finish(data)
-
-        # try indexing
-        idx = file_id_manager.index(path)
         if idx is None:
-            # file does not exists
-            raise web.HTTPError(404, f"File {path!r} does not exist")
+            # try indexing
+            status = 201
+            idx = file_id_manager.index(path)
+            if idx is None:
+                # file does not exists
+                raise web.HTTPError(404, f"File {path!r} does not exist")
 
-        # index successfully created
+        session_id = await self._get_session_id(f"{format}:{content_type}:{idx}")
+
         self.log.info("Request for Y document '%s' with room ID: %s", path, idx)
         data = json.dumps(
-            {"format": format, "type": content_type, "fileId": idx, "sessionId": SERVER_SESSION}
+            {"format": format, "type": content_type, "fileId": idx, "sessionId": session_id}
         )
-        self.set_status(201)
+        self.set_status(status)
         return self.finish(data)
+
+    async def _get_session_id(self, room_id: str) -> str | None:
+        # If the room exists and it is ready, return the session_id from the room.
+        if self._room_manager.has_room(room_id):
+            room = await self._room_manager.get_room(room_id)
+            if room.ready:
+                return room.session_id
+
+        if await self._store.exists(room_id):
+            doc = await self._store.get(room_id)
+            if doc is not None and "session_id" in doc:
+                return doc["session_id"]
+
+        return None

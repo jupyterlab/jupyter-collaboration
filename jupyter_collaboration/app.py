@@ -107,7 +107,14 @@ class YDocExtension(ExtensionApp):
                         "room_manager": self.room_manager,
                     },
                 ),
-                (r"/api/collaboration/session/(.*)", DocSessionHandler),
+                (
+                    r"/api/collaboration/session/(.*)",
+                    DocSessionHandler,
+                    {
+                        "store": self.store,
+                        "room_manager": self.room_manager,
+                    },
+                ),
             ]
         )
 

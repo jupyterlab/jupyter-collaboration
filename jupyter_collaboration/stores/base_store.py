@@ -72,13 +72,13 @@ class BaseYStore(ABC):
         ...
 
     @abstractmethod
-    async def create(self, path: str, version: int) -> None:
+    async def create(self, path: str, session_id: str) -> None:
         """
         Creates a new document.
 
         Arguments:
             path: The document name/path.
-            version: Document version.
+            session_id: A unique identifier for the updates.
         """
         ...
 

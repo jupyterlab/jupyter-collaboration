@@ -87,6 +87,8 @@ class DocumentRoom(BaseRoom):
                 # try to apply Y updates from the YStore for this document
                 if self.ystore is not None and await self.ystore.exists(self._room_id):
                     # Load the content from the store
+                    doc = await self.ystore.get(self._room_id)
+                    self._session_id = doc["session_id"]
                     await self.ystore.apply_updates(self._room_id, self.ydoc)
                     self._emit(
                         LogLevel.INFO,
@@ -114,14 +116,6 @@ class DocumentRoom(BaseRoom):
 
                         # Update the content
                         self._document.source = model["content"]
-
-                        doc = await self.ystore.get(self._room_id)
-                        await self.ystore.remove(self._room_id)
-                        version = 0
-                        if "version" in doc:
-                            version = doc["version"] + 1
-
-                        await self.ystore.create(self._room_id, version)
                         await self.ystore.encode_state_as_update(self._room_id, self.ydoc)
 
                 else:
@@ -132,7 +126,7 @@ class DocumentRoom(BaseRoom):
                     self._document.source = model["content"]
 
                     if self.ystore is not None:
-                        await self.ystore.create(self._room_id, 0)
+                        await self.ystore.create(self._room_id, self.session_id)
                         await self.ystore.encode_state_as_update(self._room_id, self.ydoc)
 
                 self._last_modified = model["last_modified"]

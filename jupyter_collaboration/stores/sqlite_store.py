@@ -81,7 +81,7 @@ class SQLiteYStore(BaseYStore):
             # Make sure every table exists.
             async with aiosqlite.connect(self._store_path) as db:
                 await db.execute(
-                    "CREATE TABLE IF NOT EXISTS documents (path TEXT PRIMARY KEY, version INTEGER NOT NULL)"
+                    "CREATE TABLE IF NOT EXISTS documents (path TEXT PRIMARY KEY, session TEXT NOT NULL)"
                 )
                 await db.execute(
                     "CREATE TABLE IF NOT EXISTS yupdates (path TEXT NOT NULL, yupdate BLOB, metadata BLOB, timestamp REAL NOT NULL)"
@@ -108,7 +108,7 @@ class SQLiteYStore(BaseYStore):
         async with self._lock:
             async with aiosqlite.connect(self._store_path) as db:
                 cursor = await db.execute(
-                    "SELECT path, version FROM documents WHERE path = ?",
+                    "SELECT path, session FROM documents WHERE path = ?",
                     (path,),
                 )
                 return (await cursor.fetchone()) is not None
@@ -142,7 +142,7 @@ class SQLiteYStore(BaseYStore):
         async with self._lock:
             async with aiosqlite.connect(self._store_path) as db:
                 cursor = await db.execute(
-                    "SELECT path, version FROM documents WHERE path = ?",
+                    "SELECT path, session FROM documents WHERE path = ?",
                     (path,),
                 )
                 doc = await cursor.fetchone()
@@ -158,15 +158,15 @@ class SQLiteYStore(BaseYStore):
                     )
                     list_updates = await cursor.fetchall()
 
-                return dict(path=doc[0], version=doc[1], updates=list_updates)
+                return dict(path=doc[0], session_id=doc[1], updates=list_updates)
 
-    async def create(self, path: str, version: int) -> None:
+    async def create(self, path: str, session_id: str) -> None:
         """
         Creates a new document.
 
         Arguments:
             path: The document name/path.
-            version: Document version.
+            session_id: A unique identifier for the updates.
         """
         if self._initialized is None:
             raise Exception("The store was not initialized.")
@@ -177,7 +177,7 @@ class SQLiteYStore(BaseYStore):
                 async with aiosqlite.connect(self._store_path) as db:
                     await db.execute(
                         "INSERT INTO documents VALUES (?, ?)",
-                        (path, version),
+                        (path, session_id),
                     )
                     await db.commit()
             except aiosqlite.IntegrityError:
@@ -197,7 +197,7 @@ class SQLiteYStore(BaseYStore):
         async with self._lock:
             async with aiosqlite.connect(self._store_path) as db:
                 cursor = await db.execute(
-                    "SELECT path, version FROM documents WHERE path = ?",
+                    "SELECT path, session FROM documents WHERE path = ?",
                     (path,),
                 )
                 if (await cursor.fetchone()) is None:

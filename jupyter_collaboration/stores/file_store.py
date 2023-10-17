@@ -121,11 +121,11 @@ class FileYStore(BaseYStore):
         if not await anyio.Path(file_path).exists():
             return None
         else:
-            version = None
+            session_id = None
             async with await anyio.open_file(file_path, "rb") as f:
                 header = await f.read(8)
                 if header == b"VERSION:":
-                    version = int(await f.readline())
+                    session_id = str(await f.readline())
 
                 list_updates: list[tuple[bytes, bytes, float]] = []
                 if updates:
@@ -133,15 +133,15 @@ class FileYStore(BaseYStore):
                     async for update, metadata, timestamp in self._decode_data(data):
                         list_updates.append((update, metadata, timestamp))
 
-                return dict(path=path, version=version, updates=list_updates)
+                return dict(path=path, session_id=session_id, updates=list_updates)
 
-    async def create(self, path: str, version: int) -> None:
+    async def create(self, path: str, session_id: str) -> None:
         """
         Creates a new document.
 
         Arguments:
             path: The document name/path.
-            version: Document version.
+            session_id: A unique identifier for the updates.
         """
         if self._initialized is None:
             raise Exception("The store was not initialized.")
@@ -154,7 +154,7 @@ class FileYStore(BaseYStore):
         else:
             await anyio.Path(file_path.parent).mkdir(parents=True, exist_ok=True)
             async with await anyio.open_file(file_path, "wb") as f:
-                version_bytes = f"VERSION:{version}\n".encode()
+                version_bytes = f"VERSION:{session_id}\n".encode()
                 await f.write(version_bytes)
 
     async def remove(self, path: str) -> None:
