@@ -32,6 +32,7 @@ def jp_server_config(jp_root_dir, jp_server_config):
             "password": "",
             "disable_check_xsrf": True,
         },
+        "YDocExtension": {"document_cleanup_delay": 0},
         "SQLiteYStore": {"db_path": str(jp_root_dir.joinpath(".rtc_test.db"))},
         "BaseFileIdManager": {
             "root_dir": str(jp_root_dir),
