@@ -43,6 +43,7 @@ async def test_clients(rtc_create_file, rtc_connect_doc_client):
     await wait(clients)
 
     assert sum(list(test_array)) == n
+    await sleep(1)
 
 
 async def test_clients_insert_text(rtc_create_file, rtc_connect_doc_client):
@@ -78,6 +79,7 @@ async def test_clients_insert_text(rtc_create_file, rtc_connect_doc_client):
     await wait(clients)
 
     assert len(doc._ysource) == res
+    await sleep(1)
 
 
 async def test_clients_insert_cell(rtc_create_notebook, rtc_connect_doc_client):
@@ -109,3 +111,4 @@ async def test_clients_insert_cell(rtc_create_notebook, rtc_connect_doc_client):
 
     # +1 For the initial cell :(
     assert doc.cell_number == n + 1
+    await sleep(1)
