@@ -3,7 +3,8 @@
 
 from __future__ import annotations
 
-from asyncio import create_task, sleep, wait
+from asyncio import Event, create_task, sleep, wait
+from typing import Any
 
 import nbformat
 from jupyter_ydoc import YNotebook, YUnicode
@@ -19,16 +20,24 @@ async def test_clients(rtc_create_file, rtc_connect_doc_client):
     async def fn(
         format: str, type: str, path: str, doc: YUnicode, content: int | None = None
     ) -> None:
-        ydoc = doc.ydoc
-        test_array = ydoc.get_array("test")
+
+        event = Event()
+
+        def callback(e: Any) -> None:
+            nonlocal event
+            event.set()
+
+        test_array = doc.ydoc.get_array("test")
+        test_array.observe(callback)
 
         async with await rtc_connect_doc_client(format, type, path) as ws, WebsocketProvider(
-            ydoc, ws
+            doc.ydoc, ws
         ):
             if content is not None:
-                with ydoc.begin_transaction() as txn:
+                with doc.ydoc.begin_transaction() as txn:
                     test_array.extend(txn, [content])
-            await sleep(0.2)
+                await event.wait()
+            await sleep(0.1)
 
     clients = []
     n = 10
@@ -55,14 +64,23 @@ async def test_clients_insert_text(rtc_create_file, rtc_connect_doc_client):
     async def fn(
         format: str, type: str, path: str, doc: YUnicode, content: str | None = None
     ) -> None:
+        event = Event()
+
+        def callback(target: str, e: Any) -> None:
+            nonlocal event
+            if target == "source":
+                event.set()
+
+        doc.observe(callback)
+
         async with await rtc_connect_doc_client(format, type, path) as ws, WebsocketProvider(
             doc.ydoc, ws
         ):
             if content is not None:
                 with doc.ydoc.begin_transaction() as txn:
                     doc._ysource.extend(txn, content)
-
-            await sleep(0.2)
+                await event.wait()
+            await sleep(0.1)
 
     n = 10
     content = "test"
@@ -91,12 +109,22 @@ async def test_clients_insert_cell(rtc_create_notebook, rtc_connect_doc_client):
     async def fn(
         format: str, type: str, path: str, doc: YNotebook, content: str | None = ""
     ) -> None:
+        event = Event()
+
+        def callback(target: str, e: Any) -> None:
+            nonlocal event
+            if target == "cells":
+                event.set()
+
+        doc.observe(callback)
+
         async with await rtc_connect_doc_client(format, type, path) as ws, WebsocketProvider(
             doc.ydoc, ws
         ):
             if content is not None:
                 doc.append_cell(nbformat.v4.new_code_cell(content))
-            await sleep(0.2)
+                await event.wait()
+            await sleep(0.1)
 
     n = 10
     clients = []
