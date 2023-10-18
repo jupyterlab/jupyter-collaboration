@@ -90,6 +90,8 @@ def rtc_create_notebook(jp_root_dir, jp_serverapp, rtc_add_doc_to_store):
         # Create a notebook string and write to file.
         if content is None:
             nb = nbformat.v4.new_notebook()
+            notary = nbformat.sign.NotebookNotary()
+            notary.sign(nb)
             content = nbformat.writes(nb, version=4)
 
         nbpath.write_text(content)
