@@ -134,10 +134,10 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             # Close websocket and propagate error.
             if isinstance(e, web.HTTPError):
                 self.log.error(f"File {path} not found.\n{e!r}", exc_info=e)
-                self.close(1004, f"File {path} not found.")
+                self.close(4000, f"File {path} not found.")
             else:
                 self.log.error(f"Error initializing: {path}\n{e!r}", exc_info=e)
-                self.close(1005, f"Error initializing: {path}. You need to close the document.")
+                self.close(4001, f"Error initializing: {path}. You need to close the document.")
 
             # Clean up the room and delete the file loader
             if self.room is not None and len(self.room.clients) == 0 or self.room.clients == [self]:
@@ -155,7 +155,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 f"Client tried to connect to {self._room_id} with an expired session ID {session_id}."
             )
             self.close(
-                1003,
+                4002,
                 f"Document session {session_id} expired. You need to reload this browser tab.",
             )
 

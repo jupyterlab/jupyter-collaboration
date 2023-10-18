@@ -136,7 +136,7 @@ export class WebSocketProvider implements IDocumentProvider {
   }
 
   private _onConnectionClosed = (event: any): void => {
-    if (event.code >= 1003 && event.code < 1006) {
+    if (event.code >= 4000 && event.code < 4005) {
       console.error('Document provider closed:', event.code, event.reason);
 
       showErrorMessage(this._trans.__('Document error'), event.reason, [
