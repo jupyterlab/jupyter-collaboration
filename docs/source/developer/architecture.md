@@ -2,19 +2,25 @@
 
 ## Current implementation
 
-COMING...
+COMING SOON...
 
 ### Class diagram
-![classes](../images/class_diagram.png)
+![classes](../images/class_diagram.svg)
 
 ### Opening a document
-![initialization](../images/initialization_diagram.png)
+![initialization](../images/initialization_diagram.svg)
+
+### Reconnecting
+The websocket connection might close for multiple reasons. In this section you will find a diagram explaining the process of reconnecting
+to an old collaborative session.
+
+![reconnect](../images/reconnect_diagram.svg)
 
 ### Autosave
-![autosave](../images/autosave_diagram.png)
+![autosave](../images/autosave_diagram.svg)
 
 ### Conflict
-![autosave](../images/conflict_diagram.png)
+![conflict](../images/conflict_diagram.svg)
 
 ## Early attempts
 
