@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.0alpha3
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/3364a94e685d6378bacd8abd96f89715a43ec489...0702dc17abeecc801cfc74098e90b612f0d6eedd))
+
+### Bugs fixed
+
+- Fixes error codes [#208](https://github.com/jupyterlab/jupyter-collaboration/pull/208) ([@hbcarlos](https://github.com/hbcarlos))
+
+### Documentation improvements
+
+- Updates documentation [#209](https://github.com/jupyterlab/jupyter-collaboration/pull/209) ([@hbcarlos](https://github.com/hbcarlos))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2023-10-17&to=2023-10-19&type=c))
+
+[@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2023-10-17..2023-10-19&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ahbcarlos+updated%3A2023-10-17..2023-10-19&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.0alpha2
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/3ece53a6a0d1ee54008c96196c955fe5ff0a3673...0a361faf48b7bb9d31f9a31fe8598780dc7bfa26))
@@ -17,8 +37,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2023-10-17&to=2023-10-17&type=c))
 
 [@hbcarlos](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ahbcarlos+updated%3A2023-10-17..2023-10-17&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.0alpha1
 
