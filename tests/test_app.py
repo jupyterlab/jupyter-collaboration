@@ -11,7 +11,7 @@ def test_default_settings(jp_serverapp):
 
     assert settings["disable_rtc"] is False
     assert settings["file_poll_interval"] == 1
-    assert settings["document_cleanup_delay"] == 60
+    assert settings["document_cleanup_delay"] == 0
     assert settings["document_save_delay"] == 1
     assert settings["ystore_class"] == SQLiteYStore
 
