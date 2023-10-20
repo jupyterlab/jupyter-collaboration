@@ -13,5 +13,6 @@ export enum RoomMessage {
   OVERWRITE = 1,
   FILE_CHANGED = 2,
   FILE_OVERWRITTEN = 3,
-  DOC_OVERWRITTEN = 4
+  DOC_OVERWRITTEN = 4,
+  SESSION_TOKEN = 5
 }

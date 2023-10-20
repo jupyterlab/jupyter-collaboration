@@ -44,6 +44,7 @@ class DocumentRoom(BaseRoom):
 
         self._file_format: str = file_format
         self._file_type: str = file_type
+        self._session_id = str(uuid.uuid4())
         self._last_modified: Any = None
         self._file: FileLoader = file
         self._document = YDOCS.get(self._file_type, YFILE)(self.ydoc)
@@ -128,6 +129,7 @@ class DocumentRoom(BaseRoom):
                     self._document.source = model["content"]
 
                     if self.ystore is not None:
+                        assert self.session_id
                         await self.ystore.create(self._room_id, self.session_id)
                         await self.ystore.encode_state_as_update(self._room_id, self.ydoc)
 

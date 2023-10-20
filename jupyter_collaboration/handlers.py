@@ -22,6 +22,7 @@ from .utils import (
     JUPYTER_COLLABORATION_EVENTS_URI,
     LogLevel,
     MessageType,
+    RoomMessages,
     decode_file_path,
 )
 
@@ -150,13 +151,22 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
         # Close the connection if the document session expired
         session_id = self.get_query_argument("sessionId", None)
-        if session_id and session_id != self.room.session_id:
+        if session_id is not None and session_id != self.room.session_id:
             self.log.error(
                 f"Client tried to connect to {self._room_id} with an expired session ID {session_id}."
             )
             self.close(
                 4002,
                 f"Document session {session_id} expired. You need to reload this browser tab.",
+            )
+        elif session_id is None and self.room.session_id is not None:
+            # If session_id is None is because is a new document
+            # send the new session token
+            data = self.room.session_id.encode("utf8")
+            await self.send(
+                bytes([MessageType.ROOM, RoomMessages.SESSION_TOKEN])
+                + write_var_uint(len(data))
+                + data
             )
 
         # Start processing messages in the room
