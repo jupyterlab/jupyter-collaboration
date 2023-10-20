@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import asyncio
-import uuid
 from logging import Logger
 
 from ..stores import BaseYStore
@@ -15,7 +14,7 @@ class BaseRoom(YRoom):
     def __init__(self, room_id: str, store: BaseYStore | None = None, log: Logger | None = None):
         super().__init__(ready=False, ystore=store, log=log)
         self._room_id = room_id
-        self._session_id: str = str(uuid.uuid4())
+        self._session_id: str | None = None
 
     @property
     def room_id(self) -> str:
@@ -25,7 +24,7 @@ class BaseRoom(YRoom):
         return self._room_id
 
     @property
-    def session_id(self) -> str:
+    def session_id(self) -> str | None:
         """
         A unique identifier for the updates.
 

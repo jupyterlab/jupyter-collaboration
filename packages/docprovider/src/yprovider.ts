@@ -15,10 +15,11 @@ import { DocumentChange, YDocument } from '@jupyter/ydoc';
 
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
+import * as url from 'lib0/url';
 import { Awareness } from 'y-protocols/awareness';
 import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
 
-import { requestDocSession } from './requests';
+import { ISessionModel, requestDocSession } from './requests';
 import { MessageType, RoomMessage } from './utils';
 
 /**
@@ -46,6 +47,7 @@ export class WebSocketProvider implements IDocumentProvider {
   constructor(options: WebSocketProvider.IOptions) {
     this._isDisposed = false;
     this._path = options.path;
+    this._session = null;
     this._contentType = options.contentType;
     this._format = options.format;
     this._serverUrl = options.url;
@@ -95,18 +97,20 @@ export class WebSocketProvider implements IDocumentProvider {
   }
 
   private async _connect(): Promise<void> {
-    const session = await requestDocSession(
+    this._session = await requestDocSession(
       this._format,
       this._contentType,
       this._path
     );
 
     const params =
-      session.sessionId !== null ? { sessionId: session.sessionId } : undefined;
+      this._session.sessionId !== null
+        ? { sessionId: this._session.sessionId }
+        : undefined;
 
     this._yWebsocketProvider = new YWebsocketProvider(
       this._serverUrl,
-      `${session.format}:${session.type}:${session.fileId}`,
+      `${this._session.format}:${this._session.type}:${this._session.fileId}`,
       this._sharedModel.ydoc,
       {
         disableBc: true,
@@ -169,6 +173,9 @@ export class WebSocketProvider implements IDocumentProvider {
           this._dialog = null;
         }
         break;
+      case RoomMessage.SESSION_TOKEN:
+        this._handleSessionToken(data);
+        break;
     }
   }
 
@@ -190,6 +197,15 @@ export class WebSocketProvider implements IDocumentProvider {
         this._sendOverwriteMsg(data);
       }
     });
+  }
+
+  private _handleSessionToken(data: string): void {
+    if (this._yWebsocketProvider && this._session) {
+      const room = `${this._session.format}:${this._session.type}:${this._session.fileId}`;
+      const encodedParams = url.encodeQueryParams({ sessionId: data });
+      this._yWebsocketProvider.url =
+        this._serverUrl + '/' + room + '?' + encodedParams;
+    }
   }
 
   private _sendReloadMsg(data: string): void {
@@ -214,6 +230,7 @@ export class WebSocketProvider implements IDocumentProvider {
   private _format: string;
   private _isDisposed: boolean;
   private _path: string;
+  private _session: ISessionModel | null;
   private _ready = new PromiseDelegate<void>();
   private _serverUrl: string;
   private _sharedModel: YDocument<DocumentChange>;
