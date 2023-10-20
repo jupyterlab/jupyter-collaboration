@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.0alpha4
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/0a6ee1e2c8d6eb9c9015c44eec083afcb0d9fb8e...0cdca391497e766d2a0538d2fc1c2a3e486b32b9))
+
+### Bugs fixed
+
+- Improve document sessions [#210](https://github.com/jupyterlab/jupyter-collaboration/pull/210) ([@hbcarlos](https://github.com/hbcarlos))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2023-10-19&to=2023-10-20&type=c))
+
+[@hbcarlos](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ahbcarlos+updated%3A2023-10-19..2023-10-20&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.0alpha3
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/3364a94e685d6378bacd8abd96f89715a43ec489...0702dc17abeecc801cfc74098e90b612f0d6eedd))
@@ -21,8 +37,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2023-10-17&to=2023-10-19&type=c))
 
 [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2023-10-17..2023-10-19&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ahbcarlos+updated%3A2023-10-17..2023-10-19&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.0alpha2
 
