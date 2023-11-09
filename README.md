@@ -18,7 +18,7 @@ pip install jupyter-collaboration
 Or using ``conda``/``mamba``:
 
 ```bash
-conda install jupyter-collaboration
+conda install -c conda-forge jupyter-collaboration
 ```
 
 ### Testing
