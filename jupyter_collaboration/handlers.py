@@ -15,11 +15,11 @@ from jupyter_ydoc import ydocs as YDOCS
 from tornado import web
 from tornado.websocket import WebSocketHandler
 from ypy_websocket.websocket_server import YRoom
-from ypy_websocket.ystore import BaseYStore
 from ypy_websocket.yutils import YMessageType, write_var_uint
 
 from .loaders import FileLoaderMapping
 from .rooms import DocumentRoom, TransientRoom
+from .stores import BaseYStore
 from .utils import (
     JUPYTER_COLLABORATION_EVENTS_URI,
     LogLevel,
@@ -62,6 +62,14 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         task.add_done_callback(self._background_tasks.discard)
 
     async def prepare(self):
+        # NOTE: Initialize in the ExtensionApp.start_extension once
+        # https://github.com/jupyter-server/jupyter_server/issues/1329
+        # is done.
+        # We are temporarily initializing the store here because `start``
+        # is an async function
+        if self._store is not None and not self._store.initialized:
+            await self._store.initialize()
+
         if not self._websocket_server.started.is_set():
             self.create_task(self._websocket_server.start())
             await self._websocket_server.started.wait()
@@ -84,15 +92,13 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     )
 
                 file = self._file_loaders[file_id]
-                updates_file_path = f".{file_type}:{file_id}.y"
-                ystore = self._ystore_class(path=updates_file_path, log=self.log)
                 self.room = DocumentRoom(
                     self._room_id,
                     file_format,
                     file_type,
                     file,
                     self.event_logger,
-                    ystore,
+                    self._store,
                     self.log,
                     self._document_save_delay,
                 )
@@ -111,7 +117,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self,
         ywebsocket_server: JupyterWebsocketServer,
         file_loaders: FileLoaderMapping,
-        ystore_class: type[BaseYStore],
+        store: BaseYStore,
         document_cleanup_delay: float | None = 60.0,
         document_save_delay: float | None = 1.0,
     ) -> None:
@@ -119,7 +125,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         # File ID manager cannot be passed as argument as the extension may load after this one
         self._file_id_manager = self.settings["file_id_manager"]
         self._file_loaders = file_loaders
-        self._ystore_class = ystore_class
+        self._store = store
         self._cleanup_delay = document_cleanup_delay
         self._document_save_delay = document_save_delay
         self._websocket_server = ywebsocket_server

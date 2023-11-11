@@ -9,7 +9,6 @@ from typing import Any
 
 from tornado.websocket import WebSocketHandler
 from ypy_websocket.websocket_server import WebsocketServer, YRoom
-from ypy_websocket.ystore import BaseYStore
 
 
 class RoomNotFound(LookupError):
@@ -27,13 +26,11 @@ class JupyterWebsocketServer(WebsocketServer):
 
     def __init__(
         self,
-        ystore_class: BaseYStore,
         rooms_ready: bool = True,
         auto_clean_rooms: bool = True,
         log: Logger | None = None,
     ):
         super().__init__(rooms_ready, auto_clean_rooms, log)
-        self.ystore_class = ystore_class
         self.ypatch_nb = 0
         self.connected_users: dict[Any, Any] = {}
         # Async loop is not yet ready at the object instantiation
