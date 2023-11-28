@@ -97,6 +97,8 @@ export class WebSocketProvider implements IDocumentProvider {
       this._contentType,
       this._path
     );
+    const state = this._sharedModel.ydoc.getMap('state');
+    state.set('file_id', session.fileId);
 
     this._yWebsocketProvider = new YWebsocketProvider(
       this._serverUrl,
