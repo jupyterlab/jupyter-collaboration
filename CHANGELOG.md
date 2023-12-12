@@ -4,6 +4,47 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.0
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@1.0.1...8fee21f7cd338057c69febb5508f9b6c8bfd2392))
+
+### Enhancements made
+
+- Adds a flag to disable RTC [#177](https://github.com/jupyterlab/jupyter-collaboration/pull/177) ([@hbcarlos](https://github.com/hbcarlos))
+- Improves chat [#173](https://github.com/jupyterlab/jupyter-collaboration/pull/173) ([@hbcarlos](https://github.com/hbcarlos))
+- Adds restore and ovewrite messages [#170](https://github.com/jupyterlab/jupyter-collaboration/pull/170) ([@hbcarlos](https://github.com/hbcarlos))
+
+### Bugs fixed
+
+- Improves error handling when the file does not exist [#175](https://github.com/jupyterlab/jupyter-collaboration/pull/175) ([@hbcarlos](https://github.com/hbcarlos))
+- Use fileId instead of path in the store [#174](https://github.com/jupyterlab/jupyter-collaboration/pull/174) ([@hbcarlos](https://github.com/hbcarlos))
+- Adds restore and ovewrite messages [#170](https://github.com/jupyterlab/jupyter-collaboration/pull/170) ([@hbcarlos](https://github.com/hbcarlos))
+
+### Maintenance and upkeep improvements
+
+- Fix CI [#221](https://github.com/jupyterlab/jupyter-collaboration/pull/221) ([@davidbrochart](https://github.com/davidbrochart))
+- Use pycrdt-websocket instead of ypy-websocket [#220](https://github.com/jupyterlab/jupyter-collaboration/pull/220) ([@davidbrochart](https://github.com/davidbrochart))
+- Switch from hub to gh CLI [#199](https://github.com/jupyterlab/jupyter-collaboration/pull/199) ([@hbcarlos](https://github.com/hbcarlos))
+- Pin jupyter_events [#186](https://github.com/jupyterlab/jupyter-collaboration/pull/186) ([@hbcarlos](https://github.com/hbcarlos))
+- Tests [#182](https://github.com/jupyterlab/jupyter-collaboration/pull/182) ([@hbcarlos](https://github.com/hbcarlos))
+- Adds tests for rooms [#181](https://github.com/jupyterlab/jupyter-collaboration/pull/181) ([@hbcarlos](https://github.com/hbcarlos))
+- Fix package name of integration tests [#176](https://github.com/jupyterlab/jupyter-collaboration/pull/176) ([@brichet](https://github.com/brichet))
+- Remove print [#172](https://github.com/jupyterlab/jupyter-collaboration/pull/172) ([@martinRenou](https://github.com/martinRenou))
+- Add UI-tests [#157](https://github.com/jupyterlab/jupyter-collaboration/pull/157) ([@brichet](https://github.com/brichet))
+
+### Documentation improvements
+
+- Update README.md [#212](https://github.com/jupyterlab/jupyter-collaboration/pull/212) ([@1reverseengineer](https://github.com/1reverseengineer))
+- docs: 📝 update configuration doc [#195](https://github.com/jupyterlab/jupyter-collaboration/pull/195) ([@yambottle](https://github.com/yambottle))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2023-06-29&to=2023-12-12&type=c))
+
+[@1reverseengineer](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3A1reverseengineer+updated%3A2023-06-29..2023-12-12&type=Issues) | [@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2023-06-29..2023-12-12&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2023-06-29..2023-12-12&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Afcollonval+updated%3A2023-06-29..2023-12-12&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2023-06-29..2023-12-12&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ahbcarlos+updated%3A2023-06-29..2023-12-12&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2023-06-29..2023-12-12&type=Issues) | [@martinRenou](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AmartinRenou+updated%3A2023-06-29..2023-12-12&type=Issues) | [@SylvainCorlay](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ASylvainCorlay+updated%3A2023-06-29..2023-12-12&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Awelcome+updated%3A2023-06-29..2023-12-12&type=Issues) | [@yambottle](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ayambottle+updated%3A2023-06-29..2023-12-12&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 1.0.1
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@1.0.0...e97855f7ad4160cc4e6f5dbe9361806d6b9f3c31))
@@ -29,8 +70,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2023-06-02&to=2023-06-29&type=c))
 
 [@codecov-commenter](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Acodecov-commenter+updated%3A2023-06-02..2023-06-29&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2023-06-02..2023-06-29&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Afcollonval+updated%3A2023-06-02..2023-06-29&type=Issues) | [@fperez](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Afperez+updated%3A2023-06-02..2023-06-29&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2023-06-02..2023-06-29&type=Issues) | [@hbcarlos](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ahbcarlos+updated%3A2023-06-02..2023-06-29&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 1.0.0
 
