@@ -8,13 +8,13 @@
     "jupyterlab",
     "jupyterlab-extension"
   ],
-  "homepage": "https://github.com/jupyterlab/jupyter_collaboration",
+  "homepage": "https://github.com/jupyterlab/jupyter-collaboration",
   "bugs": {
-    "url": "https://github.com/jupyterlab/jupyter_collaboration/issues"
+    "url": "https://github.com/jupyterlab/jupyter-collaboration/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jupyterlab/jupyter_collaboration.git"
+    "url": "https://github.com/jupyterlab/jupyter-collaboration.git"
   },
   "license": "BSD-3-Clause",
   "author": {
@@ -67,6 +67,5 @@
     "stylelint-prettier": "^3.0.0",
     "typedoc": "~0.23.28",
     "typescript": "~5.0.4"
-  },
-  "packageManager": "yarn@3.5.0"
+  }
 }

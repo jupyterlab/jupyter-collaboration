@@ -107,7 +107,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             await self._websocket_server.start_room(self.room)
             self._websocket_server.add_room(self._room_id, self.room)
 
-        return await super().prepare()
+        res = super().prepare()
+        if res is not None:
+            return await res
 
     def initialize(
         self,

@@ -7,9 +7,6 @@ import asyncio
 from datetime import datetime
 from typing import Any
 
-import pytest
-from jupyter_server import _tz as tz
-
 from jupyter_collaboration.loaders import FileLoader, FileLoaderMapping
 
 
@@ -45,7 +42,6 @@ class FakeContentsManager:
         return self.model
 
 
-@pytest.mark.asyncio
 async def test_FileLoader_with_watcher():
     id = "file-4567"
     path = "myfile.txt"
@@ -78,7 +74,6 @@ async def test_FileLoader_with_watcher():
         await loader.clean()
 
 
-@pytest.mark.asyncio
 async def test_FileLoader_without_watcher():
     id = "file-4567"
     path = "myfile.txt"
@@ -110,7 +105,6 @@ async def test_FileLoader_without_watcher():
         await loader.clean()
 
 
-@pytest.mark.asyncio
 async def test_FileLoaderMapping_with_watcher():
     id = "file-4567"
     path = "myfile.txt"

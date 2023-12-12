@@ -71,10 +71,17 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.8", "3.11"]
-        include:
-          - os: ubuntu-latest
-            python-version: "pypy-3.8"
+
+        python-version: ["3.8", "3.11", "3.12"]
+        # PyPy is not supported because we use the file_id_manager. See:
+        # https://github.com/jupyter-server/jupyter_server_fileid/issues/44
+        #include:
+        #  - os: ubuntu-latest
+        #    python-version: "pypy-3.8"
+        exclude:
+          - os: windows-latest
+            python-version: "3.12"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -138,7 +145,12 @@ jobs:
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Install the Python dependencies
         run: |
+<<<<<<< HEAD
           pip install --pre -e ".[test]"
+=======
+          pip install -e ".[test]"
+
+>>>>>>> 7ae9c62 (Fix CI (#221))
       - name: List installed packages
         run: |
           pip freeze
