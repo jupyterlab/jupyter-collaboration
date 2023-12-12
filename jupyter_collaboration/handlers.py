@@ -12,11 +12,11 @@ from typing import Any
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_ydoc import ydocs as YDOCS
+from pycrdt_websocket.websocket_server import YRoom
+from pycrdt_websocket.ystore import BaseYStore
+from pycrdt_websocket.yutils import YMessageType, write_var_uint
 from tornado import web
 from tornado.websocket import WebSocketHandler
-from ypy_websocket.websocket_server import YRoom
-from ypy_websocket.ystore import BaseYStore
-from ypy_websocket.yutils import YMessageType, write_var_uint
 
 from .loaders import FileLoaderMapping
 from .rooms import DocumentRoom, TransientRoom

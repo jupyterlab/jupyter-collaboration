@@ -27,5 +27,5 @@ jupyter lab --YDocExtension.file_poll_interval=2
 jupyter lab --YDocExtension.document_cleanup_delay=100
 
 # The YStore class to use for storing Y updates (default: JupyterSQLiteYStore).
-jupyter lab --YDocExtension.ystore_class=ypy_websocket.ystore.TempFileYStore
+jupyter lab --YDocExtension.ystore_class=pycrdt_websocket.ystore.TempFileYStore
 ```

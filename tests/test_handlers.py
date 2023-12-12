@@ -8,7 +8,7 @@ from asyncio import Event, sleep
 from typing import Any
 
 from jupyter_ydoc import YUnicode
-from ypy_websocket import WebsocketProvider
+from pycrdt_websocket import WebsocketProvider
 
 
 async def test_session_handler_should_create_session_id(

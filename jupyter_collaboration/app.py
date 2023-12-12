@@ -5,8 +5,8 @@ from __future__ import annotations
 import asyncio
 
 from jupyter_server.extension.application import ExtensionApp
+from pycrdt_websocket.ystore import BaseYStore
 from traitlets import Bool, Float, Type
-from ypy_websocket.ystore import BaseYStore
 
 from .handlers import DocSessionHandler, YDocWebSocketHandler
 from .loaders import FileLoaderMapping
