@@ -53,6 +53,60 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
     room: BaseRoom
     _serve_task: asyncio.Task | None
     _message_queue: asyncio.Queue[Any]
+    _background_tasks: set[asyncio.Task]
+
+    def create_task(self, aw):
+        task = asyncio.create_task(aw)
+        self._background_tasks.add(task)
+        task.add_done_callback(self._background_tasks.discard)
+
+    async def prepare(self):
+        if not self._websocket_server.started.is_set():
+            self.create_task(self._websocket_server.start())
+            await self._websocket_server.started.wait()
+
+        # Get room
+        self._room_id: str = self.request.path.split("/")[-1]
+
+        if self._websocket_server.room_exists(self._room_id):
+            self.room: YRoom = await self._websocket_server.get_room(self._room_id)
+
+        else:
+            if self._room_id.count(":") >= 2:
+                # DocumentRoom
+                file_format, file_type, file_id = decode_file_path(self._room_id)
+                if file_id in self._file_loaders:
+                    self._emit(
+                        LogLevel.WARNING,
+                        None,
+                        "There is another collaborative session accessing the same file.\nThe synchronization between rooms is not supported and you might lose some of your changes.",
+                    )
+
+                file = self._file_loaders[file_id]
+                updates_file_path = f".{file_type}:{file_id}.y"
+                ystore = self._ystore_class(path=updates_file_path, log=self.log)
+                self.room = DocumentRoom(
+                    self._room_id,
+                    file_format,
+                    file_type,
+                    file,
+                    self.event_logger,
+                    ystore,
+                    self.log,
+                    self._document_save_delay,
+                )
+
+            else:
+                # TransientRoom
+                # it is a transient document (e.g. awareness)
+                self.room = TransientRoom(self._room_id, self.log)
+
+            await self._websocket_server.start_room(self.room)
+            self._websocket_server.add_room(self._room_id, self.room)
+
+        res = super().prepare()
+        if res is not None:
+            return await res
 
     def initialize(
         self,

@@ -6,13 +6,11 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime
 
-import pytest
 from jupyter_ydoc import YUnicode
 
 from .utils import overite_msg, reload_msg
 
 
-@pytest.mark.asyncio
 async def test_should_initialize_document_room_without_store(rtc_create_mock_document_room):
     content = "test"
     _, _, room = rtc_create_mock_document_room("test-id", "test_path", "test.txt", content)
@@ -21,7 +19,6 @@ async def test_should_initialize_document_room_without_store(rtc_create_mock_doc
     assert room._document.source == content
 
 
-@pytest.mark.asyncio
 async def test_should_initialize_document_room_from_store(
     rtc_create_SQLite_store, rtc_create_mock_document_room
 ):
@@ -39,7 +36,6 @@ async def test_should_initialize_document_room_from_store(
     assert room._document.source == content
 
 
-@pytest.mark.asyncio
 async def test_should_overwrite_the_store(rtc_create_SQLite_store, rtc_create_mock_document_room):
     id = "test-id"
     content = "test"
@@ -55,7 +51,6 @@ async def test_should_overwrite_the_store(rtc_create_SQLite_store, rtc_create_mo
     assert doc.source == content
 
 
-@pytest.mark.asyncio
 async def test_defined_save_delay_should_save_content_after_document_change(
     rtc_create_mock_document_room,
 ):
@@ -73,7 +68,6 @@ async def test_defined_save_delay_should_save_content_after_document_change(
     assert "save" in cm.actions
 
 
-@pytest.mark.asyncio
 async def test_undefined_save_delay_should_not_save_content_after_document_change(
     rtc_create_mock_document_room,
 ):
@@ -91,7 +85,6 @@ async def test_undefined_save_delay_should_not_save_content_after_document_chang
     assert "save" not in cm.actions
 
 
-@pytest.mark.asyncio
 async def test_should_reload_content_from_disk(rtc_create_mock_document_room):
     content = "test"
     last_modified = datetime.now()
@@ -114,7 +107,6 @@ async def test_should_reload_content_from_disk(rtc_create_mock_document_room):
     assert room._document.source == content
 
 
-@pytest.mark.asyncio
 async def test_should_not_reload_content_from_disk(rtc_create_mock_document_room):
     content = "test"
     last_modified = datetime.now()
