@@ -48,7 +48,6 @@ test = [
     "jupyter_server_fileid[test]",
     "pytest>=7.0",
     "pytest-cov",
-    "pytest-asyncio",
     "websockets"
 ]
 docs = [

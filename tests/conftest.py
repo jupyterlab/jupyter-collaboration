@@ -16,28 +16,10 @@ from ypy_websocket import WebsocketProvider
 from jupyter_collaboration.loaders import FileLoader
 from jupyter_collaboration.rooms import DocumentRoom
 from jupyter_collaboration.stores import SQLiteYStore
-from jupyter_server.serverapp import ServerApp
 
 from .utils import FakeContentsManager, FakeEventLogger, FakeFileIDManager
 
 pytest_plugins = ["jupyter_server.pytest_plugin", "jupyter_server_fileid.pytest_plugin"]
-
-
-@pytest.fixture(autouse=True)
-def jp_server_cleanup(jp_asyncio_loop):  # noqa: PT004
-    """Automatically cleans up server resources."""
-    yield
-    if jp_asyncio_loop.is_closed():
-        return
-
-    app: ServerApp = ServerApp.instance()
-    try:
-        jp_asyncio_loop.run_until_complete(app._cleanup())
-    except (RuntimeError, SystemExit) as e:
-        print("ignoring cleanup error", e)  # noqa: T201
-    if hasattr(app, "kernel_manager"):
-        app.kernel_manager.context.destroy()
-    ServerApp.clear_instance()
 
 
 @pytest.fixture
