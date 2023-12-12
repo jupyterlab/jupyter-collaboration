@@ -85,7 +85,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.8", "3.12"]
+        python-version: ["3.8", "3.11", "3.12"]
         # PyPy is not supported because we use the file_id_manager. See:
         # https://github.com/jupyter-server/jupyter_server_fileid/issues/44
         #include:
