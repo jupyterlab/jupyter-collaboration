@@ -7,8 +7,9 @@ import asyncio
 from logging import Logger
 from typing import Any
 
+from pycrdt_websocket.websocket_server import WebsocketServer, YRoom
+from pycrdt_websocket.ystore import BaseYStore
 from tornado.websocket import WebSocketHandler
-from ypy_websocket.websocket_server import WebsocketServer, YRoom
 
 
 class RoomNotFound(LookupError):

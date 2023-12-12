@@ -10,7 +10,9 @@ from typing import Any
 
 from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
-from ypy_websocket.yutils import write_var_uint
+from pycrdt_websocket.websocket_server import YRoom
+from pycrdt_websocket.ystore import BaseYStore, YDocNotFound
+from pycrdt_websocket.yutils import write_var_uint
 
 from ..loaders import FileLoader
 from ..stores import BaseYStore

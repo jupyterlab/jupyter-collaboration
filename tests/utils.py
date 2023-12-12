@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any
 
 from jupyter_server import _tz as tz
-from ypy_websocket.yutils import write_var_uint
+from pycrdt_websocket.yutils import write_var_uint
 
 from jupyter_collaboration.utils import RoomMessages
 

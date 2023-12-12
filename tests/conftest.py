@@ -11,8 +11,8 @@ from typing import Any
 import nbformat
 import pytest
 from jupyter_ydoc import YNotebook, YUnicode
+from pycrdt_websocket import WebsocketProvider
 from websockets import connect
-from ypy_websocket import WebsocketProvider
 
 from jupyter_collaboration.loaders import FileLoader
 from jupyter_collaboration.rooms import DocumentRoom
