@@ -175,7 +175,7 @@ jobs:
 
       - name: Install the Python dependencies
         run: |
-          pip install --pre -e ".[test]"
+          pip install -e ".[test]"
 
       - name: List installed packages
         run: |
