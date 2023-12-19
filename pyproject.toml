@@ -47,7 +47,7 @@ test = [
     "jupyter_server[test]>=2.0.0",
     "pytest>=7.0",
     "pytest-cov",
-    "pytest-asyncio"
+    "websockets"
 ]
 docs = [
     "jupyterlab>=4.0.0",
@@ -139,6 +139,8 @@ filterwarnings = [
     "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
     # In PyPy/Cython: see https://github.com/yaml/pyyaml/issues/688
     "ignore:can't resolve package from __spec__ or __package__, falling back on __name__ and __path__:ImportWarning",
+    # see https://github.com/dateutil/dateutil/issues/1314
+    "ignore:.*datetime.utcfromtimestamp\\(\\) is deprecated.*:DeprecationWarning:",
 ]
 
 [tool.mypy]
