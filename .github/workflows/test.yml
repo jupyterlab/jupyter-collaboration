@@ -145,12 +145,7 @@ jobs:
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Install the Python dependencies
         run: |
-<<<<<<< HEAD
           pip install --pre -e ".[test]"
-=======
-          pip install -e ".[test]"
-
->>>>>>> 7ae9c62 (Fix CI (#221))
       - name: List installed packages
         run: |
           pip freeze
