@@ -7,6 +7,8 @@ import asyncio
 from datetime import datetime
 from typing import Any
 
+from jupyter_server import _tz as tz
+
 from jupyter_collaboration.loaders import FileLoader, FileLoaderMapping
 
 
