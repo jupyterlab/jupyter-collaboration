@@ -7,9 +7,6 @@ from datetime import datetime
 from typing import Any
 
 from jupyter_server import _tz as tz
-from pycrdt_websocket.yutils import write_var_uint
-
-from jupyter_collaboration.utils import RoomMessages
 
 
 class FakeFileIDManager:
@@ -55,11 +52,3 @@ class FakeContentsManager:
 class FakeEventLogger:
     def emit(self, schema_id: str, data: dict) -> None:
         print(data)
-
-
-def reload_msg(msg_id: str) -> bytearray:
-    return bytes([RoomMessages.RELOAD]) + write_var_uint(len(msg_id)) + msg_id
-
-
-def overite_msg(msg_id: str) -> bytearray:
-    return bytes([RoomMessages.OVERWRITE]) + write_var_uint(len(msg_id)) + msg_id
