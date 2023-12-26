@@ -4,11 +4,8 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
 
 from jupyter_ydoc import YUnicode
-
-from .utils import overite_msg, reload_msg
 
 
 async def test_should_initialize_document_room_without_store(rtc_create_mock_document_room):
@@ -83,47 +80,3 @@ async def test_undefined_save_delay_should_not_save_content_after_document_chang
     await asyncio.sleep(0.15)
 
     assert "save" not in cm.actions
-
-
-async def test_should_reload_content_from_disk(rtc_create_mock_document_room):
-    content = "test"
-    last_modified = datetime.now()
-
-    cm, loader, room = rtc_create_mock_document_room(
-        "test-id", "test_path", "test.txt", "whatever", last_modified
-    )
-
-    await room.initialize()
-
-    # Make sure the time increases
-    cm.model["last_modified"] = datetime.fromtimestamp(last_modified.timestamp() + 1)
-    cm.model["content"] = content
-
-    await loader.notify()
-
-    msg_id = next(iter(room._messages)).encode("utf8")
-    await room.handle_msg(reload_msg(msg_id))
-
-    assert room._document.source == content
-
-
-async def test_should_not_reload_content_from_disk(rtc_create_mock_document_room):
-    content = "test"
-    last_modified = datetime.now()
-
-    cm, loader, room = rtc_create_mock_document_room(
-        "test-id", "test_path", "test.txt", content, last_modified
-    )
-
-    await room.initialize()
-
-    # Make sure the time increases
-    cm.model["last_modified"] = datetime.fromtimestamp(last_modified.timestamp() + 1)
-    cm.model["content"] = "whatever"
-
-    await loader.notify()
-
-    msg_id = list(room._messages.keys())[0].encode("utf8")
-    await room.handle_msg(overite_msg(msg_id))
-
-    assert room._document.source == content
