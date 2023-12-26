@@ -254,9 +254,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 )
                 return skip
 
-        if message_type == MessageType.ROOM:
-            await self.room.handle_msg(message[1:])
-
         if message_type == MessageType.CHAT:
             msg = message[2:].decode("utf-8")
 
