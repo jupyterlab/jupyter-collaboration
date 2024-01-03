@@ -38,9 +38,7 @@ class FileLoader:
         self._contents_manager = contents_manager
 
         self._log = log or getLogger(__name__)
-        self._subscriptions: dict[
-            str, Callable[[str, dict[str, Any]], Coroutine[Any, Any, None]]
-        ] = {}
+        self._subscriptions: dict[str, Callable[[], Coroutine[Any, Any, None]]] = {}
 
         self._watcher = asyncio.create_task(self._watch_file()) if self._poll_interval else None
         self.last_modified = None
@@ -78,11 +76,9 @@ class FileLoader:
                 self._watcher.cancel()
             await self._watcher
 
-    def observe(
-        self, id: str, callback: Callable[[str, dict[str, Any]], Coroutine[Any, Any, None]]
-    ) -> None:
+    def observe(self, id: str, callback: Callable[[], Coroutine[Any, Any, None]]) -> None:
         """
-        Subscribe to the file to get notified on file changes.
+        Subscribe to the file to get notified about out-of-band file changes.
 
             Parameters:
                     id (str): Room ID
@@ -99,7 +95,7 @@ class FileLoader:
         """
         del self._subscriptions[id]
 
-    async def load_content(self, format: str, file_type: str, content: bool) -> dict[str, Any]:
+    async def load_content(self, format: str, file_type: str) -> dict[str, Any]:
         """
         Load the content of the file.
 
@@ -112,31 +108,11 @@ class FileLoader:
                 model (dict): A dictionary with the metadata and content of the file.
         """
         async with self._lock:
-            return await ensure_async(
-                self._contents_manager.get(
-                    self.path, format=format, type=file_type, content=content
-                )
+            model = await ensure_async(
+                self._contents_manager.get(self.path, format=format, type=file_type, content=True)
             )
-
-    async def save_content(self, model: dict[str, Any]) -> dict[str, Any]:
-        """
-        Save the content of the file.
-
-            Parameters:
-                model (dict): A dictionary with format, type, last_modified, and content of the file.
-
-            Returns:
-                model (dict): A dictionary with the metadata and content of the file.
-        """
-        async with self._lock:
-            path = self.path
-            if model["type"] not in {"directory", "file", "notebook"}:
-                # fall back to file if unknown type, the content manager only knows
-                # how to handle these types
-                model["type"] = "file"
-
-            self._log.info("Saving file: %s", path)
-            return await ensure_async(self._contents_manager.save(model, path))
+            self.last_modified = model["last_modified"]
+            return model
 
     async def maybe_save_content(self, model: dict[str, Any]) -> None:
         """
@@ -168,16 +144,24 @@ class FileLoader:
                 self._log.info("Saving file: %s", path)
                 # saving is shielded so that it cannot be cancelled
                 # otherwise it could corrupt the file
-                task = asyncio.create_task(self._save_content(model))
-                await asyncio.shield(task)
-
+                done_saving = asyncio.Event()
+                task = asyncio.create_task(self._save_content(model, done_saving))
+                try:
+                    await asyncio.shield(task)
+                except asyncio.CancelledError:
+                    pass
+                await done_saving.wait()
             else:
                 # file changed on disk, raise an error
+                self.last_modified = m["last_modified"]
                 raise OutOfBandChanges
 
-    async def _save_content(self, model: dict[str, Any]) -> None:
-        m = await ensure_async(self._contents_manager.save(model, self.path))
-        self.last_modified = m["last_modified"]
+    async def _save_content(self, model: dict[str, Any], done_saving: asyncio.Event) -> None:
+        try:
+            m = await ensure_async(self._contents_manager.save(model, self.path))
+            self.last_modified = m["last_modified"]
+        finally:
+            done_saving.set()
 
     async def _watch_file(self) -> None:
         """
@@ -192,24 +176,31 @@ class FileLoader:
             try:
                 await asyncio.sleep(self._poll_interval)
                 try:
-                    await self.notify()
+                    await self.maybe_notify()
                 except Exception as e:
                     self._log.error(f"Error watching file: {self.path}\n{e!r}", exc_info=e)
             except asyncio.CancelledError:
                 break
 
-    async def notify(self) -> None:
+    async def maybe_notify(self) -> None:
         """
-        Notifies subscribed rooms about changes on the content of the file.
+        Notifies subscribed rooms about out-of-band file changes.
         """
+        do_notify = False
         async with self._lock:
-            path = self.path
             # Get model metadata; format and type are not need
-            model = await ensure_async(self._contents_manager.get(path, content=False))
+            model = await ensure_async(self._contents_manager.get(self.path, content=False))
 
-        # Notify that the content changed on disk
-        for callback in self._subscriptions.values():
-            await callback("metadata", model)
+            if self.last_modified is not None and self.last_modified < model["last_modified"]:
+                do_notify = True
+
+            self.last_modified = model["last_modified"]
+
+        if do_notify:
+            # Notify out-of-band change
+            # callbacks will load the file content, thus release the lock before calling them
+            for callback in self._subscriptions.values():
+                await callback()
 
 
 class FileLoaderMapping:

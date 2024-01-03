@@ -49,7 +49,7 @@ class DocumentRoom(BaseRoom):
 
         # Listen for document changes
         self._document.observe(self._on_document_change)
-        self._file.observe(self.room_id, self._on_content_change)
+        self._file.observe(self.room_id, self._on_outofband_change)
 
     async def initialize(self) -> None:
         """
@@ -71,7 +71,8 @@ class DocumentRoom(BaseRoom):
                 return
 
             self.log.info("Initializing room %s", self._room_id)
-            model = await self._file.load_content(self._file_format, self._file_type, True)
+
+            model = await self._file.load_content(self._file_format, self._file_type)
 
             async with self._update_lock:
                 # try to apply Y updates from the YStore for this document
@@ -122,7 +123,6 @@ class DocumentRoom(BaseRoom):
                         await self.ystore.create(self._room_id, self.session_id)
                         await self.ystore.encode_state_as_update(self._room_id, self.ydoc)
 
-                self._file.last_modified = model["last_modified"]
                 self._document.dirty = False
                 self.ready = True
                 self._emit(LogLevel.INFO, "initialize", "Room initialized")
@@ -151,32 +151,24 @@ class DocumentRoom(BaseRoom):
 
         return super().stop()
 
-    async def _on_content_change(self, event: str, args: dict[str, Any]) -> None:
+    async def _on_outofband_change(self) -> None:
         """
-        Called when the file changes.
-
-            Parameters:
-                event (str): Type of change.
-                args (dict): A dictionary with format, type, last_modified.
+        Called when the file got out-of-band changes.
         """
-        if event == "metadata" and (
-            self._file.last_modified is None or self._file.last_modified < args["last_modified"]
-        ):
-            self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
-            self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes. Overwriting the room.")
+        self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
+        self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes. Overwriting the room.")
 
-            try:
-                model = await self._file.load_content(self._file_format, self._file_type, True)
-            except Exception as e:
-                msg = f"Error loading content from file: {self._file.path}\n{e!r}"
-                self.log.error(msg, exc_info=e)
-                self._emit(LogLevel.ERROR, None, msg)
-                return None
+        try:
+            model = await self._file.load_content(self._file_format, self._file_type)
+        except Exception as e:
+            msg = f"Error loading content from file: {self._file.path}\n{e!r}"
+            self.log.error(msg, exc_info=e)
+            self._emit(LogLevel.ERROR, None, msg)
+            return
 
-            async with self._update_lock:
-                self._document.source = model["content"]
-                self._file.last_modified = model["last_modified"]
-                self._document.dirty = False
+        async with self._update_lock:
+            self._document.source = model["content"]
+            self._document.dirty = False
 
     def _on_document_change(self, target: str, event: Any) -> None:
         """
@@ -196,14 +188,11 @@ class DocumentRoom(BaseRoom):
         if self._update_lock.locked():
             return
 
-        if self._saving_document is not None and not self._saving_document.done():
-            # the document is being saved, cancel that
-            self._saving_document.cancel()
-            self._saving_document = None
+        self._saving_document = asyncio.create_task(
+            self._maybe_save_document(self._saving_document)
+        )
 
-        self._saving_document = asyncio.create_task(self._maybe_save_document())
-
-    async def _maybe_save_document(self) -> None:
+    async def _maybe_save_document(self, saving_document: asyncio.Task | None) -> None:
         """
         Saves the content of the document to disk.
 
@@ -214,6 +203,11 @@ class DocumentRoom(BaseRoom):
         """
         if self._save_delay is None:
             return
+
+        if saving_document is not None and not saving_document.done():
+            # the document is being saved, cancel that
+            saving_document.cancel()
+            await saving_document
 
         # save after X seconds of inactivity
         await asyncio.sleep(self._save_delay)
@@ -247,7 +241,7 @@ class DocumentRoom(BaseRoom):
         except OutOfBandChanges:
             self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
             try:
-                model = await self._file.load_content(self._file_format, self._file_type, True)
+                model = await self._file.load_content(self._file_format, self._file_type)
             except Exception as e:
                 msg = f"Error loading content from file: {self._file.path}\n{e!r}"
                 self.log.error(msg, exc_info=e)
@@ -256,7 +250,6 @@ class DocumentRoom(BaseRoom):
 
             async with self._update_lock:
                 self._document.source = model["content"]
-                self._file.last_modified = model["last_modified"]
                 self._document.dirty = False
 
             self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes while saving.")
