@@ -43,6 +43,7 @@ class FileLoader:
         ] = {}
 
         self._watcher = asyncio.create_task(self._watch_file()) if self._poll_interval else None
+        self.last_modified = None
 
     @property
     def file_id(self) -> str:
@@ -137,15 +138,12 @@ class FileLoader:
             self._log.info("Saving file: %s", path)
             return await ensure_async(self._contents_manager.save(model, path))
 
-    async def maybe_save_content(self, model: dict[str, Any]) -> dict[str, Any]:
+    async def maybe_save_content(self, model: dict[str, Any]) -> None:
         """
         Save the content of the file.
 
             Parameters:
                 model (dict): A dictionary with format, type, last_modified, and content of the file.
-
-            Returns:
-                model (dict): A dictionary with the metadata and content of the file.
 
             Raises:
                 OutOfBandChanges: if the file was modified at a latter time than the model
@@ -166,13 +164,20 @@ class FileLoader:
                 )
             )
 
-            if model["last_modified"] == m["last_modified"]:
+            if self.last_modified == m["last_modified"]:
                 self._log.info("Saving file: %s", path)
-                return await ensure_async(self._contents_manager.save(model, path))
+                # saving is shielded so that it cannot be cancelled
+                # otherwise it could corrupt the file
+                task = asyncio.create_task(self._save_content(model))
+                await asyncio.shield(task)
 
             else:
                 # file changed on disk, raise an error
                 raise OutOfBandChanges
+
+    async def _save_content(self, model: dict[str, Any]) -> None:
+        m = await ensure_async(self._contents_manager.save(model, self.path))
+        self.last_modified = m["last_modified"]
 
     async def _watch_file(self) -> None:
         """
