@@ -36,8 +36,6 @@ class DocumentRoom(BaseRoom):
 
         self._file_format: str = file_format
         self._file_type: str = file_type
-        self._session_id = str(uuid.uuid4())
-        self._last_modified: Any = None
         self._file: FileLoader = file
         self._document = YDOCS.get(self._file_type, YFILE)(self.ydoc)
 
@@ -124,7 +122,7 @@ class DocumentRoom(BaseRoom):
                         await self.ystore.create(self._room_id, self.session_id)
                         await self.ystore.encode_state_as_update(self._room_id, self.ydoc)
 
-                self._last_modified = model["last_modified"]
+                self._file.last_modified = model["last_modified"]
                 self._document.dirty = False
                 self.ready = True
                 self._emit(LogLevel.INFO, "initialize", "Room initialized")
@@ -162,7 +160,7 @@ class DocumentRoom(BaseRoom):
                 args (dict): A dictionary with format, type, last_modified.
         """
         if event == "metadata" and (
-            self._last_modified is None or self._last_modified < args["last_modified"]
+            self._file.last_modified is None or self._file.last_modified < args["last_modified"]
         ):
             self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
             self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes. Overwriting the room.")
@@ -177,7 +175,7 @@ class DocumentRoom(BaseRoom):
 
             async with self._update_lock:
                 self._document.source = model["content"]
-                self._last_modified = model["last_modified"]
+                self._file.last_modified = model["last_modified"]
                 self._document.dirty = False
 
     def _on_document_change(self, target: str, event: Any) -> None:
@@ -225,6 +223,13 @@ class DocumentRoom(BaseRoom):
 
         try:
             self.log.info("Saving the content from room %s", self._room_id)
+            await self._file.maybe_save_content(
+                {
+                    "format": self._file_format,
+                    "type": self._file_type,
+                    "content": self._document.source,
+                }
+            )
             async with self._update_lock:
                 model = await self._file.maybe_save_content(
                     {
@@ -240,7 +245,21 @@ class DocumentRoom(BaseRoom):
             self._emit(LogLevel.INFO, "save", "Content saved.")
 
         except OutOfBandChanges:
-            await self._send_confict_msg()
+            self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
+            try:
+                model = await self._file.load_content(self._file_format, self._file_type, True)
+            except Exception as e:
+                msg = f"Error loading content from file: {self._file.path}\n{e!r}"
+                self.log.error(msg, exc_info=e)
+                self._emit(LogLevel.ERROR, None, msg)
+                return None
+
+            async with self._update_lock:
+                self._document.source = model["content"]
+                self._file.last_modified = model["last_modified"]
+                self._document.dirty = False
+
+            self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes while saving.")
 
         except Exception as e:
             msg = f"Error saving file: {self._file.path}\n{e!r}"
