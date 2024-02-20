@@ -7,6 +7,7 @@ import asyncio
 import json
 import time
 import uuid
+from dataclasses import asdict
 from typing import Any
 
 from jupyter_server.auth import authorized
@@ -17,6 +18,8 @@ from pycrdt_websocket.ystore import BaseYStore
 from pycrdt_websocket.yutils import YMessageType, write_var_uint
 from tornado import web
 from tornado.websocket import WebSocketHandler
+from jupyterlab_chat.handlers import ChatHandler
+from jupyterlab_chat.models import ChatUser
 
 from .loaders import FileLoaderMapping
 from .rooms import DocumentRoom, TransientRoom
@@ -404,3 +407,25 @@ class DocSessionHandler(APIHandler):
         )
         self.set_status(201)
         return self.finish(data)
+
+
+class CollaborativeChatHandler(ChatHandler):
+
+    def get_chat_user(self) -> ChatUser:
+        """Retrieves the current user from collaborative context."""
+
+        names = self.current_user.name.split(" ", maxsplit=2)
+        initials = getattr(self.current_user, "initials", None)
+        if not initials:
+            # compute default initials in case IdentityProvider doesn't
+            # return initials, e.g. JupyterHub (#302)
+            names = self.current_user.name.split(" ", maxsplit=2)
+            initials = "".join(
+                [(name.capitalize()[0] if len(name) > 0 else "") for name in names]
+            )
+        chat_user_kwargs = {
+            **asdict(self.current_user),
+            "initials": initials,
+        }
+
+        return ChatUser(**chat_user_kwargs)
