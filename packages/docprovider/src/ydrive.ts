@@ -114,7 +114,12 @@ export class YDrive extends Drive implements ICollaborativeDrive {
 
       if (provider) {
         // Save is done from the backend
-        return this.get(localPath, { ...options, content: false });
+        const fetchOptions: Contents.IFetchOptions = {
+          type: options.type,
+          format: options.format,
+          content: false
+        };
+        return this.get(localPath, fetchOptions);
       }
     }
 
