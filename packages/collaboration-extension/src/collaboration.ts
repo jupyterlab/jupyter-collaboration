@@ -6,6 +6,20 @@
  */
 
 import {
+  DocumentRegistry
+} from '@jupyterlab/docregistry';
+
+import {
+  NotebookPanel, INotebookModel
+} from '@jupyterlab/notebook';
+
+import {
+  IDisposable, DisposableDelegate
+} from '@lumino/disposable';
+
+import { CommandRegistry } from '@lumino/commands';
+
+import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
@@ -15,7 +29,11 @@ import {
   IEditorExtensionRegistry
 } from '@jupyterlab/codemirror';
 import { WebSocketAwarenessProvider } from '@jupyter/docprovider';
-import { SidePanel, usersIcon } from '@jupyterlab/ui-components';
+import {
+  SidePanel,
+  usersIcon,
+  caretDownIcon
+} from '@jupyterlab/ui-components';
 import { URLExt } from '@jupyterlab/coreutils';
 import { ServerConnection } from '@jupyterlab/services';
 import { IStateDB, StateDB } from '@jupyterlab/statedb';
@@ -189,3 +207,61 @@ export const userEditorCursors: JupyterFrontEndPlugin<void> = {
     });
   }
 };
+
+/**
+ * A plugin to add editing mode to the notebook page
+ */
+export const editingMode: JupyterFrontEndPlugin<void> = {
+  id: '@jupyter/collaboration-extension:editingMode',
+  description: 'A plugin to add editing mode to the notebook page.',
+  autoStart: true,
+  requires: [ITranslator],
+  activate: (
+    app: JupyterFrontEnd,
+  ) => {
+    app.docRegistry.addWidgetExtension('Notebook', new EditingModeExtension());
+  },
+};
+
+export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<NotebookPanel, INotebookModel> {
+  createNew(panel: NotebookPanel, context: DocumentRegistry.IContext<INotebookModel>): IDisposable {
+    const menubar = new MenuBar();
+    const commands = new CommandRegistry();
+    const menu = new Menu({ commands });
+    menu.title.label = 'Editing';
+    menu.title.icon = caretDownIcon;
+    addMenuItem(commands, menu, 'editing', 'Editing', context);
+    addMenuItem(commands, menu, 'suggesting', 'Suggesting', context);
+    menubar.addMenu(menu);
+
+    panel.toolbar.insertItem(990, 'editingMode', menubar);
+    return new DisposableDelegate(() => {
+      menubar.dispose();
+    });
+  }
+}
+
+/**
+ * Helper Function to add menu items.
+ */
+function addMenuItem(
+  commands: CommandRegistry,
+  menu: Menu,
+  command: string,
+  label: string,
+  context: DocumentRegistry.IContext<INotebookModel>,
+): void {
+  commands.addCommand(command, {
+    label: label,
+    execute: () => {
+      menu.title.label = label;
+      if (command == 'suggesting') {
+        context.model.sharedModel.getProvider('root').fork();
+      }
+    }
+  });
+  menu.addItem({
+    type: 'command',
+    command: command
+  });
+}

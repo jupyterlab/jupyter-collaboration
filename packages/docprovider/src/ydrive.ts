@@ -147,6 +147,7 @@ export class YDrive extends Drive implements ICollaborativeDrive {
       const key = `${options.format}:${options.contentType}:${options.path}`;
       this._providers.set(key, provider);
 
+      sharedModel.setProvider('root', provider);
       sharedModel.disposed.connect(() => {
         const provider = this._providers.get(key);
         if (provider) {
