@@ -32,8 +32,7 @@ export class WebSocketProvider implements IDocumentProvider {
    */
   constructor(options: WebSocketProvider.IOptions) {
     this._isDisposed = false;
-    this._isFork = options.isFork || false;
-    this._sessionId = options.sessionId || '';
+    this._sessionId = options.sessionId ?? '';
     this._path = options.path;
     this._contentType = options.contentType;
     this._format = options.format;
@@ -83,8 +82,6 @@ export class WebSocketProvider implements IDocumentProvider {
   }
 
   async fork(): Promise<void> {
-    this._yWebsocketProvider?.disconnect();
-
     const session = await requestDocSession(
       this._format,
       this._contentType,
@@ -94,6 +91,13 @@ export class WebSocketProvider implements IDocumentProvider {
     const response = await requestDocFork(`${session.format}:${session.type}:${session.fileId}`);
     const forkId = response.roomId;
 
+    this._sharedModel.forkId = forkId;
+
+    // the fork has to be advertised before the ydoc is connected to the forked room
+    // so that it targets the root room
+    this._sharedModel.addFork(forkId);
+
+    this._yWebsocketProvider?.disconnect();
     this._yWebsocketProvider = new YWebsocketProvider(
       this._serverUrl,
       forkId,
@@ -104,13 +108,12 @@ export class WebSocketProvider implements IDocumentProvider {
         awareness: this._awareness
       }
     );
-
-    this._sharedModel.addFork(forkId);
   }
 
   connectFork(forkId: string, sharedModel: YDocument<DocumentChange>): IDocumentProvider {
+    sharedModel.forkId = forkId;
+
     return new WebSocketProvider({
-      isFork: true,
       sessionId: this._sessionId,
       url: this._serverUrl,
       path: forkId,
@@ -124,10 +127,7 @@ export class WebSocketProvider implements IDocumentProvider {
 
   private async _connect(): Promise<void> {
     var roomId: string;
-    if (this._isFork) {
-      roomId = this._path;
-    }
-    else {
+    if (this._sharedModel.forkId === 'root') {
       const session = await requestDocSession(
         this._format,
         this._contentType,
@@ -135,6 +135,9 @@ export class WebSocketProvider implements IDocumentProvider {
       );
       roomId = `${session.format}:${session.type}:${session.fileId}`;
       this._sessionId = session.sessionId;
+    }
+    else {
+      roomId = this._path;
     }
 
     this._yWebsocketProvider = new YWebsocketProvider(
@@ -181,7 +184,6 @@ export class WebSocketProvider implements IDocumentProvider {
   private _contentType: string;
   private _format: string;
   private _isDisposed: boolean;
-  private _isFork: boolean;
   private _sessionId: string;
   private _path: string;
   private _ready = new PromiseDelegate<void>();
@@ -239,10 +241,5 @@ export namespace WebSocketProvider {
      * The document session ID, if the document is a fork
      */
     sessionId?: string;
-
-    /**
-     * Whether the document is a fork of a root document
-     */
-    isFork?: boolean;
   }
 }

@@ -2035,7 +2035,7 @@ __metadata:
   dependencies:
     "@jupyter/collaboration": ^2.0.11
     "@jupyter/docprovider": ^2.0.11
-    "@jupyter/ydoc": ^1.1.0-a0
+    "@jupyter/ydoc": "file:.yalc/@jupyter/ydoc"
     "@jupyterlab/application": ^4.0.5
     "@jupyterlab/apputils": ^4.0.5
     "@jupyterlab/builder": ^4.0.5
@@ -2070,6 +2070,7 @@ __metadata:
     "@codemirror/state": ^6.2.0
     "@codemirror/view": ^6.7.0
     "@jupyter/docprovider": ^2.0.11
+    "@jupyter/ydoc": "file:.yalc/@jupyter/ydoc"
     "@jupyterlab/apputils": ^4.0.5
     "@jupyterlab/coreutils": ^6.0.5
     "@jupyterlab/services": ^7.0.5
@@ -2090,7 +2091,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@jupyter/docprovider@workspace:packages/docprovider"
   dependencies:
-    "@jupyter/ydoc": ^1.1.0-a0
+    "@jupyter/ydoc": "file:.yalc/@jupyter/ydoc"
     "@jupyterlab/coreutils": ^6.0.5
     "@jupyterlab/services": ^7.0.5
     "@jupyterlab/testing": ^4.0.5
@@ -2130,9 +2131,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@jupyter/ydoc@npm:^1.0.2":
-  version: 1.0.2
-  resolution: "@jupyter/ydoc@npm:1.0.2"
+"@jupyter/ydoc@file:.yalc/@jupyter/ydoc::locator=%40jupyter%2Freal-time-collaboration%40workspace%3A.":
+  version: 2.0.1
+  resolution: "@jupyter/ydoc@file:.yalc/@jupyter/ydoc#.yalc/@jupyter/ydoc::hash=c66726&locator=%40jupyter%2Freal-time-collaboration%40workspace%3A."
   dependencies:
     "@jupyterlab/nbformat": ^3.0.0 || ^4.0.0-alpha.21 || ^4.0.0
     "@lumino/coreutils": ^1.11.0 || ^2.0.0
@@ -2140,21 +2141,7 @@ __metadata:
     "@lumino/signaling": ^1.10.0 || ^2.0.0
     y-protocols: ^1.0.5
     yjs: ^13.5.40
-  checksum: 739f9630940466b3cfcd7b742dd06479f81772ca13f863d057af0bbb5e318829506969066ab72977e7c721644982b5c8f88cf44e1ae81955ed1c27e87632d1f2
-  languageName: node
-  linkType: hard
-
-"@jupyter/ydoc@npm:^1.1.0-a0":
-  version: 1.1.0-a0
-  resolution: "@jupyter/ydoc@npm:1.1.0-a0"
-  dependencies:
-    "@jupyterlab/nbformat": ^3.0.0 || ^4.0.0-alpha.21 || ^4.0.0
-    "@lumino/coreutils": ^1.11.0 || ^2.0.0
-    "@lumino/disposable": ^1.10.0 || ^2.0.0
-    "@lumino/signaling": ^1.10.0 || ^2.0.0
-    y-protocols: ^1.0.5
-    yjs: ^13.5.40
-  checksum: 0099bacb2884a460867658e7f5a944e4d6eca7c4d3d68a6b31102be77d8fc9b6ba162af55c20f81c70f7fef4e9d9329eee4da32063c0caa0c6e3f10a488f95b5
+  checksum: f5cac20b6b88fb9ced006923ad7164bb53fcc7565b66bc4bd454bcf72595ed3f0689c479166caabff57bd5a5f73534ce3af08623123a30870e39382c74374d61
   languageName: node
   linkType: hard
 
@@ -2385,6 +2372,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jupyterlab/coreutils@npm:^6.1.2":
+  version: 6.1.2
+  resolution: "@jupyterlab/coreutils@npm:6.1.2"
+  dependencies:
+    "@lumino/coreutils": ^2.1.2
+    "@lumino/disposable": ^2.1.2
+    "@lumino/signaling": ^2.1.2
+    minimist: ~1.2.0
+    path-browserify: ^1.0.0
+    url-parse: ~1.5.4
+  checksum: 6dcc812e0ebae28f902ece4acd58aee8103033b23a3bac0935d4d9d8c9c10f8797b422f4e8b0be53fac4781811fb9b82874ce499cd69a6d198986e0cdb4a97ff
+  languageName: node
+  linkType: hard
+
 "@jupyterlab/docmanager@npm:^4.0.5":
   version: 4.0.5
   resolution: "@jupyterlab/docmanager@npm:4.0.5"
@@ -2562,6 +2563,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jupyterlab/nbformat@npm:^4.1.2":
+  version: 4.1.2
+  resolution: "@jupyterlab/nbformat@npm:4.1.2"
+  dependencies:
+    "@lumino/coreutils": ^2.1.2
+  checksum: 6c55337b667dcc5a6282f93972a30d227ba7c3f576fc4b60069408dd114dff1bc9f743bb6f984da088dfda25b7c4f25f13a472cd5c05b24af2e32b6b17172c6b
+  languageName: node
+  linkType: hard
+
 "@jupyterlab/notebook@npm:^4.0.5":
   version: 4.0.5
   resolution: "@jupyterlab/notebook@npm:4.0.5"
@@ -2663,22 +2673,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jupyterlab/services@npm:^7.0.5":
-  version: 7.0.5
-  resolution: "@jupyterlab/services@npm:7.0.5"
+"@jupyterlab/services@file:.yalc/@jupyterlab/services::locator=%40jupyter%2Freal-time-collaboration%40workspace%3A.":
+  version: 7.1.2
+  resolution: "@jupyterlab/services@file:.yalc/@jupyterlab/services#.yalc/@jupyterlab/services::hash=cec64c&locator=%40jupyter%2Freal-time-collaboration%40workspace%3A."
   dependencies:
-    "@jupyter/ydoc": ^1.0.2
-    "@jupyterlab/coreutils": ^6.0.5
-    "@jupyterlab/nbformat": ^4.0.5
-    "@jupyterlab/settingregistry": ^4.0.5
-    "@jupyterlab/statedb": ^4.0.5
+    "@jupyter/ydoc": ^1.1.1
+    "@jupyterlab/coreutils": ^6.1.2
+    "@jupyterlab/nbformat": ^4.1.2
+    "@jupyterlab/settingregistry": ^4.1.2
+    "@jupyterlab/statedb": ^4.1.2
     "@lumino/coreutils": ^2.1.2
     "@lumino/disposable": ^2.1.2
     "@lumino/polling": ^2.1.2
     "@lumino/properties": ^2.0.1
     "@lumino/signaling": ^2.1.2
     ws: ^8.11.0
-  checksum: cf4176dbb73c08e777b5e6ca26cba6ad7a142fc76ae6b46ef17ac7d8c8021f62d66e95e2ee0dbce5c33a0b2380750d440783d0398d787b8e8028920e04dd1d0b
+  checksum: 466c391f75583f033d62676e7e4d3d3db3062913f2b8a58a6323711cdf1d0f2e3061ed12d9965c220a5bb7c0b1d5bbac5cef9ec692198ad41b0d6311d77edf6c
   languageName: node
   linkType: hard
 
@@ -2701,6 +2711,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jupyterlab/settingregistry@npm:^4.1.2":
+  version: 4.1.2
+  resolution: "@jupyterlab/settingregistry@npm:4.1.2"
+  dependencies:
+    "@jupyterlab/nbformat": ^4.1.2
+    "@jupyterlab/statedb": ^4.1.2
+    "@lumino/commands": ^2.2.0
+    "@lumino/coreutils": ^2.1.2
+    "@lumino/disposable": ^2.1.2
+    "@lumino/signaling": ^2.1.2
+    "@rjsf/utils": ^5.13.4
+    ajv: ^8.12.0
+    json5: ^2.2.3
+  peerDependencies:
+    react: ">=16"
+  checksum: a0a1f9d3747caa3ac6e523df64b4023f9d3bc1c1c9a2982cdf8113a5ba3f191e10cd8a897e9bff111b9faa834b48c0666a6b03ce3749c9f9e5ffb43b9331c207
+  languageName: node
+  linkType: hard
+
 "@jupyterlab/statedb@npm:^4.0.5":
   version: 4.0.5
   resolution: "@jupyterlab/statedb@npm:4.0.5"
@@ -2711,6 +2740,19 @@ __metadata:
     "@lumino/properties": ^2.0.1
     "@lumino/signaling": ^2.1.2
   checksum: 8e01de74a2168d19124773fa2b72329cfb43601c702127845a4172e87ee67b1304d34f53f65a6db214d832bd8c244c333936a22e08bbf1ea02e458e245140f62
+  languageName: node
+  linkType: hard
+
+"@jupyterlab/statedb@npm:^4.1.2":
+  version: 4.1.2
+  resolution: "@jupyterlab/statedb@npm:4.1.2"
+  dependencies:
+    "@lumino/commands": ^2.2.0
+    "@lumino/coreutils": ^2.1.2
+    "@lumino/disposable": ^2.1.2
+    "@lumino/properties": ^2.0.1
+    "@lumino/signaling": ^2.1.2
+  checksum: 30314f4f93441aac6d62068c264c94c0e694829c64ce0dc59e867ef4d188d396edc9c6868dd92ca514f6e7b15dc2568ff3f2de078a20283f60cc5ae70723bacc
   languageName: node
   linkType: hard
 
@@ -3107,6 +3149,21 @@ __metadata:
     "@lumino/signaling": ^2.1.2
     "@lumino/virtualdom": ^2.0.1
   checksum: e4e3ee279f2a5e8d68e4ce142c880333f5542f90c684972402356936ecb5cf5e07163800b59e7cb8c911cbdb4e5089edcc5dd2990bc8db10c87517268de1fc5d
+  languageName: node
+  linkType: hard
+
+"@lumino/commands@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "@lumino/commands@npm:2.2.0"
+  dependencies:
+    "@lumino/algorithm": ^2.0.1
+    "@lumino/coreutils": ^2.1.2
+    "@lumino/disposable": ^2.1.2
+    "@lumino/domutils": ^2.0.1
+    "@lumino/keyboard": ^2.0.1
+    "@lumino/signaling": ^2.1.2
+    "@lumino/virtualdom": ^2.0.1
+  checksum: 093e9715491e5cef24bc80665d64841417b400f2fa595f9b60832a3b6340c405c94a6aa276911944a2c46d79a6229f3cc087b73f50852bba25ece805abd0fae9
   languageName: node
   linkType: hard
 
@@ -3798,6 +3855,21 @@ __metadata:
   peerDependencies:
     react: ^16.14.0 || >=17
   checksum: f6ab90d2cf383f8f7d14ba70f51b2e0171997aeee1f822115734ec39d0f208477374046e4cc2b4cbabe544f8bb6a6250f0bd5fb9e9470aae876a0896eabfa23e
+  languageName: node
+  linkType: hard
+
+"@rjsf/utils@npm:^5.13.4":
+  version: 5.17.1
+  resolution: "@rjsf/utils@npm:5.17.1"
+  dependencies:
+    json-schema-merge-allof: ^0.8.1
+    jsonpointer: ^5.0.1
+    lodash: ^4.17.21
+    lodash-es: ^4.17.21
+    react-is: ^18.2.0
+  peerDependencies:
+    react: ^16.14.0 || >=17
+  checksum: 83010de66b06f1046b023a0b7d0bf30b5f47b152893c3b12f1f42faa89e7c7d18b2f04fe2e9035e5f63454317f09e6d5753fc014d43b933c8023b71fc50c3acf
   languageName: node
   linkType: hard
 
