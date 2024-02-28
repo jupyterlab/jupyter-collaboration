@@ -256,7 +256,8 @@ function addMenuItem(
     execute: () => {
       menu.title.label = label;
       if (command == 'suggesting') {
-        context.model.sharedModel.getProvider('root').fork();
+        const provider = context.model.sharedModel.provider;
+        provider.fork().then(forkId => {provider.connectFork(forkId);});
       }
     }
   });

@@ -81,7 +81,7 @@ export class WebSocketProvider implements IDocumentProvider {
     Signal.clearData(this);
   }
 
-  async fork(): Promise<void> {
+  async fork(): Promise<string> {
     const session = await requestDocSession(
       this._format,
       this._contentType,
@@ -90,13 +90,14 @@ export class WebSocketProvider implements IDocumentProvider {
 
     const response = await requestDocFork(`${session.format}:${session.type}:${session.fileId}`);
     const forkId = response.roomId;
-
-    this._sharedModel.forkId = forkId;
-
-    // the fork has to be advertised before the ydoc is connected to the forked room
-    // so that it targets the root room
+    this._sharedModel.roomId = forkId;
     this._sharedModel.addFork(forkId);
 
+    return forkId;
+  }
+
+  connectFork(forkId: string) {
+    this._sharedModel.roomId = forkId;
     this._yWebsocketProvider?.disconnect();
     this._yWebsocketProvider = new YWebsocketProvider(
       this._serverUrl,
@@ -104,45 +105,26 @@ export class WebSocketProvider implements IDocumentProvider {
       this._sharedModel.ydoc,
       {
         disableBc: true,
-        params: { sessionId: session.sessionId },
+        params: { sessionId: this._sessionId },
         awareness: this._awareness
       }
     );
   }
 
-  connectFork(forkId: string, sharedModel: YDocument<DocumentChange>): IDocumentProvider {
-    sharedModel.forkId = forkId;
-
-    return new WebSocketProvider({
-      sessionId: this._sessionId,
-      url: this._serverUrl,
-      path: forkId,
-      format: '',
-      contentType: '',
-      model: sharedModel,
-      user: this._user,
-      translator: this._trans
-    });
-  }
-
   private async _connect(): Promise<void> {
-    var roomId: string;
-    if (this._sharedModel.forkId === 'root') {
+    if (this._sharedModel.roomId === '') {
       const session = await requestDocSession(
         this._format,
         this._contentType,
         this._path
       );
-      roomId = `${session.format}:${session.type}:${session.fileId}`;
+      this._sharedModel.roomId = `${session.format}:${session.type}:${session.fileId}`;
       this._sessionId = session.sessionId;
-    }
-    else {
-      roomId = this._path;
     }
 
     this._yWebsocketProvider = new YWebsocketProvider(
       this._serverUrl,
-      roomId,
+      this._sharedModel.roomId,
       this._sharedModel.ydoc,
       {
         disableBc: true,
