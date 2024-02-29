@@ -13,5 +13,5 @@ def _jupyter_labextension_paths():
 def _jupyter_server_extension_points() -> List[Dict[str, Any]]:
     return [
         {"module": "jupyter_collaboration", "app": YDocExtension},
-        {"module": "jupyterlab_chat", "app": CollaborativeChatExtension},
+        {"module": "jupyter_chat", "app": CollaborativeChatExtension},
     ]

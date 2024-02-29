@@ -7,8 +7,8 @@ import asyncio
 from jupyter_server.extension.application import ExtensionApp
 from pycrdt_websocket.ystore import BaseYStore
 from traitlets import Bool, Float, Type
-from jupyterlab_chat import ChatExtension
-from jupyterlab_chat.handlers import GlobalConfigHandler, ChatHistoryHandler
+from jupyter_chat import ChatExtension
+from jupyter_chat.handlers import GlobalConfigHandler, ChatHistoryHandler
 
 from .handlers import CollaborativeChatHandler, DocSessionHandler, YDocWebSocketHandler
 from .loaders import FileLoaderMapping
