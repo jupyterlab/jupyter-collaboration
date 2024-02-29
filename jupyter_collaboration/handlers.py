@@ -18,8 +18,8 @@ from pycrdt_websocket.ystore import BaseYStore
 from pycrdt_websocket.yutils import YMessageType, write_var_uint
 from tornado import web
 from tornado.websocket import WebSocketHandler
-from jupyterlab_chat.handlers import ChatHandler
-from jupyterlab_chat.models import ChatUser
+from jupyter_chat.handlers import ChatHandler
+from jupyter_chat.models import ChatUser
 
 from .loaders import FileLoaderMapping
 from .rooms import DocumentRoom, TransientRoom

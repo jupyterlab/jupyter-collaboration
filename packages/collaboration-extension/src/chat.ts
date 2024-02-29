@@ -17,16 +17,16 @@ import {
   buildErrorWidget,
   ChatHandler,
   ChatService
-} from '@jupyterlab/chat';
+} from '@jupyter/chat';
 import { IGlobalAwareness } from '@jupyter/collaboration';
 import { Awareness } from 'y-protocols/awareness';
 
 /**
- * Initialization of the @jupyterlab/chat extension.
+ * Initialization of the @jupyter/chat extension.
  */
 export const chat: JupyterFrontEndPlugin<void> = {
-  id: '@jupyterlab-extension:chat',
-  description: 'A chat extension for Jupyterlab',
+  id: '@jupyter-extension:chat',
+  description: 'A chat extension for Jupyter',
   autoStart: true,
   optional: [ILayoutRestorer, IThemeManager],
   requires: [IGlobalAwareness, IRenderMimeRegistry],
@@ -56,7 +56,7 @@ export const chat: JupyterFrontEndPlugin<void> = {
     app.shell.add(chatWidget, 'left', { rank: 2000 });
 
     if (restorer) {
-      restorer.add(chatWidget, 'jupyterlab-chat');
+      restorer.add(chatWidget, 'jupyter-chat');
     }
     console.log('Collaboration chat initialized');
   }

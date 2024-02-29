@@ -53,12 +53,12 @@
     "watch:labextension": "jupyter labextension watch ."
   },
   "dependencies": {
+    "@jupyter/chat": "0.1.0",
     "@jupyter/collaboration": "^2.0.11",
     "@jupyter/docprovider": "^2.0.11",
     "@jupyter/ydoc": "^1.1.0-a0",
     "@jupyterlab/application": "^4.0.5",
     "@jupyterlab/apputils": "^4.0.5",
-    "@jupyterlab/chat": "0.1.0",
     "@jupyterlab/codemirror": "^4.0.5",
     "@jupyterlab/coreutils": "^6.0.5",
     "@jupyterlab/docregistry": "^4.0.5",
