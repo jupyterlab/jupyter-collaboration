@@ -235,6 +235,9 @@ class DocumentRoom(YRoom):
             # the document is being saved, cancel that
             saving_document.cancel()
 
+        # all async code (i.e. await statements) must be part of this try/except block
+        # because this coroutine is run in a cancellable task and cancellation is handled here
+
         try:
             # save after X seconds of inactivity
             await asyncio.sleep(self._save_delay)
