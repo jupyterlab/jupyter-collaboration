@@ -234,12 +234,14 @@ class DocumentRoom(YRoom):
         if saving_document is not None and not saving_document.done():
             # the document is being saved, cancel that
             saving_document.cancel()
-            await saving_document
 
-        # save after X seconds of inactivity
-        await asyncio.sleep(self._save_delay)
+        # all async code (i.e. await statements) must be part of this try/except block
+        # because this coroutine is run in a cancellable task and cancellation is handled here
 
         try:
+            # save after X seconds of inactivity
+            await asyncio.sleep(self._save_delay)
+
             self.log.info("Saving the content from room %s", self._room_id)
             await self._file.maybe_save_content(
                 {
@@ -252,6 +254,9 @@ class DocumentRoom(YRoom):
                 self._document.dirty = False
 
             self._emit(LogLevel.INFO, "save", "Content saved.")
+
+        except asyncio.CancelledError:
+            return
 
         except OutOfBandChanges:
             self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
