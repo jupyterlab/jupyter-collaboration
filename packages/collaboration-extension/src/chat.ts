@@ -5,21 +5,93 @@
  * @module collaboration-extension
  */
 
+import { buildChatSidebar, buildErrorWidget } from '@jupyter/chat';
+import { IChatFileType, IGlobalAwareness } from '@jupyter/collaboration';
+import {
+  CollaborativeChatModelFactory,
+  ChatWidgetFactory,
+  CollaborativeChat,
+  CollaborativeChatModel,
+  CollaborativeChatWidget,
+  ICollaborativeDrive
+} from '@jupyter/docprovider';
 import {
   ILayoutRestorer,
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
-import { ReactWidget, IThemeManager } from '@jupyterlab/apputils';
+import { IThemeManager, WidgetTracker } from '@jupyterlab/apputils';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
-import {
-  buildChatSidebar,
-  buildErrorWidget,
-  ChatHandler,
-  ChatService
-} from '@jupyter/chat';
-import { IGlobalAwareness } from '@jupyter/collaboration';
+import { Widget } from '@lumino/widgets';
 import { Awareness } from 'y-protocols/awareness';
+
+export const chatDocument: JupyterFrontEndPlugin<IChatFileType> = {
+  id: '@jupyter-extension:chat-document',
+  description: 'A document registration for collaborative chat',
+  autoStart: true,
+  requires: [IGlobalAwareness, IRenderMimeRegistry],
+  optional: [ICollaborativeDrive, IThemeManager],
+  provides: IChatFileType,
+  activate: (
+    app: JupyterFrontEnd,
+    awareness: Awareness,
+    rmRegistry: IRenderMimeRegistry,
+    drive: ICollaborativeDrive | null,
+    themeManager: IThemeManager | null
+  ): IChatFileType => {
+    // Namespace for the tracker
+    const namespace = 'chat';
+    // Creating the tracker for the document
+    const tracker = new WidgetTracker<CollaborativeChatWidget>({ namespace });
+
+    const chatFileType: IChatFileType = {
+      name: 'chat',
+      displayName: 'Chat',
+      mimeTypes: ['text/json', 'application/json'],
+      extensions: ['.chat'],
+      fileFormat: 'text',
+      contentType: 'chat'
+    };
+
+    app.docRegistry.addFileType(chatFileType);
+
+    if (drive) {
+      const chatFactory = () => {
+        return CollaborativeChat.create();
+      };
+      drive.sharedModelFactory.registerDocumentFactory('chat', chatFactory);
+    }
+
+    // Creating and registering the model factory for our custom DocumentModel
+    const modelFactory = new CollaborativeChatModelFactory({ awareness });
+    app.docRegistry.addModelFactory(modelFactory);
+
+    // Creating the widget factory to register it so the document manager knows about
+    // our new DocumentWidget
+    const widgetFactory = new ChatWidgetFactory({
+      name: 'chat-factory',
+      modelName: 'chat-model',
+      fileTypes: ['chat'],
+      defaultFor: ['chat'],
+      themeManager,
+      rmRegistry
+    });
+
+    // Add the widget to the tracker when it's created
+    widgetFactory.widgetCreated.connect((sender, widget) => {
+      // Notify the instance tracker if restore data needs to update.
+      widget.context.pathChanged.connect(() => {
+        tracker.save(widget);
+      });
+      tracker.add(widget);
+    });
+
+    // Registering the widget factory
+    app.docRegistry.addWidgetFactory(widgetFactory);
+
+    return chatFileType;
+  }
+};
 
 /**
  * Initialization of the @jupyter/chat extension.
@@ -28,24 +100,63 @@ export const chat: JupyterFrontEndPlugin<void> = {
   id: '@jupyter-extension:chat',
   description: 'A chat extension for Jupyter',
   autoStart: true,
+  requires: [
+    IChatFileType,
+    ICollaborativeDrive,
+    IGlobalAwareness,
+    IRenderMimeRegistry
+  ],
   optional: [ILayoutRestorer, IThemeManager],
-  requires: [IGlobalAwareness, IRenderMimeRegistry],
   activate: async (
     app: JupyterFrontEnd,
+    chatFileType: IChatFileType,
+    drive: ICollaborativeDrive,
     awareness: Awareness,
     rmRegistry: IRenderMimeRegistry,
     restorer: ILayoutRestorer | null,
     themeManager: IThemeManager | null
   ) => {
     /**
-     * Initialize chat handler, open WS connection
+     * Open or create a general chat file.
      */
-    const chatHandler = new CollaborativeChatHandler({ awareness });
+    const generalChat = 'general.chat';
 
-    let chatWidget: ReactWidget | null = null;
+    const model = await drive
+      .get(generalChat)
+      .then(m => m)
+      .catch(async () => {
+        let m = await drive.newUntitled({
+          type: 'file',
+          ext: chatFileType.extensions[0]
+        });
+        m = await drive.rename(m.path, generalChat);
+        m = await drive.save(m.path, {
+          ...m,
+          format: chatFileType.fileFormat,
+          size: undefined,
+          content: '{}'
+        });
+        return m;
+      });
+
+    /**
+     * Create a share model from that chat file
+     */
+    const sharedModel = drive.sharedModelFactory.createNew({
+      path: model.path,
+      format: model.format,
+      contentType: chatFileType.contentType,
+      collaborative: true
+    }) as CollaborativeChat;
+
+    /**
+     * Initialize the chat model with the share model
+     */
+    const chat = new CollaborativeChatModel({ awareness, sharedModel });
+
+    let chatWidget: Widget | null = null;
     try {
-      await chatHandler.initialize();
-      chatWidget = buildChatSidebar(chatHandler, themeManager, rmRegistry);
+      chatWidget = buildChatSidebar(chat, themeManager, rmRegistry);
     } catch (e) {
       chatWidget = buildErrorWidget(themeManager);
     }
@@ -58,51 +169,6 @@ export const chat: JupyterFrontEndPlugin<void> = {
     if (restorer) {
       restorer.add(chatWidget, 'jupyter-chat');
     }
-    console.log('Collaboration chat initialized');
+    console.log('Collaborative chat initialized');
   }
 };
-
-/**
- * The collaborative chat handler.
- */
-class CollaborativeChatHandler extends ChatHandler {
-  /**
-   * Create a new collaborative chat handler.
-   */
-  constructor(options: Private.IOptions) {
-    super();
-    this._awareness = options.awareness;
-  }
-
-  /**
-   * A function called before transferring the message to the panel(s).
-   * Can be useful if some actions are required on the message.
-   *
-   * It is used in this case to retrieve the user avatar color, unknown on server side.
-   */
-  protected formatChatMessage(
-    message: ChatService.IChatMessage
-  ): ChatService.IChatMessage {
-    const sender = Array.from(this._awareness.states.values()).find(
-      awareness => awareness.user.username === message.sender.username
-    )?.user;
-    if (sender) {
-      message.sender.color = sender.color;
-    }
-    return message;
-  }
-
-  private _awareness: Awareness;
-}
-
-/**
- * The private namespace
- */
-namespace Private {
-  /**
-   * Options for the collaborative chat handler.
-   */
-  export interface IOptions extends ChatHandler.IOptions {
-    awareness: Awareness;
-  }
-}

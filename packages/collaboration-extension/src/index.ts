@@ -7,7 +7,7 @@
 
 import { JupyterFrontEndPlugin } from '@jupyterlab/application';
 
-import { chat } from './chat';
+import { chat, chatDocument } from './chat';
 import {
   drive,
   yfile,
@@ -29,6 +29,7 @@ import { sharedLink } from './sharedlink';
  */
 const plugins: JupyterFrontEndPlugin<any>[] = [
   chat,
+  chatDocument,
   drive,
   yfile,
   ynotebook,
