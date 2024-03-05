@@ -3,6 +3,7 @@
 
 import type { Menu } from '@lumino/widgets';
 import { Token } from '@lumino/coreutils';
+import { DocumentRegistry } from '@jupyterlab/docregistry';
 import type { User } from '@jupyterlab/services';
 
 import { IAwareness } from '@jupyter/ydoc';
@@ -22,6 +23,13 @@ export const IUserMenu = new Token<IUserMenu>(
  */
 export const IGlobalAwareness = new Token<IAwareness>(
   '@jupyter/collaboration:IGlobalAwareness'
+);
+
+/**
+ * The chat file register.
+ */
+export const IChatFileType = new Token<IChatFileType>(
+  '@jupyter/collaboration:IChatFileType'
 );
 
 /**
@@ -91,3 +99,8 @@ export interface ICollaboratorAwareness {
    */
   current?: string;
 }
+
+/**
+ * Chat file type.
+ */
+export type IChatFileType = DocumentRegistry.IFileType;

@@ -8,6 +8,8 @@
  */
 
 export * from './awareness';
+export * from './chat';
+export * from './requests';
 export * from './ydrive';
 export * from './yprovider';
 export * from './tokens';
