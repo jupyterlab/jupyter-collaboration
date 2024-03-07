@@ -2156,7 +2156,7 @@ __metadata:
 
 "@jupyter/ydoc@file:.yalc/@jupyter/ydoc::locator=%40jupyter%2Freal-time-collaboration%40workspace%3A.":
   version: 2.0.1
-  resolution: "@jupyter/ydoc@file:.yalc/@jupyter/ydoc#.yalc/@jupyter/ydoc::hash=7b1261&locator=%40jupyter%2Freal-time-collaboration%40workspace%3A."
+  resolution: "@jupyter/ydoc@file:.yalc/@jupyter/ydoc#.yalc/@jupyter/ydoc::hash=63b59a&locator=%40jupyter%2Freal-time-collaboration%40workspace%3A."
   dependencies:
     "@jupyterlab/application": ^4.0.0
     "@jupyterlab/nbformat": ^3.0.0 || ^4.0.0-alpha.21 || ^4.0.0
@@ -2165,7 +2165,7 @@ __metadata:
     "@lumino/signaling": ^1.10.0 || ^2.0.0
     y-protocols: ^1.0.5
     yjs: ^13.5.40
-  checksum: c1f8d5c6854f5854b2754200be67f117586736c08deb5edc6dc7ce419d734d8797e0d009554479ab340ac02cf94f6bd60cce0186f2d1e2df8097a6b9c607b14c
+  checksum: 9e034badb962ea9d26e8ed279feb7fb85130d11920841e8cdeb930586c23c1b27071a32bf78211043c6dcc1f303736e3abe11f2bfc33cfbc024a2f2cf8e7bd2f
   languageName: node
   linkType: hard
 

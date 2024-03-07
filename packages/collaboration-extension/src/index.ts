@@ -20,8 +20,7 @@ import {
   rtcGlobalAwarenessPlugin,
   rtcPanelPlugin,
   userEditorCursors,
-  editingMode,
-  suggestions
+  editingMode
 } from './collaboration';
 import { sharedLink } from './sharedlink';
 
@@ -40,8 +39,7 @@ const plugins: JupyterFrontEndPlugin<any>[] = [
   rtcPanelPlugin,
   sharedLink,
   userEditorCursors,
-  editingMode,
-  suggestions
+  editingMode
 ];
 
 export default plugins;

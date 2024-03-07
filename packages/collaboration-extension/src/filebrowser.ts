@@ -24,7 +24,7 @@ import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 
 import { CommandRegistry } from '@lumino/commands';
 
-import { ISuggestions, YFile, YNotebook } from '@jupyter/ydoc';
+import { YFile, YNotebook } from '@jupyter/ydoc';
 
 import { ICollaborativeDrive, YDrive } from '@jupyter/docprovider';
 
@@ -42,15 +42,14 @@ export const drive: JupyterFrontEndPlugin<ICollaborativeDrive> = {
   id: '@jupyter/collaboration-extension:drive',
   description: 'The default collaborative drive provider',
   provides: ICollaborativeDrive,
-  requires: [ITranslator, ISuggestions],
+  requires: [ITranslator],
   optional: [],
   activate: (
     app: JupyterFrontEnd,
-    translator: ITranslator,
-    suggestions: ISuggestions
+    translator: ITranslator
   ): ICollaborativeDrive => {
     const trans = translator.load('jupyter_collaboration');
-    const drive = new YDrive(app.serviceManager.user, trans, suggestions);
+    const drive = new YDrive(app.serviceManager.user, trans);
     app.serviceManager.contents.addDrive(drive);
     return drive;
   }

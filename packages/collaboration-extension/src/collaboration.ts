@@ -41,17 +41,16 @@ import { ITranslator, nullTranslator, TranslationBundle } from '@jupyterlab/tran
 
 import { Menu, MenuBar } from '@lumino/widgets';
 
-import { IAwareness, ISharedNotebook, ISuggestions, NotebookChange } from '@jupyter/ydoc';
+import { IAwareness, ISharedNotebook, NotebookChange } from '@jupyter/ydoc';
 
 import {
   CollaboratorsPanel,
-  SuggestionsPanel,
   IGlobalAwareness,
   IUserMenu,
   remoteUserCursors,
   RendererUserMenu,
   UserInfoPanel,
-  UserMenu,
+  UserMenu
 } from '@jupyter/collaboration';
 
 import * as Y from 'yjs';
@@ -148,12 +147,11 @@ export const rtcPanelPlugin: JupyterFrontEndPlugin<void> = {
   id: '@jupyter/collaboration-extension:rtcPanel',
   description: 'Add side panel to display all currently connected users.',
   autoStart: true,
-  requires: [IGlobalAwareness, ISuggestions],
+  requires: [IGlobalAwareness],
   optional: [ITranslator],
   activate: (
     app: JupyterFrontEnd,
     awareness: Awareness,
-    suggestions: ISuggestions,
     translator: ITranslator | null
   ): void => {
     const { user } = app.serviceManager;
@@ -185,10 +183,6 @@ export const rtcPanelPlugin: JupyterFrontEndPlugin<void> = {
     );
     collaboratorsPanel.title.label = trans.__('Online Collaborators');
     userPanel.addWidget(collaboratorsPanel);
-
-    const suggestionsPanel = new SuggestionsPanel(fileopener, suggestions);
-    suggestionsPanel.title.label = trans.__('Suggestions');
-    userPanel.addWidget(suggestionsPanel);
   }
 };
 
@@ -306,8 +300,6 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
     reviewCommands.addCommand('merge', {
       label: 'Merge',
       execute: () => {
-        console.log('currentRoomId', context.model.sharedModel.currentRoomId);
-        console.log('rootRoomId', context.model.sharedModel.rootRoomId);
         requestDocMerge(context.model.sharedModel.currentRoomId, context.model.sharedModel.rootRoomId);
       }
     });
@@ -394,44 +386,5 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
       suggestionMenubar.dispose();
       reviewMenubar.dispose();
     });
-  }
-}
-
-/**
- * A plugin to provide shared document suggestions.
-*/
-export const suggestions: JupyterFrontEndPlugin<ISuggestions> = {
-  id: '@jupyter/collaboration-extension:rtcGlobalSuggestions',
-  description: 'A plugin to provide shared document suggestions.',
-  autoStart: true,
-  provides: ISuggestions,
-  activate: (app: JupyterFrontEnd): ISuggestions => {
-    console.log('suggestions plugin activated');
-    return new Suggestions();
-  },
-};
-
-export class Suggestions implements ISuggestions {
-  private _forkIds: string[];
-  private _callbacks: any[];
-
-  constructor() {
-    this._forkIds = [];
-    this._callbacks = [];
-  }
-
-  addFork(forkId: string) {
-    this._forkIds.push(forkId);
-    for (const callback of this._callbacks) {
-      callback(forkId);
-    }
-  }
-
-  addCallback(callback: any) {
-    this._callbacks.push(callback);
-  }
-
-  get forks(): string[] {
-    return this._forkIds;
   }
 }
