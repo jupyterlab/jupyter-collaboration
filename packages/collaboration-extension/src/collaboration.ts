@@ -23,12 +23,12 @@ import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
-import { IToolbarWidgetRegistry } from '@jupyterlab/apputils';
+import { Dialog, IToolbarWidgetRegistry } from '@jupyterlab/apputils';
 import {
   EditorExtensionRegistry,
   IEditorExtensionRegistry
 } from '@jupyterlab/codemirror';
-import { WebSocketAwarenessProvider } from '@jupyter/docprovider';
+import { requestDocMerge, WebSocketAwarenessProvider } from '@jupyter/docprovider';
 import {
   SidePanel,
   usersIcon,
@@ -37,20 +37,21 @@ import {
 import { URLExt } from '@jupyterlab/coreutils';
 import { ServerConnection } from '@jupyterlab/services';
 import { IStateDB, StateDB } from '@jupyterlab/statedb';
-import { ITranslator, nullTranslator } from '@jupyterlab/translation';
+import { ITranslator, nullTranslator, TranslationBundle } from '@jupyterlab/translation';
 
 import { Menu, MenuBar } from '@lumino/widgets';
 
-import { IAwareness } from '@jupyter/ydoc';
+import { IAwareness, ISharedNotebook, ISuggestions, NotebookChange } from '@jupyter/ydoc';
 
 import {
   CollaboratorsPanel,
+  SuggestionsPanel,
   IGlobalAwareness,
   IUserMenu,
   remoteUserCursors,
   RendererUserMenu,
   UserInfoPanel,
-  UserMenu
+  UserMenu,
 } from '@jupyter/collaboration';
 
 import * as Y from 'yjs';
@@ -147,11 +148,12 @@ export const rtcPanelPlugin: JupyterFrontEndPlugin<void> = {
   id: '@jupyter/collaboration-extension:rtcPanel',
   description: 'Add side panel to display all currently connected users.',
   autoStart: true,
-  requires: [IGlobalAwareness],
+  requires: [IGlobalAwareness, ISuggestions],
   optional: [ITranslator],
   activate: (
     app: JupyterFrontEnd,
     awareness: Awareness,
+    suggestions: ISuggestions,
     translator: ITranslator | null
   ): void => {
     const { user } = app.serviceManager;
@@ -183,6 +185,10 @@ export const rtcPanelPlugin: JupyterFrontEndPlugin<void> = {
     );
     collaboratorsPanel.title.label = trans.__('Online Collaborators');
     userPanel.addWidget(collaboratorsPanel);
+
+    const suggestionsPanel = new SuggestionsPanel(fileopener, suggestions);
+    suggestionsPanel.title.label = trans.__('Suggestions');
+    userPanel.addWidget(suggestionsPanel);
   }
 };
 
@@ -215,54 +221,217 @@ export const editingMode: JupyterFrontEndPlugin<void> = {
   id: '@jupyter/collaboration-extension:editingMode',
   description: 'A plugin to add editing mode to the notebook page.',
   autoStart: true,
-  requires: [ITranslator],
+  optional: [ITranslator],
   activate: (
     app: JupyterFrontEnd,
+    translator: ITranslator | null
   ) => {
-    app.docRegistry.addWidgetExtension('Notebook', new EditingModeExtension());
+    app.docRegistry.addWidgetExtension('Notebook', new EditingModeExtension(translator));
   },
 };
 
 export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<NotebookPanel, INotebookModel> {
-  createNew(panel: NotebookPanel, context: DocumentRegistry.IContext<INotebookModel>): IDisposable {
-    const menubar = new MenuBar();
-    const commands = new CommandRegistry();
-    const menu = new Menu({ commands });
-    menu.title.label = 'Editing';
-    menu.title.icon = caretDownIcon;
-    addMenuItem(commands, menu, 'editing', 'Editing', context);
-    addMenuItem(commands, menu, 'suggesting', 'Suggesting', context);
-    menubar.addMenu(menu);
+  private _trans: TranslationBundle;
 
-    panel.toolbar.insertItem(990, 'editingMode', menubar);
+  constructor(translator: ITranslator | null) {
+    this._trans = (translator ?? nullTranslator).load('jupyter_collaboration');
+  }
+
+  createNew(
+    panel: NotebookPanel,
+    context: DocumentRegistry.IContext<INotebookModel>
+  ): IDisposable {
+    const editingMenubar = new MenuBar();
+    const suggestionMenubar = new MenuBar();
+    const reviewMenubar = new MenuBar();
+
+    const editingCommands = new CommandRegistry();
+    const suggestionCommands = new CommandRegistry();
+    const reviewCommands = new CommandRegistry();
+
+    const editingMenu = new Menu({ commands: editingCommands });
+    const suggestionMenu = new Menu({ commands: suggestionCommands });
+    const reviewMenu = new Menu({ commands: reviewCommands });
+
+    var myForkId = '';  // curently allows only one suggestion per user
+
+    editingMenu.title.label = 'Editing';
+    editingMenu.title.icon = caretDownIcon;
+
+    suggestionMenu.title.label = 'Root';
+    suggestionMenu.title.icon = caretDownIcon;
+
+    reviewMenu.title.label = 'Review';
+    reviewMenu.title.icon = caretDownIcon;
+
+    editingCommands.addCommand('editing', {
+      label: 'Editing',
+      execute: () => {
+        editingMenu.title.label = 'Editing';
+        suggestionMenu.title.label = 'Root';
+      }
+    });
+    editingCommands.addCommand('suggesting', {
+      label: 'Suggesting',
+      execute: () => {
+        editingMenu.title.label = 'Suggesting';
+        reviewMenu.clearItems();
+        if (myForkId === '') {
+          myForkId = 'pending';
+          const provider = context.model.sharedModel.provider;
+          provider.fork().then(newForkId => {
+            myForkId = newForkId;
+            provider.connectFork(newForkId);
+            suggestionMenu.title.label = newForkId;
+          });
+        }
+        else {
+          suggestionMenu.title.label = myForkId;
+          context.model.sharedModel.provider.connectFork(myForkId);
+        }
+      }
+    });
+
+    suggestionCommands.addCommand('root', {
+      label: 'Root',
+      execute: () => {
+        // we cannot review the root document
+        reviewMenu.clearItems();
+        suggestionMenu.title.label = 'Root';
+        editingMenu.title.label = 'Editing';
+        context.model.sharedModel.provider.connectFork(context.model.sharedModel.rootRoomId);
+      }
+    });
+
+    reviewCommands.addCommand('merge', {
+      label: 'Merge',
+      execute: () => {
+        console.log('currentRoomId', context.model.sharedModel.currentRoomId);
+        console.log('rootRoomId', context.model.sharedModel.rootRoomId);
+        requestDocMerge(context.model.sharedModel.currentRoomId, context.model.sharedModel.rootRoomId);
+      }
+    });
+    reviewCommands.addCommand('discard', {
+      label: 'Discard',
+      execute: () => {
+      }
+    });
+
+    editingMenu.addItem({type: 'command', command: 'editing'});
+    editingMenu.addItem({type: 'command', command: 'suggesting'});
+
+    suggestionMenu.addItem({type: 'command', command: 'root'});
+
+    const _onStateChanged = (sender: ISharedNotebook, changes: NotebookChange) => {
+      if (changes.stateChange) {
+        changes.stateChange.forEach(value => {
+          const forkPrefix = 'fork_';
+          if (value.name.startsWith(forkPrefix)) {
+            const newForkId = value.name.slice(forkPrefix.length);
+            suggestionCommands.addCommand(newForkId, {
+              label: newForkId,
+              execute: () => {
+                if (myForkId === newForkId) {
+                  editingMenu.title.label = 'Suggesting';
+                  // our suggestion, cannot be reviewed
+                  reviewMenu.clearItems();
+                }
+                else {
+                  editingMenu.title.label = 'Editing';
+                  // not our suggestion, can be reviewed
+                  reviewMenu.clearItems();
+                  reviewMenu.addItem({type: 'command', command: 'merge'});
+                  reviewMenu.addItem({type: 'command', command: 'discard'});
+                }
+                suggestionMenu.title.label = newForkId;
+                context.model.sharedModel.provider.connectFork(newForkId);
+                const dialog = new Dialog({
+                  title: this._trans.__('Suggestion'),
+                  body: this._trans.__('Your are now viewing the suggestion.'),
+                  buttons: [Dialog.okButton({ label: 'OK' })],
+                });
+                dialog.launch().then(resp => { dialog.close(); });
+              }
+            });
+            suggestionMenu.addItem({type: 'command', command: newForkId});
+            if ((myForkId !== 'pending') && (myForkId !== newForkId)) {
+              const dialog = new Dialog({
+                title: this._trans.__('New suggestion'),
+                body: this._trans.__('Open notebook for suggestion?'),
+                buttons: [
+                  Dialog.okButton({ label: 'Open' }),
+                  Dialog.cancelButton({ label: 'Discard' }),
+                ],
+              });
+              dialog.launch().then(resp => {
+                dialog.close();
+                if (resp.button.label === 'Open') {
+                  context.model.sharedModel.provider.connectFork(newForkId);
+                  suggestionMenu.title.label = newForkId;
+                  editingMenu.title.label = 'Editing';
+                  reviewMenu.clearItems();
+                  reviewMenu.addItem({type: 'command', command: 'merge'});
+                  reviewMenu.addItem({type: 'command', command: 'discard'});
+                }
+              });
+            }
+          }
+        });
+      }
+    };
+
+    context.model.sharedModel.changed.connect(_onStateChanged, this);
+
+    editingMenubar.addMenu(editingMenu);
+    suggestionMenubar.addMenu(suggestionMenu);
+    reviewMenubar.addMenu(reviewMenu);
+
+    panel.toolbar.insertItem(997, 'editingMode', editingMenubar);
+    panel.toolbar.insertItem(998, 'suggestions', suggestionMenubar);
+    panel.toolbar.insertItem(999, 'review', reviewMenubar);
     return new DisposableDelegate(() => {
-      menubar.dispose();
+      editingMenubar.dispose();
+      suggestionMenubar.dispose();
+      reviewMenubar.dispose();
     });
   }
 }
 
 /**
- * Helper Function to add menu items.
- */
-function addMenuItem(
-  commands: CommandRegistry,
-  menu: Menu,
-  command: string,
-  label: string,
-  context: DocumentRegistry.IContext<INotebookModel>,
-): void {
-  commands.addCommand(command, {
-    label: label,
-    execute: () => {
-      menu.title.label = label;
-      if (command == 'suggesting') {
-        const provider = context.model.sharedModel.provider;
-        provider.fork().then(forkId => {provider.connectFork(forkId);});
-      }
+ * A plugin to provide shared document suggestions.
+*/
+export const suggestions: JupyterFrontEndPlugin<ISuggestions> = {
+  id: '@jupyter/collaboration-extension:rtcGlobalSuggestions',
+  description: 'A plugin to provide shared document suggestions.',
+  autoStart: true,
+  provides: ISuggestions,
+  activate: (app: JupyterFrontEnd): ISuggestions => {
+    console.log('suggestions plugin activated');
+    return new Suggestions();
+  },
+};
+
+export class Suggestions implements ISuggestions {
+  private _forkIds: string[];
+  private _callbacks: any[];
+
+  constructor() {
+    this._forkIds = [];
+    this._callbacks = [];
+  }
+
+  addFork(forkId: string) {
+    this._forkIds.push(forkId);
+    for (const callback of this._callbacks) {
+      callback(forkId);
     }
-  });
-  menu.addItem({
-    type: 'command',
-    command: command
-  });
+  }
+
+  addCallback(callback: any) {
+    this._callbacks.push(callback);
+  }
+
+  get forks(): string[] {
+    return this._forkIds;
+  }
 }

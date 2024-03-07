@@ -24,6 +24,13 @@ export const IGlobalAwareness = new Token<IAwareness>(
   '@jupyter/collaboration:IGlobalAwareness'
 );
 
+///**
+// * The global suggestions token.
+// */
+//export const IGlobalSuggestions = new Token<ISuggestions>(
+//  '@jupyter/collaboration:IGlobalSuggestions'
+//);
+//
 /**
  * An interface describing the user menu.
  */

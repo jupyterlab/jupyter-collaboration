@@ -5,7 +5,7 @@ import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 import { TranslationBundle } from '@jupyterlab/translation';
 import { Contents, Drive, User } from '@jupyterlab/services';
 
-import { DocumentChange, ISharedDocument, YDocument } from '@jupyter/ydoc';
+import { DocumentChange, ISharedDocument, YDocument, ISuggestions } from '@jupyter/ydoc';
 
 import { WebSocketProvider } from './yprovider';
 import {
@@ -13,6 +13,8 @@ import {
   ISharedModelFactory,
   SharedDocumentFactory
 } from './tokens';
+
+import * as Y from 'yjs';
 
 const DISABLE_RTC =
   PageConfig.getOption('disableRTC') === 'true' ? true : false;
@@ -32,11 +34,12 @@ export class YDrive extends Drive implements ICollaborativeDrive {
    *
    * @param user - The user manager to add the identity to the awareness of documents.
    */
-  constructor(user: User.IManager, translator: TranslationBundle) {
+  constructor(user: User.IManager, translator: TranslationBundle, suggestions: ISuggestions) {
     super({ name: 'RTC' });
     this._user = user;
     this._trans = translator;
     this._providers = new Map<string, WebSocketProvider>();
+    this._suggestions = suggestions;
 
     this.sharedModelFactory = new SharedModelFactory(this._onCreate);
   }
@@ -126,6 +129,18 @@ export class YDrive extends Drive implements ICollaborativeDrive {
     return super.save(localPath, options);
   }
 
+  private _handleForks = (event: Y.YMapEvent<string>) => {
+    const forkPrefix = 'fork_';
+    event.changes.keys.forEach((change, key) => {
+      if (change.action === 'add') {
+        if (key.startsWith(forkPrefix)) {
+          const forkId = key.slice(forkPrefix.length);
+          this._suggestions.addFork(forkId);
+        }
+      }
+    });
+  };
+
   private _onCreate = (
     options: Contents.ISharedFactoryOptions,
     sharedModel: YDocument<DocumentChange>
@@ -147,6 +162,7 @@ export class YDrive extends Drive implements ICollaborativeDrive {
       const key = `${options.format}:${options.contentType}:${options.path}`;
       this._providers.set(key, provider);
 
+      sharedModel.ystate.observe(this._handleForks);
       sharedModel.provider = provider;
       sharedModel.disposed.connect(() => {
         const provider = this._providers.get(key);
@@ -167,6 +183,7 @@ export class YDrive extends Drive implements ICollaborativeDrive {
   private _user: User.IManager;
   private _trans: TranslationBundle;
   private _providers: Map<string, WebSocketProvider>;
+  private _suggestions: ISuggestions;
 }
 
 /**

@@ -90,14 +90,14 @@ export class WebSocketProvider implements IDocumentProvider {
 
     const response = await requestDocFork(`${session.format}:${session.type}:${session.fileId}`);
     const forkId = response.roomId;
-    this._sharedModel.roomId = forkId;
+    this._sharedModel.currentRoomId = forkId;
     this._sharedModel.addFork(forkId);
 
     return forkId;
   }
 
   connectFork(forkId: string) {
-    this._sharedModel.roomId = forkId;
+    this._sharedModel.currentRoomId = forkId;
     this._yWebsocketProvider?.disconnect();
     this._yWebsocketProvider = new YWebsocketProvider(
       this._serverUrl,
@@ -112,19 +112,20 @@ export class WebSocketProvider implements IDocumentProvider {
   }
 
   private async _connect(): Promise<void> {
-    if (this._sharedModel.roomId === '') {
+    if (this._sharedModel.rootRoomId === '') {
       const session = await requestDocSession(
         this._format,
         this._contentType,
         this._path
       );
-      this._sharedModel.roomId = `${session.format}:${session.type}:${session.fileId}`;
+      this._sharedModel.rootRoomId = `${session.format}:${session.type}:${session.fileId}`;
+      this._sharedModel.currentRoomId = this._sharedModel.rootRoomId;
       this._sessionId = session.sessionId;
     }
 
     this._yWebsocketProvider = new YWebsocketProvider(
       this._serverUrl,
-      this._sharedModel.roomId,
+      this._sharedModel.rootRoomId,
       this._sharedModel.ydoc,
       {
         disableBc: true,
