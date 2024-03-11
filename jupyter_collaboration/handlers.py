@@ -6,12 +6,13 @@ from __future__ import annotations
 import asyncio
 import json
 import time
-import uuid
+from uuid import uuid4
 from typing import Any
 
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_ydoc import ydocs as YDOCS
+from pycrdt import Doc
 from pycrdt_websocket.websocket_server import YRoom
 from pycrdt_websocket.ystore import BaseYStore
 from pycrdt_websocket.yutils import YMessageType, write_var_uint
@@ -31,7 +32,7 @@ from .websocketserver import JupyterWebsocketServer
 
 YFILE = YDOCS["file"]
 
-SERVER_SESSION = str(uuid.uuid4())
+SERVER_SESSION = str(uuid4())
 
 
 class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
@@ -404,3 +405,66 @@ class DocSessionHandler(APIHandler):
         )
         self.set_status(201)
         return self.finish(data)
+
+
+class DocForkHandler(APIHandler):
+    """
+    Jupyter Server's handler to fork a document.
+    """
+
+    auth_resource = "contents"
+
+    def initialize(
+        self,
+        ywebsocket_server: JupyterWebsocketServer,
+    ) -> None:
+        self._websocket_server = ywebsocket_server
+
+    @web.authenticated
+    @authorized
+    async def put(self, room_id):
+        """
+        Creates a fork of a root document and returns its ID.
+        """
+        idx = uuid4().hex
+
+        root_room = await self._websocket_server.get_room(room_id)
+        update = root_room.ydoc.get_update()
+        fork_ydoc = Doc()
+        fork_ydoc.apply_update(update)
+        fork_room = YRoom(fork_ydoc)
+        self._websocket_server.add_room(idx, fork_room)
+        root_room.fork_ydocs.add(fork_ydoc)
+        data = json.dumps({
+            "sessionId": SERVER_SESSION,
+            "roomId": idx,
+        })
+        self.set_status(201)
+        return self.finish(data)
+
+
+class DocMergeHandler(APIHandler):
+    """
+    Jupyter Server's handler to merge a document.
+    """
+
+    auth_resource = "contents"
+
+    def initialize(
+        self,
+        ywebsocket_server: JupyterWebsocketServer,
+    ) -> None:
+        self._websocket_server = ywebsocket_server
+
+    @web.authenticated
+    @authorized
+    async def put(self):
+        """
+        Merges back a fork into a root document.
+        """
+        model = self.get_json_body()
+        fork_room = await self._websocket_server.get_room(model["fork_roomid"])
+        root_room = await self._websocket_server.get_room(model["root_roomid"])
+        update = fork_room.ydoc.get_update()
+        root_room.ydoc.apply_update(update)
+        self.set_status(200)

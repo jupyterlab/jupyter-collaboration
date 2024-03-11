@@ -247,6 +247,7 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
     const suggestionMenu = new Menu({ commands: suggestionCommands });
     const reviewMenu = new Menu({ commands: reviewCommands });
 
+    const sharedModel = context.model.sharedModel;
     var myForkId = '';  // curently allows only one suggestion per user
 
     editingMenu.title.label = 'Editing';
@@ -263,6 +264,7 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
       execute: () => {
         editingMenu.title.label = 'Editing';
         suggestionMenu.title.label = 'Root';
+        open_dialog('Editing', this._trans);
       }
     });
     editingCommands.addCommand('suggesting', {
@@ -272,17 +274,17 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
         reviewMenu.clearItems();
         if (myForkId === '') {
           myForkId = 'pending';
-          const provider = context.model.sharedModel.provider;
-          provider.fork().then(newForkId => {
+          sharedModel.provider.fork().then(newForkId => {
             myForkId = newForkId;
-            provider.connectFork(newForkId);
+            sharedModel.provider.connectFork(newForkId);
             suggestionMenu.title.label = newForkId;
           });
         }
         else {
           suggestionMenu.title.label = myForkId;
-          context.model.sharedModel.provider.connectFork(myForkId);
+          sharedModel.provider.connectFork(myForkId);
         }
+        open_dialog('Suggesting', this._trans);
       }
     });
 
@@ -293,14 +295,15 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
         reviewMenu.clearItems();
         suggestionMenu.title.label = 'Root';
         editingMenu.title.label = 'Editing';
-        context.model.sharedModel.provider.connectFork(context.model.sharedModel.rootRoomId);
+        sharedModel.provider.connectFork(sharedModel.rootRoomId);
+        open_dialog('Editing', this._trans);
       }
     });
 
     reviewCommands.addCommand('merge', {
       label: 'Merge',
       execute: () => {
-        requestDocMerge(context.model.sharedModel.currentRoomId, context.model.sharedModel.rootRoomId);
+        requestDocMerge(sharedModel.currentRoomId, sharedModel.rootRoomId);
       }
     });
     reviewCommands.addCommand('discard', {
@@ -336,29 +339,24 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
                   reviewMenu.addItem({type: 'command', command: 'discard'});
                 }
                 suggestionMenu.title.label = newForkId;
-                context.model.sharedModel.provider.connectFork(newForkId);
-                const dialog = new Dialog({
-                  title: this._trans.__('Suggestion'),
-                  body: this._trans.__('Your are now viewing the suggestion.'),
-                  buttons: [Dialog.okButton({ label: 'OK' })],
-                });
-                dialog.launch().then(resp => { dialog.close(); });
+                sharedModel.provider.connectFork(newForkId);
+                open_dialog('Suggesting', this._trans);
               }
             });
             suggestionMenu.addItem({type: 'command', command: newForkId});
             if ((myForkId !== 'pending') && (myForkId !== newForkId)) {
               const dialog = new Dialog({
                 title: this._trans.__('New suggestion'),
-                body: this._trans.__('Open notebook for suggestion?'),
+                body: this._trans.__('View suggestion?'),
                 buttons: [
-                  Dialog.okButton({ label: 'Open' }),
+                  Dialog.okButton({ label: 'View' }),
                   Dialog.cancelButton({ label: 'Discard' }),
                 ],
               });
               dialog.launch().then(resp => {
                 dialog.close();
-                if (resp.button.label === 'Open') {
-                  context.model.sharedModel.provider.connectFork(newForkId);
+                if (resp.button.label === 'View') {
+                  sharedModel.provider.connectFork(newForkId);
                   suggestionMenu.title.label = newForkId;
                   editingMenu.title.label = 'Editing';
                   reviewMenu.clearItems();
@@ -372,7 +370,7 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
       }
     };
 
-    context.model.sharedModel.changed.connect(_onStateChanged, this);
+    sharedModel.changed.connect(_onStateChanged, this);
 
     editingMenubar.addMenu(editingMenu);
     suggestionMenubar.addMenu(suggestionMenu);
@@ -387,4 +385,21 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
       reviewMenubar.dispose();
     });
   }
+}
+
+
+function open_dialog(title: string, trans: TranslationBundle) {
+  var body: string;
+  if (title === 'Editing') {
+    body = 'You are now directly editing the document.'
+  }
+  else {
+    body = 'Your edits now become suggestions to the document.'
+  }
+  const dialog = new Dialog({
+    title: trans.__(title),
+    body: trans.__(body),
+    buttons: [Dialog.okButton({ label: 'OK' })],
+  });
+  dialog.launch().then(resp => { dialog.close(); });
 }

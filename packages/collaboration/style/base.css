@@ -9,22 +9,3 @@
 .jp-shared-link-body {
     user-select: none;
 }
-
-.jp-EditingMode {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.jp-EditingMode .lm-MenuBar-itemIcon svg {
-  vertical-align: sub;
-}
-
-.jp-nb-editing-mode-button > .jp-ToolbarButtonComponent::part(content) {
-  flex-direction: row-reverse;
-}
-
-.jp-nb-editing-mode-button > .jp-ToolbarButtonComponent > svg {
-  padding-left: 3px;
-}
