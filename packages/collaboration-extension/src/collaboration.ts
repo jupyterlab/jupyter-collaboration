@@ -248,6 +248,7 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
     const reviewMenu = new Menu({ commands: reviewCommands });
 
     const sharedModel = context.model.sharedModel;
+    const suggestions: {[key: string]: Menu.IItem} = {};
     var myForkId = '';  // curently allows only one suggestion per user
 
     editingMenu.title.label = 'Editing';
@@ -321,49 +322,77 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
       if (changes.stateChange) {
         changes.stateChange.forEach(value => {
           const forkPrefix = 'fork_';
-          if (value.name.startsWith(forkPrefix)) {
-            const newForkId = value.name.slice(forkPrefix.length);
-            suggestionCommands.addCommand(newForkId, {
-              label: newForkId,
-              execute: () => {
-                if (myForkId === newForkId) {
-                  editingMenu.title.label = 'Suggesting';
-                  // our suggestion, cannot be reviewed
-                  reviewMenu.clearItems();
+          if (value.name === 'merge') {
+            // FIXME: a client who is not connected to the fork should not see this update
+            if (sharedModel.currentRoomId === value.newValue) {
+              editingMenu.title.label = 'Editing';
+              suggestionMenu.title.label = 'Root';
+              const item: Menu.IItem = suggestions[value.newValue];
+              delete suggestions[value.newValue];
+              suggestionMenu.removeItem(item);
+              reviewMenu.clearItems();
+              sharedModel.provider.connectFork(sharedModel.rootRoomId);
+              open_dialog('Editing', this._trans);
+            }
+          }
+          else if (value.name.startsWith(forkPrefix)) {
+            const forkId = value.name.slice(forkPrefix.length);
+            if (value.newValue === 'new') {
+              suggestionCommands.addCommand(forkId, {
+                label: forkId,
+                execute: () => {
+                  if (myForkId === forkId) {
+                    editingMenu.title.label = 'Suggesting';
+                    // our suggestion, cannot be reviewed
+                    reviewMenu.clearItems();
+                  }
+                  else {
+                    editingMenu.title.label = 'Editing';
+                    // not our suggestion, can be reviewed
+                    reviewMenu.clearItems();
+                    reviewMenu.addItem({type: 'command', command: 'merge'});
+                    reviewMenu.addItem({type: 'command', command: 'discard'});
+                  }
+                  suggestionMenu.title.label = forkId;
+                  sharedModel.provider.connectFork(forkId);
+                  open_dialog('Suggesting', this._trans);
                 }
-                else {
-                  editingMenu.title.label = 'Editing';
-                  // not our suggestion, can be reviewed
-                  reviewMenu.clearItems();
-                  reviewMenu.addItem({type: 'command', command: 'merge'});
-                  reviewMenu.addItem({type: 'command', command: 'discard'});
-                }
-                suggestionMenu.title.label = newForkId;
-                sharedModel.provider.connectFork(newForkId);
-                open_dialog('Suggesting', this._trans);
+              });
+              const item = suggestionMenu.addItem({type: 'command', command: forkId});
+              suggestions[forkId] = item;
+              if ((myForkId !== 'pending') && (myForkId !== forkId)) {
+                const dialog = new Dialog({
+                  title: this._trans.__('New suggestion'),
+                  body: this._trans.__('View suggestion?'),
+                  buttons: [
+                    Dialog.okButton({ label: 'View' }),
+                    Dialog.cancelButton({ label: 'Discard' }),
+                  ],
+                });
+                dialog.launch().then(resp => {
+                  dialog.close();
+                  if (resp.button.label === 'View') {
+                    sharedModel.provider.connectFork(forkId);
+                    suggestionMenu.title.label = forkId;
+                    editingMenu.title.label = 'Editing';
+                    reviewMenu.clearItems();
+                    reviewMenu.addItem({type: 'command', command: 'merge'});
+                    reviewMenu.addItem({type: 'command', command: 'discard'});
+                  }
+                });
               }
-            });
-            suggestionMenu.addItem({type: 'command', command: newForkId});
-            if ((myForkId !== 'pending') && (myForkId !== newForkId)) {
-              const dialog = new Dialog({
-                title: this._trans.__('New suggestion'),
-                body: this._trans.__('View suggestion?'),
-                buttons: [
-                  Dialog.okButton({ label: 'View' }),
-                  Dialog.cancelButton({ label: 'Discard' }),
-                ],
-              });
-              dialog.launch().then(resp => {
-                dialog.close();
-                if (resp.button.label === 'View') {
-                  sharedModel.provider.connectFork(newForkId);
-                  suggestionMenu.title.label = newForkId;
-                  editingMenu.title.label = 'Editing';
-                  reviewMenu.clearItems();
-                  reviewMenu.addItem({type: 'command', command: 'merge'});
-                  reviewMenu.addItem({type: 'command', command: 'discard'});
-                }
-              });
+            }
+            else if (value.newValue === undefined) {
+              if (sharedModel.currentRoomId === forkId) {
+                editingMenu.title.label = 'Editing';
+                suggestionMenu.title.label = 'Root';
+                const item: Menu.IItem = suggestions[value.newValue];
+                delete suggestions[value.newValue];
+                suggestionMenu.removeItem(item);
+                reviewMenu.clearItems();
+                sharedModel.provider.connectFork(sharedModel.rootRoomId);
+                open_dialog('Editing', this._trans);
+              }
             }
           }
         });
