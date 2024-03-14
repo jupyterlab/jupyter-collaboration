@@ -155,7 +155,6 @@ class DocumentRoom(YRoom):
                 read_from_source = True
 
 
-        self._document.dirty = False
         self.ready = True
         self._emit(LogLevel.INFO, "initialize", "Room initialized")
 
@@ -205,7 +204,6 @@ class DocumentRoom(YRoom):
             return
 
         self._document.source = model["content"]
-        self._document.dirty = False
 
     def _on_document_change(self, target: str, event: Any) -> None:
         """
@@ -290,7 +288,6 @@ class DocumentRoom(YRoom):
                 return None
 
             self._document.source = model["content"]
-            self._document.dirty = False
             self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes while saving.")
 
         except Exception as e:
