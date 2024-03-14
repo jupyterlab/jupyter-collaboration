@@ -131,6 +131,19 @@ class DocumentRoom(YRoom):
                 # YDoc not found in the YStore, create the document from the source file (no change history)
                 pass
 
+        if not read_from_source and self._document.source != model["content"]:
+            # TODO: Delete document from the store.
+            self._emit(
+                LogLevel.INFO, "initialize", "The file is out-of-sync with the ystore."
+            )
+            self.log.info(
+                "Content in file %s is out-of-sync with the ystore %s",
+                self._file.path,
+                self.ystore.__class__.__name__,
+            )
+            read_from_source = True
+
+        # if YStore updates and source file are out-of-sync, resync updates with source
         if read_from_source:
             self._emit(LogLevel.INFO, "load", "Content loaded from disk.")
             self.log.info(
@@ -140,20 +153,6 @@ class DocumentRoom(YRoom):
 
             if self.ystore:
                 await self.ystore.encode_state_as_update(self.ydoc)
-        else:
-            # if YStore updates and source file are out-of-sync, resync updates with source
-            if self._document.source != model["content"]:
-                # TODO: Delete document from the store.
-                self._emit(
-                    LogLevel.INFO, "initialize", "The file is out-of-sync with the ystore."
-                )
-                self.log.info(
-                    "Content in file %s is out-of-sync with the ystore %s",
-                    self._file.path,
-                    self.ystore.__class__.__name__,
-                )
-                read_from_source = True
-
 
         self.ready = True
         self._emit(LogLevel.INFO, "initialize", "Room initialized")
