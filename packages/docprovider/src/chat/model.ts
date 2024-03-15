@@ -1,4 +1,4 @@
-import { ChatModel, ChatService } from '@jupyter/chat';
+import { ChatModel, IChatMessage, INewMessage, IUser } from '@jupyter/chat';
 import { Delta, MapChange, StateChange, YDocument } from '@jupyter/ydoc';
 import { DocumentRegistry } from '@jupyterlab/docregistry';
 import { IChangedArgs } from '@jupyterlab/coreutils';
@@ -115,9 +115,7 @@ export class CollaborativeChatModel
    *
    * It is used in this case to retrieve the user avatar color, unknown on server side.
    */
-  protected formatChatMessage(
-    message: ChatService.IChatMessage
-  ): ChatService.IChatMessage {
+  protected formatChatMessage(message: IChatMessage): IChatMessage {
     if (this._awareness) {
       const sender = Array.from(this._awareness.states.values()).find(
         awareness => awareness.user.username === message.sender.username
@@ -129,10 +127,8 @@ export class CollaborativeChatModel
     return message;
   }
 
-  addMessage(
-    message: ChatService.ChatRequest
-  ): Promise<boolean | void> | boolean | void {
-    const msg: ChatService.IChatMessage = {
+  addMessage(message: INewMessage): Promise<boolean | void> | boolean | void {
+    const msg: IChatMessage = {
       type: 'msg',
       id: UUID.uuid4(),
       body: message.body,
@@ -150,7 +146,7 @@ export class CollaborativeChatModel
     if (change.messageChange) {
       const msgDelta = change.messageChange;
       // let retain: number;
-      const messages: ChatService.IChatMessage[] = [];
+      const messages: IChatMessage[] = [];
       msgDelta.forEach(data => {
         if (data.retain) {
           // retain = data.retain;
@@ -179,7 +175,7 @@ export class CollaborativeChatModel
   private _stateChanged = new Signal<this, IChangedArgs<any>>(this);
 
   private _awareness: Awareness;
-  private _user: ChatService.IUser;
+  private _user: IUser;
 }
 
 interface ICollaborativeChatModelChange {

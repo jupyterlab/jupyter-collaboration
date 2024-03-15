@@ -22,11 +22,17 @@ import {
 } from '@jupyterlab/application';
 import { IThemeManager, WidgetTracker } from '@jupyterlab/apputils';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { Widget } from '@lumino/widgets';
 import { Awareness } from 'y-protocols/awareness';
 
+const pluginIds = {
+  chatDocument: '@jupyter/collaboration-extension:chat-document',
+  chat: '@jupyter/collaboration-extension:chat'
+};
+
 export const chatDocument: JupyterFrontEndPlugin<IChatFileType> = {
-  id: '@jupyter-extension:chat-document',
+  id: pluginIds.chatDocument,
   description: 'A document registration for collaborative chat',
   autoStart: true,
   requires: [IGlobalAwareness, IRenderMimeRegistry],
@@ -41,6 +47,7 @@ export const chatDocument: JupyterFrontEndPlugin<IChatFileType> = {
   ): IChatFileType => {
     // Namespace for the tracker
     const namespace = 'chat';
+
     // Creating the tracker for the document
     const tracker = new WidgetTracker<CollaborativeChatWidget>({ namespace });
 
@@ -97,7 +104,7 @@ export const chatDocument: JupyterFrontEndPlugin<IChatFileType> = {
  * Initialization of the @jupyter/chat extension.
  */
 export const chat: JupyterFrontEndPlugin<void> = {
-  id: '@jupyter-extension:chat',
+  id: pluginIds.chat,
   description: 'A chat extension for Jupyter',
   autoStart: true,
   requires: [
@@ -106,7 +113,7 @@ export const chat: JupyterFrontEndPlugin<void> = {
     IGlobalAwareness,
     IRenderMimeRegistry
   ],
-  optional: [ILayoutRestorer, IThemeManager],
+  optional: [ILayoutRestorer, ISettingRegistry, IThemeManager],
   activate: async (
     app: JupyterFrontEnd,
     chatFileType: IChatFileType,
@@ -114,12 +121,14 @@ export const chat: JupyterFrontEndPlugin<void> = {
     awareness: Awareness,
     rmRegistry: IRenderMimeRegistry,
     restorer: ILayoutRestorer | null,
+    settingsRegistry: ISettingRegistry,
     themeManager: IThemeManager | null
   ) => {
     /**
      * Open or create a general chat file.
      */
     const generalChat = 'general.chat';
+    let sendWithShiftEnter = false;
 
     const model = await drive
       .get(generalChat)
@@ -154,6 +163,32 @@ export const chat: JupyterFrontEndPlugin<void> = {
      */
     const chat = new CollaborativeChatModel({ awareness, sharedModel });
 
+    /**
+     * Load the settings.
+     */
+    function loadSetting(setting: ISettingRegistry.ISettings): void {
+      // Read the settings and convert to the correct type
+      sendWithShiftEnter = setting.get('sendWithShiftEnter')
+        .composite as boolean;
+      chat.config = { sendWithShiftEnter };
+    }
+
+    // Wait for the application to be restored and
+    // for the settings for this plugin to be loaded
+    Promise.all([app.restored, settingsRegistry.load(pluginIds.chat)])
+      .then(([, setting]) => {
+        // Read the settings
+        loadSetting(setting);
+
+        // Listen for your plugin setting changes using Signal
+        setting.changed.connect(loadSetting);
+      })
+      .catch(reason => {
+        console.error(
+          `Something went wrong when reading the settings.\n${reason}`
+        );
+      });
+
     let chatWidget: Widget | null = null;
     try {
       chatWidget = buildChatSidebar(chat, themeManager, rmRegistry);
@@ -169,6 +204,7 @@ export const chat: JupyterFrontEndPlugin<void> = {
     if (restorer) {
       restorer.add(chatWidget, 'jupyter-chat');
     }
+
     console.log('Collaborative chat initialized');
   }
 };
