@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Jupyter Development Team.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
 import { ChatModel, IChatMessage, INewMessage, IUser } from '@jupyter/chat';
 import { Delta, MapChange, StateChange, YDocument } from '@jupyter/ydoc';
 import { DocumentRegistry } from '@jupyterlab/docregistry';
