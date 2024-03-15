@@ -1,0 +1,14 @@
+{
+  "title": "Jupyter chat configuration",
+  "description": "Configuration for the chat panel",
+  "type": "object",
+  "properties": {
+    "sendWithShiftEnter": {
+      "description": "Whether to send a message via Shift-Enter instead of Enter.",
+      "type": "boolean",
+      "default": false,
+      "readOnly": false
+    }
+  },
+  "additionalProperties": false
+}
