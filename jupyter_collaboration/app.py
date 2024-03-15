@@ -7,10 +7,8 @@ import asyncio
 from jupyter_server.extension.application import ExtensionApp
 from pycrdt_websocket.ystore import BaseYStore
 from traitlets import Bool, Float, Type
-from jupyter_chat import ChatExtension
-from jupyter_chat.handlers import GlobalConfigHandler, ChatHistoryHandler
 
-from .handlers import CollaborativeChatHandler, DocSessionHandler, YDocWebSocketHandler
+from .handlers import DocSessionHandler, YDocWebSocketHandler
 from .loaders import FileLoaderMapping
 from .stores import SQLiteYStore
 from .utils import AWARENESS_EVENTS_SCHEMA_PATH, EVENTS_SCHEMA_PATH
@@ -123,15 +121,3 @@ class YDocExtension(ExtensionApp):
             ],
             timeout=3,
         )
-
-
-class CollaborativeChatExtension(ChatExtension):
-
-    def initialize_handlers(self):
-        self.handlers.extend([
-            (fr"{self.base_url}?", CollaborativeChatHandler),
-            (fr"{self.base_url}config/?", GlobalConfigHandler),
-            (fr"{self.base_url}history/?", ChatHistoryHandler)
-        ])
-
-        self.log.debug("Collaborative Chat Handlers initialized")
