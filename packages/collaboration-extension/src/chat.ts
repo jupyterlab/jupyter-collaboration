@@ -5,11 +5,12 @@
  * @module collaboration-extension
  */
 
-import { buildChatSidebar, buildErrorWidget } from '@jupyter/chat';
+import { chatIcon } from '@jupyter/chat';
 import { IChatFileType, IGlobalAwareness } from '@jupyter/collaboration';
 import {
-  CollaborativeChatModelFactory,
+  ChatPanel,
   ChatWidgetFactory,
+  CollaborativeChatModelFactory,
   CollaborativeChat,
   CollaborativeChatModel,
   CollaborativeChatWidget,
@@ -20,10 +21,17 @@ import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
-import { IThemeManager, WidgetTracker } from '@jupyterlab/apputils';
+import {
+  IThemeManager,
+  InputDialog,
+  WidgetTracker
+} from '@jupyterlab/apputils';
+import { PathExt } from '@jupyterlab/coreutils';
+import { FileBrowser, IDefaultFileBrowser } from '@jupyterlab/filebrowser';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
+import { Contents } from '@jupyterlab/services';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
-import { Widget } from '@lumino/widgets';
+import { addIcon } from '@jupyterlab/ui-components';
 import { Awareness } from 'y-protocols/awareness';
 
 const pluginIds = {
@@ -103,84 +111,72 @@ export const chatDocument: JupyterFrontEndPlugin<IChatFileType> = {
 /**
  * Initialization of the @jupyter/chat extension.
  */
-export const chat: JupyterFrontEndPlugin<void> = {
+export const chat: JupyterFrontEndPlugin<ChatPanel> = {
   id: pluginIds.chat,
   description: 'A chat extension for Jupyter',
   autoStart: true,
   requires: [
     IChatFileType,
     ICollaborativeDrive,
+    IDefaultFileBrowser,
     IGlobalAwareness,
     IRenderMimeRegistry
   ],
   optional: [ILayoutRestorer, ISettingRegistry, IThemeManager],
-  activate: async (
+  activate: (
     app: JupyterFrontEnd,
     chatFileType: IChatFileType,
     drive: ICollaborativeDrive,
+    filebrowser: FileBrowser,
     awareness: Awareness,
     rmRegistry: IRenderMimeRegistry,
     restorer: ILayoutRestorer | null,
     settingsRegistry: ISettingRegistry,
     themeManager: IThemeManager | null
-  ) => {
-    /**
-     * Open or create a general chat file.
-     */
-    const generalChat = 'general.chat';
-    let sendWithShiftEnter = false;
-
-    const model = await drive
-      .get(generalChat)
-      .then(m => m)
-      .catch(async () => {
-        let m = await drive.newUntitled({
-          type: 'file',
-          ext: chatFileType.extensions[0]
-        });
-        m = await drive.rename(m.path, generalChat);
-        m = await drive.save(m.path, {
-          ...m,
-          format: chatFileType.fileFormat,
-          size: undefined,
-          content: '{}'
-        });
-        return m;
-      });
+  ): ChatPanel => {
+    const { commands } = app;
 
     /**
-     * Create a share model from that chat file
+     * Add Chat widget to left sidebar
      */
-    const sharedModel = drive.sharedModelFactory.createNew({
-      path: model.path,
-      format: model.format,
-      contentType: chatFileType.contentType,
-      collaborative: true
-    }) as CollaborativeChat;
+    const chatPanel = new ChatPanel({
+      commands,
+      filebrowser,
+      rmRegistry,
+      themeManager
+    });
+    chatPanel.id = 'JupyterCollaborationChat:sidepanel';
+    chatPanel.title.icon = chatIcon;
+    chatPanel.title.caption = 'Jupyter Chat'; // TODO: i18n/
 
-    /**
-     * Initialize the chat model with the share model
-     */
-    const chat = new CollaborativeChatModel({ awareness, sharedModel });
+    app.shell.add(chatPanel, 'left', {
+      rank: 2000
+    });
+
+    if (restorer) {
+      restorer.add(chatPanel, 'jupyter-chat');
+    }
 
     /**
      * Load the settings.
      */
+    let sendWithShiftEnter = false;
+
     function loadSetting(setting: ISettingRegistry.ISettings): void {
       // Read the settings and convert to the correct type
       sendWithShiftEnter = setting.get('sendWithShiftEnter')
         .composite as boolean;
-      chat.config = { sendWithShiftEnter };
+      chatPanel.config = { sendWithShiftEnter };
     }
 
     // Wait for the application to be restored and
-    // for the settings for this plugin to be loaded
+    // for the settings to be loaded
     Promise.all([app.restored, settingsRegistry.load(pluginIds.chat)])
       .then(([, setting]) => {
         // Read the settings
         loadSetting(setting);
 
-        // Listen for your plugin setting changes using Signal
+        // Listen for the plugin setting changes
         setting.changed.connect(loadSetting);
       })
       .catch(reason => {
@@ -189,22 +185,111 @@ export const chat: JupyterFrontEndPlugin<void> = {
         );
       });
 
-    let chatWidget: Widget | null = null;
-    try {
-      chatWidget = buildChatSidebar(chat, themeManager, rmRegistry);
-    } catch (e) {
-      chatWidget = buildErrorWidget(themeManager);
-    }
+    /**
+     * Command to create a new chat.
+     */
+    commands.addCommand(ChatPanel.CommandIDs.createChat, {
+      label: 'New chat',
+      caption: 'Create a new chat',
+      icon: addIcon,
+      execute: async args => {
+        let filepath = (args.filepath as string) ?? '';
+        if (!filepath) {
+          let name = args.name ?? '';
+          if (!args.name) {
+            name =
+              (
+                await InputDialog.getText({
+                  label: 'Name',
+                  placeholder: 'untitled',
+                  title: 'Name of the chat'
+                })
+              ).value ?? '';
+          }
+          if (name) {
+            filepath = `${name}${chatFileType.extensions[0]}`;
+          }
+        }
+        commands.execute(ChatPanel.CommandIDs.openOrCreateChat, { filepath });
+      }
+    });
 
     /**
-     * Add Chat widget to right sidebar
+     * Command to open or create a chat.
+     * It requires the 'filepath' argument.
      */
-    app.shell.add(chatWidget, 'left', { rank: 2000 });
+    commands.addCommand(ChatPanel.CommandIDs.openOrCreateChat, {
+      label: 'Open or create a chat',
+      execute: async args => {
+        if (args.filepath === undefined) {
+          console.error('Open or create a chat: filepath argument missing');
+        }
+        const filepath = args.filepath as string;
+        let model: Contents.IModel | null = null;
+        if (filepath) {
+          model = await drive
+            .get(filepath)
+            .then(m => m)
+            .catch(() => null);
+        }
 
-    if (restorer) {
-      restorer.add(chatWidget, 'jupyter-chat');
-    }
+        if (!model) {
+          // Create a new untitled chat
+          model = await drive.newUntitled({
+            type: 'file',
+            ext: chatFileType.extensions[0]
+          });
+          // Rename it if a name has been provided
+          if (filepath) {
+            model = await drive.rename(model.path, filepath);
+          }
+          // Add an empty content in the file (empty JSON)
+          model = await drive.save(model.path, {
+            ...model,
+            format: chatFileType.fileFormat,
+            size: undefined,
+            content: '{}'
+          });
+          // Open it again to ensure the file has been created.
+          // TODO: Fix it, the previous steps should already ensure it.
+          model = await drive
+            .get(model.path)
+            .then(m => m)
+            .catch(() => null);
+        }
+
+        if (!model) {
+          console.error('The chat file has not been created');
+          return;
+        }
+
+        /**
+         * Create a share model from the chat file
+         */
+        const sharedModel = drive.sharedModelFactory.createNew({
+          path: model.path,
+          format: model.format,
+          contentType: chatFileType.contentType,
+          collaborative: true
+        }) as CollaborativeChat;
+
+        /**
+         * Initialize the chat model with the share model
+         */
+        const chat = new CollaborativeChatModel({ awareness, sharedModel });
+
+        /**
+         * Add a chat widget to the side panel.
+         */
+        chatPanel.addChat(
+          chat,
+          PathExt.basename(model.name, chatFileType.extensions[0])
+        );
+      }
+    });
 
     console.log('Collaborative chat initialized');
+
+    return chatPanel;
   }
 };
