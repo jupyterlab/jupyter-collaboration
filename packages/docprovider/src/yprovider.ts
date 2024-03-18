@@ -96,12 +96,12 @@ export class WebSocketProvider implements IDocumentProvider {
     return forkId;
   }
 
-  connectFork(forkId: string) {
-    this._sharedModel.currentRoomId = forkId;
+  connect(roomId: string) {
+    this._sharedModel.currentRoomId = roomId;
     this._yWebsocketProvider?.disconnect();
     this._yWebsocketProvider = new YWebsocketProvider(
       this._serverUrl,
-      forkId,
+      roomId,
       this._sharedModel.ydoc,
       {
         disableBc: true,

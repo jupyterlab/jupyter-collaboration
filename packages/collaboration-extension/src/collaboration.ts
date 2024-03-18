@@ -277,13 +277,13 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
           myForkId = 'pending';
           sharedModel.provider.fork().then(newForkId => {
             myForkId = newForkId;
-            sharedModel.provider.connectFork(newForkId);
+            sharedModel.provider.connect(newForkId);
             suggestionMenu.title.label = newForkId;
           });
         }
         else {
           suggestionMenu.title.label = myForkId;
-          sharedModel.provider.connectFork(myForkId);
+          sharedModel.provider.connect(myForkId);
         }
         open_dialog('Suggesting', this._trans);
       }
@@ -296,7 +296,7 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
         reviewMenu.clearItems();
         suggestionMenu.title.label = 'Root';
         editingMenu.title.label = 'Editing';
-        sharedModel.provider.connectFork(sharedModel.rootRoomId);
+        sharedModel.provider.connect(sharedModel.rootRoomId);
         open_dialog('Editing', this._trans);
       }
     });
@@ -331,7 +331,7 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
               delete suggestions[value.newValue];
               suggestionMenu.removeItem(item);
               reviewMenu.clearItems();
-              sharedModel.provider.connectFork(sharedModel.rootRoomId);
+              sharedModel.provider.connect(sharedModel.rootRoomId);
               open_dialog('Editing', this._trans);
             }
           }
@@ -354,7 +354,7 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
                     reviewMenu.addItem({type: 'command', command: 'discard'});
                   }
                   suggestionMenu.title.label = forkId;
-                  sharedModel.provider.connectFork(forkId);
+                  sharedModel.provider.connect(forkId);
                   open_dialog('Suggesting', this._trans);
                 }
               });
@@ -372,7 +372,7 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
                 dialog.launch().then(resp => {
                   dialog.close();
                   if (resp.button.label === 'View') {
-                    sharedModel.provider.connectFork(forkId);
+                    sharedModel.provider.connect(forkId);
                     suggestionMenu.title.label = forkId;
                     editingMenu.title.label = 'Editing';
                     reviewMenu.clearItems();
@@ -390,7 +390,7 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
                 delete suggestions[value.newValue];
                 suggestionMenu.removeItem(item);
                 reviewMenu.clearItems();
-                sharedModel.provider.connectFork(sharedModel.rootRoomId);
+                sharedModel.provider.connect(sharedModel.rootRoomId);
                 open_dialog('Editing', this._trans);
               }
             }
