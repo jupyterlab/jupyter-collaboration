@@ -3,9 +3,9 @@
 
 import type { Menu } from '@lumino/widgets';
 import { Token } from '@lumino/coreutils';
+import { ChatPanel } from '@jupyter/docprovider';
 import { DocumentRegistry } from '@jupyterlab/docregistry';
 import type { User } from '@jupyterlab/services';
-
 import { IAwareness } from '@jupyter/ydoc';
 
 /**
@@ -26,7 +26,14 @@ export const IGlobalAwareness = new Token<IAwareness>(
 );
 
 /**
- * The chat file register.
+ * The chat panel token.
+ */
+export const IChatPanel = new Token<ChatPanel>(
+  '@jupyter/collaboration:IChatPanel'
+);
+
+/**
+ * The token for the chat file type.
  */
 export const IChatFileType = new Token<IChatFileType>(
   '@jupyter/collaboration:IChatFileType'

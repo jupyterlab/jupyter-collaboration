@@ -66,6 +66,7 @@
     "@jupyterlab/fileeditor": "^4.0.5",
     "@jupyterlab/logconsole": "^4.0.5",
     "@jupyterlab/notebook": "^4.0.5",
+    "@jupyterlab/rendermime": "^4.0.5",
     "@jupyterlab/services": "^7.0.5",
     "@jupyterlab/settingregistry": "^4.0.5",
     "@jupyterlab/statedb": "^4.0.5",
