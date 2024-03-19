@@ -8,25 +8,15 @@ import { User } from '@jupyterlab/services';
 import { TranslationBundle } from '@jupyterlab/translation';
 
 import { PromiseDelegate } from '@lumino/coreutils';
-import { IDisposable } from '@lumino/disposable';
 import { Signal } from '@lumino/signaling';
 
-import { DocumentChange, YDocument } from '@jupyter/ydoc';
+import { DocumentChange, IDocumentProvider, YDocument } from '@jupyter/ydoc';
 
 import { Awareness } from 'y-protocols/awareness';
 import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
 
-import { requestDocSession } from './requests';
+import { requestDocFork, requestDocSession } from './requests';
 
-/**
- * An interface for a document provider.
- */
-export interface IDocumentProvider extends IDisposable {
-  /**
-   * Returns a Promise that resolves when the document provider is ready.
-   */
-  readonly ready: Promise<void>;
-}
 
 /**
  * A class to provide Yjs synchronization over WebSocket.
@@ -42,6 +32,7 @@ export class WebSocketProvider implements IDocumentProvider {
    */
   constructor(options: WebSocketProvider.IOptions) {
     this._isDisposed = false;
+    this._sessionId = options.sessionId ?? '';
     this._path = options.path;
     this._contentType = options.contentType;
     this._format = options.format;
@@ -50,15 +41,14 @@ export class WebSocketProvider implements IDocumentProvider {
     this._awareness = options.model.awareness;
     this._yWebsocketProvider = null;
     this._trans = options.translator;
+    this._user = options.user;
 
-    const user = options.user;
-
-    user.ready
+    this._user.ready
       .then(() => {
-        this._onUserChanged(user);
+        this._onUserChanged(this._user);
       })
       .catch(e => console.error(e));
-    user.userChanged.connect(this._onUserChanged, this);
+    this._user.userChanged.connect(this._onUserChanged, this);
 
     this._connect().catch(e => console.warn(e));
   }
@@ -91,20 +81,55 @@ export class WebSocketProvider implements IDocumentProvider {
     Signal.clearData(this);
   }
 
-  private async _connect(): Promise<void> {
+  async fork(): Promise<string> {
     const session = await requestDocSession(
       this._format,
       this._contentType,
       this._path
     );
 
+    const response = await requestDocFork(`${session.format}:${session.type}:${session.fileId}`);
+    const forkId = response.roomId;
+    this._sharedModel.currentRoomId = forkId;
+    this._sharedModel.addFork(forkId);
+
+    return forkId;
+  }
+
+  connect(roomId: string) {
+    this._sharedModel.currentRoomId = roomId;
+    this._yWebsocketProvider?.disconnect();
     this._yWebsocketProvider = new YWebsocketProvider(
       this._serverUrl,
-      `${session.format}:${session.type}:${session.fileId}`,
+      roomId,
       this._sharedModel.ydoc,
       {
         disableBc: true,
-        params: { sessionId: session.sessionId },
+        params: { sessionId: this._sessionId },
+        awareness: this._awareness
+      }
+    );
+  }
+
+  private async _connect(): Promise<void> {
+    if (this._sharedModel.rootRoomId === '') {
+      const session = await requestDocSession(
+        this._format,
+        this._contentType,
+        this._path
+      );
+      this._sharedModel.rootRoomId = `${session.format}:${session.type}:${session.fileId}`;
+      this._sharedModel.currentRoomId = this._sharedModel.rootRoomId;
+      this._sessionId = session.sessionId;
+    }
+
+    this._yWebsocketProvider = new YWebsocketProvider(
+      this._serverUrl,
+      this._sharedModel.rootRoomId,
+      this._sharedModel.ydoc,
+      {
+        disableBc: true,
+        params: { sessionId: this._sessionId! },
         awareness: this._awareness
       }
     );
@@ -142,12 +167,14 @@ export class WebSocketProvider implements IDocumentProvider {
   private _contentType: string;
   private _format: string;
   private _isDisposed: boolean;
+  private _sessionId: string;
   private _path: string;
   private _ready = new PromiseDelegate<void>();
   private _serverUrl: string;
   private _sharedModel: YDocument<DocumentChange>;
   private _yWebsocketProvider: YWebsocketProvider | null;
   private _trans: TranslationBundle;
+  private _user: User.IManager;
 }
 
 /**
@@ -192,5 +219,10 @@ export namespace WebSocketProvider {
      * The jupyterlab translator
      */
     translator: TranslationBundle;
+
+    /**
+     * The document session ID, if the document is a fork
+     */
+    sessionId?: string;
   }
 }
