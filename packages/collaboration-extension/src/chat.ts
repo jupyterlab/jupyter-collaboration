@@ -195,18 +195,22 @@ export const chat: JupyterFrontEndPlugin<ChatPanel> = {
       execute: async args => {
         let filepath = (args.filepath as string) ?? '';
         if (!filepath) {
-          let name = args.name ?? '';
-          if (!args.name) {
-            name =
-              (
-                await InputDialog.getText({
-                  label: 'Name',
-                  placeholder: 'untitled',
-                  title: 'Name of the chat'
-                })
-              ).value ?? '';
+          let name: string | null = (args.name as string) ?? null;
+          if (!name) {
+            name = (
+              await InputDialog.getText({
+                label: 'Name',
+                placeholder: 'untitled',
+                title: 'Name of the chat'
+              })
+            ).value;
           }
-          if (name) {
+          // no-op if the dialog has been cancelled
+          // fill the filepath if the dialog has been validated with content
+          // otherwise create a new untitled chat (empty filepath)
+          if (name === null) {
+            return;
+          } else if (name) {
             filepath = `${name}${chatFileType.extensions[0]}`;
           }
         }
