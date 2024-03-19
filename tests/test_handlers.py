@@ -7,6 +7,7 @@ import json
 from asyncio import Event, sleep
 from typing import Any
 
+from jupyter_events.logger import EventLogger
 from jupyter_ydoc import YUnicode
 from pycrdt_websocket import WebsocketProvider
 
@@ -83,3 +84,50 @@ async def test_room_handler_doc_client_should_connect(rtc_create_file, rtc_conne
         await sleep(0.1)
 
     assert doc.source == content
+
+
+async def test_room_handler_doc_client_should_emit_awareness_event(
+    rtc_create_file, rtc_connect_doc_client, jp_serverapp
+):
+    path, content = await rtc_create_file("test.txt", "test")
+
+    event = Event()
+
+    def _on_document_change(target: str, e: Any) -> None:
+        if target == "source":
+            event.set()
+
+    doc = YUnicode()
+    doc.observe(_on_document_change)
+
+    listener_was_called = False
+    collected_data = []
+
+    async def my_listener(logger: EventLogger, schema_id: str, data: dict) -> None:
+        nonlocal listener_was_called
+        collected_data.append(data)
+        listener_was_called = True
+
+    event_logger = jp_serverapp.event_logger
+    event_logger.add_listener(
+        schema_id="https://schema.jupyter.org/jupyter_collaboration/awareness/v1",
+        listener=my_listener,
+    )
+
+    async with await rtc_connect_doc_client("text", "file", path) as ws, WebsocketProvider(
+        doc.ydoc, ws
+    ):
+        await event.wait()
+        await sleep(0.1)
+
+    fim = jp_serverapp.web_app.settings["file_id_manager"]
+
+    assert doc.source == content
+    assert listener_was_called is True
+    assert len(collected_data) == 2
+    assert collected_data[0]["action"] == "join"
+    assert collected_data[0]["roomid"] == "text:file:" + fim.get_id("test.txt")
+    assert collected_data[0]["username"] is not None
+    assert collected_data[1]["action"] == "leave"
+    assert collected_data[1]["roomid"] == "text:file:" + fim.get_id("test.txt")
+    assert collected_data[1]["username"] is not None

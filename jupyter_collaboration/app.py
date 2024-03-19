@@ -10,9 +10,9 @@ from traitlets import Bool, Float, Type
 
 from .handlers import DocSessionHandler, YDocWebSocketHandler
 from .loaders import FileLoaderMapping
-from .rooms import RoomManager
-from .stores import BaseYStore, SQLiteYStore
-from .utils import EVENTS_SCHEMA_PATH
+from .stores import SQLiteYStore
+from .utils import AWARENESS_EVENTS_SCHEMA_PATH, EVENTS_SCHEMA_PATH
+from .websocketserver import JupyterWebsocketServer
 
 
 class YDocExtension(ExtensionApp):
@@ -60,6 +60,7 @@ class YDocExtension(ExtensionApp):
     def initialize(self):
         super().initialize()
         self.serverapp.event_logger.register_event_schema(EVENTS_SCHEMA_PATH)
+        self.serverapp.event_logger.register_event_schema(AWARENESS_EVENTS_SCHEMA_PATH)
 
     def initialize_settings(self):
         self.settings.update(

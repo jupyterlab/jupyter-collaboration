@@ -21,6 +21,7 @@ from tornado.websocket import WebSocketHandler
 from .rooms import BaseRoom, RoomManager
 from .stores import BaseYStore
 from .utils import (
+    JUPYTER_COLLABORATION_AWARENESS_EVENTS_URI,
     JUPYTER_COLLABORATION_EVENTS_URI,
     LogLevel,
     MessageType,
@@ -188,13 +189,13 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             _, _, file_id = decode_file_path(self._room_id)
             path = self._file_id_manager.get_path(file_id)
 
-            # Close websocket and propagate error.
-            if isinstance(e, web.HTTPError):
-                self.log.error(f"File {path} not found.\n{e!r}", exc_info=e)
-                self.close(4000, f"File {path} not found.")
-            else:
-                self.log.error(f"Error initializing: {path}\n{e!r}", exc_info=e)
-                self.close(4001, f"Error initializing: {path}. You need to close the document.")
+            try:
+                # Initialize the room
+                await self.room.initialize()
+                self._emit_awareness_event(self.current_user.username, "join")
+            except Exception as e:
+                _, _, file_id = decode_file_path(self._room_id)
+                file = self._file_loaders[file_id]
 
             # Clean up the room and delete the file loader
             if self.room is not None and len(self.room.clients) == 0 or self.room.clients == [self]:
@@ -205,29 +206,10 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
             return
 
-        # Close the connection if the document session expired
-        session_id = self.get_query_argument("sessionId", None)
-        if session_id is not None and session_id != self.room.session_id:
-            self.log.error(
-                f"Client tried to connect to {self._room_id} with an expired session ID {session_id}."
-            )
-            self.close(
-                4002,
-                f"Document session {session_id} expired. You need to reload this browser tab.",
-            )
-        elif session_id is None and self.room.session_id is not None:
-            # If session_id is None is because is a new document
-            # send the new session token
-            data = self.room.session_id.encode("utf8")
-            await self.send(
-                bytes([MessageType.ROOM, RoomMessages.SESSION_TOKEN])
-                + write_var_uint(len(data))
-                + data
-            )
-
-        # Start processing messages in the room
-        self._serve_task = asyncio.create_task(self.room.serve(self))
-        self._emit(LogLevel.INFO, "initialize", "New client connected.")
+            self._emit(LogLevel.INFO, "initialize", "New client connected.")
+        else:
+            if self.room.room_id != "JupyterLab:globalAwareness":
+                self._emit_awareness_event(self.current_user.username, "join")
 
     async def send(self, message):
         """
@@ -295,19 +277,13 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         # stop serving this client
         self._message_queue.put_nowait(b"")
-
-        if self._serve_task is not None and not self._serve_task.cancelled():
-            self._serve_task.cancel()
-
-        if self.room is not None:
-            # Remove it self from the list of clients
-            self.room.clients.remove(self)
-            if len(self.room.clients) == 0:
-                # no client in this room after we disconnect
-                # Remove the room with a delay in case someone reconnects
-                IOLoop.current().add_callback(
-                    self._room_manager.remove_room, self._room_id, self._cleanup_delay
-                )
+        if isinstance(self.room, DocumentRoom) and self.room.clients == [self]:
+            # no client in this room after we disconnect
+            # keep the document for a while in case someone reconnects
+            self.log.info("Cleaning room: %s", self._room_id)
+            self.room.cleaner = asyncio.create_task(self._clean_room())
+        if self.room.room_id != "JupyterLab:globalAwareness":
+            self._emit_awareness_event(self.current_user.username, "leave")
 
     def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:
         if self._room_id.count(":") < 2:
@@ -323,6 +299,49 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             data["msg"] = msg
 
         self.event_logger.emit(schema_id=JUPYTER_COLLABORATION_EVENTS_URI, data=data)
+
+    def _emit_awareness_event(self, username: str, action: str, msg: str | None = None) -> None:
+        data = {"roomid": self._room_id, "username": username, "action": action}
+        if msg:
+            data["msg"] = msg
+
+        self.event_logger.emit(schema_id=JUPYTER_COLLABORATION_AWARENESS_EVENTS_URI, data=data)
+
+    async def _clean_room(self) -> None:
+        """
+        Async task for cleaning up the resources.
+
+        When all the clients of a room leave, we setup a task to clean up the resources
+        after a certain amount of time. We need to wait a few seconds to clean up the room
+        because sometimes websockets unintentionally disconnect.
+
+        During the clean up, we need to delete the room to free resources since the room
+        contains a copy of the document. In addition, we remove the file if there is no rooms
+        subscribed to it.
+        """
+        assert isinstance(self.room, DocumentRoom)
+
+        if self._cleanup_delay is None:
+            return
+
+        await asyncio.sleep(self._cleanup_delay)
+
+        # Remove the room from the websocket server
+        self.log.info("Deleting Y document from memory: %s", self.room.room_id)
+        self._websocket_server.delete_room(room=self.room)
+
+        # Clean room
+        del self.room
+        self.log.info("Room %s deleted", self._room_id)
+        self._emit(LogLevel.INFO, "clean", "Room deleted.")
+
+        # Clean the file loader if there are not rooms using it
+        _, _, file_id = decode_file_path(self._room_id)
+        file = self._file_loaders[file_id]
+        if file.number_of_subscriptions == 0:
+            self.log.info("Deleting file %s", file.path)
+            await self._file_loaders.remove(file_id)
+            self._emit(LogLevel.INFO, "clean", "Loader deleted.")
 
     def check_origin(self, origin):
         """
