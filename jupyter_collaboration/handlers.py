@@ -21,6 +21,7 @@ from tornado.websocket import WebSocketHandler
 from .loaders import FileLoaderMapping
 from .rooms import DocumentRoom, TransientRoom
 from .utils import (
+    JUPYTER_COLLABORATION_AWARENESS_EVENTS_URI,
     JUPYTER_COLLABORATION_EVENTS_URI,
     LogLevel,
     MessageType,
@@ -184,6 +185,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             try:
                 # Initialize the room
                 await self.room.initialize()
+                self._emit_awareness_event(self.current_user.username, "join")
             except Exception as e:
                 _, _, file_id = decode_file_path(self._room_id)
                 file = self._file_loaders[file_id]
@@ -205,6 +207,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     await self._clean_room()
 
             self._emit(LogLevel.INFO, "initialize", "New client connected.")
+        else:
+            if self.room.room_id != "JupyterLab:globalAwareness":
+                self._emit_awareness_event(self.current_user.username, "join")
 
     async def send(self, message):
         """
@@ -284,6 +289,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             # keep the document for a while in case someone reconnects
             self.log.info("Cleaning room: %s", self._room_id)
             self.room.cleaner = asyncio.create_task(self._clean_room())
+        if self.room.room_id != "JupyterLab:globalAwareness":
+            self._emit_awareness_event(self.current_user.username, "leave")
 
     def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:
         _, _, file_id = decode_file_path(self._room_id)
@@ -296,6 +303,13 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             data["msg"] = msg
 
         self.event_logger.emit(schema_id=JUPYTER_COLLABORATION_EVENTS_URI, data=data)
+
+    def _emit_awareness_event(self, username: str, action: str, msg: str | None = None) -> None:
+        data = {"roomid": self._room_id, "username": username, "action": action}
+        if msg:
+            data["msg"] = msg
+
+        self.event_logger.emit(schema_id=JUPYTER_COLLABORATION_AWARENESS_EVENTS_URI, data=data)
 
     async def _clean_room(self) -> None:
         """

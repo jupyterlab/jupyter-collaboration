@@ -1,12 +1,17 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-import pathlib
 from enum import Enum, IntEnum
+from pathlib import Path
 from typing import Tuple
 
+EVENTS_FOLDER_PATH = Path(__file__).parent / "events"
 JUPYTER_COLLABORATION_EVENTS_URI = "https://schema.jupyter.org/jupyter_collaboration/session/v1"
-EVENTS_SCHEMA_PATH = pathlib.Path(__file__).parent / "events" / "session.yaml"
+EVENTS_SCHEMA_PATH = EVENTS_FOLDER_PATH / "session.yaml"
+JUPYTER_COLLABORATION_AWARENESS_EVENTS_URI = (
+    "https://schema.jupyter.org/jupyter_collaboration/awareness/v1"
+)
+AWARENESS_EVENTS_SCHEMA_PATH = EVENTS_FOLDER_PATH / "awareness.yaml"
 
 
 class MessageType(IntEnum):
