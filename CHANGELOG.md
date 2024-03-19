@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.4
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@2.0.3...265df161774ae08f2baa828b95abfcf1c40c6a1a))
+
+### Enhancements made
+
+- adding awareness event when open and close websockets [#246](https://github.com/jupyterlab/jupyter-collaboration/pull/246) ([@jzhang20133](https://github.com/jzhang20133))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-03-04&to=2024-03-19&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-03-04..2024-03-19&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-03-04..2024-03-19&type=Issues) | [@jzhang20133](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajzhang20133+updated%3A2024-03-04..2024-03-19&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Awelcome+updated%3A2024-03-04..2024-03-19&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.3
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@2.0.2...4538d02c43ec696277b91e27052e17bb0e66f4e1))
@@ -22,8 +38,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-02-13&to=2024-03-04&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-02-13..2024-03-04&type=Issues) | [@ellisonbg](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aellisonbg+updated%3A2024-02-13..2024-03-04&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-02-13..2024-03-04&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AZsailer+updated%3A2024-02-13..2024-03-04&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.2
 
