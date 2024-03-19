@@ -25,8 +25,11 @@ import * as React from 'react';
 
 import { CollaborativeChatModel } from './model';
 
-const SECTION_CLASS = 'jp-collaborativeChat-section';
-const TOOLBAR_CLASS = 'jp-collaborativeChat-toolbar';
+const SIDEPANEL_CLASS = 'jp-collab-chat-sidepanel';
+const ADD_BUTTON_CLASS = 'jp-collab-chat-add';
+const OPEN_SELECT_CLASS = 'jp-collab-chat-open';
+const SECTION_CLASS = 'jp-collab-chat-section';
+const TOOLBAR_CLASS = 'jp-collab-chat-toolbar';
 
 /**
  * DocumentWidget: widget that represents the view or editor for a file type.
@@ -59,23 +62,25 @@ export class ChatPanel extends SidePanel {
    */
   constructor(options: ChatPanel.IOptions) {
     super(options);
-
+    this.addClass(SIDEPANEL_CLASS);
     this._commands = options.commands;
     this._rmRegistry = options.rmRegistry;
     this._themeManager = options.themeManager;
 
-    const { commands, filebrowser } = options;
     const addChat = new CommandToolbarButton({
-      commands,
+      commands: this._commands,
       id: ChatPanel.CommandIDs.createChat,
       icon: addIcon
     });
+    addChat.addClass(ADD_BUTTON_CLASS);
     this.toolbar.addItem('createChat', addChat);
 
+    const { filebrowser } = options;
     const openChat = new ChatSelect({
       filebrowser,
       handleChange: this._chatSelected.bind(this)
     });
+    openChat.addClass(OPEN_SELECT_CLASS);
     this.toolbar.addItem('openChat', openChat);
 
     const content = this.content as AccordionPanel;
@@ -203,7 +208,8 @@ class ChatSection extends PanelWithToolbar {
       icon: closeIcon,
       className: 'jp-mod-styled',
       onClick: () => {
-        console.log('should close the chat');
+        this.model.dispose();
+        this.dispose();
       }
     });
     this.toolbar.addItem('collaborativeChat-close', closeButton);
