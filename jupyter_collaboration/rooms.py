@@ -45,6 +45,9 @@ class DocumentRoom(YRoom):
 
         self._cleaner: asyncio.Task | None = None
 
+        # the current `self._maybe_save_document()` task.
+        self._maybe_save_task: asyncio.Task | None = None
+
         # the task currently saving to disk via FileLoader, if any.
         self._save_task: asyncio.Task | None = None
 
@@ -219,7 +222,17 @@ class DocumentRoom(YRoom):
             document. This tasks are debounced (60 seconds by default) so we
             need to cancel previous tasks before creating a new one.
         """
-        asyncio.create_task(self._maybe_save_document())
+        if self._maybe_save_task and not self._maybe_save_task.done():
+            # only one `self._maybe_save_task` needs to be running.
+            # if this method is called after the save delay, then we need to set
+            # `self._should_resave` to `True` to reschedule
+            # `self._maybe_save_document()` on the event loop after the current
+            # `self._maybe_save_task` completes.
+            if not self._waiting_to_save:
+                self._should_resave = True
+            return
+
+        self._maybe_save_task = asyncio.create_task(self._maybe_save_document())
 
     async def _maybe_save_document(self) -> None:
         """
@@ -234,19 +247,6 @@ class DocumentRoom(YRoom):
             # TODO: fix this; if _save_delay is unset, then this never writes to disk
             return
 
-        if self._waiting_to_save:
-            # if a previously spawned `self._maybe_save_document()` task is
-            # waiting to save, then that task will save the Ydoc within
-            # `self._save_delay` seconds. therefore we can return early.
-            return
-        
-        if self._save_task and not self._save_task.done():
-            # if we are currently saving, then set the `_should_resave`
-            # flag. this indicates to the currently running `self._save_task`
-            # that it should re-call this method after it completes.
-            self._should_resave = True
-            return
-        
         # save after `self._save_delay` seconds of inactivity
         self._waiting_to_save = True
         await asyncio.sleep(self._save_delay)
@@ -271,7 +271,7 @@ class DocumentRoom(YRoom):
 
             if self._should_resave:
                 self._should_resave = False
-                asyncio.create_task(self._maybe_save_document())
+                self._maybe_save_task = asyncio.create_task(self._maybe_save_document())
 
         except asyncio.CancelledError:
             return
