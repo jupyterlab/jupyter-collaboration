@@ -9,9 +9,9 @@ from typing import Any
 
 from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
+from pycrdt import MapEvent
 from pycrdt_websocket.websocket_server import YRoom
 from pycrdt_websocket.ystore import BaseYStore, YDocNotFound
-from pycrdt import MapEvent
 
 from .loaders import FileLoader
 from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, OutOfBandChanges
@@ -121,9 +121,7 @@ class DocumentRoom(YRoom):
                 self._emit(
                     LogLevel.INFO,
                     "load",
-                    "Content loaded from the store {}".format(
-                        self.ystore.__class__.__qualname__
-                    ),
+                    f"Content loaded from the store {self.ystore.__class__.__qualname__}",
                 )
                 self.log.info(
                     "Content in room %s loaded from the ystore %s",
@@ -137,9 +135,7 @@ class DocumentRoom(YRoom):
 
         if not read_from_source and self._document.source != model["content"]:
             # TODO: Delete document from the store.
-            self._emit(
-                LogLevel.INFO, "initialize", "The file is out-of-sync with the ystore."
-            )
+            self._emit(LogLevel.INFO, "initialize", "The file is out-of-sync with the ystore.")
             self.log.info(
                 "Content in file %s is out-of-sync with the ystore %s",
                 self._file.path,
@@ -150,9 +146,7 @@ class DocumentRoom(YRoom):
         # if YStore updates and source file are out-of-sync, resync updates with source
         if read_from_source:
             self._emit(LogLevel.INFO, "load", "Content loaded from disk.")
-            self.log.info(
-                "Content in room %s loaded from file %s", self._room_id, self._file.path
-            )
+            self.log.info("Content in room %s loaded from file %s", self._room_id, self._file.path)
             self._document.source = model["content"]
 
             if self.ystore:
@@ -225,7 +219,11 @@ class DocumentRoom(YRoom):
             document. This tasks are debounced (60 seconds by default) so we
             need to cancel previous tasks before creating a new one.
         """
-        if target == "state" and isinstance(event, MapEvent) and list(event.keys.keys()) == ["dirty"]:
+        if (
+            target == "state"
+            and isinstance(event, MapEvent)
+            and list(event.keys.keys()) == ["dirty"]
+        ):
             # do not write when we are just setting the `dirty` attribute to
             # `False` for the JupyterLab UI. this prevents a save loop, as this
             # is set when the Ydoc is saved.
@@ -243,7 +241,7 @@ class DocumentRoom(YRoom):
 
         self._maybe_save_task = asyncio.create_task(self._maybe_save_document())
         self._maybe_save_task.add_done_callback(self._maybe_save_done_callback)
-    
+
     def _maybe_save_done_callback(self, _future):
         if not self._should_resave:
             return
@@ -276,13 +274,15 @@ class DocumentRoom(YRoom):
             # do not write to `self._document` in this `try` block, as that will
             # trigger the observer and result in a save loop.
             self.log.info("Saving the content from room %s", self._room_id)
-            self._save_task = asyncio.create_task(self._file.maybe_save_content(
-                {
-                    "format": self._file_format,
-                    "type": self._file_type,
-                    "content": self._document.source,
-                }
-            ))
+            self._save_task = asyncio.create_task(
+                self._file.maybe_save_content(
+                    {
+                        "format": self._file_format,
+                        "type": self._file_type,
+                        "content": self._document.source,
+                    }
+                )
+            )
             await self._save_task
             self._document.dirty = False
             self._emit(LogLevel.INFO, "save", "Content saved.")
