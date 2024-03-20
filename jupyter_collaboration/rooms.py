@@ -242,6 +242,15 @@ class DocumentRoom(YRoom):
             return
 
         self._maybe_save_task = asyncio.create_task(self._maybe_save_document())
+        self._maybe_save_task.add_done_callback(self._maybe_save_done_callback)
+    
+    def _maybe_save_done_callback(self, _future):
+        if not self._should_resave:
+            return
+
+        self._should_resave = False
+        self._maybe_save_task = asyncio.create_task(self._maybe_save_document())
+        self._maybe_save_task.add_done_callback(self._maybe_save_done_callback)
 
     async def _maybe_save_document(self) -> None:
         """
@@ -277,10 +286,6 @@ class DocumentRoom(YRoom):
             await self._save_task
             self._document.dirty = False
             self._emit(LogLevel.INFO, "save", "Content saved.")
-
-            if self._should_resave:
-                self._should_resave = False
-                self._maybe_save_task = asyncio.create_task(self._maybe_save_document())
 
         except asyncio.CancelledError:
             return
