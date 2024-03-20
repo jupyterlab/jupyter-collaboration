@@ -258,8 +258,7 @@ class DocumentRoom(YRoom):
             # do not write to `self._document` in this `try` block, as that will
             # trigger the observer and result in a save loop.
             self.log.info("Saving the content from room %s", self._room_id)
-            loop = asyncio.get_running_loop()
-            self._save_task = loop.create_task(self._file.maybe_save_content(
+            self._save_task = asyncio.create_task(self._file.maybe_save_content(
                 {
                     "format": self._file_format,
                     "type": self._file_type,
