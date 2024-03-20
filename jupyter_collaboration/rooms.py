@@ -11,6 +11,7 @@ from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
 from pycrdt_websocket.websocket_server import YRoom
 from pycrdt_websocket.ystore import BaseYStore, YDocNotFound
+from pycrdt import MapEvent
 
 from .loaders import FileLoader
 from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, OutOfBandChanges
@@ -157,6 +158,7 @@ class DocumentRoom(YRoom):
             if self.ystore:
                 await self.ystore.encode_state_as_update(self.ydoc)
 
+        self._document.dirty = False
         self.ready = True
         self._emit(LogLevel.INFO, "initialize", "Room initialized")
 
@@ -206,6 +208,7 @@ class DocumentRoom(YRoom):
             return
 
         self._document.source = model["content"]
+        self._document.dirty = False
 
     def _on_document_change(self, target: str, event: Any) -> None:
         """
@@ -222,6 +225,12 @@ class DocumentRoom(YRoom):
             document. This tasks are debounced (60 seconds by default) so we
             need to cancel previous tasks before creating a new one.
         """
+        if target == "state" and isinstance(event, MapEvent) and list(event.keys.keys()) == ["dirty"]:
+            # do not write when we are just setting the `dirty` attribute to
+            # `False` for the JupyterLab UI. this prevents a save loop, as this
+            # is set when the Ydoc is saved.
+            return
+
         if self._maybe_save_task and not self._maybe_save_task.done():
             # only one `self._maybe_save_task` needs to be running.
             # if this method is called after the save delay, then we need to set
@@ -266,6 +275,7 @@ class DocumentRoom(YRoom):
                 }
             ))
             await self._save_task
+            self._document.dirty = False
             self._emit(LogLevel.INFO, "save", "Content saved.")
 
             if self._should_resave:
@@ -286,6 +296,7 @@ class DocumentRoom(YRoom):
                 return None
 
             self._document.source = model["content"]
+            self._document.dirty = False
             self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes while saving.")
 
         except Exception as e:
