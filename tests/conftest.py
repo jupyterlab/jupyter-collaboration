@@ -23,7 +23,12 @@ pytest_plugins = ["jupyter_server.pytest_plugin", "jupyter_server_fileid.pytest_
 
 
 @pytest.fixture
-def jp_server_config(jp_root_dir, jp_server_config):
+def rtc_document_save_delay():
+    return 1
+
+
+@pytest.fixture
+def jp_server_config(jp_root_dir, jp_server_config, rtc_document_save_delay):
     return {
         "ServerApp": {
             "jpserver_extensions": {"jupyter_collaboration": True, "jupyter_server_fileid": True},
@@ -37,6 +42,7 @@ def jp_server_config(jp_root_dir, jp_server_config):
             "db_path": str(jp_root_dir.joinpath(".fid_test.db")),
             "db_journal_mode": "OFF",
         },
+        "YDocExtension": {"document_save_delay": rtc_document_save_delay},
     }
 
 
