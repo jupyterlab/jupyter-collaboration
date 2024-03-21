@@ -43,7 +43,7 @@ class DocumentRoom(BaseRoom):
         self._save_delay = save_delay
 
         self._update_lock = asyncio.Lock()
-        self._initialization_lock = asyncio.Lock()
+        self._cleaner: asyncio.Task | None = None
         self._saving_document: asyncio.Task | None = None
         self._messages: dict[str, asyncio.Lock] = {}
 
@@ -66,23 +66,19 @@ class DocumentRoom(BaseRoom):
             It is important to set the ready property in the parent class (`self.ready = True`),
             this setter will subscribe for updates on the shared document.
         """
-        async with self._initialization_lock:
-            if self.ready:
-                return
+        if self.ready:  # type: ignore[has-type]
+            return
 
-            self.log.info("Initializing room %s", self._room_id)
+        self.log.info("Initializing room %s", self._room_id)
 
-            model = await self._file.load_content(self._file_format, self._file_type)
+        model = await self._file.load_content(self._file_format, self._file_type)
 
-            async with self._update_lock:
-                # try to apply Y updates from the YStore for this document
-                if self.ystore is not None and await self.ystore.exists(self._room_id):
-                    # Load the content from the store
-                    doc = await self.ystore.get(self._room_id)
-                    assert doc
-                    self._session_id = doc["session_id"]
-
-                    await self.ystore.apply_updates(self._room_id, self.ydoc)
+        async with self._update_lock:
+            # try to apply Y updates from the YStore for this document
+            read_from_source = True
+            if self.ystore is not None:
+                try:
+                    await self.ystore.apply_updates(self.ydoc)
                     self._emit(
                         LogLevel.INFO,
                         "load",
@@ -95,37 +91,38 @@ class DocumentRoom(BaseRoom):
                         self._room_id,
                         self.ystore.__class__.__name__,
                     )
+                    read_from_source = False
+                except YDocNotFound:
+                    # YDoc not found in the YStore, create the document from the source file (no change history)
+                    pass
 
-                    # if YStore updates and source file are out-of-sync, resync updates with source
-                    if self._document.source != model["content"]:
-                        self._emit(
-                            LogLevel.INFO, "initialize", "The file is out-of-sync with the ystore."
-                        )
-                        self.log.info(
-                            "Content in file %s is out-of-sync with the ystore %s",
-                            self._file.path,
-                            self.ystore.__class__.__name__,
-                        )
-
-                        # Update the content
-                        self._document.source = model["content"]
-                        await self.ystore.encode_state_as_update(self._room_id, self.ydoc)
-
-                else:
-                    self._emit(LogLevel.INFO, "load", "Content loaded from disk.")
-                    self.log.info(
-                        "Content in room %s loaded from file %s", self._room_id, self._file.path
+            if not read_from_source:
+                # if YStore updates and source file are out-of-sync, resync updates with source
+                if self._document.source != model["content"]:
+                    # TODO: Delete document from the store.
+                    self._emit(
+                        LogLevel.INFO, "initialize", "The file is out-of-sync with the ystore."
                     )
-                    self._document.source = model["content"]
+                    self.log.info(
+                        "Content in file %s is out-of-sync with the ystore %s",
+                        self._file.path,
+                        self.ystore.__class__.__name__,
+                    )
+                    read_from_source = True
 
-                    if self.ystore is not None:
-                        assert self.session_id
-                        await self.ystore.create(self._room_id, self.session_id)
-                        await self.ystore.encode_state_as_update(self._room_id, self.ydoc)
+            if read_from_source:
+                self._emit(LogLevel.INFO, "load", "Content loaded from disk.")
+                self.log.info(
+                    "Content in room %s loaded from file %s", self._room_id, self._file.path
+                )
+                self._document.source = model["content"]
 
-                self._document.dirty = False
-                self.ready = True
-                self._emit(LogLevel.INFO, "initialize", "Room initialized")
+                if self.ystore:
+                    await self.ystore.encode_state_as_update(self.ydoc)
+
+            self._document.dirty = False
+            self.ready = True
+            self._emit(LogLevel.INFO, "initialize", "Room initialized")
 
     def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:
         data = {"level": level.value, "room": self._room_id, "path": self._file.path}
