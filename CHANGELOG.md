@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.5
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@2.0.4...1b87ab211de72e92757fb0149dba54c6e12d9841))
+
+### Bugs fixed
+
+- Fix concurrent room initialization [#255](https://github.com/jupyterlab/jupyter-collaboration/pull/255) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Maintenance and upkeep improvements
+
+- Bump jupyter_events to 0.10.0 [#258](https://github.com/jupyterlab/jupyter-collaboration/pull/258) ([@Zsailer](https://github.com/Zsailer))
+- Fix concurrent room initialization [#255](https://github.com/jupyterlab/jupyter-collaboration/pull/255) ([@davidbrochart](https://github.com/davidbrochart))
+- Add test for document dirty attribute [#251](https://github.com/jupyterlab/jupyter-collaboration/pull/251) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-03-19&to=2024-03-21&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-03-19..2024-03-21&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-03-19..2024-03-21&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Awelcome+updated%3A2024-03-19..2024-03-21&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AZsailer+updated%3A2024-03-19..2024-03-21&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.4
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@2.0.3...265df161774ae08f2baa828b95abfcf1c40c6a1a))
@@ -17,8 +39,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-03-04&to=2024-03-19&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-03-04..2024-03-19&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-03-04..2024-03-19&type=Issues) | [@jzhang20133](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajzhang20133+updated%3A2024-03-04..2024-03-19&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Awelcome+updated%3A2024-03-04..2024-03-19&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.3
 
