@@ -251,7 +251,7 @@ const userHover = hoverTooltip(
           continue;
         }
         // Use some margin around the cursor to display the user.
-        if (head.index - 1 <= pos && pos <= head.index + 1) {
+        if (head.index - 3 <= pos && pos <= head.index + 3) {
           return {
             pos: head.index,
             above: true,
@@ -271,7 +271,8 @@ const userHover = hoverTooltip(
     return null;
   },
   {
-    hideOn: (tr, tooltip) => !!tr.annotation(remoteSelectionsAnnotation)
+    hideOn: (tr, tooltip) => !!tr.annotation(remoteSelectionsAnnotation),
+    hoverTime: 0
   }
 );
 
