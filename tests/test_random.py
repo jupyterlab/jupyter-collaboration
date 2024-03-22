@@ -58,8 +58,8 @@ async def test_random(
                         stop_ready.set()
                         await do_stop.wait()
                         # allow some time for last messages to arrive through websocket
-                        # FIXME: how long? 1 second is arbitrary, maybe not enough
-                        await sleep(1)
+                        # FIXME: how long?
+                        await sleep(10)
                         stop_done.set()
                         return
                     await sleep(uniform(0, change_max_delay))
