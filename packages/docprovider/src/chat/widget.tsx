@@ -7,7 +7,6 @@ import { IChatModel, ChatWidget, IConfig } from '@jupyter/chat';
 import { IThemeManager } from '@jupyterlab/apputils';
 import { PathExt } from '@jupyterlab/coreutils';
 import { DocumentWidget } from '@jupyterlab/docregistry';
-import { FileBrowser } from '@jupyterlab/filebrowser';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import {
   addIcon,
@@ -21,8 +20,9 @@ import {
 } from '@jupyterlab/ui-components';
 import { CommandRegistry } from '@lumino/commands';
 import { AccordionPanel, Panel } from '@lumino/widgets';
-import * as React from 'react';
+import React, { useEffect, useState } from 'react';
 
+import { ICollaborativeDrive } from '../tokens';
 import { CollaborativeChatModel } from './model';
 
 const SIDEPANEL_CLASS = 'jp-collab-chat-sidepanel';
@@ -75,11 +75,13 @@ export class ChatPanel extends SidePanel {
     addChat.addClass(ADD_BUTTON_CLASS);
     this.toolbar.addItem('createChat', addChat);
 
-    const { filebrowser } = options;
-    const openChat = new ChatSelect({
-      filebrowser,
-      handleChange: this._chatSelected.bind(this)
-    });
+    const { drive } = options;
+    const openChat = ReactWidget.create(
+      <ChatSelect
+        drive={drive}
+        handleChange={this._chatSelected.bind(this)}
+      ></ChatSelect>
+    );
     openChat.addClass(OPEN_SELECT_CLASS);
     this.toolbar.addItem('openChat', openChat);
 
@@ -176,7 +178,7 @@ export namespace ChatPanel {
    */
   export interface IOptions extends SidePanel.IOptions {
     commands: CommandRegistry;
-    filebrowser: FileBrowser;
+    drive: ICollaborativeDrive;
     rmRegistry: IRenderMimeRegistry;
     themeManager: IThemeManager | null;
   }
@@ -248,37 +250,50 @@ export namespace ChatSection {
   }
 }
 
+type ChatSelectProps = {
+  drive: ICollaborativeDrive;
+  handleChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
+};
+
 /**
- * A widget to select a chat
+ * A component to select a chat from the drive.
  */
-export class ChatSelect extends ReactWidget {
+function ChatSelect({ drive, handleChange }: ChatSelectProps): JSX.Element {
+  const [chatNames, setChatNames] = useState<string[]>([]);
+
   /**
-   * the constructor of the widget.
+   * Get chats list on initial render.
    */
-  constructor(options: {
-    filebrowser: FileBrowser;
-    handleChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
-  }) {
-    super();
-    this._filebrowser = options.filebrowser;
-    this._handleChange = options.handleChange;
-  }
+  useEffect(() => {
+    // Find chat files in drive (root level only)
+    // TODO: search in sub-directories ?
+    async function getChats() {
+      drive
+        .get('.')
+        .then(model => {
+          const chatsName = (model.content as any[])
+            .filter(f => f.type === 'file' && f.name.endsWith('.chat'))
+            .map(f => PathExt.basename(f.name, '.chat'));
+          setChatNames(chatsName);
+        })
+        .catch(e => console.error('Error getting the chat file in drive'));
+    }
 
-  render(): JSX.Element {
-    const items = Array.from(this._filebrowser.model.items());
-    const chatNames = items
-      .filter(f => f.name.endsWith('.chat'))
-      .map(f => PathExt.basename(f.name, '.chat'));
-    return (
-      <HTMLSelect onChange={this._handleChange}>
-        <option value="-">Open a chat</option>
-        {chatNames.map(name => (
-          <option value={name}>{name}</option>
-        ))}
-      </HTMLSelect>
-    );
-  }
+    // Listen for changes in drive.
+    drive.fileChanged.connect((_, change) => {
+      getChats();
+    });
 
-  private _filebrowser: FileBrowser;
-  private _handleChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
+    // Initialize the chats list.
+    getChats();
+  }, [drive]);
+
+  return (
+    <HTMLSelect onChange={handleChange}>
+      <option value="-">Open a chat</option>
+      {chatNames.map(name => (
+        <option value={name}>{name}</option>
+      ))}
+    </HTMLSelect>
+  );
 }
