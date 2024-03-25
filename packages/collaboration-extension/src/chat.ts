@@ -27,7 +27,6 @@ import {
   WidgetTracker
 } from '@jupyterlab/apputils';
 import { PathExt } from '@jupyterlab/coreutils';
-import { FileBrowser, IDefaultFileBrowser } from '@jupyterlab/filebrowser';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { Contents } from '@jupyterlab/services';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
@@ -118,7 +117,6 @@ export const chat: JupyterFrontEndPlugin<ChatPanel> = {
   requires: [
     IChatFileType,
     ICollaborativeDrive,
-    IDefaultFileBrowser,
     IGlobalAwareness,
     IRenderMimeRegistry
   ],
@@ -127,7 +125,6 @@ export const chat: JupyterFrontEndPlugin<ChatPanel> = {
     app: JupyterFrontEnd,
     chatFileType: IChatFileType,
     drive: ICollaborativeDrive,
-    filebrowser: FileBrowser,
     awareness: Awareness,
     rmRegistry: IRenderMimeRegistry,
     restorer: ILayoutRestorer | null,
@@ -141,7 +138,7 @@ export const chat: JupyterFrontEndPlugin<ChatPanel> = {
      */
     const chatPanel = new ChatPanel({
       commands,
-      filebrowser,
+      drive,
       rmRegistry,
       themeManager
     });
