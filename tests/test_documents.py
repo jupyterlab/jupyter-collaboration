@@ -59,3 +59,25 @@ async def test_room_concurrent_initialization(
         tg.start_soon(connect, file_format, file_type, file_path)
     t1 = time()
     assert t1 - t0 < 0.5
+
+
+async def test_room_sequential_opening(
+    rtc_create_file,
+    rtc_connect_doc_client,
+):
+    file_format = "text"
+    file_type = "file"
+    file_path = "dummy.txt"
+    await rtc_create_file(file_path)
+
+    async def connect(file_format, file_type, file_path):
+        t0 = time()
+        async with await rtc_connect_doc_client(file_format, file_type, file_path) as ws:
+            pass
+        t1 = time()
+        return t1 - t0
+
+    dt = await connect(file_format, file_type, file_path)
+    assert dt < 1
+    dt = await connect(file_format, file_type, file_path)
+    assert dt < 1
