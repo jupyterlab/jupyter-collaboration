@@ -326,14 +326,14 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         contains a copy of the document. In addition, we remove the file if there is no rooms
         subscribed to it.
         """
+        assert isinstance(self.room, DocumentRoom)
+
+        if self._cleanup_delay is None:
+            return
+
+        await asyncio.sleep(self._cleanup_delay)
+
         async with self._room_lock(self._room_id):
-            assert isinstance(self.room, DocumentRoom)
-
-            if self._cleanup_delay is None:
-                return
-
-            await asyncio.sleep(self._cleanup_delay)
-
             # Remove the room from the websocket server
             self.log.info("Deleting Y document from memory: %s", self.room.room_id)
             self._websocket_server.delete_room(room=self.room)
