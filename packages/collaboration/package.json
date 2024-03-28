@@ -1,6 +1,6 @@
 {
   "name": "@jupyter/collaboration",
-  "version": "2.0.9",
+  "version": "2.0.10",
   "description": "JupyterLab - Real-Time Collaboration Widgets",
   "homepage": "https://github.com/jupyterlab/jupyter-collaboration",
   "bugs": {
@@ -41,7 +41,7 @@
   "dependencies": {
     "@codemirror/state": "^6.2.0",
     "@codemirror/view": "^6.7.0",
-    "@jupyter/docprovider": "^2.0.9",
+    "@jupyter/docprovider": "^2.0.10",
     "@jupyterlab/apputils": "^4.0.5",
     "@jupyterlab/coreutils": "^6.0.5",
     "@jupyterlab/services": "^7.0.5",
