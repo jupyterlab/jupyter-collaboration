@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.7
+
+No merged PRs
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.6
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@2.0.5...8f55ea5e62f22a49619d19e846d1b16f06bc47e1))
@@ -21,8 +27,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-03-21&to=2024-03-28&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-03-21..2024-03-28&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-03-21..2024-03-28&type=Issues) | [@jzhang20133](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajzhang20133+updated%3A2024-03-21..2024-03-28&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AZsailer+updated%3A2024-03-21..2024-03-28&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.5
 
