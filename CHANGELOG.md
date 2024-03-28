@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.0.10
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@2.0.9...ffcdc6f917b9dc0768d8e056c14ada1dd0baebdd))
+
+### Enhancements made
+
+- Make user's cursor "tooltip-on-hover" faster and wider [#259](https://github.com/jupyterlab/jupyter-collaboration/pull/259) ([@jzhang20133](https://github.com/jzhang20133))
+
+### Bugs fixed
+
+- Fix releaser [#268](https://github.com/jupyterlab/jupyter-collaboration/pull/268) ([@davidbrochart](https://github.com/davidbrochart))
+- Fix slow room opening [#264](https://github.com/jupyterlab/jupyter-collaboration/pull/264) ([@davidbrochart](https://github.com/davidbrochart))
+- Use WebSocket \_room_id attribute directly [#266](https://github.com/jupyterlab/jupyter-collaboration/pull/266) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-03-28&to=2024-03-28&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-03-28..2024-03-28&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.9
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@2.0.8...0682d45797bb0b90c3efdfb9525d485b932ba1d9))
@@ -26,8 +48,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-03-28&to=2024-03-28&type=c))
 
 [@blink1073](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ablink1073+updated%3A2024-03-28..2024-03-28&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-03-28..2024-03-28&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-03-28..2024-03-28&type=Issues) | [@welcome](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Awelcome+updated%3A2024-03-28..2024-03-28&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.8
 
