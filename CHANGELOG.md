@@ -4,11 +4,15 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
-## 2.0.7
+## 2.0.8
 
 No merged PRs
 
 <!-- <END NEW CHANGELOG ENTRY> -->
+
+## 2.0.7
+
+No merged PRs
 
 ## 2.0.6
 
