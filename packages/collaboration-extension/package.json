@@ -1,6 +1,6 @@
 {
   "name": "@jupyter/collaboration-extension",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "JupyterLab - Real-Time Collaboration Extension",
   "keywords": [
     "jupyter",
@@ -53,8 +53,8 @@
     "watch:labextension": "jupyter labextension watch ."
   },
   "dependencies": {
-    "@jupyter/collaboration": "^2.0.7",
-    "@jupyter/docprovider": "^2.0.7",
+    "@jupyter/collaboration": "^2.0.8",
+    "@jupyter/docprovider": "^2.0.8",
     "@jupyter/ydoc": "^1.1.0-a0",
     "@jupyterlab/application": "^4.0.5",
     "@jupyterlab/apputils": "^4.0.5",
