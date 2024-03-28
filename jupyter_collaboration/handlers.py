@@ -215,7 +215,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
             self._emit(LogLevel.INFO, "initialize", "New client connected.")
         else:
-            if self.room.room_id != "JupyterLab:globalAwareness":
+            if self._room_id != "JupyterLab:globalAwareness":
                 self._emit_awareness_event(self.current_user.username, "join")
 
     async def send(self, message):
@@ -296,7 +296,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             # keep the document for a while in case someone reconnects
             self.log.info("Cleaning room: %s", self._room_id)
             self.room.cleaner = asyncio.create_task(self._clean_room())
-        if self.room.room_id != "JupyterLab:globalAwareness":
+        if self._room_id != "JupyterLab:globalAwareness":
             self._emit_awareness_event(self.current_user.username, "leave")
 
     def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:
@@ -339,7 +339,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
         async with self._room_lock(self._room_id):
             # Remove the room from the websocket server
-            self.log.info("Deleting Y document from memory: %s", self.room.room_id)
+            self.log.info("Deleting Y document from memory: %s", self._room_id)
             self._websocket_server.delete_room(room=self.room)
 
             # Clean room
