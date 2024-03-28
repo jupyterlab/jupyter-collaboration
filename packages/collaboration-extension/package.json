@@ -53,9 +53,10 @@
     "watch:labextension": "jupyter labextension watch ."
   },
   "dependencies": {
+    "@jupyter/chat": "0.1.0",
     "@jupyter/collaboration": "^2.0.5",
     "@jupyter/docprovider": "^2.0.5",
-    "@jupyter/ydoc": "^1.1.0-a0",
+    "@jupyter/ydoc": "^1.1.1",
     "@jupyterlab/application": "^4.0.5",
     "@jupyterlab/apputils": "^4.0.5",
     "@jupyterlab/codemirror": "^4.0.5",
@@ -65,6 +66,7 @@
     "@jupyterlab/fileeditor": "^4.0.5",
     "@jupyterlab/logconsole": "^4.0.5",
     "@jupyterlab/notebook": "^4.0.5",
+    "@jupyterlab/rendermime": "^4.0.5",
     "@jupyterlab/services": "^7.0.5",
     "@jupyterlab/settingregistry": "^4.0.5",
     "@jupyterlab/statedb": "^4.0.5",
@@ -78,7 +80,7 @@
   },
   "devDependencies": {
     "@jupyterlab/builder": "^4.0.5",
-    "@types/react": "~18.0.26",
+    "@types/react": "^18.0.26",
     "npm-run-all": "^4.1.5",
     "rimraf": "^4.1.2",
     "typescript": "~5.0.4"

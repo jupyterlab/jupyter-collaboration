@@ -14,5 +14,7 @@ from jupyterlab.galata import configure_jupyter_server
 c: Any
 configure_jupyter_server(c)  # noqa
 
+c.FileContentsManager.delete_to_trash = False
+
 # Uncomment to set server log level to debug level
 # c.ServerApp.log_level = "DEBUG"
