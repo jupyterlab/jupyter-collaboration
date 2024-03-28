@@ -67,7 +67,6 @@
     "typescript": "~5.0.4"
   },
   "resolutions": {
-    "@jupyter/ydoc": "file:.yalc/@jupyter/ydoc",
-    "@jupyterlab/services": "file:.yalc/@jupyterlab/services"
+    "@jupyter/ydoc": "file:.yalc/@jupyter/ydoc"
   }
 }
