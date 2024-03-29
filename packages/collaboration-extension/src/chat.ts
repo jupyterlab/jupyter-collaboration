@@ -5,8 +5,12 @@
  * @module collaboration-extension
  */
 
-import { chatIcon } from '@jupyter/chat';
-import { IChatFileType, IGlobalAwareness } from '@jupyter/collaboration';
+import { chatIcon } from 'chat-jupyter';
+import {
+  IChatFileType,
+  IChatPanel,
+  IGlobalAwareness
+} from '@jupyter/collaboration';
 import {
   ChatPanel,
   ChatWidgetFactory,
@@ -38,6 +42,9 @@ const pluginIds = {
   chat: '@jupyter/collaboration-extension:chat'
 };
 
+/**
+ * Extension registering the chat file type.
+ */
 export const chatDocument: JupyterFrontEndPlugin<IChatFileType> = {
   id: pluginIds.chatDocument,
   description: 'A document registration for collaborative chat',
@@ -108,12 +115,13 @@ export const chatDocument: JupyterFrontEndPlugin<IChatFileType> = {
 };
 
 /**
- * Initialization of the @jupyter/chat extension.
+ * Extension providing a chat panel.
  */
 export const chat: JupyterFrontEndPlugin<ChatPanel> = {
   id: pluginIds.chat,
   description: 'A chat extension for Jupyter',
   autoStart: true,
+  provides: IChatPanel,
   requires: [
     IChatFileType,
     ICollaborativeDrive,

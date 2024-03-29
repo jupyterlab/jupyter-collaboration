@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { IChatModel, ChatWidget, IConfig } from '@jupyter/chat';
+import { IChatModel, ChatWidget, IConfig } from 'chat-jupyter';
 import { IThemeManager } from '@jupyterlab/apputils';
 import { PathExt } from '@jupyterlab/coreutils';
 import { DocumentWidget } from '@jupyterlab/docregistry';

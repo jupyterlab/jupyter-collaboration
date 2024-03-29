@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { ChatModel, IChatMessage, INewMessage, IUser } from '@jupyter/chat';
+import { ChatModel, IChatMessage, INewMessage, IUser } from 'chat-jupyter';
 import { Delta, MapChange, StateChange, YDocument } from '@jupyter/ydoc';
 import { DocumentRegistry } from '@jupyterlab/docregistry';
 import { IChangedArgs } from '@jupyterlab/coreutils';
