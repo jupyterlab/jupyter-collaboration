@@ -7,7 +7,6 @@ import asyncio
 import json
 import time
 import uuid
-from dataclasses import asdict
 from typing import Any
 
 from jupyter_server.auth import authorized

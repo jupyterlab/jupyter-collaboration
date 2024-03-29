@@ -1,10 +1,11 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from functools import partial
 import json
-from jupyter_ydoc.ybasedoc import YBaseDoc
+from functools import partial
 from typing import Any, Callable, List
+
+from jupyter_ydoc.ybasedoc import YBaseDoc
 from pycrdt import Array, Map
 
 
@@ -42,22 +43,18 @@ class YChat(YBaseDoc):
         """
         Sets the content of the document.
         :param value: The content of the document.
-        :type value: Any
+        :type value: str
         """
-        value = json.loads(value)
-        if "messages" in value.keys():
+        contents = json.loads(value)
+        if "messages" in contents.keys():
             with self._ydoc.transaction():
-                for v in value["messages"]:
+                for v in contents["messages"]:
                     self._ymessages.append(v)
 
-    def observe(self, callback: Callable[[str, Any], None]):
+    def observe(self, callback: Callable[[str, Any], None]) -> None:
         self.unobserve()
-        self._subscriptions[self._ystate] = self._ystate.observe(
-            partial(callback, "state")
-        )
+        self._subscriptions[self._ystate] = self._ystate.observe(partial(callback, "state"))
         self._subscriptions[self._ymessages] = self._ymessages.observe(
             partial(callback, "messages")
         )
-        self._subscriptions[self._ycontent] = self._ycontent.observe(
-            partial(callback, "content")
-        )
+        self._subscriptions[self._ycontent] = self._ycontent.observe(partial(callback, "content"))
