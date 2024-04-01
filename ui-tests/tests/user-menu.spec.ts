@@ -11,7 +11,7 @@ test.use( {
 });
 
 const openDialog = async (page: IJupyterLabPageFixture): Promise<Locator> => {
-  const sharedLinkButton = page.locator('button[data-command="collaboration:shared-link"]');
+  const sharedLinkButton = page.locator('jp-button[data-command="collaboration:shared-link"]');
   await sharedLinkButton.click();
   await expect(page.locator('.jp-Dialog')).toBeVisible();
   return page.locator('.jp-Dialog').first();
@@ -23,7 +23,7 @@ test('the top bar should contain the user menu with 2 items', async ({ page }) =
 });
 
 test('should open dialog when clicking on the shared link button', async ({ page }) => {
-  const sharedLinkButton = page.locator('button[data-command="collaboration:shared-link"]');
+  const sharedLinkButton = page.locator('jp-button[data-command="collaboration:shared-link"]');
 
   expect(await sharedLinkButton.screenshot()).toMatchSnapshot(
     'shared-link-icon.png'
