@@ -131,6 +131,7 @@ test.describe('Initialization', () => {
 
     await guestPage.filebrowser.refresh();
     await guestPage.notebook.open(exampleNotebook);
+    await guestPage.notebook.activate(exampleNotebook);
 
     const nbPanel = await page.notebook.getNotebookInPanel();
     expect.soft(await nbPanel?.screenshot()).toMatchSnapshot(
