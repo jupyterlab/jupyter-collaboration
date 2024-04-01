@@ -3,16 +3,26 @@
 from __future__ import annotations
 
 import asyncio
+from typing import Literal
 
 from jupyter_server.extension.application import ExtensionApp
+from jupyter_ydoc import ydocs as YDOCS
+from jupyter_ydoc.ybasedoc import YBaseDoc
+from pycrdt import Doc
 from pycrdt_websocket.ystore import BaseYStore
 from traitlets import Bool, Float, Type
 
 from .handlers import DocSessionHandler, YDocWebSocketHandler
 from .loaders import FileLoaderMapping
+from .rooms import DocumentRoom
 from .stores import SQLiteYStore
-from .utils import AWARENESS_EVENTS_SCHEMA_PATH, EVENTS_SCHEMA_PATH
-from .websocketserver import JupyterWebsocketServer
+from .utils import (
+    AWARENESS_EVENTS_SCHEMA_PATH,
+    EVENTS_SCHEMA_PATH,
+    encode_file_path,
+    room_id_from_encoded_path,
+)
+from .websocketserver import JupyterWebsocketServer, RoomNotFound
 
 
 class YDocExtension(ExtensionApp):
@@ -123,6 +133,39 @@ class YDocExtension(ExtensionApp):
                 (r"/api/collaboration/session/(.*)", DocSessionHandler),
             ]
         )
+
+    async def get_document(
+        self: YDocExtension,
+        *,
+        path: str,
+        content_type: Literal["notebook", "file"],
+        file_format: Literal["json", "text"],
+    ) -> YBaseDoc | None:
+        """Get a read-only view of the shared model for the matching document.
+
+        The returned shared model is a fork, meaning that any changes made to it
+        will not be propagated to the shared model used by the application.
+        """
+        file_id_manager = self.serverapp.web_app.settings["file_id_manager"]
+        file_id = file_id_manager.index(path)
+
+        encoded_path = encode_file_path(file_format, content_type, file_id)
+        room_id = room_id_from_encoded_path(encoded_path)
+
+        try:
+            room = await self.ywebsocket_server.get_room(room_id)
+        except RoomNotFound:
+            return None
+
+        if isinstance(room, DocumentRoom):
+            update = room.ydoc.get_update()
+
+            fork_ydoc = Doc()
+            fork_ydoc.apply_update(update)
+
+            return YDOCS.get(content_type, YDOCS["file"])(fork_ydoc)
+
+        return None
 
     async def stop_extension(self):
         # Cancel tasks and clean up

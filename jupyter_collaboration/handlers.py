@@ -26,6 +26,7 @@ from .utils import (
     LogLevel,
     MessageType,
     decode_file_path,
+    room_id_from_encoded_path,
 )
 from .websocketserver import JupyterWebsocketServer
 
@@ -74,7 +75,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             await self._websocket_server.started.wait()
 
         # Get room
-        self._room_id: str = self.request.path.split("/")[-1]
+        self._room_id: str = room_id_from_encoded_path(self.request.path)
 
         async with self._room_lock(self._room_id):
             if self._websocket_server.room_exists(self._room_id):
