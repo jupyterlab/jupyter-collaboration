@@ -62,6 +62,7 @@ async def test_room_concurrent_initialization(
 
 
 async def test_room_sequential_opening(
+    jp_serverapp,
     rtc_create_file,
     rtc_connect_doc_client,
 ):
@@ -81,3 +82,7 @@ async def test_room_sequential_opening(
     assert dt < 1
     dt = await connect(file_format, file_type, file_path)
     assert dt < 1
+
+    # workaround for a shutdown issue of aiosqlite, see
+    # https://github.com/jupyterlab/jupyter-collaboration/issues/252
+    await jp_serverapp.web_app.settings["jupyter_collaboration"].stop_extension()
