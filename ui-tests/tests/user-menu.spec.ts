@@ -17,9 +17,11 @@ const openDialog = async (page: IJupyterLabPageFixture): Promise<Locator> => {
   return page.locator('.jp-Dialog').first();
 };
 
-test('the top bar should contain the user menu with 2 items', async ({ page }) => {
-  const topBarItems = page.locator('#jp-top-bar > :not(.jp-Toolbar-spacer)');
-  await expect(topBarItems).toHaveCount(2);
+test('the top bar should contain one user menu and one share button', async ({ page }) => {
+  const shareButton = page.locator('#jp-top-bar jp-button[data-command="collaboration:shared-link"]');
+  await expect(shareButton).toHaveCount(1);
+  const userMenu = page.locator('#jp-top-bar .jp-MenuBar-anonymousIcon');
+  await expect(userMenu).toHaveCount(1);
 });
 
 test('should open dialog when clicking on the shared link button', async ({ page }) => {
