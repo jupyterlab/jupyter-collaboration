@@ -109,7 +109,7 @@ test.describe('Initialization', () => {
     await guestPage.notebook.open(pathUntitled);
 
     const nbPanel = await page.notebook.getNotebookInPanel();
-    expect(await nbPanel?.screenshot()).toMatchSnapshot(
+    expect.soft(await nbPanel?.screenshot()).toMatchSnapshot(
       'initialization-create-notebook-host.png'
     );
 
@@ -133,7 +133,7 @@ test.describe('Initialization', () => {
     await guestPage.notebook.open(exampleNotebook);
 
     const nbPanel = await page.notebook.getNotebookInPanel();
-    expect(await nbPanel?.screenshot()).toMatchSnapshot(
+    expect.soft(await nbPanel?.screenshot()).toMatchSnapshot(
       'initialization-open-notebook-host.png'
     );
 
