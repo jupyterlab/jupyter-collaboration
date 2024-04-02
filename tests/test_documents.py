@@ -41,6 +41,7 @@ async def test_dirty(
 
 
 async def test_room_concurrent_initialization(
+    jp_serverapp,
     rtc_create_file,
     rtc_connect_doc_client,
 ):
@@ -59,6 +60,10 @@ async def test_room_concurrent_initialization(
         tg.start_soon(connect, file_format, file_type, file_path)
     t1 = time()
     assert t1 - t0 < 0.5
+
+    # workaround for a shutdown issue of aiosqlite, see
+    # https://github.com/jupyterlab/jupyter-collaboration/issues/252
+    await jp_serverapp.web_app.settings["jupyter_collaboration"].stop_extension()
 
 
 async def test_room_sequential_opening(
