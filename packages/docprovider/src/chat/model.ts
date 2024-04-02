@@ -4,18 +4,12 @@
  */
 
 import { ChatModel, IChatMessage, INewMessage, IUser } from 'chat-jupyter';
-import { Delta, MapChange, StateChange, YDocument } from '@jupyter/ydoc';
 import { DocumentRegistry } from '@jupyterlab/docregistry';
 import { IChangedArgs } from '@jupyterlab/coreutils';
-import {
-  JSONExt,
-  JSONObject,
-  PartialJSONObject,
-  UUID
-} from '@lumino/coreutils';
+import { PartialJSONObject, UUID } from '@lumino/coreutils';
 import { ISignal, Signal } from '@lumino/signaling';
 import { Awareness } from 'y-protocols/awareness';
-import * as Y from 'yjs';
+import { ChatChange, YChat } from './ychat';
 
 /**
  * Collaborative chat namespace.
@@ -23,7 +17,7 @@ import * as Y from 'yjs';
 export namespace CollaborativeChatModel {
   export interface IOptions extends ChatModel.IOptions {
     awareness: Awareness;
-    sharedModel?: CollaborativeChat;
+    sharedModel?: YChat;
     languagePreference?: string;
   }
 }
@@ -44,7 +38,7 @@ export class CollaborativeChatModel
     if (sharedModel) {
       this._sharedModel = sharedModel;
     } else {
-      this._sharedModel = CollaborativeChat.create();
+      this._sharedModel = YChat.create();
     }
 
     this.sharedModel.changed.connect(this._onchange, this);
@@ -54,7 +48,7 @@ export class CollaborativeChatModel
 
   readonly collaborative = true;
 
-  get sharedModel(): CollaborativeChat {
+  get sharedModel(): YChat {
     return this._sharedModel;
   }
 
@@ -144,12 +138,9 @@ export class CollaborativeChatModel
     this.sharedModel.transact(() => void this.sharedModel.setMessage(msg));
   }
 
-  private _onchange = (
-    _: CollaborativeChat,
-    change: ICollaborativeChatModelChange
-  ) => {
-    if (change.messageChange) {
-      const msgDelta = change.messageChange;
+  private _onchange = (_: YChat, change: ChatChange) => {
+    if (change.messagesChange) {
+      const msgDelta = change.messagesChange;
       // let retain: number;
       const messages: IChatMessage[] = [];
       msgDelta.forEach(data => {
@@ -171,7 +162,7 @@ export class CollaborativeChatModel
   readonly defaultKernelName: string = '';
   readonly defaultKernelLanguage: string = '';
 
-  private _sharedModel: CollaborativeChat;
+  private _sharedModel: YChat;
 
   private _dirty = false;
   private _readOnly = false;
@@ -181,70 +172,4 @@ export class CollaborativeChatModel
 
   private _awareness: Awareness;
   private _user: IUser;
-}
-
-interface ICollaborativeChatModelChange {
-  messageChange?: Delta<any>;
-  contentChange?: MapChange;
-  stateChange?: StateChange<any>[];
-}
-
-interface IDict<T = any> {
-  [key: string]: T;
-}
-
-/**
- * The collaborative chat shared document.
- */
-export class CollaborativeChat extends YDocument<ICollaborativeChatModelChange> {
-  /**
-   * Create a new collaborative chat model.
-   */
-  constructor(options?: YDocument.IOptions) {
-    super(options);
-    this._content = this.ydoc.getMap<IDict>('content');
-    this._content.observe(this._contentObserver);
-
-    this._messages = this.ydoc.getArray<IDict>('messages');
-    this._messages.observe(this._messagesObserver);
-  }
-
-  /**
-   * Document version
-   */
-  readonly version: string = '1.0.0';
-
-  /**
-   * Static method to create instances on the sharedModel
-   *
-   * @returns The sharedModel instance
-   */
-  static create(options?: YDocument.IOptions): CollaborativeChat {
-    return new CollaborativeChat(options);
-  }
-
-  get content(): JSONObject {
-    return JSONExt.deepCopy(this._content.toJSON());
-  }
-
-  get messages(): string[] {
-    return JSONExt.deepCopy(this._messages.toJSON());
-  }
-
-  setMessage(value: IDict): void {
-    this._messages.push([value]);
-  }
-
-  private _contentObserver = (event: Y.YMapEvent<IDict>): void => {
-    this._changed.emit(this.content);
-  };
-
-  private _messagesObserver = (event: Y.YArrayEvent<IDict>): void => {
-    const changes: ICollaborativeChatModelChange = {};
-    changes.messageChange = event.delta;
-    this._changed.emit(changes);
-  };
-
-  private _content: Y.Map<IDict>;
-  private _messages: Y.Array<IDict>;
 }

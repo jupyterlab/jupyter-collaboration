@@ -10,8 +10,9 @@ import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { Contents } from '@jupyterlab/services';
 import { Awareness } from 'y-protocols/awareness';
 
-import { CollaborativeChat, CollaborativeChatModel } from './model';
+import { CollaborativeChatModel } from './model';
 import { CollaborativeChatWidget } from './widget';
+import { YChat } from './ychat';
 
 /**
  * A widget factory to create new instances of CollaborativeChatWidget.
@@ -138,7 +139,7 @@ export class CollaborativeChatModelFactory
    */
 
   createNew(
-    options: DocumentRegistry.IModelOptions<CollaborativeChat>
+    options: DocumentRegistry.IModelOptions<YChat>
   ): CollaborativeChatModel {
     return new CollaborativeChatModel({
       ...options,

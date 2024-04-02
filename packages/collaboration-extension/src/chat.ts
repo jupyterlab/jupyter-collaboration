@@ -15,10 +15,10 @@ import {
   ChatPanel,
   ChatWidgetFactory,
   CollaborativeChatModelFactory,
-  CollaborativeChat,
   CollaborativeChatModel,
   CollaborativeChatWidget,
-  ICollaborativeDrive
+  ICollaborativeDrive,
+  YChat
 } from '@jupyter/docprovider';
 import {
   ILayoutRestorer,
@@ -78,7 +78,7 @@ export const chatDocument: JupyterFrontEndPlugin<IChatFileType> = {
 
     if (drive) {
       const chatFactory = () => {
-        return CollaborativeChat.create();
+        return YChat.create();
       };
       drive.sharedModelFactory.registerDocumentFactory('chat', chatFactory);
     }
@@ -280,7 +280,7 @@ export const chat: JupyterFrontEndPlugin<ChatPanel> = {
           format: model.format,
           contentType: chatFileType.contentType,
           collaborative: true
-        }) as CollaborativeChat;
+        }) as YChat;
 
         /**
          * Initialize the chat model with the share model

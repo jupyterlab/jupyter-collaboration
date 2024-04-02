@@ -1,15 +1,16 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+# TODO: remove this module in favor of the one in jupyter_ydoc when released.
+
 import json
+import jupyter_ydoc
 from functools import partial
 from typing import Any, Callable, List
-
-from jupyter_ydoc.ybasedoc import YBaseDoc
 from pycrdt import Array, Map
 
 
-class YChat(YBaseDoc):
+class YChat(jupyter_ydoc.YBaseDoc):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._ydoc["content"] = self._ycontent = Map()
@@ -58,3 +59,7 @@ class YChat(YBaseDoc):
             partial(callback, "messages")
         )
         self._subscriptions[self._ycontent] = self._ycontent.observe(partial(callback, "content"))
+
+
+# Register the ydoc
+jupyter_ydoc.ydocs["jupyter_collaboration.chat_ydoc:YChat"] = YChat

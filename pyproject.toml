@@ -173,6 +173,3 @@ module = [
     "terminado"
 ]
 ignore_missing_imports = true
-
-[project.entry-points.jupyter_ydoc]
-chat = "jupyter_collaboration.chat_ydoc:YChat"
