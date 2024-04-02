@@ -13,6 +13,7 @@ import { ServerConnection, Contents } from '@jupyterlab/services';
 const DOC_SESSION_URL = 'api/collaboration/session';
 const DOC_FORK_URL = 'api/collaboration/fork_room';
 const DOC_MERGE_URL = 'api/collaboration/merge_room';
+const DOC_DELETE_URL = 'api/collaboration/delete_room';
 
 /**
  * Document session model
@@ -124,6 +125,45 @@ export async function requestDocMerge(
   );
   const body = {
     method: 'PUT',
+    body: JSON.stringify({ fork_roomid: forkRoomid, root_roomid: rootRoomid })
+  };
+
+  let response: Response;
+  try {
+    response = await ServerConnection.makeRequest(url, body, settings);
+  } catch (error) {
+    throw new ServerConnection.NetworkError(error as Error);
+  }
+
+  let data: any = await response.text();
+
+  if (data.length > 0) {
+    try {
+      data = JSON.parse(data);
+    } catch (error) {
+      console.log('Not a JSON response body.', response);
+    }
+  }
+
+  if (!response.ok) {
+    throw new ServerConnection.ResponseError(response, data.message || data);
+  }
+
+  return data;
+}
+
+
+export async function requestDocDelete(
+  forkRoomid: string,
+  rootRoomid: string,
+): Promise<any> {
+  const settings = ServerConnection.makeSettings();
+  const url = URLExt.join(
+    settings.baseUrl,
+    DOC_DELETE_URL,
+  );
+  const body = {
+    method: 'DELETE',
     body: JSON.stringify({ fork_roomid: forkRoomid, root_roomid: rootRoomid })
   };
 

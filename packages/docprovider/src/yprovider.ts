@@ -96,9 +96,25 @@ export class WebSocketProvider implements IDocumentProvider {
     return forkId;
   }
 
-  connect(roomId: string) {
+  connect(roomId: string, merge?: boolean) {
     this._sharedModel.currentRoomId = roomId;
     this._yWebsocketProvider?.disconnect();
+    if (roomId === this._sharedModel.rootRoomId) {
+      // connecting to the root
+      // don't bring our changes there if not merging
+      if (merge !== true) {
+        while (this._sharedModel.undoManager.canUndo()) {
+          this._sharedModel.undoManager.undo();
+        }
+      }
+      this._sharedModel.undoManager.clear();
+    }
+    else {
+      // connecting to a fork
+      // keep track of changes so that we can undo them when connecting back to root
+      this._sharedModel.undoManager.clear();
+    }
+
     this._yWebsocketProvider = new YWebsocketProvider(
       this._serverUrl,
       roomId,

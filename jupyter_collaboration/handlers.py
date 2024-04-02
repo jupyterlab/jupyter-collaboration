@@ -471,13 +471,53 @@ class DocMergeHandler(APIHandler):
         if idx in root_state:
             del root_state[idx]
         else:
+            self.set_status(404)
             raise RuntimeError(f"Could not find root document fork with ID: {fork_roomid}")
         fork_room = await self._websocket_server.get_room(fork_roomid)
         fork_ydoc = fork_room.ydoc
-        update = fork_ydoc.get_update()
-        root_ydoc.apply_update(update)
+        fork_update = fork_ydoc.get_update()
+        root_ydoc.apply_update(fork_update)
         root_room.fork_ydocs.remove(fork_ydoc)
         fork_state = fork_ydoc.get("state", type=Map)
         fork_state["merge"] = fork_roomid
+        #self._websocket_server.delete_room(name=fork_roomid)
+        self.set_status(200)
+
+
+class DocDeleteHandler(APIHandler):
+    """
+    Jupyter Server's handler to delete a document.
+    """
+
+    auth_resource = "contents"
+
+    def initialize(
+        self,
+        ywebsocket_server: JupyterWebsocketServer,
+    ) -> None:
+        self._websocket_server = ywebsocket_server
+
+    @web.authenticated
+    @authorized
+    async def delete(self):
+        """
+        Deletes a forked document.
+        """
+        model = self.get_json_body()
+        fork_roomid = model["fork_roomid"]
+        root_room = await self._websocket_server.get_room(model["root_roomid"])
+        root_ydoc = root_room.ydoc
+        idx = f"fork_{fork_roomid}"
+        root_state = root_ydoc.get("state", type=Map)
+        if idx in root_state:
+            del root_state[idx]
+        else:
+            self.set_status(404)
+            raise RuntimeError(f"Could not find root document fork with ID: {fork_roomid}")
+        fork_room = await self._websocket_server.get_room(fork_roomid)
+        fork_ydoc = fork_room.ydoc
+        root_room.fork_ydocs.remove(fork_ydoc)
+        fork_state = fork_ydoc.get("state", type=Map)
+        fork_state["delete"] = fork_roomid
         #self._websocket_server.delete_room(name=fork_roomid)
         self.set_status(200)

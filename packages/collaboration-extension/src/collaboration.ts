@@ -28,7 +28,7 @@ import {
   EditorExtensionRegistry,
   IEditorExtensionRegistry
 } from '@jupyterlab/codemirror';
-import { requestDocMerge, WebSocketAwarenessProvider } from '@jupyter/docprovider';
+import { requestDocDelete, requestDocMerge, WebSocketAwarenessProvider } from '@jupyter/docprovider';
 import {
   SidePanel,
   usersIcon,
@@ -310,6 +310,7 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
     reviewCommands.addCommand('discard', {
       label: 'Discard',
       execute: () => {
+        requestDocDelete(sharedModel.currentRoomId, sharedModel.rootRoomId);
       }
     });
 
@@ -322,7 +323,7 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
       if (changes.stateChange) {
         changes.stateChange.forEach(value => {
           const forkPrefix = 'fork_';
-          if (value.name === 'merge') {
+          if (value.name === 'merge' || value.name === 'delete') {
             // FIXME: a client who is not connected to the fork should not see this update
             if (sharedModel.currentRoomId === value.newValue) {
               editingMenu.title.label = 'Editing';
@@ -331,7 +332,8 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
               delete suggestions[value.newValue];
               suggestionMenu.removeItem(item);
               reviewMenu.clearItems();
-              sharedModel.provider.connect(sharedModel.rootRoomId);
+              const merge = value.name === 'merge';
+              sharedModel.provider.connect(sharedModel.rootRoomId, merge);
               open_dialog('Editing', this._trans);
             }
           }

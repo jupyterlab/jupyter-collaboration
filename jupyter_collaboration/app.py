@@ -8,7 +8,7 @@ from jupyter_server.extension.application import ExtensionApp
 from pycrdt_websocket.ystore import BaseYStore
 from traitlets import Bool, Float, Type
 
-from .handlers import DocForkHandler, DocMergeHandler, DocSessionHandler, YDocWebSocketHandler
+from .handlers import DocForkHandler, DocDeleteHandler, DocMergeHandler, DocSessionHandler, YDocWebSocketHandler
 from .loaders import FileLoaderMapping
 from .stores import SQLiteYStore
 from .utils import AWARENESS_EVENTS_SCHEMA_PATH, EVENTS_SCHEMA_PATH
@@ -119,6 +119,13 @@ class YDocExtension(ExtensionApp):
                 (
                     r"/api/collaboration/merge_room",
                     DocMergeHandler,
+                    {
+                        "ywebsocket_server": self.ywebsocket_server,
+                    }
+                ),
+                (
+                    r"/api/collaboration/delete_room",
+                    DocDeleteHandler,
                     {
                         "ywebsocket_server": self.ywebsocket_server,
                     }
