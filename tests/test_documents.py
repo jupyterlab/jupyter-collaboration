@@ -40,7 +40,16 @@ async def test_dirty(
                 assert not jupyter_ydoc.dirty
 
 
+async def cleanup(jp_serverapp):
+    # workaround for a shutdown issue of aiosqlite, see
+    # https://github.com/jupyterlab/jupyter-collaboration/issues/252
+    await jp_serverapp.web_app.settings["jupyter_collaboration"].stop_extension()
+    # workaround `jupyter_server_fileid` manager accessing database on GC
+    del jp_serverapp.web_app.settings["file_id_manager"]
+
+
 async def test_room_concurrent_initialization(
+    jp_serverapp,
     rtc_create_file,
     rtc_connect_doc_client,
 ):
@@ -60,8 +69,11 @@ async def test_room_concurrent_initialization(
     t1 = time()
     assert t1 - t0 < 0.5
 
+    await cleanup(jp_serverapp)
+
 
 async def test_room_sequential_opening(
+    jp_serverapp,
     rtc_create_file,
     rtc_connect_doc_client,
 ):
@@ -81,3 +93,5 @@ async def test_room_sequential_opening(
     assert dt < 1
     dt = await connect(file_format, file_type, file_path)
     assert dt < 1
+
+    await cleanup(jp_serverapp)
