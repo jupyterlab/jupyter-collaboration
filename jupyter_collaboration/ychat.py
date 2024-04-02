@@ -4,9 +4,10 @@
 # TODO: remove this module in favor of the one in jupyter_ydoc when released.
 
 import json
-import jupyter_ydoc
 from functools import partial
 from typing import Any, Callable, List
+
+import jupyter_ydoc
 from pycrdt import Array, Map
 
 
