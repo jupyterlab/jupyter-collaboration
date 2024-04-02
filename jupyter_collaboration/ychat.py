@@ -8,10 +8,11 @@ from functools import partial
 from typing import Any, Callable, List
 
 import jupyter_ydoc
+from jupyter_ydoc.ybasedoc import YBaseDoc
 from pycrdt import Array, Map
 
 
-class YChat(jupyter_ydoc.YBaseDoc):
+class YChat(YBaseDoc):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._ydoc["content"] = self._ycontent = Map()
