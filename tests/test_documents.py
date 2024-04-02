@@ -49,6 +49,14 @@ async def cleanup(jp_serverapp):
     del jp_serverapp.web_app.settings["file_id_manager"]
 
 
+async def cleanup(jp_serverapp):
+    # workaround for a shutdown issue of aiosqlite, see
+    # https://github.com/jupyterlab/jupyter-collaboration/issues/252
+    await jp_serverapp.web_app.settings["jupyter_collaboration"].stop_extension()
+    # workaround `jupyter_server_fileid` manager accessing database on GC
+    del jp_serverapp.web_app.settings["file_id_manager"]
+
+
 async def test_room_concurrent_initialization(
     jp_serverapp,
     rtc_create_file,
