@@ -324,37 +324,26 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
         changes.stateChange.forEach(value => {
           const forkPrefix = 'fork_';
           if (value.name === 'merge' || value.name === 'delete') {
-            // FIXME: a client who is not connected to the fork should not see this update
+            // we are on fork
             if (sharedModel.currentRoomId === value.newValue) {
-              editingMenu.title.label = 'Editing';
-              suggestionMenu.title.label = 'Root';
-              const item: Menu.IItem = suggestions[value.newValue];
-              delete suggestions[value.newValue];
-              suggestionMenu.removeItem(item);
               reviewMenu.clearItems();
               const merge = value.name === 'merge';
               sharedModel.provider.connect(sharedModel.rootRoomId, merge);
               open_dialog('Editing', this._trans);
+              myForkId = '';
             }
           }
           else if (value.name.startsWith(forkPrefix)) {
+            // we are on root
             const forkId = value.name.slice(forkPrefix.length);
             if (value.newValue === 'new') {
               suggestionCommands.addCommand(forkId, {
                 label: forkId,
                 execute: () => {
-                  if (myForkId === forkId) {
-                    editingMenu.title.label = 'Suggesting';
-                    // our suggestion, cannot be reviewed
-                    reviewMenu.clearItems();
-                  }
-                  else {
-                    editingMenu.title.label = 'Editing';
-                    // not our suggestion, can be reviewed
-                    reviewMenu.clearItems();
-                    reviewMenu.addItem({type: 'command', command: 'merge'});
-                    reviewMenu.addItem({type: 'command', command: 'discard'});
-                  }
+                  editingMenu.title.label = 'Suggesting';
+                  reviewMenu.clearItems();
+                  reviewMenu.addItem({type: 'command', command: 'merge'});
+                  reviewMenu.addItem({type: 'command', command: 'discard'});
                   suggestionMenu.title.label = forkId;
                   sharedModel.provider.connect(forkId);
                   open_dialog('Suggesting', this._trans);
@@ -362,39 +351,41 @@ export class EditingModeExtension implements DocumentRegistry.IWidgetExtension<N
               });
               const item = suggestionMenu.addItem({type: 'command', command: forkId});
               suggestions[forkId] = item;
-              if ((myForkId !== 'pending') && (myForkId !== forkId)) {
-                const dialog = new Dialog({
-                  title: this._trans.__('New suggestion'),
-                  body: this._trans.__('View suggestion?'),
-                  buttons: [
-                    Dialog.okButton({ label: 'View' }),
-                    Dialog.cancelButton({ label: 'Discard' }),
-                  ],
-                });
-                dialog.launch().then(resp => {
-                  dialog.close();
-                  if (resp.button.label === 'View') {
-                    sharedModel.provider.connect(forkId);
-                    suggestionMenu.title.label = forkId;
-                    editingMenu.title.label = 'Editing';
-                    reviewMenu.clearItems();
-                    reviewMenu.addItem({type: 'command', command: 'merge'});
-                    reviewMenu.addItem({type: 'command', command: 'discard'});
-                  }
-                });
+              if (myForkId !== forkId) {
+                if (myForkId !== 'pending') {
+                  const dialog = new Dialog({
+                    title: this._trans.__('New suggestion'),
+                    body: this._trans.__('View suggestion?'),
+                    buttons: [
+                      Dialog.okButton({ label: 'View' }),
+                      Dialog.cancelButton({ label: 'Discard' }),
+                    ],
+                  });
+                  dialog.launch().then(resp => {
+                    dialog.close();
+                    if (resp.button.label === 'View') {
+                      sharedModel.provider.connect(forkId);
+                      suggestionMenu.title.label = forkId;
+                      editingMenu.title.label = 'Suggesting';
+                      reviewMenu.clearItems();
+                      reviewMenu.addItem({type: 'command', command: 'merge'});
+                      reviewMenu.addItem({type: 'command', command: 'discard'});
+                    }
+                  });
+                }
+                else {
+                  reviewMenu.clearItems();
+                  reviewMenu.addItem({type: 'command', command: 'merge'});
+                  reviewMenu.addItem({type: 'command', command: 'discard'});
+                }
               }
             }
             else if (value.newValue === undefined) {
-              if (sharedModel.currentRoomId === forkId) {
-                editingMenu.title.label = 'Editing';
-                suggestionMenu.title.label = 'Root';
-                const item: Menu.IItem = suggestions[value.newValue];
-                delete suggestions[value.newValue];
-                suggestionMenu.removeItem(item);
-                reviewMenu.clearItems();
-                sharedModel.provider.connect(sharedModel.rootRoomId);
-                open_dialog('Editing', this._trans);
-              }
+              editingMenu.title.label = 'Editing';
+              suggestionMenu.title.label = 'Root';
+              const item: Menu.IItem = suggestions[value.oldValue];
+              delete suggestions[value.oldValue];
+              suggestionMenu.removeItem(item);
             }
           }
         });
