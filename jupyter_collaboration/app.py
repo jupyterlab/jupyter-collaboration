@@ -57,6 +57,14 @@ class YDocExtension(ExtensionApp):
         directory.""",
     )
 
+    server_side_execution = Bool(
+        False,
+        config=True,
+        help="""Whether to execute notebooks in the server using the REST API, not using the kernel
+        protocol over WebSocket. The frontend only interacts with the notebook through its shared
+        model.""",
+    )
+
     def initialize(self):
         super().initialize()
         self.serverapp.event_logger.register_event_schema(EVENTS_SCHEMA_PATH)
