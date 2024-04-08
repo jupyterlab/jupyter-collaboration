@@ -192,22 +192,20 @@ export const userEditorCursors: JupyterFrontEndPlugin<void> = {
   }
 };
 
-export const notebookCellExecutor: JupyterFrontEndPlugin<INotebookCellExecutor> = {
-  id: '@jupyter/collaboration-extension:notebook-cell-executor',
-  description:
-    'Add notebook cell executor that uses REST API instead of kernel protocol over WebSocket.',
-  autoStart: true,
-  provides: INotebookCellExecutor,
-  activate: (
-    app: JupyterFrontEnd
-  ): INotebookCellExecutor => {
-    if (PageConfig.getOption('serverSideExecution') === 'true') {
-      return Object.freeze({ runCell: runCellServerSide });
+export const notebookCellExecutor: JupyterFrontEndPlugin<INotebookCellExecutor> =
+  {
+    id: '@jupyter/collaboration-extension:notebook-cell-executor',
+    description:
+      'Add notebook cell executor that uses REST API instead of kernel protocol over WebSocket.',
+    autoStart: true,
+    provides: INotebookCellExecutor,
+    activate: (app: JupyterFrontEnd): INotebookCellExecutor => {
+      if (PageConfig.getOption('serverSideExecution') === 'true') {
+        return Object.freeze({ runCell: runCellServerSide });
+      }
+      return Object.freeze({ runCell });
     }
-    return Object.freeze({ runCell });
-  }
-};
-
+  };
 
 async function runCellServerSide({
   cell,
@@ -246,6 +244,7 @@ async function runCellServerSide({
       } catch (error: any) {
         throw new ServerConnection.NetworkError(error);
       }
+      break;
     default:
       break;
   }
