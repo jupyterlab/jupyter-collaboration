@@ -223,7 +223,7 @@ async function runCellServerSide({
       cell.inputHidden = false;
       onCellExecuted({ cell, success: true });
       break;
-    case 'code':
+    case 'code': {
       const kernelId = sessionContext?.session?.kernel?.id;
       const settings = ServerConnection.makeSettings();
       const apiURL = URLExt.join(
@@ -245,6 +245,7 @@ async function runCellServerSide({
         throw new ServerConnection.NetworkError(error);
       }
       break;
+    }
     default:
       break;
   }
