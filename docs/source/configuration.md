@@ -10,7 +10,7 @@ you happen to delete it, there shouldn't be any serious consequence either.
 There are a number of settings that you can change:
 
 ```bash
-# To enable or disable RTC(Real-Time Collaboration) (default: False).
+# To enable or disable RTC (Real-Time Collaboration) (default: False).
 # If True, RTC will be disabled.
 jupyter lab --YDocExtension.disable_rtc=True
 
@@ -28,4 +28,21 @@ jupyter lab --YDocExtension.document_cleanup_delay=100
 
 # The YStore class to use for storing Y updates (default: JupyterSQLiteYStore).
 jupyter lab --YDocExtension.ystore_class=pycrdt_websocket.ystore.TempFileYStore
+```
+
+There is an experimental feature that is currently only supported by the
+[Jupyverse](https://github.com/jupyter-server/jupyverse) server
+(not yet with [jupyter-server](https://github.com/jupyter-server/jupyter_server)):
+server-side execution. With this, running notebook code cells is not done in the frontend through
+the low-level kernel protocol over WebSocket API, but through a high-level REST API. Communication
+with the kernel is then delegated to the server, and cell outputs are populated in the notebook
+shared document. The frontend gets these outputs changes and shows them live. What this means is
+that the notebook state can be fully recovered even if the frontend disconnects, because cell
+outputs are not populated frontend-side but server-side.
+
+This feature is disabled by default, and can be enabled like so:
+```bash
+pip install "jupyterlab>=4.2.0b0"
+pip install "jupyverse[jupyterlab, auth]>=0.4.2"
+jupyverse --set kernels.require_yjs=true --set jupyterlab.server_side_execution=true
 ```
