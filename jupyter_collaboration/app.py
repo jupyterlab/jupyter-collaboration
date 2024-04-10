@@ -82,7 +82,11 @@ class YDocExtension(ExtensionApp):
 
     def initialize_handlers(self):
         self.serverapp.web_app.settings.setdefault(
-            "page_config_data", {"disableRTC": self.disable_rtc}
+            "page_config_data",
+            {
+                "disableRTC": self.disable_rtc,
+                "serverSideExecution": self.server_side_execution,
+            },
         )
 
         # Set configurable parameters to YStore class
