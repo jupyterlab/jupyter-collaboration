@@ -32,7 +32,8 @@ jupyter lab --YDocExtension.ystore_class=pycrdt_websocket.ystore.TempFileYStore
 
 There is an experimental feature that is currently only supported by the
 [Jupyverse](https://github.com/jupyter-server/jupyverse) server
-(not yet with [jupyter-server](https://github.com/jupyter-server/jupyter_server)):
+(not yet with [jupyter-server](https://github.com/jupyter-server/jupyter_server),
+see the [issue #900](https://github.com/jupyter-server/jupyter_server/issues/900)):
 server-side execution. With this, running notebook code cells is not done in the frontend through
 the low-level kernel protocol over WebSocket API, but through a high-level REST API. Communication
 with the kernel is then delegated to the server, and cell outputs are populated in the notebook
