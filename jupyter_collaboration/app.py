@@ -140,6 +140,7 @@ class YDocExtension(ExtensionApp):
         path: str,
         content_type: Literal["notebook", "file"],
         file_format: Literal["json", "text"],
+        copy: bool = True,
     ) -> YBaseDoc | None:
         """Get a read-only view of the shared model for the matching document.
 
@@ -158,7 +159,15 @@ class YDocExtension(ExtensionApp):
             return None
 
         if isinstance(room, DocumentRoom):
-            return room._document
+            if copy:
+                update = room.ydoc.get_update()
+
+                fork_ydoc = Doc()
+                fork_ydoc.apply_update(update)
+
+                return YDOCS.get(content_type, YDOCS["file"])(fork_ydoc)
+            else:
+                return room._document
 
         return None
 
