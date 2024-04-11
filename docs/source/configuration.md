@@ -37,8 +37,8 @@ server-side execution. With this, running notebook code cells is not done in the
 the low-level kernel protocol over WebSocket API, but through a high-level REST API. Communication
 with the kernel is then delegated to the server, and cell outputs are populated in the notebook
 shared document. The frontend gets these outputs changes and shows them live. What this means is
-that the notebook state can be fully recovered even if the frontend disconnects, because cell
-outputs are not populated frontend-side but server-side.
+that the notebook state can be recovered even if the frontend disconnects, because cell outputs are
+not populated frontend-side but server-side.
 
 This feature is disabled by default, and can be enabled like so:
 ```bash
