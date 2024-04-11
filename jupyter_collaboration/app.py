@@ -142,10 +142,10 @@ class YDocExtension(ExtensionApp):
         file_format: Literal["json", "text"],
         copy: bool = True,
     ) -> YBaseDoc | None:
-        """Get a read-only view of the shared model for the matching document.
+        """Get a view of the shared model for the matching document.
 
-        The returned shared model is a fork, meaning that any changes made to it
-        will not be propagated to the shared model used by the application.
+        If `copy=True`, the returned shared model is a fork, meaning that any changes
+         made to it will not be propagated to the shared model used by the application.
         """
         file_id_manager = self.serverapp.web_app.settings["file_id_manager"]
         file_id = file_id_manager.index(path)
