@@ -158,12 +158,7 @@ class YDocExtension(ExtensionApp):
             return None
 
         if isinstance(room, DocumentRoom):
-            update = room.ydoc.get_update()
-
-            fork_ydoc = Doc()
-            fork_ydoc.apply_update(update)
-
-            return YDOCS.get(content_type, YDOCS["file"])(fork_ydoc)
+            return room._document
 
         return None
 

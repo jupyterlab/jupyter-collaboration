@@ -67,15 +67,3 @@ async def test_get_document_file(rtc_create_file, jp_serverapp):
     document = await collaboration.get_document(path=path, content_type="file", file_format="text")
     assert document.get() == content == "test"
     await collaboration.stop_extension()
-
-
-async def test_get_document_file_is_a_fork(rtc_create_file, jp_serverapp, rtc_fetch_session):
-    path, content = await rtc_create_file("test.txt", "test", store=True)
-    collaboration = jp_serverapp.web_app.settings["jupyter_collaboration"]
-    document = await collaboration.get_document(path=path, content_type="file", file_format="text")
-    document.set("other")
-    fresh_copy = await collaboration.get_document(
-        path=path, content_type="file", file_format="text"
-    )
-    assert fresh_copy.get() == "test"
-    await collaboration.stop_extension()
