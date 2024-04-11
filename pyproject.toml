@@ -27,7 +27,7 @@ classifiers = [
     "Framework :: Jupyter :: JupyterLab :: Extensions :: Prebuilt",
 ]
 dependencies = [
-    "jupyter_server>=2.0.0,<3.0.0",
+    "jupyter_server>=2.4.0,<3.0.0",
     "jupyter_ydoc>=2.0.0,<3.0.0",
     "pycrdt-websocket>=0.12.5,<0.13.0",
     "jupyter_events>=0.10.0",
@@ -44,12 +44,12 @@ dev = [
 ]
 test = [
     "coverage",
-    "jupyter_server[test]>=2.0.0",
+    "jupyter_server[test]>=2.4.0",
     "jupyter_server_fileid[test]",
     "pytest>=7.0",
     "pytest-cov",
     "websockets",
-    "importlib_metadata >=3.6; python_version<'3.10'",
+    "importlib_metadata >=4.8.3; python_version<'3.10'",
 ]
 docs = [
     "jupyterlab>=4.0.0",
