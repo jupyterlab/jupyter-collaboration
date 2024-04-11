@@ -152,10 +152,12 @@ jobs:
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
-          python_version: "3.11"
+          python_version: "3.8"
+          dependency_type: minimum
 
-      - name: Install minimum versions
-        uses: jupyterlab/maintainer-tools/.github/actions/install-minimums@v1
+      - name: Install the Python dependencies
+        run: |
+          pip install -e ".[test]"
 
       - name: Run the unit tests
         run: |
