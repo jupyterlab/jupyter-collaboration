@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from jupyter_collaboration.stores import SQLiteYStore, TempFileYStore
 
 
@@ -59,3 +61,30 @@ def test_settings_should_change_ystore_class(jp_configurable_serverapp):
     settings = app.web_app.settings["jupyter_collaboration_config"]
 
     assert settings["ystore_class"] == TempFileYStore
+
+
+@pytest.mark.parametrize("copy", [True, False])
+async def test_get_document_file(rtc_create_file, jp_serverapp, copy):
+    path, content = await rtc_create_file("test.txt", "test", store=True)
+    collaboration = jp_serverapp.web_app.settings["jupyter_collaboration"]
+    document = await collaboration.get_document(
+        path=path, content_type="file", file_format="text", copy=copy
+    )
+    assert document.get() == content == "test"
+    await collaboration.stop_extension()
+
+
+async def test_get_document_file_copy_is_independent(
+    rtc_create_file, jp_serverapp, rtc_fetch_session
+):
+    path, content = await rtc_create_file("test.txt", "test", store=True)
+    collaboration = jp_serverapp.web_app.settings["jupyter_collaboration"]
+    document = await collaboration.get_document(
+        path=path, content_type="file", file_format="text", copy=True
+    )
+    document.set("other")
+    fresh_copy = await collaboration.get_document(
+        path=path, content_type="file", file_format="text"
+    )
+    assert fresh_copy.get() == "test"
+    await collaboration.stop_extension()
