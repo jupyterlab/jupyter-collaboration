@@ -114,7 +114,7 @@ jobs:
       - name: Run the tests with Coverage
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(runner.os, 'Windows') }}
         run: |
-          python -m pytest -vv --cov jupyter_collaboration --cov-branch --cov-report term-missing:skip-covered
+          python -m pytest -vv --cov jupyter_server_ydoc --cov-branch --cov-report term-missing:skip-covered
 
       #- name: Run the tests on pypy
       #  if: ${{ startsWith(matrix.python-version, 'pypy') }}
@@ -126,7 +126,7 @@ jobs:
       - name: Run the tests on Windows
         if: ${{ startsWith(runner.os, 'Windows') }}
         run: |
-          python -W ignore::ImportWarning -m pytest -vv --cov jupyter_collaboration --cov-branch --cov-report term-missing:skip-covered
+          python -W ignore::ImportWarning -m pytest -vv --cov jupyter_server_ydoc --cov-branch --cov-report term-missing:skip-covered
 
       - uses: jupyterlab/maintainer-tools/.github/actions/upload-coverage@v1
 
@@ -136,7 +136,7 @@ jobs:
         run: |
           set -eux
           jupyter server extension list
-          jupyter server extension list 2>&1 | grep -ie "jupyter_collaboration.*OK"
+          jupyter server extension list 2>&1 | grep -ie "jupyter_server_ydoc.*OK"
           jupyter labextension list
           jupyter labextension list 2>&1 | grep -ie "@jupyter/collaboration-extension.*OK"
           python -m jupyterlab.browser_check
@@ -231,7 +231,7 @@ jobs:
           python -m pytest -vv -raXxs --durations 10 --color=yes
 
           jupyter server extension list
-          jupyter server extension list 2>&1 | grep -ie "jupyter_collaboration.*OK"
+          jupyter server extension list 2>&1 | grep -ie "jupyter_server_ydoc.*OK"
           jupyter labextension list
           jupyter labextension list 2>&1 | grep -ie "@jupyter/collaboration-extension.*OK"
           python -m jupyterlab.browser_check --no-browser-test

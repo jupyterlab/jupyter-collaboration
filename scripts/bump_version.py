@@ -13,10 +13,13 @@ LERNA_CMD = "jlpm run lerna version --no-push --force-publish --no-git-tag-versi
 
 @click.command()
 @click.option("--force", default=False, is_flag=True)
+@click.option("--skip-if-dirty", default=False, is_flag=True)
 @click.argument("spec", nargs=1)
-def bump(force, spec):
+def bump(force, skip_if_dirty, spec):
     status = run("git status --porcelain").strip()
     if len(status) > 0:
+        if skip_if_dirty:
+            return
         raise Exception("Must be in a clean git state with no untracked files")
 
     curr = parse_version(get_version())
@@ -51,6 +54,11 @@ def bump(force, spec):
     run(lerna_cmd)
 
     HERE = Path(__file__).parent.parent.resolve()
+
+    # bump the Python packages
+    for version_file in HERE.glob("projects/**/_version.py"):
+        version_file.write_text(f"__version__ = '{spec}'")
+
     path = HERE.joinpath("package.json")
     if path.exists():
         with path.open(mode="r") as f:

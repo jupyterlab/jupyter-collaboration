@@ -26,7 +26,7 @@ from .websocketserver import JupyterWebsocketServer, RoomNotFound
 
 
 class YDocExtension(ExtensionApp):
-    name = "jupyter_collaboration"
+    name = "jupyter_server_ydoc"
     app_name = "Collaboration"
     description = """
     Enables Real Time Collaboration in JupyterLab

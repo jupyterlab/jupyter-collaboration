@@ -39,7 +39,7 @@ namespace CommandIDs {
  * The default collaborative drive provider.
  */
 export const drive: JupyterFrontEndPlugin<ICollaborativeDrive> = {
-  id: '@jupyter/collaboration-extension:drive',
+  id: '@jupyter/docprovider-extension:drive',
   description: 'The default collaborative drive provider',
   provides: ICollaborativeDrive,
   requires: [ITranslator],
@@ -59,7 +59,7 @@ export const drive: JupyterFrontEndPlugin<ICollaborativeDrive> = {
  * Plugin to register the shared model factory for the content type 'file'.
  */
 export const yfile: JupyterFrontEndPlugin<void> = {
-  id: '@jupyter/collaboration-extension:yfile',
+  id: '@jupyter/docprovider-extension:yfile',
   description:
     "Plugin to register the shared model factory for the content type 'file'",
   autoStart: true,
@@ -77,7 +77,7 @@ export const yfile: JupyterFrontEndPlugin<void> = {
  * Plugin to register the shared model factory for the content type 'notebook'.
  */
 export const ynotebook: JupyterFrontEndPlugin<void> = {
-  id: '@jupyter/collaboration-extension:ynotebook',
+  id: '@jupyter/docprovider-extension:ynotebook',
   description:
     "Plugin to register the shared model factory for the content type 'notebook'",
   autoStart: true,
@@ -126,7 +126,7 @@ export const ynotebook: JupyterFrontEndPlugin<void> = {
  * The default file browser factory provider.
  */
 export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
-  id: '@jupyter/collaboration-extension:defaultFileBrowser',
+  id: '@jupyter/docprovider-extension:defaultFileBrowser',
   description: 'The default file browser factory provider',
   provides: IDefaultFileBrowser,
   requires: [ICollaborativeDrive, IFileBrowserFactory],
@@ -170,7 +170,7 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
  * The default collaborative drive provider.
  */
 export const logger: JupyterFrontEndPlugin<void> = {
-  id: '@jupyter/collaboration-extension:logger',
+  id: '@jupyter/docprovider-extension:logger',
   description: 'A logging plugin for debugging purposes.',
   autoStart: true,
   optional: [ILoggerRegistry, IEditorTracker, INotebookTracker, ITranslator],
