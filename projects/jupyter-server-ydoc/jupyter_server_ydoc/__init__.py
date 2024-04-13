@@ -8,4 +8,4 @@ from .app import YDocExtension
 
 
 def _jupyter_server_extension_points() -> List[Dict[str, Any]]:
-    return [{"module": "jupyter_collaboration", "app": YDocExtension}]
+    return [{"module": "jupyter_server_ydoc", "app": YDocExtension}]
