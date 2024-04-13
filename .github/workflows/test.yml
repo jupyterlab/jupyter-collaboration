@@ -237,7 +237,11 @@ jobs:
           echo "::group::Run test"
           set -ex
           cd sdist/test
+
+          # for now only `jupyter_server_ydoc` includes python tests
+          cd jupyter_server_ydoc*
           python -m pytest -vv -raXxs --durations 10 --color=yes
+          cd ..
 
           jupyter server extension list
           jupyter server extension list 2>&1 | grep -ie "jupyter_server_ydoc.*OK"
