@@ -45,10 +45,6 @@ exclude = ["/.github", "/binder", "node_modules"]
 
 [tool.hatch.build.targets.sdist.force-include]
 "../../packages" = "packages"
-"../../LICENSE" = "LICENSE"
-
-[tool.hatch.build.targets.wheel.force-include]
-"../../LICENSE" = "LICENSE"
 
 [tool.hatch.build.targets.wheel.shared-data]
 "jupyter_docprovider/labextension" = "share/jupyter/labextensions/@jupyter/docprovider-extension"
