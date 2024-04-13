@@ -39,3 +39,6 @@ path = "jupyter_collaboration/_version.py"
 
 [tool.check-wheel-contents]
 ignore = ["W002"]
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../LICENSE" = "LICENSE"

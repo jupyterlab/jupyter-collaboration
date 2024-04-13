@@ -47,3 +47,6 @@ exclude = ["/.github", "/binder", "node_modules"]
 
 [tool.check-wheel-contents]
 ignore = ["W002"]
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../LICENSE" = "LICENSE"
