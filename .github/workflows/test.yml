@@ -196,7 +196,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-      - uses: jupyterlab/maintainer-tools/.github/actions/make-sdist@v1
+      - name: Build SDist
+        shell: bash
+        run: |
+          pip install build
+          find projects/* -maxdepth 0 -type d | xargs -L 1 -P 4 python -m build --sdist --outdir dist/
+      - uses: actions/upload-artifact@v3
+        with:
+          name: "sdist"
+          path: dist/*.tar.gz
 
   test_sdist:
     runs-on: ubuntu-latest
