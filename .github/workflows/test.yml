@@ -224,7 +224,7 @@ jobs:
           set -ex
           cd sdist
           mkdir test
-          tar --strip-components=1 -zxvf *.tar.gz -C ./test
+          find *.tar.gz | xargs -L 1 tar --strip-components=1 -C ./test -zxvf
           cd test
           python -m pip install "jupyterlab>=4.0.0,<5"
           python -m pip install ".[test]"
