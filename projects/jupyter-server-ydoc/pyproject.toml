@@ -45,5 +45,8 @@ exclude = ["/.github", "/binder", "node_modules"]
 [tool.hatch.build.targets.wheel.shared-data]
 "jupyter-config/jupyter_server_ydoc.json" = "etc/jupyter/jupyter_server_config.d/jupyter_collaboration.json"
 
+[tool.hatch.build.targets.sdist.force-include]
+"../../tests" = "tests"
+
 [tool.check-wheel-contents]
 ignore = ["W002"]
