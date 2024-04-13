@@ -8,7 +8,7 @@ requires = ["hatchling>=1.4.0", "jupyterlab>=4.0.0"]
 [project]
 name = "jupyter-docprovider"
 readme = "README.md"
-license = { file = "../../LICENSE" }
+license = { file = "LICENSE" }
 requires-python = ">=3.8"
 description = "JupyterLab/Jupyter Notebook 7+ extension integrating collaborative shared models."
 classifiers = [
@@ -45,6 +45,9 @@ exclude = ["/.github", "/binder", "node_modules"]
 
 [tool.hatch.build.targets.sdist.force-include]
 "../../packages" = "packages"
+"../../LICENSE" = "LICENSE"
+
+[tool.hatch.build.targets.wheel.force-include]
 "../../LICENSE" = "LICENSE"
 
 [tool.hatch.build.targets.wheel.shared-data]

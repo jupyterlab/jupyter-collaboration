@@ -8,7 +8,7 @@ requires = ["hatchling>=1.4.0"]
 [project]
 name = "jupyter-collaboration"
 readme = "../../README.md"
-license = { file = "../../LICENSE" }
+license = { file = "LICENSE" }
 requires-python = ">=3.8"
 description = "JupyterLab/Jupyter Notebook 7+ Real Time Collaboration extension (metapackage)"
 classifiers = [
@@ -41,4 +41,7 @@ path = "jupyter_collaboration/_version.py"
 ignore = ["W002"]
 
 [tool.hatch.build.targets.sdist.force-include]
+"../../LICENSE" = "LICENSE"
+
+[tool.hatch.build.targets.wheel.force-include]
 "../../LICENSE" = "LICENSE"
