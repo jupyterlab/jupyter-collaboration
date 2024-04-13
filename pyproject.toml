@@ -26,13 +26,7 @@ dev = [
     "jupyter_releaser"
 ]
 test = [
-    "coverage",
-    "jupyter_server[test]>=2.4.0",
-    "jupyter_server_fileid[test]",
-    "pytest>=7.0",
-    "pytest-cov",
-    "websockets",
-    "importlib_metadata >=4.8.3; python_version<'3.10'",
+    "jupyter-server-ydoc[test] @ {root:uri}/projects/jupyter-server-ydoc",
 ]
 docs = [
     "jupyterlab>=4.0.0",
@@ -68,10 +62,10 @@ skip = ["check-links"]
 # `--skip-if-dirty` is a workaround for https://github.com/jupyter-server/jupyter_releaser/issues/567
 version-cmd = "cd ../.. && python scripts/bump_version.py --force --skip-if-dirty"
 python_packages = [
-  "projects/jupyter-server-ydoc:jupyter-server-ydoc",
-  "projects/jupyter-collaboration-ui:jupyter-collaboration-ui",
-  "projects/jupyter-docprovider:jupyter-docprovider",
-  "projects/jupyter-collaboration:jupyter-collaboration"
+    "projects/jupyter-server-ydoc:jupyter-server-ydoc",
+    "projects/jupyter-collaboration-ui:jupyter-collaboration-ui",
+    "projects/jupyter-docprovider:jupyter-docprovider",
+    "projects/jupyter-collaboration:jupyter-collaboration"
 ]
 
 [tool.jupyter-releaser.hooks]

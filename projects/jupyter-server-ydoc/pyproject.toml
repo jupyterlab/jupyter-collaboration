@@ -36,6 +36,17 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[project.optional-dependencies]
+test = [
+    "coverage",
+    "jupyter_server[test]>=2.4.0",
+    "jupyter_server_fileid[test]",
+    "pytest>=7.0",
+    "pytest-cov",
+    "websockets",
+    "importlib_metadata >=4.8.3; python_version<'3.10'",
+]
+
 [tool.hatch.version]
 path = "jupyter_server_ydoc/_version.py"
 
