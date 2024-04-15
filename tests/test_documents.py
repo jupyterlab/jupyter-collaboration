@@ -52,7 +52,7 @@ async def cleanup(jp_serverapp):
 async def cleanup(jp_serverapp):
     # workaround for a shutdown issue of aiosqlite, see
     # https://github.com/jupyterlab/jupyter-collaboration/issues/252
-    await jp_serverapp.web_app.settings["jupyter_collaboration"].stop_extension()
+    await jp_serverapp.web_app.settings["jupyter_server_ydoc"].stop_extension()
     # workaround `jupyter_server_fileid` manager accessing database on GC
     del jp_serverapp.web_app.settings["file_id_manager"]
 
