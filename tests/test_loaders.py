@@ -6,7 +6,7 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, timedelta, timezone
 
-from jupyter_collaboration.loaders import FileLoader, FileLoaderMapping
+from jupyter_server_ydoc.loaders import FileLoader, FileLoaderMapping
 
 from .utils import FakeContentsManager, FakeFileIDManager
 

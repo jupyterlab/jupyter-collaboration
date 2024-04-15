@@ -1,0 +1,7 @@
+# jupyter-server-ydoc
+
+jupyter-server extension integrating collaborative shared models.
+
+The collaborative shared models are used for both:
+- real time collaboration, and
+- server-side execution of notebooks

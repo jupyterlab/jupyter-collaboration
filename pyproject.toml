@@ -6,35 +6,18 @@ build-backend = "hatchling.build"
 requires = ["hatchling>=1.4.0", "hatch-nodejs-version", "jupyterlab>=4.0.0"]
 
 [project]
-name = "jupyter_collaboration"
-readme = "README.md"
-license = { file = "LICENSE" }
+name = "jupyter-collaboration-monorepo"
 requires-python = ">=3.8"
-classifiers = [
-    "Intended Audience :: Developers",
-    "Intended Audience :: System Administrators",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: BSD License",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Framework :: Jupyter",
-    "Framework :: Jupyter :: JupyterLab",
-    "Framework :: Jupyter :: JupyterLab :: 4",
-    "Framework :: Jupyter :: JupyterLab :: Extensions",
-    "Framework :: Jupyter :: JupyterLab :: Extensions :: Prebuilt",
-]
 dependencies = [
-    "jupyter_server>=2.4.0,<3.0.0",
-    "jupyter_ydoc>=2.0.0,<3.0.0",
-    "pycrdt-websocket>=0.12.5,<0.13.0",
-    "jupyter_events>=0.10.0",
-    "jupyter_server_fileid>=0.7.0,<1",
-    "jsonschema>=4.18.0"
+    # jupyter-server extensions
+    "jupyter-server-ydoc @ {root:uri}/projects/jupyter-server-ydoc",
+    # jupyterlab/notebook frontend extensions
+    "jupyter-collaboration-ui @ {root:uri}/projects/jupyter-collaboration-ui",
+    "jupyter-docprovider @ {root:uri}/projects/jupyter-docprovider",
+    # the metapackage
+    "jupyter-collaboration @ {root:uri}/projects/jupyter-collaboration",
 ]
-dynamic = ["version", "description", "authors", "urls", "keywords"]
+dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
@@ -43,13 +26,7 @@ dev = [
     "jupyter_releaser"
 ]
 test = [
-    "coverage",
-    "jupyter_server[test]>=2.4.0",
-    "jupyter_server_fileid[test]",
-    "pytest>=7.0",
-    "pytest-cov",
-    "websockets",
-    "importlib_metadata >=4.8.3; python_version<'3.10'",
+    "jupyter-server-ydoc[test] @ {root:uri}/projects/jupyter-server-ydoc",
 ]
 docs = [
     "jupyterlab>=4.0.0",
@@ -67,43 +44,29 @@ profile = "black"
 [tool.hatch.version]
 source = "nodejs"
 
-[tool.hatch.build.hooks.version]
-path = "jupyter_collaboration/_version.py"
-
-[tool.hatch.metadata.hooks.nodejs]
-fields = ["description", "authors", "urls"]
-
-[tool.hatch.build.targets.sdist]
-artifacts = ["/jupyter_collaboration/labextension"]
-exclude = ["/.github", "/binder", "node_modules"]
-
-[tool.hatch.build.targets.sdist.force-include]
-"./packages" = "packages"
-
-[tool.hatch.build.targets.wheel.shared-data]
-"jupyter_collaboration/labextension" = "share/jupyter/labextensions/@jupyter/collaboration-extension"
-"install.json" = "share/jupyter/labextensions/@jupyter/collaboration-extension/install.json"
-"jupyter-config/jupyter_collaboration.json" = "etc/jupyter/jupyter_server_config.d/jupyter_collaboration.json"
-
-[tool.hatch.build.hooks.jupyter-builder]
-dependencies = ["hatch-jupyter-builder>=0.5"]
-build-function = "hatch_jupyter_builder.npm_builder"
-ensured-targets = [
-    "jupyter_collaboration/labextension/static/style.js",
-    "jupyter_collaboration/labextension/package.json",
+[tool.hatch.build]
+packages = [
+    "projects/jupyter-server-ydoc",
+    "projects/jupyter-collaboration-ui",
+    "projects/jupyter-docprovider",
+    "projects/jupyter-collaboration"
 ]
-skip-if-exists = ["jupyter_collaboration/labextension/static/style.js"]
 
-[tool.hatch.build.hooks.jupyter-builder.build-kwargs]
-npm = ["jlpm"]
-build_cmd = "build:prod"
-editable_build_cmd = "install:extension"
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.jupyter-releaser]
 skip = ["check-links"]
 
 [tool.jupyter-releaser.options]
-version-cmd = "python scripts/bump_version.py --force"
+# `--skip-if-dirty` is a workaround for https://github.com/jupyter-server/jupyter_releaser/issues/567
+version-cmd = "cd ../.. && python scripts/bump_version.py --force --skip-if-dirty"
+python_packages = [
+    "projects/jupyter-server-ydoc:jupyter-server-ydoc",
+    "projects/jupyter-collaboration-ui:jupyter-collaboration-ui",
+    "projects/jupyter-docprovider:jupyter-docprovider",
+    "projects/jupyter-collaboration:jupyter-collaboration"
+]
 
 [tool.jupyter-releaser.hooks]
 before-build-npm = [
@@ -120,9 +83,6 @@ before-bump-version = [
     "python -m pip install -U jupyterlab",
     "jlpm"
 ]
-
-[tool.check-wheel-contents]
-ignore = ["W002"]
 
 [tool.pytest.ini_options]
 addopts = "-raXs --durations 10 --color=yes --doctest-modules"
@@ -148,6 +108,7 @@ filterwarnings = [
 [tool.mypy]
 exclude=[
     "^binder/jupyter_config\\.py$",
+    "/setup\\.py$",
 ]
 check_untyped_defs = true
 disallow_any_generics = false

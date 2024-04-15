@@ -11,16 +11,27 @@ from pkg_resources import parse_version  # type: ignore
 LERNA_CMD = "jlpm run lerna version --no-push --force-publish --no-git-tag-version"
 
 
-@click.command()
-@click.option("--force", default=False, is_flag=True)
-@click.argument("spec", nargs=1)
-def bump(force, spec):
-    status = run("git status --porcelain").strip()
-    if len(status) > 0:
-        raise Exception("Must be in a clean git state with no untracked files")
+def increment_version(current, spec):
+    curr = parse_version(current)
 
-    curr = parse_version(get_version())
-    if spec == "next":
+    if spec == "major":
+        spec = f"{curr.major + 1}.0.0.a0"
+
+    elif spec == "minor":
+        spec = f"{curr.major}.{curr.minor + 1}.0.a0"
+
+    elif spec == "release":
+        p, x = curr.pre
+        if p == "a":
+            p = "b"
+        elif p == "b":
+            p = "rc"
+        elif p == "rc":
+            p = None
+        suffix = f"{p}0" if p else ""
+        spec = f"{curr.major}.{curr.minor}.{curr.micro}{suffix}"
+
+    elif spec == "next":
         spec = f"{curr.major}.{curr.minor}."
         if curr.pre:
             p, x = curr.pre
@@ -34,8 +45,25 @@ def bump(force, spec):
             spec += f"{curr.micro}"
         else:
             spec += f"{curr.micro + 1}"
+    else:
+        raise ValueError("Unknown version spec")
 
-    version = parse_version(spec)
+    return spec
+
+
+@click.command()
+@click.option("--force", default=False, is_flag=True)
+@click.option("--skip-if-dirty", default=False, is_flag=True)
+@click.argument("spec", nargs=1)
+def bump(force, skip_if_dirty, spec):
+    status = run("git status --porcelain").strip()
+    if len(status) > 0:
+        if skip_if_dirty:
+            return
+        raise Exception("Must be in a clean git state with no untracked files")
+
+    current = get_version()
+    version = parse_version(increment_version(current, spec))
 
     # convert the Python version
     js_version = f"{version.major}.{version.minor}.{version.micro}"
@@ -51,6 +79,20 @@ def bump(force, spec):
     run(lerna_cmd)
 
     HERE = Path(__file__).parent.parent.resolve()
+
+    # bump the Python packages
+    for version_file in HERE.glob("projects/**/_version.py"):
+        content = version_file.read_text().splitlines()
+        variable, current = content[0].split(" = ")
+        if variable != "__version__":
+            raise ValueError(
+                f"Version file {version_file} has unexpected content;"
+                f" expected __version__ assignment in the first line, found {variable}"
+            )
+        current = current.strip("'\"")
+        version_spec = increment_version(current, spec)
+        version_file.write_text(f'__version__ = "{version_spec}"\n')
+
     path = HERE.joinpath("package.json")
     if path.exists():
         with path.open(mode="r") as f:

@@ -24,5 +24,6 @@ header:
     - 'coverage'
     - 'LICENSE'
     - 'yarn.lock'
+    - '**/_version.py'
 
   comment: on-failure
