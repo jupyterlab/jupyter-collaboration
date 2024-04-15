@@ -84,7 +84,11 @@ def bump(force, skip_if_dirty, spec):
     for version_file in HERE.glob("projects/**/_version.py"):
         content = version_file.read_text().splitlines()
         variable, current = content[0].split(" = ")
-        assert variable == "__version__"
+        if variable != "__version__":
+            raise ValueError(
+                f"Version file {version_file} has unexpected content;"
+                f" expected __version__ assignment in the first line, found {variable}"
+            )
         current = current.strip("'\"")
         version_spec = increment_version(current, spec)
         version_file.write_text(f'__version__ = "{version_spec}"\n')
