@@ -7,7 +7,7 @@ The recommended way to make a release is to use [`jupyter_releaser`](https://git
 ## Version specification
 
 Here is an example of how version numbers progress through a release process.
-Input appropriate specifier to into the `jupyter-releaser` workflow dispatch dialog to bump version numbers for this release.
+Input appropriate specifier into the `jupyter-releaser` workflow dispatch dialog to bump version numbers for this release.
 
 | Command   | Python Version Change | NPM Version change                 |
 | --------- | --------------------- | ---------------------------------- |
