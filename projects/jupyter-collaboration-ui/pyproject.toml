@@ -1,0 +1,70 @@
+# Copyright (c) Jupyter Development Team.
+# Distributed under the terms of the Modified BSD License.
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling>=1.4.0", "jupyterlab>=4.0.0"]
+
+[project]
+name = "jupyter-collaboration-ui"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.8"
+description = "JupyterLab/Jupyter Notebook 7+ extension providing user interface integration for real time collaboration"
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Framework :: Jupyter",
+    "Framework :: Jupyter :: JupyterLab",
+    "Framework :: Jupyter :: JupyterLab :: 4",
+    "Framework :: Jupyter :: JupyterLab :: Extensions",
+    "Framework :: Jupyter :: JupyterLab :: Extensions :: Prebuilt",
+]
+authors = [
+    { name = "Jupyter Development Team", email = "jupyter@googlegroups.com" },
+]
+dynamic = ["version"]
+
+[project.urls]
+Documentation = "https://jupyterlab-realtime-collaboration.readthedocs.io/"
+Repository = "https://github.com/jupyterlab/jupyter-collaboration"
+
+[tool.hatch.version]
+path = "jupyter_collaboration_ui/_version.py"
+
+[tool.hatch.build.targets.sdist]
+artifacts = ["jupyter_collaboration_ui/labextension"]
+exclude = ["/.github", "/binder", "node_modules"]
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../packages" = "packages"
+
+[tool.hatch.build.targets.wheel.shared-data]
+"jupyter_collaboration_ui/labextension" = "share/jupyter/labextensions/@jupyter/collaboration-extension"
+"install.json" = "share/jupyter/labextensions/@jupyter/collaboration-extension/install.json"
+
+[tool.hatch.build.hooks.jupyter-builder]
+dependencies = ["hatch-jupyter-builder>=0.5"]
+build-function = "hatch_jupyter_builder.npm_builder"
+ensured-targets = [
+    "jupyter_collaboration_ui/labextension/static/style.js",
+    "jupyter_collaboration_ui/labextension/package.json",
+]
+skip-if-exists = ["jupyter_collaboration_ui/labextension/static/style.js"]
+
+[tool.hatch.build.hooks.jupyter-builder.build-kwargs]
+npm = ["jlpm"]
+path = "../.."
+build_cmd = "build:prod"
+editable_build_cmd = "install:extension"
+
+[tool.check-wheel-contents]
+ignore = ["W002"]

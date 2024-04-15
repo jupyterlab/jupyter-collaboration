@@ -10,13 +10,12 @@ from typing import Any
 
 import nbformat
 import pytest
+from jupyter_server_ydoc.loaders import FileLoader
+from jupyter_server_ydoc.rooms import DocumentRoom
+from jupyter_server_ydoc.stores import SQLiteYStore
 from jupyter_ydoc import YNotebook, YUnicode
 from pycrdt_websocket import WebsocketProvider
 from websockets import connect
-
-from jupyter_collaboration.loaders import FileLoader
-from jupyter_collaboration.rooms import DocumentRoom
-from jupyter_collaboration.stores import SQLiteYStore
 
 from .utils import FakeContentsManager, FakeEventLogger, FakeFileIDManager
 
@@ -32,7 +31,7 @@ def rtc_document_save_delay():
 def jp_server_config(jp_root_dir, jp_server_config, rtc_document_save_delay):
     return {
         "ServerApp": {
-            "jpserver_extensions": {"jupyter_collaboration": True, "jupyter_server_fileid": True},
+            "jpserver_extensions": {"jupyter_server_ydoc": True, "jupyter_server_fileid": True},
             "token": "",
             "password": "",
             "disable_check_xsrf": True,

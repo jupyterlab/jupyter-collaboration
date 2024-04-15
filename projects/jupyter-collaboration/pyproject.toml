@@ -1,0 +1,42 @@
+# Copyright (c) Jupyter Development Team.
+# Distributed under the terms of the Modified BSD License.
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling>=1.4.0"]
+
+[project]
+name = "jupyter-collaboration"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.8"
+description = "JupyterLab/Jupyter Notebook 7+ Real Time Collaboration extension (metapackage)"
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Framework :: Jupyter",
+    "Framework :: Jupyter :: JupyterLab",
+    "Framework :: Jupyter :: JupyterLab :: 4",
+    "Framework :: Jupyter :: JupyterLab :: Extensions",
+    "Framework :: Jupyter :: JupyterLab :: Extensions :: Prebuilt",
+]
+dependencies = [
+    "jupyter-server-ydoc>=1.0.0a0",
+    "jupyter-collaboration-ui>=1.0.0a0",
+    "jupyter-docprovider>=1.0.0a0"
+]
+dynamic = ["version"]
+
+[tool.hatch.version]
+path = "jupyter_collaboration/_version.py"
+
+[tool.check-wheel-contents]
+ignore = ["W002"]

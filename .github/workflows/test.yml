@@ -114,7 +114,7 @@ jobs:
       - name: Run the tests with Coverage
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(runner.os, 'Windows') }}
         run: |
-          python -m pytest -vv --cov jupyter_collaboration --cov-branch --cov-report term-missing:skip-covered
+          python -m pytest -vv --cov jupyter_server_ydoc --cov-branch --cov-report term-missing:skip-covered
 
       #- name: Run the tests on pypy
       #  if: ${{ startsWith(matrix.python-version, 'pypy') }}
@@ -126,7 +126,7 @@ jobs:
       - name: Run the tests on Windows
         if: ${{ startsWith(runner.os, 'Windows') }}
         run: |
-          python -W ignore::ImportWarning -m pytest -vv --cov jupyter_collaboration --cov-branch --cov-report term-missing:skip-covered
+          python -W ignore::ImportWarning -m pytest -vv --cov jupyter_server_ydoc --cov-branch --cov-report term-missing:skip-covered
 
       - uses: jupyterlab/maintainer-tools/.github/actions/upload-coverage@v1
 
@@ -136,7 +136,7 @@ jobs:
         run: |
           set -eux
           jupyter server extension list
-          jupyter server extension list 2>&1 | grep -ie "jupyter_collaboration.*OK"
+          jupyter server extension list 2>&1 | grep -ie "jupyter_server_ydoc.*OK"
           jupyter labextension list
           jupyter labextension list 2>&1 | grep -ie "@jupyter/collaboration-extension.*OK"
           python -m jupyterlab.browser_check
@@ -196,7 +196,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
-      - uses: jupyterlab/maintainer-tools/.github/actions/make-sdist@v1
+      - name: Build SDist
+        shell: bash
+        run: |
+          pip install build
+          find projects/* -maxdepth 0 -type d | xargs -L 1 python -m build --sdist --outdir dist/
+      - uses: actions/upload-artifact@v3
+        with:
+          name: "sdist"
+          path: dist/*.tar.gz
 
   test_sdist:
     runs-on: ubuntu-latest
@@ -216,10 +224,11 @@ jobs:
           set -ex
           cd sdist
           mkdir test
-          tar --strip-components=1 -zxvf *.tar.gz -C ./test
+          find *.tar.gz | xargs -L 1 tar -C ./test -zxvf
           cd test
           python -m pip install "jupyterlab>=4.0.0,<5"
-          python -m pip install ".[test]"
+          # install each from source, except for `jupyter_collaboration` metapackage
+          find ./* -maxdepth 0 -type d -not -path './jupyter_collaboration-*' | sed 's/$/[test]/' | xargs -L 1 python -m pip install
           echo "::endgroup::"
 
       - name: Run Test
@@ -228,10 +237,14 @@ jobs:
           echo "::group::Run test"
           set -ex
           cd sdist/test
+
+          # for now only `jupyter_server_ydoc` includes python tests
+          cd jupyter_server_ydoc*
           python -m pytest -vv -raXxs --durations 10 --color=yes
+          cd ..
 
           jupyter server extension list
-          jupyter server extension list 2>&1 | grep -ie "jupyter_collaboration.*OK"
+          jupyter server extension list 2>&1 | grep -ie "jupyter_server_ydoc.*OK"
           jupyter labextension list
           jupyter labextension list 2>&1 | grep -ie "@jupyter/collaboration-extension.*OK"
           python -m jupyterlab.browser_check --no-browser-test

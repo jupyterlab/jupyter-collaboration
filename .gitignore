@@ -9,10 +9,8 @@ node_modules/
 *.tsbuildinfo
 package-lock.json
 docs/source/ts
-jupyter_collaboration/labextension
-
-# Version file is handled by hatchling
-jupyter_collaboration/_version.py
+.jupyter
+labextension
 
 # Integration tests
 ui-tests/test-results/

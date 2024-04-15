@@ -8,24 +8,24 @@
 import { JupyterFrontEndPlugin } from '@jupyterlab/application';
 
 import {
-  userMenuPlugin,
-  menuBarPlugin,
-  rtcGlobalAwarenessPlugin,
-  rtcPanelPlugin,
-  userEditorCursors
-} from './collaboration';
-import { sharedLink } from './sharedlink';
+  drive,
+  yfile,
+  ynotebook,
+  defaultFileBrowser,
+  logger
+} from './filebrowser';
+import { notebookCellExecutor } from './executor';
 
 /**
  * Export the plugins as default.
  */
 const plugins: JupyterFrontEndPlugin<any>[] = [
-  userMenuPlugin,
-  menuBarPlugin,
-  rtcGlobalAwarenessPlugin,
-  rtcPanelPlugin,
-  sharedLink,
-  userEditorCursors
+  drive,
+  yfile,
+  ynotebook,
+  defaultFileBrowser,
+  logger,
+  notebookCellExecutor
 ];
 
 export default plugins;
