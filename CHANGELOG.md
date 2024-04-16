@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 3.0.0alpha0
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@2.0.11...a3b498471ace2b47f430984531ef8b98e68bc40f))
+
+### Enhancements made
+
+- Split up the backend, frontend, and the docprovider [#280](https://github.com/jupyterlab/jupyter-collaboration/pull/280) ([@krassowski](https://github.com/krassowski))
+- Support server-side execution [#279](https://github.com/jupyterlab/jupyter-collaboration/pull/279) ([@davidbrochart](https://github.com/davidbrochart))
+- Add a public API for getting a read-only view of the shared model [#275](https://github.com/jupyterlab/jupyter-collaboration/pull/275) ([@krassowski](https://github.com/krassowski))
+
+### Maintenance and upkeep improvements
+
+- Only include `docprovider` packages in its sdist [#282](https://github.com/jupyterlab/jupyter-collaboration/pull/282) ([@krassowski](https://github.com/krassowski))
+- Workaround shutdown issue with `aiosqlite` for now [#278](https://github.com/jupyterlab/jupyter-collaboration/pull/278) ([@krassowski](https://github.com/krassowski))
+- Fix UI tests [#277](https://github.com/jupyterlab/jupyter-collaboration/pull/277) ([@krassowski](https://github.com/krassowski))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-03-28&to=2024-04-16&type=c))
+
+[@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2024-03-28..2024-04-16&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-03-28..2024-04-16&type=Issues) | [@ellisonbg](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aellisonbg+updated%3A2024-03-28..2024-04-16&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-03-28..2024-04-16&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajtpio+updated%3A2024-03-28..2024-04-16&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2024-03-28..2024-04-16&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AZsailer+updated%3A2024-03-28..2024-04-16&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.11
 
 ### Enhancements made
@@ -15,8 +39,6 @@ All notable changes to this project will be documented in this file.
 - Fix releaser [#268](https://github.com/jupyterlab/jupyter-collaboration/pull/268) ([@davidbrochart](https://github.com/davidbrochart))
 - Fix slow room opening [#264](https://github.com/jupyterlab/jupyter-collaboration/pull/264) ([@davidbrochart](https://github.com/davidbrochart))
 - Use WebSocket \_room_id attribute directly [#266](https://github.com/jupyterlab/jupyter-collaboration/pull/266) ([@davidbrochart](https://github.com/davidbrochart))
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.10
 
