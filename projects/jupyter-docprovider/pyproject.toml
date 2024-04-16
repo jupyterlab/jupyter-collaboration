@@ -45,7 +45,8 @@ artifacts = ["jupyter_docprovider/labextension"]
 exclude = ["/.github", "/binder", "node_modules"]
 
 [tool.hatch.build.targets.sdist.force-include]
-"../../packages" = "packages"
+"../../packages/docprovider" = "packages/docprovider"
+"../../packages/docprovider-extension" = "packages/docprovider-extension"
 
 [tool.hatch.build.targets.wheel.shared-data]
 "jupyter_docprovider/labextension" = "share/jupyter/labextensions/@jupyter/docprovider-extension"
