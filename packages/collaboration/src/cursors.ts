@@ -4,8 +4,10 @@
 import {
   Annotation,
   EditorSelection,
+  EditorState,
   Extension,
-  Facet
+  Facet,
+  StateField,
 } from '@codemirror/state';
 import {
   EditorView,
@@ -15,7 +17,9 @@ import {
   RectangleMarker,
   tooltips,
   ViewPlugin,
-  ViewUpdate
+  ViewUpdate,
+  Tooltip,
+  showTooltip,
 } from '@codemirror/view';
 import { User } from '@jupyterlab/services';
 import { JSONExt } from '@lumino/coreutils';
@@ -277,6 +281,92 @@ const userHover = hoverTooltip(
 );
 
 /**
+ * Extension displaying display name on the cursor currently typing
+ */
+// const userTypingTooltipField = StateField.define<readonly Tooltip[]>({
+//   create: (state) => getUserTypingTooltips(state),
+//   update: (tooltips, tr) => {
+//     if (!tr.docChanged && !tr.selection) return tooltips;
+//     return getUserTypingTooltips(tr.state);
+//   },
+//   provide: (f) => showTooltip.computeN([f], (state) => state.field(f)),
+// });
+
+// function getUserTypingTooltips(state: EditorState): readonly Tooltip[] {
+//   const { awareness, ytext } = state.facet(editorAwarenessFacet);
+//     const ydoc = ytext.doc!;
+
+//     for (const [clientID, state] of awareness.getStates()) {
+//       if (clientID === awareness.doc.clientID) {
+//         continue;
+//       }
+
+//       for (const cursor of state.cursors ?? []) {
+//         if (!cursor?.head) {
+//           continue;
+//         }
+//         const head = createAbsolutePositionFromRelativePosition(
+//           cursor.head,
+//           ydoc
+//         );
+//         if (head?.type !== ytext) {
+//           continue;
+//         }
+//         // Use some margin around the cursor to display the user.
+//         //if (head.index - 3 <= pos && pos <= head.index + 3) {
+//           return {
+//             //pos: head.index,
+//             above: true,
+//             create: () => {
+//               const dom = document.createElement('div');
+//               dom.classList.add('jp-remote-userInfo');
+//               dom.style.backgroundColor = state.user?.color ?? 'darkgrey';
+//               dom.textContent =
+//                 (state as IAwarenessState).user?.display_name ?? 'Anonymous';
+//               return { dom };
+//             }
+//           };
+//         //}
+//       }
+//     }
+
+//     return [];
+// }
+const collaboratorNameTooltipField = StateField.define<readonly Tooltip[]>({
+  create: (state) => getCollaboratorNameTooltips(state),
+  update: (tooltips, tr) => {
+    if (!tr.docChanged && !tr.selection) return tooltips;
+    return getCollaboratorNameTooltips(tr.state);
+  },
+  provide: (f) => showTooltip.computeN([f], (state) => state.field(f)),
+});
+
+function getCollaboratorNameTooltips(state: EditorState): readonly Tooltip[] {
+  const { awareness } = state.facet(editorAwarenessFacet);
+  const tooltips: Tooltip[] = [];
+
+  for (const [clientID, clientState] of awareness.getStates()) {
+    if (clientID === awareness.doc.clientID) continue;
+
+    const cursor = clientState.cursors?.[0];
+    if (cursor?.head) {
+      tooltips.push({
+        pos: cursor.head.index,
+        above: true,
+        create: () => {
+          const dom = document.createElement("div");
+          dom.classList.add("jp-remote-userInfo");
+          dom.style.backgroundColor = clientState.user?.color ?? "darkgrey";
+          dom.textContent = clientState.user?.display_name ?? "Anonymous";
+          return { dom };
+        },
+      });
+    }
+  }
+
+  return tooltips;
+}
+/**
  * Extension defining a new editor layer storing the remote selections
  */
 const remoteSelectionLayer = layer({
@@ -428,6 +518,8 @@ const showCollaborators = ViewPlugin.fromClass(
         remoteCursorsLayer,
         remoteSelectionLayer,
         userHover,
+        //userTypingTooltipField,
+        collaboratorNameTooltipField,
         // As we use relative positioning of widget, the tooltip must be positioned absolutely
         // And we attach the tooltip to the body to avoid overflow rules
         tooltips({ position: 'absolute', parent: document.body })
