@@ -118,10 +118,17 @@ export class CollaboratorsBody extends ReactWidget {
         canOpenCurrent = true;
         const path = value.current.split(':');
         currentFileLocation = `${path[1]}:${path[2]}`;
+      }
+      if (value.documents) {
+        const documents = value.documents.map(document => {
+          const path = document.split(':');
 
-        current = PathExt.basename(path[2]);
-        current =
-          current.length > 25 ? current.slice(0, 12).concat('…') : current;
+          current = PathExt.basename(path[1]);
+          return current.length > 25
+            ? current.slice(0, 12).concat('…')
+            : current;
+        });
+        current = documents.join(' ; ');
         separator = '•';
       }
 

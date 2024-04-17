@@ -13,6 +13,7 @@ import {
   ISharedModelFactory,
   SharedDocumentFactory
 } from './tokens';
+import { Awareness } from 'y-protocols/awareness';
 
 const DISABLE_RTC =
   PageConfig.getOption('disableRTC') === 'true' ? true : false;
@@ -32,10 +33,15 @@ export class YDrive extends Drive implements ICollaborativeDrive {
    *
    * @param user - The user manager to add the identity to the awareness of documents.
    */
-  constructor(user: User.IManager, translator: TranslationBundle) {
+  constructor(
+    user: User.IManager,
+    translator: TranslationBundle,
+    globalAwareness: Awareness | null
+  ) {
     super({ name: 'RTC' });
     this._user = user;
     this._trans = translator;
+    this._globalAwareness = globalAwareness;
     this._providers = new Map<string, WebSocketProvider>();
 
     this.sharedModelFactory = new SharedModelFactory(this._onCreate);
@@ -144,6 +150,14 @@ export class YDrive extends Drive implements ICollaborativeDrive {
         translator: this._trans
       });
 
+      // Add the document path in the list of opened ones for this user.
+      const state = this._globalAwareness?.getLocalState() || {};
+      const documents: any[] = state.documents || [];
+      if (!documents.includes(options.path)) {
+        documents.push(`${this.name}:${options.path}`);
+        this._globalAwareness?.setLocalStateField('documents', documents);
+      }
+
       const key = `${options.format}:${options.contentType}:${options.path}`;
       this._providers.set(key, provider);
 
@@ -153,6 +167,15 @@ export class YDrive extends Drive implements ICollaborativeDrive {
           provider.dispose();
           this._providers.delete(key);
         }
+
+        // Remove the document path from the list of opened ones for this user.
+        const state = this._globalAwareness?.getLocalState() || {};
+        const documents: any[] = state.documents || [];
+        const index = documents.indexOf(`${this.name}:${options.path}`);
+        if (index > -1) {
+          documents.splice(index, 1);
+        }
+        this._globalAwareness?.setLocalStateField('documents', documents);
       });
     } catch (error) {
       // Falling back to the contents API if opening the websocket failed
@@ -166,6 +189,7 @@ export class YDrive extends Drive implements ICollaborativeDrive {
   private _user: User.IManager;
   private _trans: TranslationBundle;
   private _providers: Map<string, WebSocketProvider>;
+  private _globalAwareness: Awareness | null;
 }
 
 /**
