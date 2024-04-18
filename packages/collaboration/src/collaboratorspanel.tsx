@@ -1,17 +1,17 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import * as React from 'react';
-
-import { Awareness } from 'y-protocols/awareness';
-
-import { Panel } from '@lumino/widgets';
-
 import { ReactWidget } from '@jupyterlab/apputils';
 
 import { User } from '@jupyterlab/services';
 
-import { PathExt } from '@jupyterlab/coreutils';
+import { Signal, ISignal } from '@lumino/signaling';
+
+import { Panel } from '@lumino/widgets';
+
+import React, { useState } from 'react';
+
+import { Awareness } from 'y-protocols/awareness';
 
 import { ICollaboratorAwareness } from './tokens';
 
@@ -40,11 +40,22 @@ const CLICKABLE_COLLABORATOR_CLASS = 'jp-ClickableCollaborator';
  */
 const COLLABORATOR_ICON_CLASS = 'jp-CollaboratorIcon';
 
-export class CollaboratorsPanel extends Panel {
-  private _currentUser: User.IManager;
-  private _awareness: Awareness;
-  private _body: CollaboratorsBody;
+/**
+ * The CSS class added to the files list.
+ */
+const COLLABORATOR_FILES_CLASS = 'jp-CollaboratorFiles';
 
+/**
+ * The CSS class added to the files in the list.
+ */
+const COLLABORATOR_FILE_CLASS = 'jp-CollaboratorFile';
+
+/**
+ * The CSS class added to the file opened in main area of the collaborator.
+ */
+const COLLABORATOR_MAIN_FILE_CLASS = 'jp-CollaboratorMainFile';
+
+export class CollaboratorsPanel extends Panel {
   constructor(
     currentUser: User.IManager,
     awareness: Awareness,
@@ -58,9 +69,14 @@ export class CollaboratorsPanel extends Panel {
 
     this.addClass(COLLABORATORS_PANEL_CLASS);
 
-    this._body = new CollaboratorsBody(fileopener);
-    this.addWidget(this._body);
-    this.update();
+    this.addWidget(
+      ReactWidget.create(
+        <CollaboratorsBody
+          fileopener={fileopener}
+          collaboratorsChanged={this._collaboratorsChanged}
+        ></CollaboratorsBody>
+      )
+    );
 
     this._awareness.on('change', this._onAwarenessChanged);
   }
@@ -80,85 +96,113 @@ export class CollaboratorsPanel extends Panel {
         collaborators.push(value);
       }
     });
-
-    this._body.collaborators = collaborators;
+    this._collaboratorsChanged.emit(collaborators);
   };
+  private _currentUser: User.IManager;
+  private _awareness: Awareness;
+  private _collaboratorsChanged = new Signal<this, ICollaboratorAwareness[]>(
+    this
+  );
 }
 
-/**
- * The collaborators list.
- */
-export class CollaboratorsBody extends ReactWidget {
-  private _collaborators: ICollaboratorAwareness[] = [];
-  private _fileopener: (path: string) => void;
+export function CollaboratorsBody(props: {
+  fileopener: (path: string) => void;
+  collaboratorsChanged: ISignal<CollaboratorsPanel, ICollaboratorAwareness[]>;
+}): JSX.Element {
+  const [collaborators, setCollaborators] = useState<ICollaboratorAwareness[]>(
+    []
+  );
 
-  constructor(fileopener: (path: string) => void) {
-    super();
-    this._fileopener = fileopener;
-    this.addClass(COLLABORATORS_LIST_CLASS);
+  props.collaboratorsChanged.connect((_, value) => {
+    setCollaborators(value);
+  });
+
+  return (
+    <div className={COLLABORATORS_LIST_CLASS}>
+      {collaborators.map((collaborator, i) => {
+        return (
+          <Collaborator
+            collaborator={collaborator}
+            fileopener={props.fileopener}
+          ></Collaborator>
+        );
+      })}
+    </div>
+  );
+}
+
+export function Collaborator(props: {
+  collaborator: ICollaboratorAwareness;
+  fileopener: (path: string) => void;
+}): JSX.Element {
+  const [open, setOpen] = useState<boolean>(false);
+  const { collaborator, fileopener } = props;
+  let currentMain = '';
+
+  if (collaborator.current) {
+    const path = collaborator.current.split(':');
+    currentMain = `${path[1]}:${path[2]}`;
   }
 
-  get collaborators(): ICollaboratorAwareness[] {
-    return this._collaborators;
-  }
+  const documents: string[] = collaborator.documents || [];
+  const docs = documents.map(document => {
+    const path = document.split(':');
 
-  set collaborators(value: ICollaboratorAwareness[]) {
-    this._collaborators = value;
-    this.update();
-  }
+    return {
+      filename:
+        path[1].length > 40
+          ? path[1]
+              .slice(0, 10)
+              .concat('…')
+              .concat(path[1].slice(path[1].length - 20))
+          : path[1],
+      fileLocation: document
+    };
+  });
 
-  render(): React.ReactElement<any>[] {
-    return this._collaborators.map((value, i) => {
-      let canOpenCurrent = false;
-      let current = '';
-      let separator = '';
-      let currentFileLocation = '';
+  const onClick = () => {
+    setOpen(!open);
+  };
 
-      if (value.current) {
-        canOpenCurrent = true;
-        const path = value.current.split(':');
-        currentFileLocation = `${path[1]}:${path[2]}`;
-      }
-      if (value.documents) {
-        const documents = value.documents.map(document => {
-          const path = document.split(':');
-
-          current = PathExt.basename(path[1]);
-          return current.length > 25
-            ? current.slice(0, 12).concat('…')
-            : current;
-        });
-        current = documents.join(' ; ');
-        separator = '•';
-      }
-
-      const onClick = () => {
-        if (canOpenCurrent) {
-          this._fileopener(currentFileLocation);
+  return (
+    <div>
+      <div
+        className={
+          documents
+            ? `${CLICKABLE_COLLABORATOR_CLASS} ${COLLABORATOR_CLASS}`
+            : COLLABORATOR_CLASS
         }
-      };
-
-      const displayName = `${value.user.display_name} ${separator} ${current}`;
-
-      return (
+        onClick={onClick}
+      >
         <div
-          className={
-            canOpenCurrent
-              ? `${CLICKABLE_COLLABORATOR_CLASS} ${COLLABORATOR_CLASS}`
-              : COLLABORATOR_CLASS
-          }
-          key={i}
-          onClick={onClick}
+          className={COLLABORATOR_ICON_CLASS}
+          style={{ backgroundColor: collaborator.user.color }}
         >
-          <div
-            className={COLLABORATOR_ICON_CLASS}
-            style={{ backgroundColor: value.user.color }}
-          >
-            <span>{value.user.initials}</span>
-          </div>
-          <span>{displayName}</span>
+          <span>{collaborator.user.initials}</span>
         </div>
-      );
-    });
-  }
+        <span>{collaborator.user.display_name}</span>
+      </div>
+
+      <ul
+        className={COLLABORATOR_FILES_CLASS}
+        style={open ? { display: 'block' } : {}}
+      >
+        {docs.map(doc => {
+          return (
+            <li
+              className={
+                doc.fileLocation === currentMain
+                  ? `${COLLABORATOR_FILE_CLASS} ${COLLABORATOR_MAIN_FILE_CLASS}`
+                  : COLLABORATOR_FILE_CLASS
+              }
+              key={doc.filename}
+              onClick={() => fileopener(doc.fileLocation)}
+            >
+              {doc.filename}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
 }

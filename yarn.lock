@@ -2122,6 +2122,7 @@ __metadata:
     "@jupyterlab/services": ^7.0.5
     "@jupyterlab/ui-components": ^4.0.5
     "@lumino/coreutils": ^2.1.0
+    "@lumino/signaling": ^2.0.0
     "@lumino/virtualdom": ^2.0.0
     "@lumino/widgets": ^2.1.0
     "@types/react": ^18.0.27
@@ -3273,7 +3274,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lumino/signaling@npm:^1.10.0 || ^2.0.0, @lumino/signaling@npm:^2.1.0, @lumino/signaling@npm:^2.1.2":
+"@lumino/signaling@npm:^1.10.0 || ^2.0.0, @lumino/signaling@npm:^2.0.0, @lumino/signaling@npm:^2.1.0, @lumino/signaling@npm:^2.1.2":
   version: 2.1.2
   resolution: "@lumino/signaling@npm:2.1.2"
   dependencies:
