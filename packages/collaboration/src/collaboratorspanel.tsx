@@ -3,7 +3,11 @@
 
 import { ReactWidget } from '@jupyterlab/apputils';
 
+import { DocumentRegistry } from '@jupyterlab/docregistry';
+
 import { User } from '@jupyterlab/services';
+
+import { LabIcon, fileIcon } from '@jupyterlab/ui-components';
 
 import { Signal, ISignal } from '@lumino/signaling';
 
@@ -50,16 +54,12 @@ const COLLABORATOR_FILES_CLASS = 'jp-CollaboratorFiles';
  */
 const COLLABORATOR_FILE_CLASS = 'jp-CollaboratorFile';
 
-/**
- * The CSS class added to the file opened in main area of the collaborator.
- */
-const COLLABORATOR_MAIN_FILE_CLASS = 'jp-CollaboratorMainFile';
-
 export class CollaboratorsPanel extends Panel {
   constructor(
     currentUser: User.IManager,
     awareness: Awareness,
-    fileopener: (path: string) => void
+    fileopener: (path: string) => void,
+    docRegistry?: DocumentRegistry
   ) {
     super({});
 
@@ -74,6 +74,7 @@ export class CollaboratorsPanel extends Panel {
         <CollaboratorsBody
           fileopener={fileopener}
           collaboratorsChanged={this._collaboratorsChanged}
+          docRegistry={docRegistry}
         ></CollaboratorsBody>
       )
     );
@@ -106,8 +107,9 @@ export class CollaboratorsPanel extends Panel {
 }
 
 export function CollaboratorsBody(props: {
-  fileopener: (path: string) => void;
   collaboratorsChanged: ISignal<CollaboratorsPanel, ICollaboratorAwareness[]>;
+  fileopener: (path: string) => void;
+  docRegistry?: DocumentRegistry;
 }): JSX.Element {
   const [collaborators, setCollaborators] = useState<ICollaboratorAwareness[]>(
     []
@@ -124,6 +126,7 @@ export function CollaboratorsBody(props: {
           <Collaborator
             collaborator={collaborator}
             fileopener={props.fileopener}
+            docRegistry={props.docRegistry}
           ></Collaborator>
         );
       })}
@@ -134,6 +137,7 @@ export function CollaboratorsBody(props: {
 export function Collaborator(props: {
   collaborator: ICollaboratorAwareness;
   fileopener: (path: string) => void;
+  docRegistry?: DocumentRegistry;
 }): JSX.Element {
   const [open, setOpen] = useState<boolean>(false);
   const { collaborator, fileopener } = props;
@@ -147,6 +151,19 @@ export function Collaborator(props: {
   const documents: string[] = collaborator.documents || [];
   const docs = documents.map(document => {
     const path = document.split(':');
+    const ft = props.docRegistry?.fileTypes();
+    if (ft) {
+      Array.from(ft).forEach(f => {
+        console.log(f);
+      });
+    }
+    const fileTypes = props.docRegistry
+      ?.getFileTypesForPath(path[1])
+      ?.filter(ft => ft.icon !== undefined);
+    const icon = fileTypes ? fileTypes[0].icon! : fileIcon;
+    const iconClass: string | undefined = fileTypes
+      ? fileTypes[0].iconClass
+      : undefined;
 
     return {
       filename:
@@ -156,7 +173,9 @@ export function Collaborator(props: {
               .concat('…')
               .concat(path[1].slice(path[1].length - 20))
           : path[1],
-      fileLocation: document
+      fileLocation: document,
+      icon,
+      iconClass
     };
   });
 
@@ -182,27 +201,36 @@ export function Collaborator(props: {
         </div>
         <span>{collaborator.user.display_name}</span>
       </div>
-
-      <ul
-        className={COLLABORATOR_FILES_CLASS}
-        style={open ? { display: 'block' } : {}}
+      <div
+        className={`${COLLABORATOR_FILES_CLASS} jp-DirListing`}
+        style={open ? {} : { display: 'none' }}
       >
-        {docs.map(doc => {
-          return (
-            <li
-              className={
-                doc.fileLocation === currentMain
-                  ? `${COLLABORATOR_FILE_CLASS} ${COLLABORATOR_MAIN_FILE_CLASS}`
-                  : COLLABORATOR_FILE_CLASS
-              }
-              key={doc.filename}
-              onClick={() => fileopener(doc.fileLocation)}
-            >
-              {doc.filename}
-            </li>
-          );
-        })}
-      </ul>
+        <ul className={'jp-DirListing-content'}>
+          {docs.map(doc => {
+            return (
+              <li
+                className={
+                  'jp-DirListing-item ' +
+                  (doc.fileLocation === currentMain
+                    ? `${COLLABORATOR_FILE_CLASS} jp-mod-running`
+                    : COLLABORATOR_FILE_CLASS)
+                }
+                key={doc.filename}
+                onClick={() => fileopener(doc.fileLocation)}
+              >
+                <LabIcon.resolveReact
+                  icon={doc.icon}
+                  iconClass={doc.iconClass}
+                  tag={'span'}
+                  className={'jp-DirListing-itemIcon'}
+                  stylesheet={'listing'}
+                />
+                <span className={'jp-DirListing-itemText'}>{doc.filename}</span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </div>
   );
 }

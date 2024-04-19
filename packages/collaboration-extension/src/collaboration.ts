@@ -161,7 +161,8 @@ export const rtcPanelPlugin: JupyterFrontEndPlugin<void> = {
     const collaboratorsPanel = new CollaboratorsPanel(
       user,
       awareness,
-      fileopener
+      fileopener,
+      app.docRegistry
     );
     collaboratorsPanel.title.label = trans.__('Online Collaborators');
     userPanel.addWidget(collaboratorsPanel);
