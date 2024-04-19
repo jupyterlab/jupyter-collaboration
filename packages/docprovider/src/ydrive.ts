@@ -215,6 +215,7 @@ export class YDrive extends Drive implements ICollaborativeDrive {
         });
       });
 
+      sharedModel.provider = provider;
       sharedModel.disposed.connect(() => {
         const provider = this._providers.get(key);
         if (provider) {
