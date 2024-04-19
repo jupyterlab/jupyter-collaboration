@@ -159,15 +159,9 @@ export function Collaborator(props: {
   }
 
   const documents: string[] = collaborator.documents || [];
-  console.log(documents);
+
   const docs = documents.map(document => {
     const path = document.split(':');
-    const ft = props.docRegistry?.fileTypes();
-    if (ft) {
-      Array.from(ft).forEach(f => {
-        console.log(f);
-      });
-    }
     const fileTypes = props.docRegistry
       ?.getFileTypesForPath(path[1])
       ?.filter(ft => ft.icon !== undefined);
@@ -190,7 +184,7 @@ export function Collaborator(props: {
       iconClass
     };
   });
-  console.log('DOCS', docs);
+
   const onClick = () => {
     if (docs.length) {
       setOpen(!open);
