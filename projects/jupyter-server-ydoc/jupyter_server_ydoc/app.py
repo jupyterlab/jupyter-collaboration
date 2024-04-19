@@ -12,7 +12,7 @@ from pycrdt import Doc
 from pycrdt_websocket.ystore import BaseYStore
 from traitlets import Bool, Float, Type
 
-from .handlers import DocSessionHandler, YDocWebSocketHandler
+from .handlers import DocForkHandler, DocDeleteHandler, DocMergeHandler, DocSessionHandler, YDocWebSocketHandler
 from .loaders import FileLoaderMapping
 from .rooms import DocumentRoom
 from .stores import SQLiteYStore
@@ -131,6 +131,27 @@ class YDocExtension(ExtensionApp):
                     },
                 ),
                 (r"/api/collaboration/session/(.*)", DocSessionHandler),
+                (
+                    r"/api/collaboration/fork_room/(.*)",
+                    DocForkHandler,
+                    {
+                        "ywebsocket_server": self.ywebsocket_server,
+                    }
+                ),
+                (
+                    r"/api/collaboration/merge_room",
+                    DocMergeHandler,
+                    {
+                        "ywebsocket_server": self.ywebsocket_server,
+                    }
+                ),
+                (
+                    r"/api/collaboration/delete_room",
+                    DocDeleteHandler,
+                    {
+                        "ywebsocket_server": self.ywebsocket_server,
+                    }
+                ),
             ]
         )
 
