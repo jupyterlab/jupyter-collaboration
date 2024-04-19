@@ -7,7 +7,7 @@ import { DocumentRegistry } from '@jupyterlab/docregistry';
 
 import { User } from '@jupyterlab/services';
 
-import { LabIcon, fileIcon } from '@jupyterlab/ui-components';
+import { LabIcon, caretDownIcon, fileIcon } from '@jupyterlab/ui-components';
 
 import { Signal, ISignal } from '@lumino/signaling';
 
@@ -35,7 +35,17 @@ const COLLABORATORS_LIST_CLASS = 'jp-CollaboratorsList';
 const COLLABORATOR_CLASS = 'jp-Collaborator';
 
 /**
- * The CSS class added to each collaborator element.
+ * The CSS class added to each collaborator header.
+ */
+const COLLABORATOR_HEADER_CLASS = 'jp-CollaboratorHeader';
+
+/**
+ * The CSS class added to each collaborator header collapser.
+ */
+const COLLABORATOR_HEADER_COLLAPSER_CLASS = 'jp-CollaboratorHeaderCollapser';
+
+/**
+ * The CSS class added to each collaborator header with document.
  */
 const CLICKABLE_COLLABORATOR_CLASS = 'jp-ClickableCollaborator';
 
@@ -166,12 +176,13 @@ export function Collaborator(props: {
       : undefined;
 
     return {
+      filepath: path[1],
       filename:
         path[1].length > 40
           ? path[1]
               .slice(0, 10)
               .concat('…')
-              .concat(path[1].slice(path[1].length - 20))
+              .concat(path[1].slice(path[1].length - 15))
           : path[1],
       fileLocation: document,
       icon,
@@ -184,15 +195,23 @@ export function Collaborator(props: {
   };
 
   return (
-    <div>
+    <div className={COLLABORATOR_CLASS}>
       <div
         className={
           documents
-            ? `${CLICKABLE_COLLABORATOR_CLASS} ${COLLABORATOR_CLASS}`
-            : COLLABORATOR_CLASS
+            ? `${CLICKABLE_COLLABORATOR_CLASS} ${COLLABORATOR_HEADER_CLASS}`
+            : COLLABORATOR_HEADER_CLASS
         }
-        onClick={onClick}
+        onClick={documents ? onClick : undefined}
       >
+        <LabIcon.resolveReact
+          icon={caretDownIcon}
+          className={
+            COLLABORATOR_HEADER_COLLAPSER_CLASS +
+            (open ? ' jp-mod-expanded' : '')
+          }
+          tag={'div'}
+        />
         <div
           className={COLLABORATOR_ICON_CLASS}
           style={{ backgroundColor: collaborator.user.color }}
@@ -225,7 +244,9 @@ export function Collaborator(props: {
                   className={'jp-DirListing-itemIcon'}
                   stylesheet={'listing'}
                 />
-                <span className={'jp-DirListing-itemText'}>{doc.filename}</span>
+                <span className={'jp-DirListing-itemText'} title={doc.filepath}>
+                  {doc.filename}
+                </span>
               </li>
             );
           })}
