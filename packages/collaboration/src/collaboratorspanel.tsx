@@ -159,6 +159,7 @@ export function Collaborator(props: {
   }
 
   const documents: string[] = collaborator.documents || [];
+  console.log(documents);
   const docs = documents.map(document => {
     const path = document.split(':');
     const ft = props.docRegistry?.fileTypes();
@@ -189,16 +190,18 @@ export function Collaborator(props: {
       iconClass
     };
   });
-
+  console.log('DOCS', docs);
   const onClick = () => {
-    setOpen(!open);
+    if (docs.length) {
+      setOpen(!open);
+    }
   };
 
   return (
     <div className={COLLABORATOR_CLASS}>
       <div
         className={
-          documents
+          docs.length
             ? `${CLICKABLE_COLLABORATOR_CLASS} ${COLLABORATOR_HEADER_CLASS}`
             : COLLABORATOR_HEADER_CLASS
         }

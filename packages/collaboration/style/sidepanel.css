@@ -106,14 +106,14 @@
   color: var(--jp-ui-font-color0);
 }
 
-.jp-CollaboratorHeader:not(.jp-ClickableCollaborator) .jp-CollaboratorHeaderCollapser {
-  visibility: hidden;
-}
-
 .jp-CollaboratorHeaderCollapser {
   transform: rotate(-90deg);
   margin: auto 0;
   height: 16px;
+}
+
+.jp-CollaboratorHeader:not(.jp-ClickableCollaborator) .jp-CollaboratorHeaderCollapser {
+  visibility: hidden;
 }
 
 .jp-CollaboratorHeaderCollapser.jp-mod-expanded {
