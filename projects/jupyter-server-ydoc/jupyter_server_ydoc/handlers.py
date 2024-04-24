@@ -70,9 +70,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         task.add_done_callback(self._background_tasks.discard)
 
     async def prepare(self):
-        if not self._websocket_server.started.is_set():
-            self.create_task(self._websocket_server.start())
-            await self._websocket_server.started.wait()
+        await self._websocket_server.started.wait()
 
         # Get room
         self._room_id: str = room_id_from_encoded_path(self.request.path)

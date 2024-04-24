@@ -10,7 +10,8 @@ from jupyter_ydoc import ydocs as YDOCS
 from jupyter_ydoc.ybasedoc import YBaseDoc
 from pycrdt import Doc
 from pycrdt_websocket.ystore import BaseYStore
-from traitlets import Bool, Float, Type
+from pycrdt_websocket.websocket_server import exception_logger
+from traitlets import Bool, Float, Type, Set, Instance
 
 from .handlers import DocSessionHandler, YDocWebSocketHandler
 from .loaders import FileLoaderMapping
@@ -23,7 +24,6 @@ from .utils import (
     room_id_from_encoded_path,
 )
 from .websocketserver import JupyterWebsocketServer, RoomNotFound
-
 
 class YDocExtension(ExtensionApp):
     name = "jupyter_server_ydoc"
@@ -75,6 +75,10 @@ class YDocExtension(ExtensionApp):
         model.""",
     )
 
+    _running_ywebsocket_server = Instance(asyncio.Task, allow_none=True)
+    ywebsocket_server = Instance(JupyterWebsocketServer, allow_none=True)
+
+
     def initialize(self):
         super().initialize()
         self.serverapp.event_logger.register_event_schema(EVENTS_SCHEMA_PATH)
@@ -90,6 +94,14 @@ class YDocExtension(ExtensionApp):
             }
         )
 
+        self.ywebsocket_server = JupyterWebsocketServer(
+            rooms_ready=False,
+            auto_clean_rooms=False,
+            ystore_class=self.ystore_class,
+            log=self.log,
+            exception_logger=exception_logger
+        )
+
     def initialize_handlers(self):
         self.serverapp.web_app.settings.setdefault(
             "page_config_data",
@@ -102,13 +114,6 @@ class YDocExtension(ExtensionApp):
         # Set configurable parameters to YStore class
         for k, v in self.config.get(self.ystore_class.__name__, {}).items():
             setattr(self.ystore_class, k, v)
-
-        self.ywebsocket_server = JupyterWebsocketServer(
-            rooms_ready=False,
-            auto_clean_rooms=False,
-            ystore_class=self.ystore_class,
-            log=self.log,
-        )
 
         # self.settings is local to the ExtensionApp but here we need
         # the global app settings in which the file id manager will register
@@ -133,6 +138,14 @@ class YDocExtension(ExtensionApp):
                 (r"/api/collaboration/session/(.*)", DocSessionHandler),
             ]
         )
+
+    async def start_extension(self):
+        """Start the y-websocket server.
+        """
+        self.log.info("Starting the Collaborative Document Server.")
+
+        # Start the websocket server
+        self._running_ywebsocket_server = asyncio.create_task(self.ywebsocket_server.start())
 
     async def get_document(
         self: YDocExtension,
