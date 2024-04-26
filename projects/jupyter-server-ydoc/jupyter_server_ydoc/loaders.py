@@ -74,7 +74,10 @@ class FileLoader:
         if self._watcher is not None:
             if not self._watcher.cancelled():
                 self._watcher.cancel()
-            await self._watcher
+            try:
+                await self._watcher
+            except asyncio.CancelledError:
+                self._log.info(f"file watcher for '{self.file_id}' is cancelled now")
 
     def observe(self, id: str, callback: Callable[[], Coroutine[Any, Any, None]]) -> None:
         """
