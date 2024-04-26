@@ -139,7 +139,10 @@ class DocumentRoom(BaseRoom):
 
         Cancels the save task and unsubscribes from the file.
         """
-        await super().stop()
+        try:
+            await super().stop()
+        except RuntimeError:
+            pass
         # TODO: Should we cancel or wait ?
         if self._saving_document:
             self._saving_document.cancel()
@@ -280,4 +283,13 @@ class TransientRoom(YRoom):
         try:
             await super()._broadcast_updates()
         except asyncio.CancelledError:
+            pass
+
+    async def stop(self) -> None:
+        """
+        Stop the room.
+        """
+        try:
+            await super().stop()
+        except RuntimeError:
             pass

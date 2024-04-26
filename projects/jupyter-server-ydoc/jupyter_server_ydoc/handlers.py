@@ -10,6 +10,7 @@ from typing import Any
 
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
+from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS
 from pycrdt_websocket.websocket_server import YRoom
 from pycrdt_websocket.ystore import BaseYStore
@@ -71,6 +72,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         task.add_done_callback(self._background_tasks.discard)
 
     async def prepare(self):
+        await ensure_async(super().prepare())
         if not self._websocket_server.started.is_set():
             self.create_task(self._websocket_server.start())
             await self._websocket_server.started.wait()
@@ -111,12 +113,26 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     # it is a transient document (e.g. awareness)
                     self.room = TransientRoom(self._room_id, self.log)
 
-            await self._websocket_server.start_room(self.room)
-            self._websocket_server.add_room(self._room_id, self.room)
+            try:
+                await self._websocket_server.start_room(self.room)
+            except Exception as e:
+                self.log.error("Room %s failed to start on websocket server", self._room_id)
+                # Clean room
+                await self.room.stop()
+                self.log.info("Room %s deleted", self._room_id)
+                self._emit(LogLevel.INFO, "clean", "Room deleted.")
 
-        res = super().prepare()
-        if res is not None:
-            return await res
+                # Clean the file loader in file loader mapping if there are not any rooms using it
+                _, _, file_id = decode_file_path(self._room_id)
+                file = self._file_loaders[file_id]
+                if file.number_of_subscriptions == 0 or (
+                    file.number_of_subscriptions == 1 and self._room_id in file._subscriptions
+                ):
+                    self.log.info("Deleting file %s", file.path)
+                    await self._file_loaders.remove(file_id)
+                    self._emit(LogLevel.INFO, "clean", "file loader removed.")
+                raise e
+            self._websocket_server.add_room(self._room_id, self.room)
 
     def initialize(
         self,
@@ -134,6 +150,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
         self._serve_task: asyncio.Task | None = None
         self._message_queue = asyncio.Queue()
+        self._room_id = ""
+        self.room = None
 
     async def prepare(self):
         # NOTE: Initialize in the ExtensionApp.start_extension once
@@ -227,7 +245,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         try:
             self.write_message(message, binary=True)
         except Exception as e:
-            self.log.debug("Failed to write message", exc_info=e)
+            self.log.error("Failed to write message", exc_info=e)
 
     async def recv(self):
         """
