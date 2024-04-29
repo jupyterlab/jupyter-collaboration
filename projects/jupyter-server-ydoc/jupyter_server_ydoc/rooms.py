@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import asyncio
 from logging import Logger
-from typing import Any
+from typing import Any, Callable
 
 from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
@@ -31,8 +31,9 @@ class DocumentRoom(YRoom):
         ystore: BaseYStore | None,
         log: Logger | None,
         save_delay: float | None = None,
+        exception_handler: Callable[[Exception, Logger], bool] | None = None,
     ):
-        super().__init__(ready=False, ystore=ystore, log=log)
+        super().__init__(ready=False, ystore=ystore, exception_handler=exception_handler, log=log)
 
         self._room_id: str = room_id
         self._file_format: str = file_format
@@ -285,8 +286,13 @@ class DocumentRoom(YRoom):
 class TransientRoom(YRoom):
     """A Y room for sharing state (e.g. awareness)."""
 
-    def __init__(self, room_id: str, log: Logger | None):
-        super().__init__(log=log)
+    def __init__(
+        self,
+        room_id: str,
+        log: Logger | None = None,
+        exception_handler: Callable[[Exception, Logger], bool] | None = None,
+    ):
+        super().__init__(log=log, exception_handler=exception_handler)
 
         self._room_id = room_id
 
