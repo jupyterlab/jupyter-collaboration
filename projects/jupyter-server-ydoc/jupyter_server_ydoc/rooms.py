@@ -133,15 +133,13 @@ class DocumentRoom(BaseRoom):
 
         self._logger.emit(schema_id=JUPYTER_COLLABORATION_EVENTS_URI, data=data)
 
-    def stop(self) -> None:
+    async def stop(self) -> None:
         """
         Stop the room.
 
         Cancels the save task and unsubscribes from the file.
         """
-        self._document.unobserve()
-        self._file.unobserve(self.room_id)
-
+        await super().stop()
         # TODO: Should we cancel or wait ?
         if self._saving_document:
             self._saving_document.cancel()
