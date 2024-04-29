@@ -341,7 +341,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         async with self._room_lock(self._room_id):
             # Remove the room from the websocket server
             self.log.info("Deleting Y document from memory: %s", self._room_id)
-            self._websocket_server.delete_room(room=self.room)
+            await self._websocket_server.delete_room(room=self.room)
 
             # Clean room
             del self.room
