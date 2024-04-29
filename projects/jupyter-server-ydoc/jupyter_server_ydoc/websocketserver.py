@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import asyncio
 from logging import Logger
-from typing import Any
+from typing import Any, Callable
 
 from pycrdt_websocket.websocket_server import WebsocketServer, YRoom
 from pycrdt_websocket.ystore import BaseYStore
@@ -14,6 +14,17 @@ from tornado.websocket import WebSocketHandler
 
 class RoomNotFound(LookupError):
     pass
+
+
+def exception_logger(exception: Exception, log: Logger) -> bool:
+    """A function that catches any exceptions raised in the websocket
+    server and logs them.
+
+    The protects the websocket server's task group from cancelling
+    anytime an exception is raised.
+    """
+    log.error("Jupyter Websocket Server: ", exc_info=exception)
+    return True
 
 
 class JupyterWebsocketServer(WebsocketServer):
@@ -30,9 +41,15 @@ class JupyterWebsocketServer(WebsocketServer):
         ystore_class: BaseYStore,
         rooms_ready: bool = True,
         auto_clean_rooms: bool = True,
+        exception_handler: Callable[[Exception, Logger], bool] | None = None,
         log: Logger | None = None,
     ):
-        super().__init__(rooms_ready, auto_clean_rooms, log)
+        super().__init__(
+            rooms_ready=rooms_ready,
+            auto_clean_rooms=auto_clean_rooms,
+            exception_handler=exception_handler,
+            log=log,
+        )
         self.ystore_class = ystore_class
         self.ypatch_nb = 0
         self.connected_users: dict[Any, Any] = {}

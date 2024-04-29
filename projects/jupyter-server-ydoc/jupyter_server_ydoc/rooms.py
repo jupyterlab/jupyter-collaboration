@@ -123,7 +123,9 @@ class DocumentRoom(YRoom):
                 if self._document.source != model["content"]:
                     # TODO: Delete document from the store.
                     self._emit(
-                        LogLevel.INFO, "initialize", "The file is out-of-sync with the ystore."
+                        LogLevel.INFO,
+                        "initialize",
+                        "The file is out-of-sync with the ystore.",
                     )
                     self.log.info(
                         "Content in file %s is out-of-sync with the ystore %s",
@@ -135,7 +137,9 @@ class DocumentRoom(YRoom):
             if read_from_source:
                 self._emit(LogLevel.INFO, "load", "Content loaded from disk.")
                 self.log.info(
-                    "Content in room %s loaded from file %s", self._room_id, self._file.path
+                    "Content in room %s loaded from file %s",
+                    self._room_id,
+                    self._file.path,
                 )
                 self._document.source = model["content"]
 
@@ -146,7 +150,9 @@ class DocumentRoom(YRoom):
             self.ready = True
             self._emit(LogLevel.INFO, "initialize", "Room initialized")
 
-    def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:
+    def _emit(
+        self, level: LogLevel, action: str | None = None, msg: str | None = None
+    ) -> None:
         data = {"level": level.value, "room": self._room_id, "path": self._file.path}
         if action:
             data["action"] = action
@@ -180,8 +186,12 @@ class DocumentRoom(YRoom):
         """
         Called when the file got out-of-band changes.
         """
-        self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
-        self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes. Overwriting the room.")
+        self.log.info(
+            "Out-of-band changes. Overwriting the content in room %s", self._room_id
+        )
+        self._emit(
+            LogLevel.INFO, "overwrite", "Out-of-band changes. Overwriting the room."
+        )
 
         try:
             model = await self._file.load_content(self._file_format, self._file_type)
@@ -257,9 +267,13 @@ class DocumentRoom(YRoom):
             return
 
         except OutOfBandChanges:
-            self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
+            self.log.info(
+                "Out-of-band changes. Overwriting the content in room %s", self._room_id
+            )
             try:
-                model = await self._file.load_content(self._file_format, self._file_type)
+                model = await self._file.load_content(
+                    self._file_format, self._file_type
+                )
             except Exception as e:
                 msg = f"Error loading content from file: {self._file.path}\n{e!r}"
                 self.log.error(msg, exc_info=e)
