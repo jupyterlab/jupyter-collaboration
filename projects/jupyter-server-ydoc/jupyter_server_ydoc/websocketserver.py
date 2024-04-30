@@ -20,7 +20,7 @@ def exception_logger(exception: Exception, log: Logger) -> bool:
     """A function that catches any exceptions raised in the websocket
     server and logs them.
 
-    The protects the websocket server's task group from cancelling
+    This protects the websocket server's task group from cancelling
     anytime an exception is raised.
     """
     log.error("Jupyter Websocket Server: ", exc_info=exception)
