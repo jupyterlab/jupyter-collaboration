@@ -22,7 +22,7 @@ from .utils import (
     encode_file_path,
     room_id_from_encoded_path,
 )
-from .websocketserver import JupyterWebsocketServer, RoomNotFound
+from .websocketserver import JupyterWebsocketServer, RoomNotFound, exception_logger
 
 
 class YDocExtension(ExtensionApp):
@@ -103,7 +103,15 @@ class YDocExtension(ExtensionApp):
         for k, v in self.config.get(self.ystore_class.__name__, {}).items():
             setattr(self.ystore_class, k, v)
 
-        self.store = self.ystore_class(log=self.log)
+        self.ywebsocket_server = JupyterWebsocketServer(
+            rooms_ready=False,
+            auto_clean_rooms=False,
+            ystore_class=self.ystore_class,
+            # Log exceptions, because we don't want the websocket server
+            # to _ever_ crash permanently in a live jupyter_server.
+            exception_handler=exception_logger,
+            log=self.log,
+        )
 
         # self.settings is local to the ExtensionApp but here we need
         # the global app settings in which the file id manager will register
