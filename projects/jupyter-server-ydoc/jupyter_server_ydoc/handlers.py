@@ -7,6 +7,7 @@ import asyncio
 import json
 import time
 import uuid
+from logging import Logger
 from typing import Any
 
 from jupyter_server.auth import authorized
@@ -83,6 +84,21 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             if self._websocket_server.room_exists(self._room_id):
                 self.room: YRoom = await self._websocket_server.get_room(self._room_id)
             else:
+                # Logging exceptions, instead of raising them here to ensure
+                # that the y-rooms stay alive even after an exception is seen.
+                def exception_logger(exception: Exception, log: Logger) -> bool:
+                    """A function that catches any exceptions raised in the websocket
+                    server and logs them.
+
+                    The protects the y-room's task group from cancelling
+                    anytime an exception is raised.
+                    """
+                    log.error(
+                        f"Document Room Exception, (room_id={self._room_id or 'unknown'}): ",
+                        exc_info=exception,
+                    )
+                    return True
+
                 if self._room_id.count(":") >= 2:
                     # DocumentRoom
                     file_format, file_type, file_id = decode_file_path(self._room_id)
@@ -104,13 +120,18 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                         self.event_logger,
                         ystore,
                         self.log,
-                        self._document_save_delay,
+                        exception_handler=exception_logger,
+                        save_delay=self._document_save_delay,
                     )
 
                 else:
                     # TransientRoom
                     # it is a transient document (e.g. awareness)
-                    self.room = TransientRoom(self._room_id, self.log)
+                    self.room = TransientRoom(
+                        self._room_id,
+                        log=self.log,
+                        exception_handler=exception_logger,
+                    )
 
             try:
                 await self._websocket_server.start_room(self.room)
@@ -223,7 +244,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 else:
                     self.log.error(f"Error initializing: {file.path}\n{e!r}", exc_info=e)
                     self.close(
-                        1003, f"Error initializing: {file.path}. You need to close the document."
+                        1003,
+                        f"Error initializing: {file.path}. You need to close the document.",
                     )
 
                 # Clean up the room and delete the file loader
@@ -290,7 +312,11 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
             user = self.current_user
             data = json.dumps(
-                {"sender": user.username, "timestamp": time.time(), "content": json.loads(msg)}
+                {
+                    "sender": user.username,
+                    "timestamp": time.time(),
+                    "content": json.loads(msg),
+                }
             ).encode("utf8")
 
             for client in self.room.clients:
@@ -405,7 +431,12 @@ class DocSessionHandler(APIHandler):
             # index already exists
             self.log.info("Request for Y document '%s' with room ID: %s", path, idx)
             data = json.dumps(
-                {"format": format, "type": content_type, "fileId": idx, "sessionId": SERVER_SESSION}
+                {
+                    "format": format,
+                    "type": content_type,
+                    "fileId": idx,
+                    "sessionId": SERVER_SESSION,
+                }
             )
             self.set_status(200)
             return self.finish(data)
@@ -419,7 +450,12 @@ class DocSessionHandler(APIHandler):
         # index successfully created
         self.log.info("Request for Y document '%s' with room ID: %s", path, idx)
         data = json.dumps(
-            {"format": format, "type": content_type, "fileId": idx, "sessionId": SERVER_SESSION}
+            {
+                "format": format,
+                "type": content_type,
+                "fileId": idx,
+                "sessionId": SERVER_SESSION,
+            }
         )
         self.set_status(201)
         return self.finish(data)

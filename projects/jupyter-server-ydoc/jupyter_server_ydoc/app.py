@@ -22,7 +22,7 @@ from .utils import (
     encode_file_path,
     room_id_from_encoded_path,
 )
-from .websocketserver import JupyterWebsocketServer, RoomNotFound
+from .websocketserver import JupyterWebsocketServer, RoomNotFound, exception_logger
 
 
 class YDocExtension(ExtensionApp):
@@ -107,6 +107,9 @@ class YDocExtension(ExtensionApp):
             rooms_ready=False,
             auto_clean_rooms=False,
             ystore_class=self.ystore_class,
+            # Log exceptions, because we don't want the websocket server
+            # to _ever_ crash permanently in a live jupyter_server.
+            exception_handler=exception_logger,
             log=self.log,
         )
 
