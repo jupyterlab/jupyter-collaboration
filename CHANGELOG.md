@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.1.0
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@2.0.11...b6a73098fdaf56dfc0084a9727748dba7749e158))
+
+### Bugs fixed
+
+- Backport 'handle exception when websocket server start room failed' #289 [#298](https://github.com/jupyterlab/jupyter-collaboration/pull/298) ([@jzhang20133](https://github.com/jzhang20133))
+- Backport 'Log (instead of raise) exceptions when running as a server extension' #295 [#297](https://github.com/jupyterlab/jupyter-collaboration/pull/297) ([@Zsailer](https://github.com/Zsailer))
+
+### Maintenance and upkeep improvements
+
+- Backport 'Update pycrdt-websocket v0.13.0' #293 [#296](https://github.com/jupyterlab/jupyter-collaboration/pull/296) ([@Zsailer](https://github.com/Zsailer))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-03-28&to=2024-05-01&type=c))
+
+[@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2024-03-28..2024-05-01&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-03-28..2024-05-01&type=Issues) | [@ellisonbg](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aellisonbg+updated%3A2024-03-28..2024-05-01&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-03-28..2024-05-01&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajtpio+updated%3A2024-03-28..2024-05-01&type=Issues) | [@jzhang20133](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajzhang20133+updated%3A2024-03-28..2024-05-01&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2024-03-28..2024-05-01&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AZsailer+updated%3A2024-03-28..2024-05-01&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.0.11
 
 ### Enhancements made
@@ -15,8 +36,6 @@ All notable changes to this project will be documented in this file.
 - Fix releaser [#268](https://github.com/jupyterlab/jupyter-collaboration/pull/268) ([@davidbrochart](https://github.com/davidbrochart))
 - Fix slow room opening [#264](https://github.com/jupyterlab/jupyter-collaboration/pull/264) ([@davidbrochart](https://github.com/davidbrochart))
 - Use WebSocket \_room_id attribute directly [#266](https://github.com/jupyterlab/jupyter-collaboration/pull/266) ([@davidbrochart](https://github.com/davidbrochart))
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.10
 
