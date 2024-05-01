@@ -58,7 +58,7 @@ class JupyterWebsocketServer(WebsocketServer):
         #         self.log.warning(msg)
         #         self.log.debug("Pending tasks: %r", pending)
 
-        self.stop()
+        await self.stop()
         tasks = []
         if self.monitor_task is not None:
             self.monitor_task.cancel()
