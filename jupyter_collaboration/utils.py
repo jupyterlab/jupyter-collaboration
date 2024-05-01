@@ -70,3 +70,8 @@ def encode_file_path(format: str, file_type: str, file_id: str) -> str:
             path (str): File path.
     """
     return f"{format}:{file_type}:{file_id}"
+
+
+def room_id_from_encoded_path(encoded_path: str) -> str:
+    """Transforms the encoded path into a stable room identifier."""
+    return encoded_path.split("/")[-1]
