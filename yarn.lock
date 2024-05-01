@@ -2094,8 +2094,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@jupyter/collaboration-extension@workspace:packages/collaboration-extension"
   dependencies:
-    "@jupyter/collaboration": ^3.0.0-alpha.0
-    "@jupyter/docprovider": ^3.0.0-alpha.0
+    "@jupyter/collaboration": ^3.0.0-alpha.1
+    "@jupyter/docprovider": ^3.0.0-alpha.1
     "@jupyter/ydoc": ^1.1.0-a0
     "@jupyterlab/application": ^4.2.0-beta.0
     "@jupyterlab/apputils": ^4.2.0-beta.0
@@ -2117,13 +2117,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@jupyter/collaboration@^3.0.0-alpha.0, @jupyter/collaboration@workspace:packages/collaboration":
+"@jupyter/collaboration@^3.0.0-alpha.1, @jupyter/collaboration@workspace:packages/collaboration":
   version: 0.0.0-use.local
   resolution: "@jupyter/collaboration@workspace:packages/collaboration"
   dependencies:
     "@codemirror/state": ^6.2.0
     "@codemirror/view": ^6.7.0
-    "@jupyter/docprovider": ^3.0.0-alpha.0
+    "@jupyter/docprovider": ^3.0.0-alpha.1
     "@jupyterlab/apputils": ^4.0.5
     "@jupyterlab/coreutils": ^6.0.5
     "@jupyterlab/services": ^7.0.5
@@ -2144,7 +2144,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@jupyter/docprovider-extension@workspace:packages/docprovider-extension"
   dependencies:
-    "@jupyter/docprovider": ^3.0.0-alpha.0
+    "@jupyter/docprovider": ^3.0.0-alpha.1
     "@jupyter/ydoc": ^1.1.0-a0
     "@jupyterlab/application": ^4.2.0-beta.0
     "@jupyterlab/apputils": ^4.2.0-beta.0
@@ -2167,7 +2167,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@jupyter/docprovider@^3.0.0-alpha.0, @jupyter/docprovider@workspace:packages/docprovider":
+"@jupyter/docprovider@^3.0.0-alpha.1, @jupyter/docprovider@workspace:packages/docprovider":
   version: 0.0.0-use.local
   resolution: "@jupyter/docprovider@workspace:packages/docprovider"
   dependencies:
