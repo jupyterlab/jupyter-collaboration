@@ -12,7 +12,7 @@ from .handlers import DocSessionHandler, YDocWebSocketHandler
 from .loaders import FileLoaderMapping
 from .stores import SQLiteYStore
 from .utils import AWARENESS_EVENTS_SCHEMA_PATH, EVENTS_SCHEMA_PATH
-from .websocketserver import JupyterWebsocketServer
+from .websocketserver import JupyterWebsocketServer, exception_logger
 
 
 class YDocExtension(ExtensionApp):
@@ -85,6 +85,9 @@ class YDocExtension(ExtensionApp):
             rooms_ready=False,
             auto_clean_rooms=False,
             ystore_class=self.ystore_class,
+            # Log exceptions, because we don't want the websocket server
+            # to _ever_ crash permanently in a live jupyter_server.
+            exception_handler=exception_logger,
             log=self.log,
         )
 
