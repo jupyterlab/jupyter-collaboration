@@ -100,6 +100,7 @@ class DocumentRoom(YRoom):
             # try to apply Y updates from the YStore for this document
             read_from_source = True
             if self.ystore is not None:
+                await self.ystore.started.wait()
                 try:
                     await self.ystore.apply_updates(self.ydoc)
                     self._emit(
