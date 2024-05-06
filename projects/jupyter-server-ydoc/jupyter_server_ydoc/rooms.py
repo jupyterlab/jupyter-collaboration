@@ -21,6 +21,8 @@ YFILE = YDOCS["file"]
 class DocumentRoom(YRoom):
     """A Y room for a possibly stored document (e.g. a notebook)."""
 
+    _background_tasks: set[asyncio.Task]
+
     def __init__(
         self,
         room_id: str,
@@ -48,6 +50,7 @@ class DocumentRoom(YRoom):
         self._cleaner: asyncio.Task | None = None
         self._saving_document: asyncio.Task | None = None
         self._messages: dict[str, asyncio.Lock] = {}
+        self._background_tasks = set()
 
         # Listen for document changes
         self._document.observe(self._on_document_change)
@@ -100,6 +103,9 @@ class DocumentRoom(YRoom):
             # try to apply Y updates from the YStore for this document
             read_from_source = True
             if self.ystore is not None:
+                if not self.ystore.started.is_set():
+                    self.create_task(self.ystore.start())
+                    await self.ystore.started.wait()
                 try:
                     await self.ystore.apply_updates(self.ydoc)
                     self._emit(
@@ -176,6 +182,11 @@ class DocumentRoom(YRoom):
 
         self._document.unobserve()
         self._file.unobserve(self.room_id)
+
+    def create_task(self, aw):
+        task = asyncio.create_task(aw)
+        self._background_tasks.add(task)
+        task.add_done_callback(self._background_tasks.discard)
 
     async def _broadcast_updates(self):
         # FIXME should be upstreamed
