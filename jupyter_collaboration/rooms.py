@@ -103,9 +103,10 @@ class DocumentRoom(YRoom):
             # try to apply Y updates from the YStore for this document
             read_from_source = True
             if self.ystore is not None:
-                if not self.ystore.started.is_set():
-                    self.create_task(self.ystore.start())
-                    await self.ystore.started.wait()
+                async with self.ystore.start_lock:
+                    if not self.ystore.started.is_set():
+                        self.create_task(self.ystore.start())
+                        await self.ystore.started.wait()
                 try:
                     await self.ystore.apply_updates(self.ydoc)
                     self._emit(
