@@ -21,6 +21,8 @@ YFILE = YDOCS["file"]
 class DocumentRoom(BaseRoom):
     """A Y room for a possibly stored document (e.g. a notebook)."""
 
+    _background_tasks: set[asyncio.Task]
+
     def __init__(
         self,
         room_id: str,
@@ -47,6 +49,7 @@ class DocumentRoom(BaseRoom):
         self._cleaner: asyncio.Task | None = None
         self._saving_document: asyncio.Task | None = None
         self._messages: dict[str, asyncio.Lock] = {}
+        self._background_tasks = set()
 
         # Listen for document changes
         self._document.observe(self._on_document_change)
@@ -78,6 +81,10 @@ class DocumentRoom(BaseRoom):
             # try to apply Y updates from the YStore for this document
             read_from_source = True
             if self.ystore is not None:
+                async with self.ystore.start_lock:
+                    if not self.ystore.started.is_set():
+                        self.create_task(self.ystore.start())
+                        await self.ystore.started.wait()
                 try:
                     await self.ystore.apply_updates(self.ydoc)
                     self._emit(
@@ -152,7 +159,20 @@ class DocumentRoom(BaseRoom):
         if self._saving_document:
             self._saving_document.cancel()
 
-        return super().stop()
+        self._document.unobserve()
+        self._file.unobserve(self.room_id)
+
+    def create_task(self, aw):
+        task = asyncio.create_task(aw)
+        self._background_tasks.add(task)
+        task.add_done_callback(self._background_tasks.discard)
+
+    async def _broadcast_updates(self):
+        # FIXME should be upstreamed
+        try:
+            await super()._broadcast_updates()
+        except asyncio.CancelledError:
+            pass
 
     async def _on_outofband_change(self) -> None:
         """
