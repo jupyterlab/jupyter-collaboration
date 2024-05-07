@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from asyncio import Event, sleep
+from asyncio import Event, create_task, sleep
 from datetime import datetime
 from typing import Any
 
@@ -177,7 +177,8 @@ def rtc_create_SQLite_store(jp_serverapp):
 
     async def _inner(type: str, path: str, content: str) -> DocumentRoom:
         db = SQLiteYStore(path=f"{type}:{path}")
-        await db.start()
+        task = create_task(db.start())
+        await db.started.wait()
 
         if type == "notebook":
             doc = YNotebook()
