@@ -27,7 +27,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install "jupyterlab>=4.0.0,<5"
+          pip install "jupyterlab>=4.0.0,<4.2.0"
           pip install -e .
           jlpm
 
@@ -68,7 +68,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install "jupyterlab>=4.0.0,<5"
+          pip install "jupyterlab>=4.0.0,<4.2.0"
           pip install -e .
           jlpm
 
@@ -103,7 +103,7 @@ jobs:
 
       - name: Install the Python dependencies
         run: |
-          python -m pip install "jupyterlab>=4.0.0,<5"
+          python -m pip install "jupyterlab>=4.0.0,<4.2.0"
           pip install -e ".[test]" codecov
 
       - name: List installed packages
@@ -216,7 +216,7 @@ jobs:
           mkdir test
           tar --strip-components=1 -zxvf *.tar.gz -C ./test
           cd test
-          python -m pip install "jupyterlab>=4.0.0,<5"
+          python -m pip install "jupyterlab>=4.0.0,<4.2.0"
           python -m pip install ".[test]"
           echo "::endgroup::"
 
