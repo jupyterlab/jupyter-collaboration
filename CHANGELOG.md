@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.1.1
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@2.1.0...e5ab770ebe976e119efd121ed2486ab07b10cdc3))
+
+### Enhancements made
+
+- Start ystore in a task [#302](https://github.com/jupyterlab/jupyter-collaboration/pull/302) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Bugs fixed
+
+- adding await ystore start method in prepare method [#299](https://github.com/jupyterlab/jupyter-collaboration/pull/299) ([@jzhang20133](https://github.com/jzhang20133))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-05-01&to=2024-05-08&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-05-01..2024-05-08&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-05-01..2024-05-08&type=Issues) | [@jzhang20133](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajzhang20133+updated%3A2024-05-01..2024-05-08&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AZsailer+updated%3A2024-05-01..2024-05-08&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.1.0
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@2.0.11...b6a73098fdaf56dfc0084a9727748dba7749e158))
@@ -22,8 +42,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-03-28&to=2024-05-01&type=c))
 
 [@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2024-03-28..2024-05-01&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-03-28..2024-05-01&type=Issues) | [@ellisonbg](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aellisonbg+updated%3A2024-03-28..2024-05-01&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-03-28..2024-05-01&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajtpio+updated%3A2024-03-28..2024-05-01&type=Issues) | [@jzhang20133](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajzhang20133+updated%3A2024-03-28..2024-05-01&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2024-03-28..2024-05-01&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AZsailer+updated%3A2024-03-28..2024-05-01&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.0.11
 
