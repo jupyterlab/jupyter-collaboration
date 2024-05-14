@@ -9,12 +9,13 @@ import time
 import uuid
 from logging import Logger
 from typing import Any
+from uuid import uuid4
 
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS
-from pycrdt import YMessageType, write_var_uint
+from pycrdt import Doc, UndoManager, YMessageType, write_var_uint
 from pycrdt_websocket.websocket_server import YRoom
 from pycrdt_websocket.ystore import BaseYStore
 from tornado import web
@@ -28,13 +29,19 @@ from .utils import (
     LogLevel,
     MessageType,
     decode_file_path,
+    encode_file_path,
     room_id_from_encoded_path,
 )
-from .websocketserver import JupyterWebsocketServer
+from .websocketserver import JupyterWebsocketServer, RoomNotFound
 
 YFILE = YDOCS["file"]
+YNOTEBOOK = YDOCS["notebook"]
+YJCAD = YDOCS.get("jcad", None)
+
 
 SERVER_SESSION = str(uuid.uuid4())
+UNDO_MANAGERS = {}
+FORK_DOCUMENTS = {}
 
 
 class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
@@ -459,3 +466,140 @@ class DocSessionHandler(APIHandler):
         )
         self.set_status(201)
         return self.finish(data)
+
+
+class TimelineHandler(APIHandler):
+    def initialize(
+        self, ystore_class: type[BaseYStore], ywebsocket_server: JupyterWebsocketServer
+    ) -> None:
+        self.ystore_class = ystore_class
+        self.ywebsocket_server = ywebsocket_server
+
+    async def get(self, path: str) -> None:
+
+        file_id_manager = self.settings["file_id_manager"]
+        file_id = file_id_manager.get_id("/".join(self.request.path.split("/")[4:]))
+
+        # get format and content_type
+        format = str(self.request.query_arguments.get("format")[0].decode("utf-8"))
+        content_type = str(self.request.query_arguments.get("type")[0].decode("utf-8"))
+        encoded_path = encode_file_path(format, content_type, file_id)
+        try:
+            room_id = room_id_from_encoded_path(encoded_path)
+            room: YRoom = await self.ywebsocket_server.get_room(room_id)
+
+            timestamps = [item[-1] async for item in room.ystore.read()]
+            data = {
+                "roomId": room_id,
+                "timestamps": timestamps,
+            }
+
+            self.set_status(200)
+            self.finish(json.dumps(data))
+
+        except RoomNotFound:
+            return None
+
+
+class TimelineForkHandler(APIHandler):
+    def initialize(self, ywebsocket_server: JupyterWebsocketServer) -> None:
+        self._websocket_server = ywebsocket_server
+
+    async def put(self, room_id):
+        idx = uuid4().hex
+        try:
+            fileType = room_id.split(":")[1]
+
+            mode = str(self.request.query_arguments.get("mode")[0].decode("utf-8"))
+            action = str(self.request.query_arguments.get("action")[0].decode("utf-8"))
+            steps = int(self.request.query_arguments.get("steps")[0].decode("utf-8"))
+
+            if mode == "original":
+                root_room = await self._websocket_server.get_room(room_id)
+
+                updates = [item[0] async for item in root_room.ystore.read()]
+                fork_ydoc = Doc()
+
+                if fileType == "notebook":
+                    FORK_DOCUMENTS[idx] = YNOTEBOOK(fork_ydoc)
+                elif fileType == "file":
+                    FORK_DOCUMENTS[idx] = YFILE(fork_ydoc)
+                elif fileType == "jcad":
+                    if YJCAD is None:
+                        print("Warning: 'jcad' YDoc type is not available. Proceeding without it.")
+                    else:
+                        FORK_DOCUMENTS[idx] = YJCAD(fork_ydoc)
+
+                undo_manager = FORK_DOCUMENTS[idx].undo_manager
+
+                UNDO_MANAGERS[idx] = undo_manager
+                for item in updates:
+                    fork_ydoc.apply_update(item)
+
+                fork_room = YRoom()
+                fork_room.ydoc = fork_ydoc
+                self._websocket_server.add_room(idx, fork_room)
+                if undo_manager.can_undo():
+                    await self._perform_undo_or_redo(undo_manager, "undo", steps)
+                data = json.dumps(
+                    {
+                        "sessionId": SERVER_SESSION,
+                        "roomId": idx,
+                    }
+                )
+                self.set_status(200)
+                return self.finish(data)
+            elif mode == "fork":
+                for _key, value in UNDO_MANAGERS.items():
+                    undo_manager = value
+
+                if action == "undo":
+                    if undo_manager.can_undo():
+                        await self._perform_undo_or_redo(undo_manager, "undo", steps)
+                        self.set_status(200)
+                        return self.finish({"status": "undone"})
+                    else:
+                        return self.finish({"error": "No more undo operations available"})
+                elif action == "redo":
+                    if undo_manager.can_redo():
+                        await self._perform_undo_or_redo(undo_manager, "redo", steps)
+                        self.set_status(200)
+                        return self.finish({"status": "redone"})
+                    else:
+                        return self.finish({"error": "No more redo operations available"})
+            elif mode == "restore":
+                try:
+                    for _key, value in FORK_DOCUMENTS.items():
+                        fork_document = value
+                    if not fork_document:
+                        self.set_status(404)
+                        return self.finish({"code": 404, "error": "Fork document not found"})
+                    root_room = await self._websocket_server.get_room(room_id)
+                    original_ydoc = root_room.ydoc
+                    original_ydoc.apply_update(fork_document.ydoc.get_update())
+                    self.set_status(200)
+                    return self.finish({"code": 200, "status": "Document restored successfully"})
+                except Exception as e:
+                    self.set_status(500)
+                    return self.finish(
+                        {"code": 500, "error": "Internal server error", "message": str(e)}
+                    )
+
+        except Exception as e:
+            print("Error during fork creation: ", e)
+
+    async def _perform_undo_or_redo(
+        self, undo_manager: UndoManager, action: str, steps: int
+    ) -> None:
+        for _ in range(steps):
+            if (
+                action == "undo"
+                and undo_manager.can_undo()
+                and undo_manager.undo_stack.__len__() > 1
+            ):
+                undo_manager.undo()
+
+            elif action == "redo" and undo_manager.can_redo():
+                undo_manager.redo()
+            else:
+                break
