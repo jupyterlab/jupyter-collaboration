@@ -12,7 +12,8 @@ import {
   yfile,
   ynotebook,
   defaultFileBrowser,
-  logger
+  logger,
+  statusBarTimeline
 } from './filebrowser';
 import { notebookCellExecutor } from './executor';
 
@@ -25,7 +26,8 @@ const plugins: JupyterFrontEndPlugin<any>[] = [
   ynotebook,
   defaultFileBrowser,
   logger,
-  notebookCellExecutor
+  notebookCellExecutor,
+  statusBarTimeline
 ];
 
 export default plugins;

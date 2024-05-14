@@ -5,6 +5,7 @@ import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 import { TranslationBundle } from '@jupyterlab/translation';
 import { Contents, Drive, User } from '@jupyterlab/services';
 
+import { Widget } from '@lumino/widgets';
 import { DocumentChange, ISharedDocument, YDocument } from '@jupyter/ydoc';
 
 import { WebSocketProvider } from './yprovider';
@@ -14,6 +15,7 @@ import {
   SharedDocumentFactory
 } from './tokens';
 import { Awareness } from 'y-protocols/awareness';
+import { TimelineWidget } from './TimelineSlider';
 
 const DISABLE_RTC =
   PageConfig.getOption('disableRTC') === 'true' ? true : false;
@@ -22,6 +24,7 @@ const DISABLE_RTC =
  * The url for the default drive service.
  */
 const DOCUMENT_PROVIDER_URL = 'api/collaboration/room';
+const DOCUMENT_TIMELINE_URL = 'api/collaboration/timeline';
 
 /**
  * A Collaborative implementation for an `IDrive`, talking to the
@@ -52,10 +55,57 @@ export class YDrive extends Drive implements ICollaborativeDrive {
    */
   readonly sharedModelFactory: ISharedModelFactory;
 
+  disposeTimelineWidget(): void {
+    if (this._timelineWidget) {
+      this._timelineWidget.dispose();
+      this._timelineWidget = null;
+    }
+  }
+
+  setTimelineWidget(widget: TimelineWidget) {
+    this._timelineWidget = widget;
+  }
+
+  getTimelineWidget(): TimelineWidget | null {
+    return this._timelineWidget || null;
+  }
+
+  async updateTimelineForNotebook(notebookPath: string): Promise<void> {
+    try {
+      if (notebookPath.split(':')[1]) {
+        const fullPath = URLExt.join(
+          this.serverSettings.baseUrl,
+          DOCUMENT_TIMELINE_URL,
+          notebookPath.split(':')[1]
+        );
+        if (this._timelineWidget) {
+          let key = '';
+          if (notebookPath.split('.')[1] === 'ipynb') {
+            key = `json:notebook:${notebookPath.split(':')[1]}`;
+          } else if (notebookPath.split('.')[1] === 'jcad') {
+            key = `text:jcad:${notebookPath.split(':')[1]}`;
+          } else {
+            key = `text:file:${notebookPath.split(':')[1]}`;
+          }
+
+          const provider = this._providers.get(key);
+          if (provider) {
+            this._timelineWidget.updateContent(fullPath, provider);
+          }
+        } else {
+          console.warn('Timeline widget is not initialized or no data fetched');
+        }
+      }
+    } catch (error: any) {
+      console.error('An unexpected error occurred:', error);
+    }
+  }
+
   /**
    * Dispose of the resources held by the manager.
    */
   dispose(): void {
+    this.disposeTimelineWidget();
     if (this.isDisposed) {
       return;
     }
@@ -132,7 +182,7 @@ export class YDrive extends Drive implements ICollaborativeDrive {
     return super.save(localPath, options);
   }
 
-  private _onCreate = (
+  private _onCreate = async (
     options: Contents.ISharedFactoryOptions,
     sharedModel: YDocument<DocumentChange>
   ) => {
@@ -177,6 +227,29 @@ export class YDrive extends Drive implements ICollaborativeDrive {
         }
         this._globalAwareness?.setLocalStateField('documents', documents);
       });
+
+      const notebookPath = URLExt.join(
+        this.serverSettings.baseUrl,
+        DOCUMENT_TIMELINE_URL,
+        options.path
+      );
+      if (!this._timelineWidget) {
+        this._timelineWidget = new TimelineWidget(
+          notebookPath,
+          provider,
+          options.contentType,
+          options.format
+        );
+      } else {
+        this.updateTimelineForNotebook(options.path);
+        this._timelineWidget.update();
+      }
+      const elt = document.getElementById('slider-status-bar');
+      if (elt && !this._timelineWidget.isAttached) {
+        Widget.attach(this._timelineWidget, elt);
+      } else if (!this._timelineWidget.isAttached) {
+        Widget.attach(this._timelineWidget, document.body);
+      }
     } catch (error) {
       // Falling back to the contents API if opening the websocket failed
       //  This may happen if the shared document is not a YDocument.
@@ -190,6 +263,7 @@ export class YDrive extends Drive implements ICollaborativeDrive {
   private _trans: TranslationBundle;
   private _providers: Map<string, WebSocketProvider>;
   private _globalAwareness: Awareness | null;
+  private _timelineWidget: TimelineWidget | null = null;
 }
 
 /**

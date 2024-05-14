@@ -16,7 +16,7 @@ import { DocumentChange, YDocument } from '@jupyter/ydoc';
 import { Awareness } from 'y-protocols/awareness';
 import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
 
-import { requestDocSession } from './requests';
+import { requestDocFork, requestDocSession } from './requests';
 
 /**
  * An interface for a document provider.
@@ -34,6 +34,7 @@ export interface IDocumentProvider extends IDisposable {
  * We specify custom messages that the server can interpret. For reference please look in yjs_ws_server.
  *
  */
+
 export class WebSocketProvider implements IDocumentProvider {
   /**
    * Construct a new WebSocketProvider
@@ -76,7 +77,13 @@ export class WebSocketProvider implements IDocumentProvider {
   get ready(): Promise<void> {
     return this._ready.promise;
   }
+  get contentType(): string {
+    return this._contentType;
+  }
 
+  get format(): string {
+    return this._format;
+  }
   /**
    * Dispose of the resources held by the object.
    */
@@ -88,7 +95,17 @@ export class WebSocketProvider implements IDocumentProvider {
     this._yWebsocketProvider?.off('connection-close', this._onConnectionClosed);
     this._yWebsocketProvider?.off('sync', this._onSync);
     this._yWebsocketProvider?.destroy();
+    this._disconnect();
     Signal.clearData(this);
+  }
+  get sharedModel(): YDocument<DocumentChange> {
+    return this._sharedModel;
+  }
+  setPath(path: string) {
+    this._path = path;
+  }
+  setSharedModel(sharedModel: YDocument<DocumentChange>) {
+    this._sharedModel = sharedModel;
   }
 
   private async _connect(): Promise<void> {
@@ -113,6 +130,49 @@ export class WebSocketProvider implements IDocumentProvider {
     this._yWebsocketProvider.on('connection-close', this._onConnectionClosed);
   }
 
+  async connectToFork(
+    action: 'undo' | 'redo',
+    mode: string,
+    steps: number
+  ): Promise<any> {
+    const session = await requestDocSession(
+      this._format,
+      this._contentType,
+      this._path
+    );
+
+    this._disconnect();
+    const response = await requestDocFork(
+      `${session.format}:${session.type}:${session.fileId}`,
+      action,
+      mode,
+      steps
+    );
+    const forkRoomId = response.roomId;
+    const sessionId = response.sessionId;
+    this._yWebsocketProvider = new YWebsocketProvider(
+      this._serverUrl,
+      forkRoomId,
+      this._sharedModel.ydoc,
+      {
+        disableBc: true,
+        params: { sessionId },
+        awareness: this._awareness
+      }
+    );
+    return { session, forkRoomId };
+  }
+
+  get wsProvider() {
+    return this._yWebsocketProvider;
+  }
+  private _disconnect(): void {
+    this._yWebsocketProvider?.off('connection-close', this._onConnectionClosed);
+    this._yWebsocketProvider?.off('sync', this._onSync);
+    this._yWebsocketProvider?.destroy();
+    this._yWebsocketProvider = null;
+  }
+
   private _onUserChanged(user: User.IManager): void {
     this._awareness.setLocalStateField('user', user.identity);
   }
@@ -124,7 +184,7 @@ export class WebSocketProvider implements IDocumentProvider {
       showErrorMessage(this._trans.__('Document session error'), event.reason, [
         Dialog.okButton()
       ]);
-
+      
       // Dispose shared model immediately. Better break the document model,
       // than overriding data on disk.
       this._sharedModel.dispose();
