@@ -54,6 +54,16 @@ class DocumentRoom(YRoom):
         self._file.observe(self.room_id, self._on_outofband_change)
 
     @property
+    def file_format(self) -> str:
+        """Document file format."""
+        return self._file_format
+
+    @property
+    def file_type(self) -> str:
+        """Document file type."""
+        return self._file_type
+
+    @property
     def room_id(self) -> str:
         """
         The room ID.

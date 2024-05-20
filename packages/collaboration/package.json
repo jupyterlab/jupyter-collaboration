@@ -54,7 +54,7 @@
     "yjs": "^13.5.40"
   },
   "devDependencies": {
-    "@types/react": "^18.0.27",
+    "@types/react": "~18.3.1",
     "rimraf": "^4.1.2",
     "typescript": "~5.0.4"
   },
