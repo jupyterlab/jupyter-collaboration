@@ -2119,9 +2119,11 @@ __metadata:
     "@jupyter/docprovider": ^3.0.0-alpha.2
     "@jupyterlab/apputils": ^4.0.5
     "@jupyterlab/coreutils": ^6.0.5
+    "@jupyterlab/docregistry": ^4.0.5
     "@jupyterlab/services": ^7.0.5
     "@jupyterlab/ui-components": ^4.0.5
     "@lumino/coreutils": ^2.1.0
+    "@lumino/signaling": ^2.0.0
     "@lumino/virtualdom": ^2.0.0
     "@lumino/widgets": ^2.1.0
     "@types/react": ^18.0.27
@@ -2137,6 +2139,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@jupyter/docprovider-extension@workspace:packages/docprovider-extension"
   dependencies:
+    "@jupyter/collaboration": ^3.0.0-alpha.2
     "@jupyter/docprovider": ^3.0.0-alpha.2
     "@jupyter/ydoc": ^2.0.0
     "@jupyterlab/application": ^4.2.0
@@ -2494,7 +2497,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jupyterlab/docregistry@npm:^4.2.0":
+"@jupyterlab/docregistry@npm:^4.0.5, @jupyterlab/docregistry@npm:^4.2.0":
   version: 4.2.0
   resolution: "@jupyterlab/docregistry@npm:4.2.0"
   dependencies:
@@ -3272,7 +3275,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lumino/signaling@npm:^1.10.0 || ^2.0.0, @lumino/signaling@npm:^2.1.0, @lumino/signaling@npm:^2.1.2":
+"@lumino/signaling@npm:^1.10.0 || ^2.0.0, @lumino/signaling@npm:^2.0.0, @lumino/signaling@npm:^2.1.0, @lumino/signaling@npm:^2.1.2":
   version: 2.1.2
   resolution: "@lumino/signaling@npm:2.1.2"
   dependencies:
