@@ -86,13 +86,17 @@
   z-index: 1000;
 }
 
-.jp-Collaborator {
+.jp-CollaboratorHeader {
   padding: 10px;
   display: flex;
   align-items: center;
   font-size: var(--jp-ui-font-size0);
   fill: var(--jp-ui-font-color1);
   color: var(--jp-ui-font-color1);
+}
+
+.jp-CollaboratorHeader > span {
+  padding-left: 7px;
 }
 
 .jp-ClickableCollaborator:hover {
@@ -102,8 +106,18 @@
   color: var(--jp-ui-font-color0);
 }
 
-.jp-Collaborator > span {
-  padding-left: 7px;
+.jp-CollaboratorHeaderCollapser {
+  transform: rotate(-90deg);
+  margin: auto 0;
+  height: 16px;
+}
+
+.jp-CollaboratorHeader:not(.jp-ClickableCollaborator) .jp-CollaboratorHeaderCollapser {
+  visibility: hidden;
+}
+
+.jp-CollaboratorHeaderCollapser.jp-mod-expanded {
+  transform: rotate(0deg);
 }
 
 .jp-CollaboratorIcon {
@@ -122,7 +136,9 @@
   color: var(--jp-ui-font-color1);
 }
 
-.jp-CollaboratorCurrent {
-  position: absolute;
-  right: 0;
+.jp-CollaboratorFiles {
+  padding-left: 1em;
+  margin-top: 0;
+  box-shadow: 0 2px 2px -2px rgb(0 0 0 / 24%);
+
 }

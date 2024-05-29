@@ -99,6 +99,54 @@ test.describe('One client', () => {
     await expect(panel.locator('collaboratorsList .jp-Collaborator')).toHaveCount(0);
   });
 
+  test('clicking on collaborator without document should do nothing', async ({ page, browser }) => {
+    const panel = await openPanel(page);
+
+    // Expect the collaborators list to contain 1 element.
+    const collaborators = panel.locator('.jp-CollaboratorsList .jp-Collaborator');
+    await expect(collaborators).toHaveCount(1);
+    await panel.locator('.jp-CollaboratorsList .jp-CollaboratorHeader').first().click();
+    await expect(collaborators.first().locator('.jp-CollaboratorFiles')).not.toBeVisible();
+  });
+
+  test('clicking on collaborator should open its file list', async ({ page, browser }) => {
+    // Expand the collaborators list in there.
+    const panel = await openPanel(guestPage);
+    const accordionTitles = panel.locator('.lm-AccordionPanel>h3');
+    if (
+      !(await accordionTitles.last().getAttribute('class') || '')
+        .includes('lm-mod-expanded')
+    ) {
+      await accordionTitles.last().click();
+    }
+
+    await openPanel(page);
+
+    // Expect the collaborators list to contain one collaborator.
+    const collaborators = panel.locator('.jp-CollaboratorsList .jp-Collaborator');
+    await expect.soft(collaborators).toHaveCount(1);
+    // The collaborator files list should be hidden by default.
+    await expect.soft(collaborators.first().locator('.jp-CollaboratorFiles')).not.toBeVisible();
+
+    const notebookName = await page.notebook.createNew() || '';
+    const notebookName2 = await page.notebook.createNew() || '';
+
+    // First expect the new page only contains the Launcher tab.
+    const dockTabs = guestPage.locator('#jp-main-dock-panel > .lm-DockPanel-tabBar > ul');
+    await expect.soft(dockTabs.locator('li')).toHaveCount(1);
+    await expect.soft(dockTabs.locator('li.lm-mod-current > .lm-TabBar-tabLabel')).toHaveText('Launcher');
+
+    // Click on collaborator should open files list of the collaborator.
+    await panel.locator('.jp-CollaboratorsList .jp-CollaboratorHeader').first().click();
+    const fileList = collaborators.first().locator('.jp-CollaboratorFiles');
+    await expect(fileList).toBeVisible();
+    await expect(fileList.getByText(notebookName)).toHaveCount(1);
+    await expect(fileList.getByText(notebookName2)).toHaveCount(1);
+
+    expect(await collaborators.first().screenshot()).toMatchSnapshot('one-client-with-two-documents.png');
+  });
+
+
   test('clicking on collaborator should open to its current document', async ({ page, browser }) => {
     // Expand the collaborators list in there.
     const panel = await openPanel(guestPage);
@@ -122,8 +170,10 @@ test.describe('One client', () => {
     await expect.soft(dockTabs.locator('li')).toHaveCount(1);
     await expect.soft(dockTabs.locator('li.lm-mod-current > .lm-TabBar-tabLabel')).toHaveText('Launcher');
 
-    // Click on collaborator should open the current notebook of this collaborator.
-    await panel.locator('.jp-CollaboratorsList .jp-Collaborator').first().click();
+    // Click on a collaborator file should open the file of this collaborator.
+    await panel.locator('.jp-CollaboratorsList .jp-CollaboratorHeader').first().click();
+    await panel.locator('.jp-CollaboratorsList .jp-CollaboratorFiles').getByText(notebookName).click();
+
     await expect.soft(dockTabs.locator('li')).toHaveCount(2);
     await expect(dockTabs.locator('li.lm-mod-current > .lm-TabBar-tabLabel')).toHaveText(notebookName);
   });
@@ -210,7 +260,7 @@ test.describe('Three clients', () => {
 
     // wait for guest clients
     for (let i = 0; i < numClients; i++) {
-      await page.waitForSelector('text=/jovyan_. . Untitled.ipynb/');
+      await page.waitForSelector('text=/jovyan_./');
     }
 
     const tab = await page.sidebar.getContentPanel('left');

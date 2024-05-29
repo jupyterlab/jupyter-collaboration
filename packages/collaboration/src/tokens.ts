@@ -87,7 +87,12 @@ export interface ICollaboratorAwareness {
   user: User.IIdentity;
 
   /**
-   * The current file/context the user is working on.
+   * The current file/context the user is working on (current panel in main area).
    */
   current?: string;
+
+  /**
+   * The shared documents opened by the user.
+   */
+  documents?: string[];
 }

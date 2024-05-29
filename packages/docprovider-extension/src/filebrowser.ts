@@ -26,7 +26,9 @@ import { CommandRegistry } from '@lumino/commands';
 
 import { YFile, YNotebook } from '@jupyter/ydoc';
 
+import { IGlobalAwareness } from '@jupyter/collaboration';
 import { ICollaborativeDrive, YDrive } from '@jupyter/docprovider';
+import { Awareness } from 'y-protocols/awareness';
 
 /**
  * The command IDs used by the file browser plugin.
@@ -43,13 +45,14 @@ export const drive: JupyterFrontEndPlugin<ICollaborativeDrive> = {
   description: 'The default collaborative drive provider',
   provides: ICollaborativeDrive,
   requires: [ITranslator],
-  optional: [],
+  optional: [IGlobalAwareness],
   activate: (
     app: JupyterFrontEnd,
-    translator: ITranslator
+    translator: ITranslator,
+    globalAwareness: Awareness | null
   ): ICollaborativeDrive => {
     const trans = translator.load('jupyter_collaboration');
-    const drive = new YDrive(app.serviceManager.user, trans);
+    const drive = new YDrive(app.serviceManager.user, trans, globalAwareness);
     app.serviceManager.contents.addDrive(drive);
     return drive;
   }
