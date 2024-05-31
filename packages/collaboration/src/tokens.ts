@@ -3,8 +3,9 @@
 
 import type { Menu } from '@lumino/widgets';
 import { Token } from '@lumino/coreutils';
-import { IAwareness } from '@jupyter/docprovider';
 import type { User } from '@jupyterlab/services';
+
+import { IAwareness } from '@jupyter/ydoc';
 
 /**
  * The user menu token.

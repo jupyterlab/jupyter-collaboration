@@ -5,18 +5,24 @@ from __future__ import annotations
 import asyncio
 
 from jupyter_server.extension.application import ExtensionApp
-from traitlets import Float, Type
-from ypy_websocket.ystore import BaseYStore
+from pycrdt_websocket.ystore import BaseYStore
+from traitlets import Bool, Float, Type
 
 from .handlers import DocSessionHandler, YDocWebSocketHandler
 from .loaders import FileLoaderMapping
 from .stores import SQLiteYStore
-from .utils import EVENTS_SCHEMA_PATH
-from .websocketserver import JupyterWebsocketServer
+from .utils import AWARENESS_EVENTS_SCHEMA_PATH, EVENTS_SCHEMA_PATH
+from .websocketserver import JupyterWebsocketServer, exception_logger
 
 
 class YDocExtension(ExtensionApp):
     name = "jupyter_collaboration"
+    app_name = "Collaboration"
+    description = """
+    Enables Real Time Collaboration in JupyterLab
+    """
+
+    disable_rtc = Bool(False, config=True, help="Whether to disable real time collaboration.")
 
     file_poll_interval = Float(
         1,
@@ -54,6 +60,7 @@ class YDocExtension(ExtensionApp):
     def initialize(self):
         super().initialize()
         self.serverapp.event_logger.register_event_schema(EVENTS_SCHEMA_PATH)
+        self.serverapp.event_logger.register_event_schema(AWARENESS_EVENTS_SCHEMA_PATH)
 
     def initialize_settings(self):
         self.settings.update(
@@ -66,6 +73,10 @@ class YDocExtension(ExtensionApp):
         )
 
     def initialize_handlers(self):
+        self.serverapp.web_app.settings.setdefault(
+            "page_config_data", {"disableRTC": self.disable_rtc}
+        )
+
         # Set configurable parameters to YStore class
         for k, v in self.config.get(self.ystore_class.__name__, {}).items():
             setattr(self.ystore_class, k, v)
@@ -74,6 +85,9 @@ class YDocExtension(ExtensionApp):
             rooms_ready=False,
             auto_clean_rooms=False,
             ystore_class=self.ystore_class,
+            # Log exceptions, because we don't want the websocket server
+            # to _ever_ crash permanently in a live jupyter_server.
+            exception_handler=exception_logger,
             log=self.log,
         )
 

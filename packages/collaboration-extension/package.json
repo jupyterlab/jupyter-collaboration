@@ -1,19 +1,19 @@
 {
   "name": "@jupyter/collaboration-extension",
-  "version": "1.0.0",
+  "version": "2.1.1",
   "description": "JupyterLab - Real-Time Collaboration Extension",
   "keywords": [
     "jupyter",
     "jupyterlab",
     "jupyterlab-extension"
   ],
-  "homepage": "https://github.com/jupyterlab/jupyter_collaboration",
+  "homepage": "https://github.com/jupyterlab/jupyter-collaboration",
   "bugs": {
-    "url": "https://github.com/jupyterlab/jupyter_collaboration/issues"
+    "url": "https://github.com/jupyterlab/jupyter-collaboration/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jupyterlab/jupyter_collaboration.git"
+    "url": "https://github.com/jupyterlab/jupyter-collaboration.git"
   },
   "license": "BSD-3-Clause",
   "author": "Project Jupyter",
@@ -53,22 +53,23 @@
     "watch:labextension": "jupyter labextension watch ."
   },
   "dependencies": {
-    "@jupyter/collaboration": "^1.0.0",
-    "@jupyter/docprovider": "^1.0.0",
-    "@jupyterlab/application": "^4.0.0",
-    "@jupyterlab/apputils": "^4.0.0",
-    "@jupyterlab/codemirror": "^4.0.0",
-    "@jupyterlab/coreutils": "^6.0.0",
-    "@jupyterlab/docregistry": "^4.0.0",
-    "@jupyterlab/filebrowser": "^4.0.0",
-    "@jupyterlab/fileeditor": "^4.0.0",
-    "@jupyterlab/logconsole": "^4.0.0",
-    "@jupyterlab/notebook": "^4.0.0",
-    "@jupyterlab/services": "^7.0.0",
-    "@jupyterlab/settingregistry": "^4.0.0",
-    "@jupyterlab/statedb": "^4.0.0",
-    "@jupyterlab/translation": "^4.0.0",
-    "@jupyterlab/ui-components": "^4.0.0",
+    "@jupyter/collaboration": "^2.1.1",
+    "@jupyter/docprovider": "^2.1.1",
+    "@jupyter/ydoc": "^1.1.0-a0",
+    "@jupyterlab/application": "^4.0.5",
+    "@jupyterlab/apputils": "^4.0.5",
+    "@jupyterlab/codemirror": "^4.0.5",
+    "@jupyterlab/coreutils": "^6.0.5",
+    "@jupyterlab/docregistry": "^4.0.5",
+    "@jupyterlab/filebrowser": "^4.0.5",
+    "@jupyterlab/fileeditor": "^4.0.5",
+    "@jupyterlab/logconsole": "^4.0.5",
+    "@jupyterlab/notebook": "^4.0.5",
+    "@jupyterlab/services": "^7.0.5",
+    "@jupyterlab/settingregistry": "^4.0.5",
+    "@jupyterlab/statedb": "^4.0.5",
+    "@jupyterlab/translation": "^4.0.5",
+    "@jupyterlab/ui-components": "^4.0.5",
     "@lumino/commands": "^2.1.0",
     "@lumino/widgets": "^2.1.0",
     "y-protocols": "^1.0.5",
@@ -76,7 +77,7 @@
     "yjs": "^13.5.40"
   },
   "devDependencies": {
-    "@jupyterlab/builder": "^4.0.0",
+    "@jupyterlab/builder": "^4.0.5",
     "@types/react": "~18.0.26",
     "npm-run-all": "^4.1.5",
     "rimraf": "^4.1.2",

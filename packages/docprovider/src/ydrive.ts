@@ -1,7 +1,7 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { URLExt } from '@jupyterlab/coreutils';
+import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 import { TranslationBundle } from '@jupyterlab/translation';
 import { Contents, Drive, User } from '@jupyterlab/services';
 
@@ -13,6 +13,9 @@ import {
   ISharedModelFactory,
   SharedDocumentFactory
 } from './tokens';
+
+const DISABLE_RTC =
+  PageConfig.getOption('disableRTC') === 'true' ? true : false;
 
 /**
  * The url for the default drive service.
@@ -75,8 +78,14 @@ export class YDrive extends Drive implements ICollaborativeDrive {
       const provider = this._providers.get(key);
 
       if (provider) {
-        const model = super.get(localPath, { ...options, content: false });
-        await provider.ready;
+        // If the document does't exist, `super.get` will reject with an
+        // error and the provider will never be resolved.
+        // Use `Promise.all` to reject as soon as possible. The Context will
+        // show a dialog to the user.
+        const [model] = await Promise.all([
+          super.get(localPath, { ...options, content: false }),
+          provider.ready
+        ]);
         return model;
       }
     }
@@ -105,7 +114,12 @@ export class YDrive extends Drive implements ICollaborativeDrive {
 
       if (provider) {
         // Save is done from the backend
-        return this.get(localPath, { ...options, content: false });
+        const fetchOptions: Contents.IFetchOptions = {
+          type: options.type,
+          format: options.format,
+          content: false
+        };
+        return this.get(localPath, fetchOptions);
       }
     }
 
@@ -177,7 +191,7 @@ class SharedModelFactory implements ISharedModelFactory {
   /**
    * Whether the IDrive supports real-time collaboration or not.
    */
-  readonly collaborative = true;
+  readonly collaborative = !DISABLE_RTC;
 
   /**
    * Register a SharedDocumentFactory.
@@ -208,7 +222,7 @@ class SharedModelFactory implements ISharedModelFactory {
       return;
     }
 
-    if (!options.collaborative) {
+    if (!this.collaborative || !options.collaborative) {
       // Bail if the document model does not support collaboration
       // the `sharedModel` will be the default one.
       return;

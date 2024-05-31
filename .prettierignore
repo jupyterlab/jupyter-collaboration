@@ -6,7 +6,6 @@
 **/tsconfig.test.json
 **/*.d.ts
 **/test
-**/ui-tests
 
 docs
 tests

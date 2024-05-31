@@ -1,14 +1,14 @@
 {
   "name": "@jupyter/collaboration",
-  "version": "1.0.0",
+  "version": "2.1.1",
   "description": "JupyterLab - Real-Time Collaboration Widgets",
-  "homepage": "https://github.com/jupyterlab/jupyter_collaboration",
+  "homepage": "https://github.com/jupyterlab/jupyter-collaboration",
   "bugs": {
-    "url": "https://github.com/jupyterlab/jupyter_collaboration/issues"
+    "url": "https://github.com/jupyterlab/jupyter-collaboration/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jupyterlab/jupyter_collaboration.git"
+    "url": "https://github.com/jupyterlab/jupyter-collaboration.git"
   },
   "license": "BSD-3-Clause",
   "author": "Project Jupyter",
@@ -41,11 +41,11 @@
   "dependencies": {
     "@codemirror/state": "^6.2.0",
     "@codemirror/view": "^6.7.0",
-    "@jupyter/docprovider": "1.0.0",
-    "@jupyterlab/apputils": "^4.0.0",
-    "@jupyterlab/coreutils": "^6.0.0",
-    "@jupyterlab/services": "^7.0.0",
-    "@jupyterlab/ui-components": "^4.0.0",
+    "@jupyter/docprovider": "^2.1.1",
+    "@jupyterlab/apputils": "^4.0.5",
+    "@jupyterlab/coreutils": "^6.0.5",
+    "@jupyterlab/services": "^7.0.5",
+    "@jupyterlab/ui-components": "^4.0.5",
     "@lumino/coreutils": "^2.1.0",
     "@lumino/virtualdom": "^2.0.0",
     "@lumino/widgets": "^2.1.0",

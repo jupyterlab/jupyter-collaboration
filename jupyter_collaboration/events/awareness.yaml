@@ -1,0 +1,33 @@
+"$id": https://schema.jupyter.org/jupyter_collaboration/awareness/v1
+"$schema": "http://json-schema.org/draft-07/schema"
+version: 1
+title: Collaborative awareness events
+personal-data: true
+description: |
+  Awareness events emitted from server-side during a collaborative session.
+type: object
+required:
+  - roomid
+  - username
+  - action
+properties:
+  roomid:
+    type: string
+    description: |
+      Room ID. Usually composed by the file type, format and ID.
+  username:
+    type: string
+    description: |
+      The name of the user who joined or left room.
+  action:
+    enum:
+      - join
+      - leave
+    description: |
+      Possible values:
+      1. join
+      2. leave
+  msg:
+    type: string
+    description: |
+      Optional event message.

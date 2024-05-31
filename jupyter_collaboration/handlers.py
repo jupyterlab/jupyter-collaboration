@@ -5,26 +5,30 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 import uuid
-from pathlib import Path
+from logging import Logger
 from typing import Any
 
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
+from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS
+from pycrdt_websocket.websocket_server import YRoom
+from pycrdt_websocket.ystore import BaseYStore
+from pycrdt_websocket.yutils import YMessageType, write_var_uint
 from tornado import web
 from tornado.websocket import WebSocketHandler
-from ypy_websocket.websocket_server import YRoom
-from ypy_websocket.ystore import BaseYStore
-from ypy_websocket.yutils import YMessageType, write_var_uint
 
 from .loaders import FileLoaderMapping
 from .rooms import DocumentRoom, TransientRoom
 from .utils import (
+    JUPYTER_COLLABORATION_AWARENESS_EVENTS_URI,
     JUPYTER_COLLABORATION_EVENTS_URI,
     LogLevel,
     MessageType,
     decode_file_path,
+    room_id_from_encoded_path,
 )
 from .websocketserver import JupyterWebsocketServer
 
@@ -54,6 +58,100 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
     """
 
     _message_queue: asyncio.Queue[Any]
+    _background_tasks: set[asyncio.Task]
+    _room_locks: dict[str, asyncio.Lock] = {}
+
+    def _room_lock(self, room_id: str) -> asyncio.Lock:
+        if room_id not in self._room_locks:
+            self._room_locks[room_id] = asyncio.Lock()
+        return self._room_locks[room_id]
+
+    def create_task(self, aw):
+        task = asyncio.create_task(aw)
+        self._background_tasks.add(task)
+        task.add_done_callback(self._background_tasks.discard)
+
+    async def prepare(self):
+        await ensure_async(super().prepare())
+        if not self._websocket_server.started.is_set():
+            self.create_task(self._websocket_server.start())
+            await self._websocket_server.started.wait()
+
+        # Get room
+        self._room_id: str = room_id_from_encoded_path(self.request.path)
+
+        async with self._room_lock(self._room_id):
+            if self._websocket_server.room_exists(self._room_id):
+                self.room: YRoom = await self._websocket_server.get_room(self._room_id)
+            else:
+                # Logging exceptions, instead of raising them here to ensure
+                # that the y-rooms stay alive even after an exception is seen.
+                def exception_logger(exception: Exception, log: Logger) -> bool:
+                    """A function that catches any exceptions raised in the websocket
+                    server and logs them.
+                    The protects the y-room's task group from cancelling
+                    anytime an exception is raised.
+                    """
+                    log.error(
+                        f"Document Room Exception, (room_id={self._room_id or 'unknown'}): ",
+                        exc_info=exception,
+                    )
+                    return True
+
+                if self._room_id.count(":") >= 2:
+                    # DocumentRoom
+                    file_format, file_type, file_id = decode_file_path(self._room_id)
+                    if file_id in self._file_loaders:
+                        self._emit(
+                            LogLevel.WARNING,
+                            None,
+                            "There is another collaborative session accessing the same file.\nThe synchronization between rooms is not supported and you might lose some of your changes.",
+                        )
+
+                    file = self._file_loaders[file_id]
+                    updates_file_path = f".{file_type}:{file_id}.y"
+                    ystore = self._ystore_class(path=updates_file_path, log=self.log)
+                    self.room = DocumentRoom(
+                        self._room_id,
+                        file_format,
+                        file_type,
+                        file,
+                        self.event_logger,
+                        ystore,
+                        self.log,
+                        exception_handler=exception_logger,
+                        save_delay=self._document_save_delay,
+                    )
+
+                else:
+                    # TransientRoom
+                    # it is a transient document (e.g. awareness)
+                    self.room = TransientRoom(
+                        self._room_id,
+                        log=self.log,
+                        exception_handler=exception_logger,
+                    )
+
+            try:
+                await self._websocket_server.start_room(self.room)
+            except Exception as e:
+                self.log.error("Room %s failed to start on websocket server", self._room_id)
+                # Clean room
+                await self.room.stop()
+                self.log.info("Room %s deleted", self._room_id)
+                self._emit(LogLevel.INFO, "clean", "Room deleted.")
+
+                # Clean the file loader in file loader mapping if there are not any rooms using it
+                _, _, file_id = decode_file_path(self._room_id)
+                file = self._file_loaders[file_id]
+                if file.number_of_subscriptions == 0 or (
+                    file.number_of_subscriptions == 1 and self._room_id in file._subscriptions
+                ):
+                    self.log.info("Deleting file %s", file.path)
+                    await self._file_loaders.remove(file_id)
+                    self._emit(LogLevel.INFO, "clean", "file loader removed.")
+                raise e
+            self._websocket_server.add_room(self._room_id, self.room)
 
     def initialize(
         self,
@@ -63,53 +161,17 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         document_cleanup_delay: float | None = 60.0,
         document_save_delay: float | None = 1.0,
     ) -> None:
+        self._background_tasks = set()
         # File ID manager cannot be passed as argument as the extension may load after this one
         self._file_id_manager = self.settings["file_id_manager"]
         self._file_loaders = file_loaders
+        self._ystore_class = ystore_class
         self._cleanup_delay = document_cleanup_delay
+        self._document_save_delay = document_save_delay
         self._websocket_server = ywebsocket_server
-
         self._message_queue = asyncio.Queue()
-
-        # Get room
-        self._room_id: str = self.request.path.split("/")[-1]
-
-        if self._websocket_server.room_exists(self._room_id):
-            self.room: YRoom = self._websocket_server.get_room(self._room_id)
-
-        else:
-            if self._room_id.count(":") >= 2:
-                # DocumentRoom
-                file_format, file_type, file_id = decode_file_path(self._room_id)
-                if file_id in self._file_loaders:
-                    self._emit(
-                        LogLevel.WARNING,
-                        None,
-                        "There is another collaborative session accessing the same file.\nThe synchronization between rooms is not supported and you might lose some of your changes.",
-                    )
-
-                file = self._file_loaders[file_id]
-                path = self._file_id_manager.get_path(file_id)
-                path = Path(path)
-                updates_file_path = str(path.parent / f".{file_type}:{path.name}.y")
-                ystore = ystore_class(path=updates_file_path, log=self.log)
-                self.room = DocumentRoom(
-                    self._room_id,
-                    file_format,
-                    file_type,
-                    file,
-                    self.event_logger,
-                    ystore,
-                    self.log,
-                    document_save_delay,
-                )
-
-            else:
-                # TransientRoom
-                # it is a transient document (e.g. awareness)
-                self.room = TransientRoom(self._room_id, self.log)
-
-            self._websocket_server.add_room(self._room_id, self.room)
+        self._room_id = ""
+        self.room = None
 
     @property
     def path(self):
@@ -141,7 +203,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         Overrides default behavior to check whether the client is authenticated or not.
         """
-        if self.get_current_user() is None:
+        if self.current_user is None:
             self.log.warning("Couldn't authenticate WebSocket connection")
             raise web.HTTPError(403)
         return await super().get(*args, **kwargs)
@@ -150,9 +212,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         On connection open.
         """
-        task = asyncio.create_task(self._websocket_server.serve(self))
-        self._websocket_server.background_tasks.add(task)
-        task.add_done_callback(self._websocket_server.background_tasks.discard)
+        self.create_task(self._websocket_server.serve(self))
 
         if isinstance(self.room, DocumentRoom):
             # Close the connection if the document session expired
@@ -169,16 +229,33 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
             try:
                 # Initialize the room
-                await self.room.initialize()
+                async with self._room_lock(self._room_id):
+                    await self.room.initialize()
+                self._emit_awareness_event(self.current_user.username, "join")
             except Exception as e:
                 _, _, file_id = decode_file_path(self._room_id)
                 file = self._file_loaders[file_id]
-                self.log.error(f"Error initializing: {file.path}\n{e!r}", exc_info=e)
-                self.close(
-                    1003, f"Error initializing: {file.path}. You need to close the document."
-                )
+
+                # Close websocket and propagate error.
+                if isinstance(e, web.HTTPError):
+                    self.log.error(f"File {file.path} not found.\n{e!r}", exc_info=e)
+                    self.close(1004, f"File {file.path} not found.")
+                else:
+                    self.log.error(f"Error initializing: {file.path}\n{e!r}", exc_info=e)
+                    self.close(
+                        1003, f"Error initializing: {file.path}. You need to close the document."
+                    )
+
+                # Clean up the room and delete the file loader
+                if len(self.room.clients) == 0 or self.room.clients == [self]:
+                    self._message_queue.put_nowait(b"")
+                    self._cleanup_delay = 0
+                    await self._clean_room()
 
             self._emit(LogLevel.INFO, "initialize", "New client connected.")
+        else:
+            if self._room_id != "JupyterLab:globalAwareness":
+                self._emit_awareness_event(self.current_user.username, "join")
 
     async def send(self, message):
         """
@@ -188,7 +265,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         try:
             self.write_message(message, binary=True)
         except Exception as e:
-            self.log.debug("Failed to write message", exc_info=e)
+            self.log.error("Failed to write message", exc_info=e)
 
     async def recv(self):
         """
@@ -197,12 +274,11 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         message = await self._message_queue.get()
         return message
 
-    def on_message(self, message):
+    async def on_message(self, message):
         """
         On message receive.
         """
         message_type = message[0]
-        print("message type:", message_type)
 
         if message_type == YMessageType.AWARENESS:
             # awareness
@@ -231,8 +307,12 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
         if message_type == MessageType.CHAT:
             msg = message[2:].decode("utf-8")
-            user = self.get_current_user()
-            data = json.dumps({"username": user.username, "msg": msg}).encode("utf8")
+
+            user = self.current_user
+            data = json.dumps(
+                {"sender": user.username, "timestamp": time.time(), "content": json.loads(msg)}
+            ).encode("utf8")
+
             for client in self.room.clients:
                 if client != self:
                     task = asyncio.create_task(
@@ -255,6 +335,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             # keep the document for a while in case someone reconnects
             self.log.info("Cleaning room: %s", self._room_id)
             self.room.cleaner = asyncio.create_task(self._clean_room())
+        if self._room_id != "JupyterLab:globalAwareness":
+            self._emit_awareness_event(self.current_user.username, "leave")
 
     def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:
         _, _, file_id = decode_file_path(self._room_id)
@@ -267,6 +349,13 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             data["msg"] = msg
 
         self.event_logger.emit(schema_id=JUPYTER_COLLABORATION_EVENTS_URI, data=data)
+
+    def _emit_awareness_event(self, username: str, action: str, msg: str | None = None) -> None:
+        data = {"roomid": self._room_id, "username": username, "action": action}
+        if msg:
+            data["msg"] = msg
+
+        self.event_logger.emit(schema_id=JUPYTER_COLLABORATION_AWARENESS_EVENTS_URI, data=data)
 
     async def _clean_room(self) -> None:
         """
@@ -287,22 +376,24 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
         await asyncio.sleep(self._cleanup_delay)
 
-        # Remove the room from the websocket server
-        self.log.info("Deleting Y document from memory: %s", self.room.room_id)
-        self._websocket_server.delete_room(room=self.room)
+        async with self._room_lock(self._room_id):
+            # Remove the room from the websocket server
+            self.log.info("Deleting Y document from memory: %s", self._room_id)
+            await self._websocket_server.delete_room(room=self.room)
 
-        # Clean room
-        del self.room
-        self.log.info("Room %s deleted", self._room_id)
-        self._emit(LogLevel.INFO, "clean", "Room deleted.")
+            # Clean room
+            del self.room
+            self.log.info("Room %s deleted", self._room_id)
+            self._emit(LogLevel.INFO, "clean", "Room deleted.")
 
-        # Clean the file loader if there are not rooms using it
-        _, _, file_id = decode_file_path(self._room_id)
-        file = self._file_loaders[file_id]
-        if file.number_of_subscriptions == 0:
-            self.log.info("Deleting file %s", file.path)
-            del self._file_loaders[file_id]
-            self._emit(LogLevel.INFO, "clean", "Loader deleted.")
+            # Clean the file loader if there are not rooms using it
+            _, _, file_id = decode_file_path(self._room_id)
+            file = self._file_loaders[file_id]
+            if file.number_of_subscriptions == 0:
+                self.log.info("Deleting file %s", file.path)
+                await self._file_loaders.remove(file_id)
+                self._emit(LogLevel.INFO, "clean", "Loader deleted.")
+            del self._room_locks[self._room_id]
 
     def check_origin(self, origin):
         """

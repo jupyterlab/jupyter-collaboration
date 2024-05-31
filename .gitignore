@@ -126,7 +126,7 @@ dmypy.json
 docs/source/changelog.md
 
 .pnp.*
-.yarn/*
+.yarn/
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases

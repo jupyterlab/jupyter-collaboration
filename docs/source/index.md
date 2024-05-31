@@ -25,11 +25,6 @@ Installation using pip:
 pip install jupyter-collaboration
 ```
 
-To share a document with other users, you can copy the URL and send it, or you
-can install a helpful extension called
-[jupyterlab-link-share](https://github.com/jupyterlab-contrib/jupyterlab-link-share)
-that might help to share the link including the token.
-
 The new collaborative editing feature enables collaboration in real-time
 between multiple clients without user roles. When sharing the URL of a
 document to other users, they will have access to the same environment you

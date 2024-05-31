@@ -4,71 +4,37 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
-from typing import Any
-
-import pytest
-from jupyter_server import _tz as tz
+from datetime import datetime, timedelta, timezone
 
 from jupyter_collaboration.loaders import FileLoader, FileLoaderMapping
 
-
-class FakeFileIDManager:
-    def __init__(self, mapping: dict[str, str]):
-        self.mapping = mapping
-
-    def get_path(self, id: str) -> str:
-        return self.mapping[id]
+from .utils import FakeContentsManager, FakeFileIDManager
 
 
-class FakeContentsManager:
-    def __init__(self, model: dict):
-        self.model = {
-            "name": "",
-            "path": "",
-            "last_modified": datetime(1970, 1, 1, 0, 0, tzinfo=tz.UTC),
-            "created": datetime(1970, 1, 1, 0, 0, tzinfo=tz.UTC),
-            "content": None,
-            "format": None,
-            "mimetype": None,
-            "size": 0,
-            "writable": False,
-        }
-        self.model.update(model)
-
-    def get(
-        self, path: str, content: bool = True, format: str | None = None, type: str | None = None
-    ) -> dict:
-        return self.model
-
-    def save_content(self, model: dict[str, Any], path: str) -> dict:
-        return self.model
-
-
-@pytest.mark.asyncio
 async def test_FileLoader_with_watcher():
     id = "file-4567"
     path = "myfile.txt"
     paths = {}
     paths[id] = path
 
-    cm = FakeContentsManager({"last_modified": datetime.now()})
+    cm = FakeContentsManager({"last_modified": datetime.now(timezone.utc)})
     loader = FileLoader(
         id,
         FakeFileIDManager(paths),
         cm,
         poll_interval=0.1,
     )
+    await loader.load_content("text", "file")
 
     triggered = False
 
-    async def trigger(*args):
+    async def trigger():
         nonlocal triggered
         triggered = True
 
     loader.observe("test", trigger)
 
-    cm.model["last_modified"] = datetime.now()
+    cm.model["last_modified"] = datetime.now(timezone.utc) + timedelta(seconds=1)
 
     await asyncio.sleep(0.15)
 
@@ -78,31 +44,31 @@ async def test_FileLoader_with_watcher():
         await loader.clean()
 
 
-@pytest.mark.asyncio
 async def test_FileLoader_without_watcher():
     id = "file-4567"
     path = "myfile.txt"
     paths = {}
     paths[id] = path
 
-    cm = FakeContentsManager({"last_modified": datetime.now()})
+    cm = FakeContentsManager({"last_modified": datetime.now(timezone.utc)})
     loader = FileLoader(
         id,
         FakeFileIDManager(paths),
         cm,
     )
+    await loader.load_content("text", "file")
 
     triggered = False
 
-    async def trigger(*args):
+    async def trigger():
         nonlocal triggered
         triggered = True
 
     loader.observe("test", trigger)
 
-    cm.model["last_modified"] = datetime.now()
+    cm.model["last_modified"] = datetime.now(timezone.utc) + timedelta(seconds=1)
 
-    await loader.notify()
+    await loader.maybe_notify()
 
     try:
         assert triggered
@@ -110,14 +76,13 @@ async def test_FileLoader_without_watcher():
         await loader.clean()
 
 
-@pytest.mark.asyncio
 async def test_FileLoaderMapping_with_watcher():
     id = "file-4567"
     path = "myfile.txt"
     paths = {}
     paths[id] = path
 
-    cm = FakeContentsManager({"last_modified": datetime.now()})
+    cm = FakeContentsManager({"last_modified": datetime.now(timezone.utc)})
 
     map = FileLoaderMapping(
         {"contents_manager": cm, "file_id_manager": FakeFileIDManager(paths)},
@@ -125,10 +90,11 @@ async def test_FileLoaderMapping_with_watcher():
     )
 
     loader = map[id]
+    await loader.load_content("text", "file")
 
     triggered = False
 
-    async def trigger(*args):
+    async def trigger():
         nonlocal triggered
         triggered = True
 
@@ -136,7 +102,7 @@ async def test_FileLoaderMapping_with_watcher():
 
     # Clear map (and its loader) before updating => triggered should be False
     await map.clear()
-    cm.model["last_modified"] = datetime.now()
+    cm.model["last_modified"] = datetime.now(timezone.utc)
 
     await asyncio.sleep(0.15)
 
