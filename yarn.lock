@@ -2021,7 +2021,7 @@ __metadata:
   dependencies:
     "@jupyter/collaboration": ^2.1.1
     "@jupyter/docprovider": ^2.1.1
-    "@jupyter/ydoc": ^1.1.0-a0
+    "@jupyter/ydoc": ^1.1.0-a0 || ^2.0.0
     "@jupyterlab/application": ^4.0.5
     "@jupyterlab/apputils": ^4.0.5
     "@jupyterlab/builder": ^4.0.5
@@ -2130,7 +2130,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jupyter/ydoc@npm:^1.1.0-a0, @jupyter/ydoc@npm:^1.1.0-a0 || ^2.0.0":
+"@jupyter/ydoc@npm:^1.1.0-a0 || ^2.0.0":
   version: 1.1.0-a0
   resolution: "@jupyter/ydoc@npm:1.1.0-a0"
   dependencies:
