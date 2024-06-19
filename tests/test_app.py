@@ -62,13 +62,18 @@ def test_settings_should_change_ystore_class(jp_configurable_serverapp):
     assert settings["ystore_class"] == TempFileYStore
 
 
-def test_settings_should_change_document_ttl(jp_configurable_serverapp):
+async def test_document_ttl_from_settings(
+    rtc_create_SQLite_store, rtc_create_mock_document_room, jp_configurable_serverapp):
     argv = ["--SQLiteYStore.document_ttl=3600"]
 
     app = jp_configurable_serverapp(argv=argv)
-    settings = app.web_app.settings["jupyter_server_ydoc_config"]
 
-    assert settings["ystore_class"].document_ttl == 3600
+    id = "test-id"
+    content = "test_ttl"
+    store = await rtc_create_SQLite_store("file", id, content)
+    
+    assert store.document_ttl == 3600
+
 
 
 @pytest.mark.parametrize("copy", [True, False])
