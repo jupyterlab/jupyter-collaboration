@@ -14,9 +14,9 @@ from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS
+from pycrdt import YMessageType, write_var_uint
 from pycrdt_websocket.websocket_server import YRoom
 from pycrdt_websocket.ystore import BaseYStore
-from pycrdt_websocket.yutils import YMessageType, write_var_uint
 from tornado import web
 from tornado.ioloop import IOLoop
 from tornado.websocket import WebSocketHandler
