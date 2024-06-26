@@ -30,3 +30,9 @@ class SQLiteYStore(LoggingConfigurable, _SQLiteYStore, metaclass=SQLiteYStoreMet
         help="""The document time-to-live in seconds. Defaults to None (document history is never
         cleared).""",
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Class is instantiated later, so we need to set the document_ttl here
+        self.document_ttl = int(self.document_ttl) if self.document_ttl is not None else None
+      
