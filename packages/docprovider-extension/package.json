@@ -71,8 +71,8 @@
     "yjs": "^13.5.40"
   },
   "devDependencies": {
-    "@jupyterlab/builder": "^4.0.5",
-    "@types/react": "~18.0.26",
+    "@jupyterlab/builder": "^4.0.0",
+    "@types/react": "~18.3.1",
     "npm-run-all": "^4.1.5",
     "rimraf": "^4.1.2",
     "typescript": "~5.0.4"

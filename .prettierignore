@@ -6,6 +6,7 @@
 **/tsconfig.test.json
 **/*.d.ts
 **/test
+**/labextension
 
 docs
 tests

@@ -136,21 +136,35 @@ class YDocExtension(ExtensionApp):
     async def get_document(
         self: YDocExtension,
         *,
-        path: str,
-        content_type: Literal["notebook", "file"],
-        file_format: Literal["json", "text"],
+        path: str | None = None,
+        content_type: str | None = None,
+        file_format: Literal["json", "text"] | None = None,
+        room_id: str | None = None,
         copy: bool = True,
     ) -> YBaseDoc | None:
         """Get a view of the shared model for the matching document.
 
+        You need to provide either a ``room_id`` or the ``path``,
+        the ``content_type`` and the ``file_format``.
+
         If `copy=True`, the returned shared model is a fork, meaning that any changes
          made to it will not be propagated to the shared model used by the application.
         """
-        file_id_manager = self.serverapp.web_app.settings["file_id_manager"]
-        file_id = file_id_manager.index(path)
+        error_msg = "You need to provide either a ``room_id`` or the ``path``, the ``content_type`` and the ``file_format``."
+        if room_id is None:
+            if path is None or content_type is None or file_format is None:
+                raise ValueError(error_msg)
 
-        encoded_path = encode_file_path(file_format, content_type, file_id)
-        room_id = room_id_from_encoded_path(encoded_path)
+            file_id_manager = self.serverapp.web_app.settings["file_id_manager"]
+            file_id = file_id_manager.index(path)
+
+            encoded_path = encode_file_path(file_format, content_type, file_id)
+            room_id = room_id_from_encoded_path(encoded_path)
+
+        elif path is not None or content_type is not None or file_format is not None:
+            raise ValueError(error_msg)
+        else:
+            room_id = room_id
 
         try:
             room = await self.ywebsocket_server.get_room(room_id)
@@ -164,7 +178,7 @@ class YDocExtension(ExtensionApp):
                 fork_ydoc = Doc()
                 fork_ydoc.apply_update(update)
 
-                return YDOCS.get(content_type, YDOCS["file"])(fork_ydoc)
+                return YDOCS.get(room.file_type, YDOCS["file"])(fork_ydoc)
             else:
                 return room._document
 
