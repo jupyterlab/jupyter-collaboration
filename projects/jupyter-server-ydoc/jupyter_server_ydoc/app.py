@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from functools import partial
 from typing import Literal
 
 from jupyter_server.extension.application import ExtensionApp
@@ -96,13 +97,12 @@ class YDocExtension(ExtensionApp):
         page_config.setdefault("serverSideExecution", self.server_side_execution)
 
         # Set configurable parameters to YStore class
-        for k, v in self.config.get(self.ystore_class.__name__, {}).items():
-            setattr(self.ystore_class, k, v)
+        ystore_class = partial(self.ystore_class, config=self.config)
 
         self.ywebsocket_server = JupyterWebsocketServer(
             rooms_ready=False,
             auto_clean_rooms=False,
-            ystore_class=self.ystore_class,
+            ystore_class=ystore_class,
             # Log exceptions, because we don't want the websocket server
             # to _ever_ crash permanently in a live jupyter_server.
             exception_handler=exception_logger,
@@ -125,7 +125,7 @@ class YDocExtension(ExtensionApp):
                         "document_cleanup_delay": self.document_cleanup_delay,
                         "document_save_delay": self.document_save_delay,
                         "file_loaders": self.file_loaders,
-                        "ystore_class": self.ystore_class,
+                        "ystore_class": ystore_class,
                         "ywebsocket_server": self.ywebsocket_server,
                     },
                 ),
