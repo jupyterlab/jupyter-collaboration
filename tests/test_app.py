@@ -6,6 +6,8 @@ from __future__ import annotations
 import pytest
 from jupyter_server_ydoc.stores import SQLiteYStore, TempFileYStore
 
+from .conftest import rtc_create_SQLite_store_factory
+
 
 def test_default_settings(jp_serverapp):
     settings = jp_serverapp.web_app.settings["jupyter_server_ydoc_config"]
@@ -60,6 +62,19 @@ def test_settings_should_change_ystore_class(jp_configurable_serverapp):
     settings = app.web_app.settings["jupyter_server_ydoc_config"]
 
     assert settings["ystore_class"] == TempFileYStore
+
+
+async def test_document_ttl_from_settings(rtc_create_mock_document_room, jp_configurable_serverapp):
+    argv = ["--SQLiteYStore.document_ttl=3600"]
+
+    app = jp_configurable_serverapp(argv=argv)
+
+    id = "test-id"
+    content = "test_ttl"
+    rtc_create_SQLite_store = rtc_create_SQLite_store_factory(app)
+    store = await rtc_create_SQLite_store("file", id, content)
+
+    assert store.document_ttl == 3600
 
 
 @pytest.mark.parametrize("copy", [True, False])
