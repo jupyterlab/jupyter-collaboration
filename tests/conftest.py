@@ -169,13 +169,9 @@ def rtc_add_doc_to_store(rtc_connect_doc_client):
     return _inner
 
 
-@pytest.fixture
-def rtc_create_SQLite_store(jp_serverapp):
-    for k, v in jp_serverapp.config.get("SQLiteYStore").items():
-        setattr(SQLiteYStore, k, v)
-
+def rtc_create_SQLite_store_factory(jp_serverapp):
     async def _inner(type: str, path: str, content: str) -> DocumentRoom:
-        db = SQLiteYStore(path=f"{type}:{path}")
+        db = SQLiteYStore(path=f"{type}:{path}", config=jp_serverapp.config)
         task = create_task(db.start())
         await db.started.wait()
 
@@ -190,6 +186,11 @@ def rtc_create_SQLite_store(jp_serverapp):
         return db
 
     return _inner
+
+
+@pytest.fixture
+def rtc_create_SQLite_store(jp_serverapp):
+    return rtc_create_SQLite_store_factory(jp_serverapp)
 
 
 @pytest.fixture
