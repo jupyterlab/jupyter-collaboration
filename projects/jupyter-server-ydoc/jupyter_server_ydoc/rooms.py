@@ -55,6 +55,37 @@ class DocumentRoom(BaseRoom):
         self._document.observe(self._on_document_change)
         self._file.observe(self.room_id, self._on_outofband_change)
 
+    @property
+    def file_format(self) -> str:
+        """Document file format."""
+        return self._file_format
+
+    @property
+    def file_type(self) -> str:
+        """Document file type."""
+        return self._file_type
+
+    @property
+    def room_id(self) -> str:
+        """
+        The room ID.
+        """
+        return self._room_id
+
+    @property
+    def cleaner(self) -> asyncio.Task | None:
+        """
+        The task for cleaning up the resources.
+        """
+        return self._cleaner
+
+    @cleaner.setter
+    def cleaner(self, value: asyncio.Task) -> None:
+        """
+        Setter for the clean up task.
+        """
+        self._cleaner = value
+
     async def initialize(self) -> None:
         """
         Initializes the room.
