@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 3.0.0beta0
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@3.0.0-alpha.2...ab80f15094f971da6dc6f9afc72e1504c63dc9ff))
+
+### Enhancements made
+
+- Add the list of opened shared documents to the user awareness [#287](https://github.com/jupyterlab/jupyter-collaboration/pull/287) ([@brichet](https://github.com/brichet))
+
+### Bugs fixed
+
+- Fix use of traitlets to configure YStore class [#322](https://github.com/jupyterlab/jupyter-collaboration/pull/322) ([@krassowski](https://github.com/krassowski))
+- Fix for code execution on the Jupyter Server  [#307](https://github.com/jupyterlab/jupyter-collaboration/pull/307) ([@fcollonval](https://github.com/fcollonval))
+
+### Maintenance and upkeep improvements
+
+- Bump pycrdt-websocket v0.14.0 [#320](https://github.com/jupyterlab/jupyter-collaboration/pull/320) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-05-08&to=2024-07-17&type=c))
+
+[@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2024-05-08..2024-07-17&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-05-08..2024-07-17&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Afcollonval+updated%3A2024-05-08..2024-07-17&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-05-08..2024-07-17&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2024-05-08..2024-07-17&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 3.0.0alpha2
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@3.0.0-alpha.1...5b166c49d76ed5a009ae7f5dc8c4bf9a881913b0))
@@ -25,8 +50,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-05-01&to=2024-05-08&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-05-01..2024-05-08&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Afcollonval+updated%3A2024-05-01..2024-05-08&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-05-01..2024-05-08&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AZsailer+updated%3A2024-05-01..2024-05-08&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 3.0.0alpha1
 
