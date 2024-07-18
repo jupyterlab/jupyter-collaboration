@@ -161,9 +161,9 @@ def rtc_add_doc_to_store(rtc_connect_doc_client):
 
         doc.observe(_on_document_change)
 
-        async with await rtc_connect_doc_client(
-            format, type, path
-        ) as ws, WebsocketProvider(doc.ydoc, ws):
+        async with await rtc_connect_doc_client(format, type, path) as ws, WebsocketProvider(
+            doc.ydoc, ws
+        ):
             await event.wait()
             await sleep(0.1)
 
@@ -209,9 +209,7 @@ def rtc_create_mock_document_room():
         if last_modified is None:
             cm = FakeContentsManager({"content": content})
         else:
-            cm = FakeContentsManager(
-                {"last_modified": datetime.now(), "content": content}
-            )
+            cm = FakeContentsManager({"last_modified": datetime.now(), "content": content})
 
         loader = FileLoader(
             id,
