@@ -28,7 +28,10 @@ def rtc_document_save_delay():
 def jp_server_config(jp_root_dir, jp_server_config, rtc_document_save_delay):
     return {
         "ServerApp": {
-            "jpserver_extensions": {"jupyter_server_ydoc": True, "jupyter_server_fileid": True},
+            "jpserver_extensions": {
+                "jupyter_server_ydoc": True,
+                "jupyter_server_fileid": True,
+            },
             "token": "",
             "password": "",
             "disable_check_xsrf": True,
@@ -158,9 +161,9 @@ def rtc_add_doc_to_store(rtc_connect_doc_client):
 
         doc.observe(_on_document_change)
 
-        async with await rtc_connect_doc_client(format, type, path) as ws, WebsocketProvider(
-            doc.ydoc, ws
-        ):
+        async with await rtc_connect_doc_client(
+            format, type, path
+        ) as ws, WebsocketProvider(doc.ydoc, ws):
             await event.wait()
             await sleep(0.1)
 
@@ -170,7 +173,7 @@ def rtc_add_doc_to_store(rtc_connect_doc_client):
 def rtc_create_SQLite_store_factory(jp_serverapp):
     async def _inner(type: str, path: str, content: str) -> DocumentRoom:
         db = SQLiteYStore(path=f"{type}:{path}", config=jp_serverapp.config)
-        task = create_task(db.start())
+        _ = create_task(db.start())
         await db.started.wait()
 
         if type == "notebook":
@@ -206,7 +209,9 @@ def rtc_create_mock_document_room():
         if last_modified is None:
             cm = FakeContentsManager({"content": content})
         else:
-            cm = FakeContentsManager({"last_modified": datetime.now(), "content": content})
+            cm = FakeContentsManager(
+                {"last_modified": datetime.now(), "content": content}
+            )
 
         loader = FileLoader(
             id,
@@ -219,7 +224,14 @@ def rtc_create_mock_document_room():
             cm,
             loader,
             DocumentRoom(
-                "test-room", "text", "file", loader, FakeEventLogger(), store, None, save_delay
+                "test-room",
+                "text",
+                "file",
+                loader,
+                FakeEventLogger(),
+                store,
+                None,
+                save_delay,
             ),
         )
 
