@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 3.0.0beta1
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@3.0.0-beta.0...1c3bd6470cd53b718a24ad15e7bae89301e4451f))
+
+### Enhancements made
+
+- Move fixtures to `jupyter_server_ydoc.pytest_plugin` [#327](https://github.com/jupyterlab/jupyter-collaboration/pull/327) ([@krassowski](https://github.com/krassowski))
+
+### Maintenance and upkeep improvements
+
+- Remove @jupyter/collaboration dependency from @jupyter/docprovider [#331](https://github.com/jupyterlab/jupyter-collaboration/pull/331) ([@brichet](https://github.com/brichet))
+- Add notebook test for `get_document`, fix fixture when `store=True` [#329](https://github.com/jupyterlab/jupyter-collaboration/pull/329) ([@krassowski](https://github.com/krassowski))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-07-17&to=2024-07-19&type=c))
+
+[@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2024-07-17..2024-07-19&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-07-17..2024-07-19&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2024-07-17..2024-07-19&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 3.0.0beta0
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@3.0.0-alpha.2...ab80f15094f971da6dc6f9afc72e1504c63dc9ff))
@@ -26,8 +47,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-05-08&to=2024-07-17&type=c))
 
 [@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2024-05-08..2024-07-17&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-05-08..2024-07-17&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Afcollonval+updated%3A2024-05-08..2024-07-17&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-05-08..2024-07-17&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2024-05-08..2024-07-17&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 3.0.0alpha2
 
