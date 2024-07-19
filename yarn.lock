@@ -2116,7 +2116,6 @@ __metadata:
   dependencies:
     "@codemirror/state": ^6.2.0
     "@codemirror/view": ^6.7.0
-    "@jupyter/docprovider": ^3.0.0-beta.0
     "@jupyterlab/apputils": ^4.0.5
     "@jupyterlab/coreutils": ^6.0.5
     "@jupyterlab/docregistry": ^4.0.5
@@ -2139,7 +2138,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@jupyter/docprovider-extension@workspace:packages/docprovider-extension"
   dependencies:
-    "@jupyter/collaboration": ^3.0.0-beta.0
     "@jupyter/docprovider": ^3.0.0-beta.0
     "@jupyter/ydoc": ^2.0.0
     "@jupyterlab/application": ^4.2.0
