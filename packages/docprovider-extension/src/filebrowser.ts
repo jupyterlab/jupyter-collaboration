@@ -26,8 +26,11 @@ import { CommandRegistry } from '@lumino/commands';
 
 import { YFile, YNotebook } from '@jupyter/ydoc';
 
-import { IGlobalAwareness } from '@jupyter/collaboration';
-import { ICollaborativeDrive, YDrive } from '@jupyter/docprovider';
+import {
+  ICollaborativeDrive,
+  IGlobalAwareness,
+  YDrive
+} from '@jupyter/docprovider';
 import { Awareness } from 'y-protocols/awareness';
 
 /**
