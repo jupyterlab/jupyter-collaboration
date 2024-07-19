@@ -1,7 +1,7 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { DocumentChange, YDocument } from '@jupyter/ydoc';
+import { DocumentChange, IAwareness, YDocument } from '@jupyter/ydoc';
 import { Contents } from '@jupyterlab/services';
 
 import { Token } from '@lumino/coreutils';
@@ -14,6 +14,13 @@ import { IChatMessage } from './awareness';
  */
 export const ICollaborativeDrive = new Token<ICollaborativeDrive>(
   '@jupyter/collaboration-extension:ICollaborativeDrive'
+);
+
+/**
+ * The global awareness token.
+ */
+export const IGlobalAwareness = new Token<IAwareness>(
+  '@jupyter/collaboration:IGlobalAwareness'
 );
 
 /**
