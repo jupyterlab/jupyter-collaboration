@@ -5,8 +5,6 @@ import type { Menu } from '@lumino/widgets';
 import { Token } from '@lumino/coreutils';
 import type { User } from '@jupyterlab/services';
 
-import { IAwareness } from '@jupyter/ydoc';
-
 /**
  * The user menu token.
  *
@@ -15,13 +13,6 @@ import { IAwareness } from '@jupyter/ydoc';
  */
 export const IUserMenu = new Token<IUserMenu>(
   '@jupyter/collaboration:IUserMenu'
-);
-
-/**
- * The global awareness token.
- */
-export const IGlobalAwareness = new Token<IAwareness>(
-  '@jupyter/collaboration:IGlobalAwareness'
 );
 
 /**
