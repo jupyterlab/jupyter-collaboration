@@ -149,11 +149,12 @@ def rtc_connect_doc_client(jp_http_port, jp_base_url, rtc_fetch_session):
 def rtc_add_doc_to_store(rtc_connect_doc_client):
     event = Event()
 
-    def _on_document_change(target: str, e: Any) -> None:
-        if target == "source":
-            event.set()
-
     async def _inner(format: str, type: str, path: str) -> None:
+        def _on_document_change(target: str, e: Any) -> None:
+            expected_target = "cells" if type == "notebook" else "source"
+            if target == expected_target:
+                event.set()
+
         if type == "notebook":
             doc = YNotebook()
         else:

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import nbformat
 import pytest
 from jupyter_server_ydoc.pytest_plugin import rtc_create_SQLite_store_factory
 from jupyter_server_ydoc.stores import SQLiteYStore, TempFileYStore
@@ -84,6 +85,25 @@ async def test_get_document_file(rtc_create_file, jp_serverapp, copy):
         path=path, content_type="file", file_format="text", copy=copy
     )
     assert document.get() == content == "test"
+    await collaboration.stop_extension()
+
+
+@pytest.mark.parametrize("copy", [True, False])
+async def test_get_document_notebook(rtc_create_notebook, jp_serverapp, copy):
+    nb = nbformat.v4.new_notebook(
+        cells=[nbformat.v4.new_code_cell(source="1+1", execution_count=99)]
+    )
+    nb_content = nbformat.writes(nb, version=4)
+    path, _ = await rtc_create_notebook("test.ipynb", nb_content, store=True)
+    collaboration = jp_serverapp.web_app.settings["jupyter_server_ydoc"]
+    document = await collaboration.get_document(
+        path=path, content_type="notebook", file_format="json", copy=copy
+    )
+    doc = document.get()
+    assert len(doc["cells"]) == 1
+    cell = doc["cells"][0]
+    assert cell["source"] == "1+1"
+    assert cell["execution_count"] == 99
     await collaboration.stop_extension()
 
 
