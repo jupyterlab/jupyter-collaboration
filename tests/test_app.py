@@ -8,8 +8,6 @@ import pytest
 from jupyter_server_ydoc.pytest_plugin import rtc_create_SQLite_store_factory
 from jupyter_server_ydoc.stores import SQLiteYStore, TempFileYStore
 
-from .conftest import rtc_create_SQLite_store_factory
-
 
 def test_default_settings(jp_serverapp):
     settings = jp_serverapp.web_app.settings["jupyter_server_ydoc_config"]
