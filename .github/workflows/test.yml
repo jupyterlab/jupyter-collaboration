@@ -132,10 +132,10 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/upload-coverage@v1
 
       - name: Print installed packages
-       run: |
-        pip freeze | grep jupyter-ydoc
-        pip freeze | grep pycrdt
-       
+        run: |
+          pip freeze | grep jupyter-ydoc
+          pip freeze | grep pycrdt
+
       - name: Build the extension
         if: ${{ !startsWith(matrix.python-version, 'pypy') }}
         shell: bash
