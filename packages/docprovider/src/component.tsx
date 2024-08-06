@@ -67,7 +67,7 @@ export const TimelineSliderComponent: React.FC<Props> = ({
       'restore',
       0
     );
-    if (response.code == 200) {
+    if (response.code === 200) {
       Notification.success(response.status, { autoClose: 4000 });
     } else {
       Notification.error(response.status, { autoClose: 4000 });

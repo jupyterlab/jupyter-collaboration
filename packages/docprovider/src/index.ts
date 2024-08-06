@@ -13,4 +13,4 @@ export * from './requests';
 export * from './ydrive';
 export * from './yprovider';
 export * from './tokens';
-export * from './TimelineSlider'
+export * from './TimelineSlider';

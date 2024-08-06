@@ -7,10 +7,12 @@
 #slider-status-bar {
   display: flex;
 }
+
 .jp-Notebook.frozen {
   pointer-events: none;
   opacity: 0.5;
 }
+
 .timestamp-display {
   display: flex;
   flex-direction: row;
@@ -20,10 +22,10 @@
 
 .restore-btn button {
   cursor: pointer;
-  color: #fff; 
-  width: 100%; 
+  color: #fff;
+  width: 100%;
 }
 
 .restore-btn {
-  width: 192px; 
+  width: 192px;
 }

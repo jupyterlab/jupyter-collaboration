@@ -9,22 +9,22 @@ import time
 import uuid
 from logging import Logger
 from typing import Any
+from uuid import uuid4
 
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.utils import ensure_async
-
 from jupyter_ydoc import ydocs as YDOCS
-from pycrdt import YMessageType, write_var_uint
+from jupyter_ydoc.yfile import YFile
+from jupyter_ydoc.ynotebook import YNotebook
+from jupytercad_core.jcad_ydoc import YJCad
+from pycrdt import Doc, UndoManager, YMessageType, write_var_uint
 from pycrdt_websocket.websocket_server import YRoom
-from pycrdt import Doc, UndoManager
 from pycrdt_websocket.yroom import YRoom
 from pycrdt_websocket.ystore import BaseYStore
 from tornado import web
-from tornado.websocket import WebSocketHandler, WebSocketClosedError
+from tornado.websocket import WebSocketClosedError, WebSocketHandler
 
-from pycrdt import Doc
-from uuid import uuid4
 from .loaders import FileLoaderMapping
 from .rooms import DocumentRoom, TransientRoom
 from .utils import (
@@ -37,10 +37,6 @@ from .utils import (
     room_id_from_encoded_path,
 )
 from .websocketserver import JupyterWebsocketServer, RoomNotFound
-from jupyter_ydoc.ynotebook import YNotebook
-from jupyter_ydoc.yfile import YFile
-
-from jupytercad_core.jcad_ydoc import YJCad
 
 YFILE = YDOCS["file"]
 
@@ -474,7 +470,6 @@ class DocSessionHandler(APIHandler):
 
 
 class TimelineHandler(APIHandler):
-
     def initialize(self, ystore_class: type[BaseYStore], ywebsocket_server: JupyterWebsocketServer):
         self.ystore_class = ystore_class
         self.ywebsocket_server = ywebsocket_server
@@ -506,7 +501,6 @@ class TimelineHandler(APIHandler):
 
 
 class TimelineForkHandler(APIHandler):
-
     def initialize(self, ywebsocket_server: JupyterWebsocketServer) -> None:
         self._websocket_server = ywebsocket_server
 

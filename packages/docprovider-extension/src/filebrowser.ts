@@ -233,7 +233,7 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
       tree,
       labShell
     );
-    
+
     return defaultBrowser;
   }
 };

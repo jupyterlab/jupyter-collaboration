@@ -184,7 +184,7 @@ export class WebSocketProvider implements IDocumentProvider {
       showErrorMessage(this._trans.__('Document session error'), event.reason, [
         Dialog.okButton()
       ]);
-      
+
       // Dispose shared model immediately. Better break the document model,
       // than overriding data on disk.
       this._sharedModel.dispose();
