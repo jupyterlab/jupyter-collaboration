@@ -1,3 +1,8 @@
+/* -----------------------------------------------------------------------------
+| Copyright (c) Jupyter Development Team.
+| Distributed under the terms of the Modified BSD License.
+|----------------------------------------------------------------------------*/
+
 .timeline-slider-wrapper .slider-container {
   display: flex;
   align-items: center;
