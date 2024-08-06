@@ -106,6 +106,7 @@ jobs:
           python -m pip install "jupyterlab>=4.0.0,<5"
           pip install -e ".[test]" codecov
           pip install jupytercad_core
+          jupyter labextension disable jupytercad
 
       - name: List installed packages
         run: |
@@ -130,11 +131,6 @@ jobs:
           python -W ignore::ImportWarning -m pytest -vv --cov jupyter_server_ydoc --cov-branch --cov-report term-missing:skip-covered
 
       - uses: jupyterlab/maintainer-tools/.github/actions/upload-coverage@v1
-
-      - name: Print installed packages
-        run: |
-          pip freeze | grep jupyter-ydoc
-          pip freeze | grep pycrdt
 
       - name: Build the extension
         if: ${{ !startsWith(matrix.python-version, 'pypy') }}
