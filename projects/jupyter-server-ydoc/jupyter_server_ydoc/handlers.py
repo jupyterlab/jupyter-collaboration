@@ -20,10 +20,9 @@ from jupyter_ydoc.ynotebook import YNotebook
 from jupytercad_core.jcad_ydoc import YJCad
 from pycrdt import Doc, UndoManager, YMessageType, write_var_uint
 from pycrdt_websocket.websocket_server import YRoom
-from pycrdt_websocket.yroom import YRoom
 from pycrdt_websocket.ystore import BaseYStore
 from tornado import web
-from tornado.websocket import WebSocketClosedError, WebSocketHandler
+from tornado.websocket import WebSocketHandler
 
 from .loaders import FileLoaderMapping
 from .rooms import DocumentRoom, TransientRoom
@@ -470,11 +469,13 @@ class DocSessionHandler(APIHandler):
 
 
 class TimelineHandler(APIHandler):
-    def initialize(self, ystore_class: type[BaseYStore], ywebsocket_server: JupyterWebsocketServer):
+    def initialize(
+        self, ystore_class: type[BaseYStore], ywebsocket_server: JupyterWebsocketServer
+    ) -> None:
         self.ystore_class = ystore_class
         self.ywebsocket_server = ywebsocket_server
 
-    async def get(self, path: str):
+    async def get(self, path: str) -> None:
 
         file_id_manager = self.settings["file_id_manager"]
         file_id = file_id_manager.get_id("/".join(self.request.path.split("/")[4:]))
@@ -507,7 +508,6 @@ class TimelineForkHandler(APIHandler):
     async def put(self, room_id):
         idx = uuid4().hex
         try:
-            format = room_id.split(":")[0]
             fileType = room_id.split(":")[1]
 
             mode = str(self.request.query_arguments.get("mode")[0].decode("utf-8"))
@@ -547,7 +547,7 @@ class TimelineForkHandler(APIHandler):
                 self.set_status(200)
                 return self.finish(data)
             elif mode == "fork":
-                for key, value in UNDO_MANAGERS.items():
+                for _key, value in UNDO_MANAGERS.items():
                     undo_manager = value
 
                 if action == "undo":
@@ -566,7 +566,7 @@ class TimelineForkHandler(APIHandler):
                         return self.finish({"error": "No more redo operations available"})
             elif mode == "restore":
                 try:
-                    for key, value in FORK_DOCUMENTS.items():
+                    for _key, value in FORK_DOCUMENTS.items():
                         fork_document = value
                     if not fork_document:
                         self.set_status(404)
@@ -585,7 +585,9 @@ class TimelineForkHandler(APIHandler):
         except Exception as e:
             print("Error during fork creation: ", e)
 
-    async def _perform_undo_or_redo(self, undo_manager: UndoManager, action, steps: int):
+    async def _perform_undo_or_redo(
+        self, undo_manager: UndoManager, action: str, steps: int
+    ) -> None:
         for _ in range(steps):
             if (
                 action == "undo"
