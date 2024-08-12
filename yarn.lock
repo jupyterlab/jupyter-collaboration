@@ -2089,7 +2089,7 @@ __metadata:
   dependencies:
     "@jupyter/collaboration": ^3.0.0-beta.1
     "@jupyter/docprovider": ^3.0.0-beta.1
-    "@jupyter/ydoc": ^2.0.0
+    "@jupyter/ydoc": ^2.0.0 || ^3.0.0-a3
     "@jupyterlab/application": ^4.2.0
     "@jupyterlab/apputils": ^4.2.0
     "@jupyterlab/builder": ^4.0.5
@@ -2139,7 +2139,7 @@ __metadata:
   resolution: "@jupyter/docprovider-extension@workspace:packages/docprovider-extension"
   dependencies:
     "@jupyter/docprovider": ^3.0.0-beta.1
-    "@jupyter/ydoc": ^2.0.0
+    "@jupyter/ydoc": ^2.0.0 || ^3.0.0-a3
     "@jupyterlab/application": ^4.2.0
     "@jupyterlab/apputils": ^4.2.0
     "@jupyterlab/builder": ^4.0.0
@@ -2165,7 +2165,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@jupyter/docprovider@workspace:packages/docprovider"
   dependencies:
-    "@jupyter/ydoc": ^2.0.0
+    "@jupyter/ydoc": ^2.0.0 || ^3.0.0-a3
     "@jupyterlab/apputils": ^4.2.0
     "@jupyterlab/cells": ^4.2.0
     "@jupyterlab/coreutils": ^6.2.0
@@ -2233,7 +2233,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jupyter/ydoc@npm:^2.0.0, @jupyter/ydoc@npm:^2.0.1":
+"@jupyter/ydoc@npm:^2.0.0 || ^3.0.0-a3":
+  version: 3.0.0-a3
+  resolution: "@jupyter/ydoc@npm:3.0.0-a3"
+  dependencies:
+    "@jupyterlab/nbformat": ^3.0.0 || ^4.0.0-alpha.21 || ^4.0.0
+    "@lumino/coreutils": ^1.11.0 || ^2.0.0
+    "@lumino/disposable": ^1.10.0 || ^2.0.0
+    "@lumino/signaling": ^1.10.0 || ^2.0.0
+    y-protocols: ^1.0.5
+    yjs: ^13.5.40
+  checksum: 6651b7433c73312f6caf24bcd066b999a55be695ec6850a48442fbe9f739343893b181532398bf5e0b6c10f3fe874c832c075c865f1adb902d859b306cc1d333
+  languageName: node
+  linkType: hard
+
+"@jupyter/ydoc@npm:^2.0.1":
   version: 2.0.1
   resolution: "@jupyter/ydoc@npm:2.0.1"
   dependencies:
