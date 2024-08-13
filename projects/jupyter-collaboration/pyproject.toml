@@ -29,9 +29,9 @@ classifiers = [
     "Framework :: Jupyter :: JupyterLab :: Extensions :: Prebuilt",
 ]
 dependencies = [
-    "jupyter-server-ydoc>=1.0.0a0",
-    "jupyter-collaboration-ui>=1.0.0a0",
-    "jupyter-docprovider>=1.0.0a0"
+    "jupyter-server-ydoc>=1.0.0b1",
+    "jupyter-collaboration-ui>=1.0.0b1",
+    "jupyter-docprovider>=1.0.0b1"
 ]
 dynamic = ["version"]
 

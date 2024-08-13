@@ -23,7 +23,8 @@ dynamic = ["version"]
 dev = [
     "click",
     "pre-commit",
-    "jupyter_releaser"
+    "jupyter_releaser",
+    "tomlkit"
 ]
 test = [
     "jupyter-server-ydoc[test] @ {root:uri}/projects/jupyter-server-ydoc",
@@ -80,7 +81,7 @@ before-build-python = [
     "jlpm clean:lib"
 ]
 before-bump-version = [
-    "python -m pip install -U jupyterlab",
+    "python -m pip install -U jupyterlab tomlkit",
     "jlpm"
 ]
 
