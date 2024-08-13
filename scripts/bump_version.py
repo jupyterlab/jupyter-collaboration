@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 import click
+import tomlkit
 from jupyter_releaser.util import get_version, run
 from pkg_resources import parse_version  # type: ignore
 
@@ -80,6 +81,8 @@ def bump(force, skip_if_dirty, spec):
 
     HERE = Path(__file__).parent.parent.resolve()
 
+    project_pins = {}
+
     # bump the Python packages
     for version_file in HERE.glob("projects/**/_version.py"):
         content = version_file.read_text().splitlines()
@@ -92,6 +95,19 @@ def bump(force, skip_if_dirty, spec):
         current = current.strip("'\"")
         version_spec = increment_version(current, spec)
         version_file.write_text(f'__version__ = "{version_spec}"\n')
+        project = version_file.parent.name
+        project_pins[project] = version_spec
+
+    # bump the required version in jupyter-collaboration metapackage
+    # to ensure that users can just upgrade `jupyter-collaboration`
+    # and get all fixes for free
+    metapackage = "jupyter-collaboration"
+    metapackage_toml_path = HERE / "projects" / metapackage / "pyproject.toml"
+    metapackage_toml = tomlkit.parse(metapackage_toml_path.read_text())
+    metapackage_toml["dependencies"] = [
+        key + ">=" + project_pins[key] for key in sorted(project_pins) if key != metapackage
+    ]
+    metapackage_toml_path.write_text(tomlkit.dumps(metapackage_toml))
 
     path = HERE.joinpath("package.json")
     if path.exists():
