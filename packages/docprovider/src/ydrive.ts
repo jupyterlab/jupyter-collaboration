@@ -4,6 +4,7 @@
 import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 import { TranslationBundle } from '@jupyterlab/translation';
 import { Contents, Drive, User } from '@jupyterlab/services';
+import { ISignal, Signal } from '@lumino/signaling';
 
 import { DocumentChange, ISharedDocument, YDocument } from '@jupyter/ydoc';
 
@@ -45,6 +46,10 @@ export class YDrive extends Drive implements ICollaborativeDrive {
     this._providers = new Map<string, WebSocketProvider>();
 
     this.sharedModelFactory = new SharedModelFactory(this._onCreate);
+    super.fileChanged.connect((_, change) => {
+      // pass through any events from the Drive superclass
+      this._ydriveFileChanged.emit(change);
+    });
   }
 
   /**
@@ -84,7 +89,7 @@ export class YDrive extends Drive implements ICollaborativeDrive {
       const provider = this._providers.get(key);
 
       if (provider) {
-        // If the document does't exist, `super.get` will reject with an
+        // If the document doesn't exist, `super.get` will reject with an
         // error and the provider will never be resolved.
         // Use `Promise.all` to reject as soon as possible. The Context will
         // show a dialog to the user.
@@ -132,6 +137,13 @@ export class YDrive extends Drive implements ICollaborativeDrive {
     return super.save(localPath, options);
   }
 
+  /**
+   * A signal emitted when a file operation takes place.
+   */
+  get fileChanged(): ISignal<this, Contents.IChangedArgs> {
+    return this._ydriveFileChanged;
+  }
+
   private _onCreate = (
     options: Contents.ISharedFactoryOptions,
     sharedModel: YDocument<DocumentChange>
@@ -160,6 +172,51 @@ export class YDrive extends Drive implements ICollaborativeDrive {
 
       const key = `${options.format}:${options.contentType}:${options.path}`;
       this._providers.set(key, provider);
+
+      sharedModel.changed.connect(async (_, change) => {
+        // TODO: make use of the hash
+        if (!change.stateChange) {
+          return;
+        }
+        const hashChanges = change.stateChange.filter(
+          change => change.name === 'hash'
+        );
+        if (hashChanges.length === 0) {
+          return;
+        }
+        if (hashChanges.length > 1) {
+          console.error(
+            'Unexpected multiple changes to hash value in a single transaction'
+          );
+        }
+        const hashChange = hashChanges[0];
+
+        // A change in hash signifies that a save occurred on the server-side
+        // (e.g. a collaborator performed the save) - we want notify the observers
+        // about this change so that they can store the new hash value.
+
+        const model = await this.get(options.path, { content: false });
+        /*
+        this._ydriveFileChanged.emit({
+          type: 'server-side-save',
+          newValue: {...model, hash: hashChange.newValue},
+          // we do not have the old model because it was discarded when server made the change,
+          // we only have the old hash here (which may be empty if the file was newly created!)
+          oldValue: {hash: hashChange.oldValue}
+        });
+        */
+        // TODO: add handler for `server-side-save` in
+        // https://github.com/jupyterlab/jupyterlab/blob/dca1ec376c66038b8df7001d32cf058c70fcd717/packages/docregistry/src/context.ts#L410-L444
+        // For now, fake it:
+        // it happens that "rename" will perform the update of context's internal
+        // contentsModel (which we desire to solve the spurious "File Changed" dialog)
+        // even if file path has not changed.
+        this._ydriveFileChanged.emit({
+          type: 'rename',
+          newValue: { ...model, hash: hashChange.newValue },
+          oldValue: { ...model, hash: hashChange.oldValue }
+        });
+      });
 
       sharedModel.disposed.connect(() => {
         const provider = this._providers.get(key);
@@ -190,6 +247,7 @@ export class YDrive extends Drive implements ICollaborativeDrive {
   private _trans: TranslationBundle;
   private _providers: Map<string, WebSocketProvider>;
   private _globalAwareness: Awareness | null;
+  private _ydriveFileChanged = new Signal<this, Contents.IChangedArgs>(this);
 }
 
 /**
