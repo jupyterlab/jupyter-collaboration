@@ -174,7 +174,6 @@ export class YDrive extends Drive implements ICollaborativeDrive {
       this._providers.set(key, provider);
 
       sharedModel.changed.connect(async (_, change) => {
-        // TODO: make use of the hash
         if (!change.stateChange) {
           return;
         }
@@ -192,29 +191,16 @@ export class YDrive extends Drive implements ICollaborativeDrive {
         const hashChange = hashChanges[0];
 
         // A change in hash signifies that a save occurred on the server-side
-        // (e.g. a collaborator performed the save) - we want notify the observers
-        // about this change so that they can store the new hash value.
-
+        // (e.g. a collaborator performed the save) - we want to notify the
+        // observers about this change so that they can store the new hash value.
         const model = await this.get(options.path, { content: false });
-        /*
+
         this._ydriveFileChanged.emit({
-          type: 'server-side-save',
-          newValue: {...model, hash: hashChange.newValue},
+          type: 'save',
+          newValue: { ...model, hash: hashChange.newValue },
           // we do not have the old model because it was discarded when server made the change,
           // we only have the old hash here (which may be empty if the file was newly created!)
-          oldValue: {hash: hashChange.oldValue}
-        });
-        */
-        // TODO: add handler for `server-side-save` in
-        // https://github.com/jupyterlab/jupyterlab/blob/dca1ec376c66038b8df7001d32cf058c70fcd717/packages/docregistry/src/context.ts#L410-L444
-        // For now, fake it:
-        // it happens that "rename" will perform the update of context's internal
-        // contentsModel (which we desire to solve the spurious "File Changed" dialog)
-        // even if file path has not changed.
-        this._ydriveFileChanged.emit({
-          type: 'rename',
-          newValue: { ...model, hash: hashChange.newValue },
-          oldValue: { ...model, hash: hashChange.oldValue }
+          oldValue: { hash: hashChange.oldValue }
         });
       });
 
