@@ -282,9 +282,6 @@ class DocumentRoom(YRoom):
                 self._document.dirty = False
                 if saved_model:
                     self._document.hash = saved_model["hash"]
-                    # for now circumvent the public API, TODO remove before undrafting,
-                    # once https://github.com/jupyter-server/jupyter_ydoc/pull/262 is merged
-                    self._document._ystate["hash"] = saved_model["hash"]
 
             self._emit(LogLevel.INFO, "save", "Content saved.")
 
