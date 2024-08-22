@@ -117,7 +117,7 @@ class FileLoader:
             self.last_modified = model["last_modified"]
             return model
 
-    async def maybe_save_content(self, model: dict[str, Any]) -> None:
+    async def maybe_save_content(self, model: dict[str, Any]) -> dict[str, Any] | None:
         """
         Save the content of the file.
 
@@ -149,20 +149,34 @@ class FileLoader:
                 # otherwise it could corrupt the file
                 done_saving = asyncio.Event()
                 task = asyncio.create_task(self._save_content(model, done_saving))
+                saved_model = None
                 try:
-                    await asyncio.shield(task)
+                    saved_model = await asyncio.shield(task)
                 except asyncio.CancelledError:
                     pass
                 await done_saving.wait()
+                return saved_model
             else:
                 # file changed on disk, raise an error
                 self.last_modified = m["last_modified"]
                 raise OutOfBandChanges
 
-    async def _save_content(self, model: dict[str, Any], done_saving: asyncio.Event) -> None:
+    async def _save_content(
+        self, model: dict[str, Any], done_saving: asyncio.Event
+    ) -> dict[str, Any]:
         try:
             m = await ensure_async(self._contents_manager.save(model, self.path))
             self.last_modified = m["last_modified"]
+            # TODO, get rid of the extra `get` here once upstream issue:
+            # https://github.com/jupyter-server/jupyter_server/issues/1453 is resolved
+            model_with_hash = await ensure_async(
+                self._contents_manager.get(
+                    self.path,
+                    content=False,
+                    require_hash=True,
+                )
+            )
+            return {**m, "hash": model_with_hash["hash"]}
         finally:
             done_saving.set()
 
