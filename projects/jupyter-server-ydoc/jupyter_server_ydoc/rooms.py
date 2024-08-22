@@ -273,7 +273,7 @@ class DocumentRoom(BaseRoom):
             await asyncio.sleep(self._save_delay)
 
             self.log.info("Saving the content from room %s", self._room_id)
-            await self._file.maybe_save_content(
+            saved_model = await self._file.maybe_save_content(
                 {
                     "format": self._file_format,
                     "type": self._file_type,
@@ -291,6 +291,8 @@ class DocumentRoom(BaseRoom):
                 )
                 self._last_modified = model["last_modified"]
                 self._document.dirty = False
+                if saved_model:
+                    self._document.hash = saved_model["hash"]
 
             self._emit(LogLevel.INFO, "save", "Content saved.")
 
