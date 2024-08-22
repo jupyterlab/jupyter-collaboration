@@ -173,7 +173,7 @@ class FileLoader:
                 self._contents_manager.get(
                     self.path,
                     content=False,
-                    require_hash=True,  # TODO require version supporting hash
+                    require_hash=True,
                 )
             )
             return {**m, "hash": model_with_hash["hash"]}
