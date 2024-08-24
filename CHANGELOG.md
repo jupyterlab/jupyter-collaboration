@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 3.0.0beta3
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@3.0.0-beta.2...1b74c437fec5475548e8cf08233c0992dcfdd4f8))
+
+### Bugs fixed
+
+- Fix spurious "File Changed" dialog in JupyterLab 4.1+/Notebook 7.1+ [#337](https://github.com/jupyterlab/jupyter-collaboration/pull/337) ([@krassowski](https://github.com/krassowski))
+- Bump dependencies to fix CI [#335](https://github.com/jupyterlab/jupyter-collaboration/pull/335) ([@krassowski](https://github.com/krassowski))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-08-12&to=2024-08-24&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-08-12..2024-08-24&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-08-12..2024-08-24&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2024-08-12..2024-08-24&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 3.0.0beta2
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@3.0.0-beta.1...74a269c38d49fe5ff413322178508719c54790a3))
@@ -17,8 +34,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-07-19&to=2024-08-12&type=c))
 
 [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-07-19..2024-08-12&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2024-07-19..2024-08-12&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 3.0.0beta1
 
