@@ -5,14 +5,14 @@
 
 import React, { useState, useRef } from 'react';
 import '../style/slider.css';
-import { WebSocketProvider } from './yprovider';
 import { requestDocFork, requestDocumentTimeline } from './requests';
 import { historyIcon } from '@jupyterlab/ui-components';
 import { Notification } from '@jupyterlab/apputils';
+import { IForkProvider } from './ydrive';
 
 type Props = {
   apiURL: string;
-  provider: WebSocketProvider;
+  provider: IForkProvider;
   contentType: string;
   format: string;
 };
@@ -65,7 +65,7 @@ export const TimelineSliderComponent: React.FC<Props> = ({
       console.error('Error fetching data:', error);
     }
   }
-  const handleClick = async () => {
+  const handleRestore = async () => {
     const response = await requestDocFork(
       `${session.format}:${session.type}:${session.fileId}`,
       'undo',
@@ -169,9 +169,9 @@ export const TimelineSliderComponent: React.FC<Props> = ({
             </strong>{' '}
           </div>
           {isBtn && (
-            <div className="restore-btn">
+            <div className="restore-btn-container">
               <button
-                onClick={handleClick}
+                onClick={handleRestore}
                 className="jp-ToolbarButtonComponent restore-btn"
                 style={{ background: '#1976d2' }}
               >

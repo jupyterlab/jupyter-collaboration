@@ -13,11 +13,6 @@
   display: flex;
 }
 
-.jp-Notebook.frozen {
-  pointer-events: none;
-  opacity: 0.5;
-}
-
 .timestamp-display {
   display: flex;
   flex-direction: row;
@@ -25,12 +20,12 @@
   gap: 6px;
 }
 
-.restore-btn button {
-  cursor: pointer;
-  color: #fff;
-  width: 100%;
+.restore-btn-container {
+  width: 192px;
 }
 
 .restore-btn {
-  width: 192px;
+  cursor: pointer;
+  color: #fff;
+  width: 100%;
 }

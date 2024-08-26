@@ -17,6 +17,7 @@ import { Awareness } from 'y-protocols/awareness';
 import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
 
 import { requestDocFork, requestDocSession } from './requests';
+import { IForkProvider } from './ydrive';
 
 /**
  * An interface for a document provider.
@@ -35,7 +36,7 @@ export interface IDocumentProvider extends IDisposable {
  *
  */
 
-export class WebSocketProvider implements IDocumentProvider {
+export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   /**
    * Construct a new WebSocketProvider
    *
@@ -97,15 +98,6 @@ export class WebSocketProvider implements IDocumentProvider {
     this._yWebsocketProvider?.destroy();
     this._disconnect();
     Signal.clearData(this);
-  }
-  get sharedModel(): YDocument<DocumentChange> {
-    return this._sharedModel;
-  }
-  setPath(path: string) {
-    this._path = path;
-  }
-  setSharedModel(sharedModel: YDocument<DocumentChange>) {
-    this._sharedModel = sharedModel;
   }
 
   private async _connect(): Promise<void> {

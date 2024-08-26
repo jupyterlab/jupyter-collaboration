@@ -10,7 +10,7 @@ import {
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
 import { Dialog, showDialog } from '@jupyterlab/apputils';
-import { IDocumentWidget } from '@jupyterlab/docregistry';
+import { DocumentWidget, IDocumentWidget } from '@jupyterlab/docregistry';
 import { Widget } from '@lumino/widgets';
 import {
   FileBrowser,
@@ -31,10 +31,13 @@ import { YFile, YNotebook } from '@jupyter/ydoc';
 
 import {
   ICollaborativeDrive,
+  IForkProvider,
   IGlobalAwareness,
+  TimelineWidget,
   YDrive
 } from '@jupyter/docprovider';
 import { Awareness } from 'y-protocols/awareness';
+import { URLExt } from '@jupyterlab/coreutils';
 
 /**
  * The command IDs used by the file browser plugin.
@@ -42,6 +45,7 @@ import { Awareness } from 'y-protocols/awareness';
 namespace CommandIDs {
   export const openPath = 'filebrowser:open-path';
 }
+const DOCUMENT_TIMELINE_URL = 'api/collaboration/timeline';
 
 /**
  * The default collaborative drive provider.
@@ -137,45 +141,65 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
   id: '@jupyter/docprovider-extension:statusBarTimeline',
   description: 'Plugin to add a timeline slider to the status bar',
   autoStart: true,
-  requires: [IStatusBar],
-  optional: [ICollaborativeDrive],
+  requires: [IStatusBar, ICollaborativeDrive],
   activate: async (
     app: JupyterFrontEnd,
     statusBar: IStatusBar,
-    drive: YDrive | null
+    drive: ICollaborativeDrive
   ): Promise<void> => {
+    function isYDrive(drive: YDrive | ICollaborativeDrive): drive is YDrive {
+      return 'getProviderForPath' in drive;
+    }
     try {
-      if (!drive) {
-        console.warn('Collaborative drive not available');
-        return;
-      }
-
       let sliderItem: Widget | null = null;
-      const updateTimelineForDocument = async (document: any) => {
-        if (document && document.context) {
-          const { context } = document;
-          const documentPath = context.path;
-          const sharedModel = context.model.sharedModel;
-          document.node.id = sharedModel.ydoc.guid;
-          await drive.updateTimelineForNotebook(documentPath);
+      let timelineWidget: TimelineWidget | null = null;
+
+      const updateTimelineForDocument = async (documentPath: string) => {
+        if (drive) {
+          if (isYDrive(drive)) {
+            const provider = (await drive.getProviderForPath(
+              documentPath
+            )) as IForkProvider;
+            const fullPath = URLExt.join(
+              app.serviceManager.serverSettings.baseUrl,
+              DOCUMENT_TIMELINE_URL,
+              documentPath.split(':')[1]
+            );
+
+            if (timelineWidget) {
+              timelineWidget.updateContent(fullPath, provider);
+            } else {
+              timelineWidget = new TimelineWidget(
+                fullPath,
+                provider,
+                provider.contentType,
+                provider.format
+              );
+            }
+            const elt = document.getElementById('slider-status-bar');
+            if (elt && !timelineWidget.isAttached) {
+              Widget.attach(timelineWidget, elt);
+            } else if (!timelineWidget.isAttached) {
+              Widget.attach(timelineWidget, document.body);
+            }
+          }
         }
       };
 
       if (app.shell.currentChanged) {
         app.shell.currentChanged.connect(async (_, args) => {
-          const currentWidget = args.newValue;
-
+          const currentWidget = args.newValue as DocumentWidget;
           if (currentWidget && 'context' in currentWidget) {
-            await updateTimelineForDocument(currentWidget);
+            await updateTimelineForDocument(currentWidget.context.path);
           }
         });
       }
+
       if (statusBar) {
         if (!sliderItem) {
           sliderItem = new Widget();
           sliderItem.addClass('jp-StatusBar-GroupItem');
           sliderItem.addClass('jp-mod-highlighted');
-
           sliderItem.id = 'slider-status-bar';
           statusBar.registerStatusItem('slider-status-bar', {
             item: sliderItem,

@@ -476,9 +476,8 @@ class TimelineHandler(APIHandler):
         self.ywebsocket_server = ywebsocket_server
 
     async def get(self, path: str) -> None:
-
         file_id_manager = self.settings["file_id_manager"]
-        file_id = file_id_manager.get_id("/".join(self.request.path.split("/")[4:]))
+        file_id = file_id_manager.get_id(path)
 
         # get format and content_type
         format = str(self.request.query_arguments.get("format")[0].decode("utf-8"))

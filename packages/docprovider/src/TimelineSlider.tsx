@@ -6,17 +6,17 @@
 import { ReactWidget } from '@jupyterlab/apputils';
 import { TimelineSliderComponent } from './component';
 import * as React from 'react';
-import { WebSocketProvider } from './yprovider';
+import { IForkProvider } from './ydrive';
 
 export class TimelineWidget extends ReactWidget {
   private apiURL: string;
-  private provider: WebSocketProvider;
+  private provider: IForkProvider;
   private contentType: string;
   private format: string;
 
   constructor(
     apiURL: string,
-    provider: WebSocketProvider,
+    provider: IForkProvider,
     contentType: string,
     format: string
   ) {
@@ -39,7 +39,7 @@ export class TimelineWidget extends ReactWidget {
       />
     );
   }
-  updateContent(apiURL: string, provider: WebSocketProvider): void {
+  updateContent(apiURL: string, provider: IForkProvider): void {
     this.apiURL = apiURL;
     this.provider = provider;
     this.contentType = this.provider.contentType;
