@@ -35,8 +35,6 @@ from .utils import (
 from .websocketserver import JupyterWebsocketServer, RoomNotFound
 
 YFILE = YDOCS["file"]
-YNOTEBOOK = YDOCS["notebook"]
-YJCAD = YDOCS.get("jcad", None)
 
 
 SERVER_SESSION = str(uuid.uuid4())
@@ -519,15 +517,9 @@ class TimelineForkHandler(APIHandler):
                 updates = [item[0] async for item in root_room.ystore.read()]
                 fork_ydoc = Doc()
 
-                if fileType == "notebook":
-                    FORK_DOCUMENTS[idx] = YNOTEBOOK(fork_ydoc)
-                elif fileType == "file":
-                    FORK_DOCUMENTS[idx] = YFILE(fork_ydoc)
-                elif fileType == "jcad":
-                    if YJCAD is None:
-                        print("Warning: 'jcad' YDoc type is not available. Proceeding without it.")
-                    else:
-                        FORK_DOCUMENTS[idx] = YJCAD(fork_ydoc)
+                ydoc_factory = YDOCS.get(fileType)
+                if ydoc_factory is not None:
+                    FORK_DOCUMENTS[idx] = ydoc_factory(fork_ydoc)
 
                 undo_manager = FORK_DOCUMENTS[idx].undo_manager
 

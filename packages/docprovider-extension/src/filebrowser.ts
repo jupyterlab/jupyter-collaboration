@@ -155,33 +155,34 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
       let timelineWidget: TimelineWidget | null = null;
 
       const updateTimelineForDocument = async (documentPath: string) => {
-        if (drive) {
-          if (isYDrive(drive)) {
-            const provider = (await drive.getProviderForPath(
-              documentPath
-            )) as IForkProvider;
-            const fullPath = URLExt.join(
-              app.serviceManager.serverSettings.baseUrl,
-              DOCUMENT_TIMELINE_URL,
-              documentPath.split(':')[1]
-            );
+        if (drive && isYDrive(drive)) {
+          // Dispose of the previous timelineWidget if it exists
+          if (timelineWidget) {
+            timelineWidget.dispose();
+            timelineWidget = null;
+          }
 
-            if (timelineWidget) {
-              timelineWidget.updateContent(fullPath, provider);
-            } else {
-              timelineWidget = new TimelineWidget(
-                fullPath,
-                provider,
-                provider.contentType,
-                provider.format
-              );
-            }
-            const elt = document.getElementById('slider-status-bar');
-            if (elt && !timelineWidget.isAttached) {
-              Widget.attach(timelineWidget, elt);
-            } else if (!timelineWidget.isAttached) {
-              Widget.attach(timelineWidget, document.body);
-            }
+          const provider = (await drive.getProviderForPath(
+            documentPath
+          )) as IForkProvider;
+          const fullPath = URLExt.join(
+            app.serviceManager.serverSettings.baseUrl,
+            DOCUMENT_TIMELINE_URL,
+            documentPath.split(':')[1]
+          );
+
+          timelineWidget = new TimelineWidget(
+            fullPath,
+            provider,
+            provider.contentType,
+            provider.format
+          );
+
+          const elt = document.getElementById('slider-status-bar');
+          if (elt && !timelineWidget.isAttached) {
+            Widget.attach(timelineWidget, elt);
+          } else if (!timelineWidget.isAttached) {
+            Widget.attach(timelineWidget, document.body);
           }
         }
       };
@@ -189,6 +190,11 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
       if (app.shell.currentChanged) {
         app.shell.currentChanged.connect(async (_, args) => {
           const currentWidget = args.newValue as DocumentWidget;
+          if (timelineWidget) {
+            // Dispose of the timelineWidget when the document is closed
+            timelineWidget.dispose();
+            timelineWidget = null;
+          }
           if (currentWidget && 'context' in currentWidget) {
             await updateTimelineForDocument(currentWidget.context.path);
           }
