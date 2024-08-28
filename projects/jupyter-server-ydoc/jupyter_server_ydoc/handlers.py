@@ -38,7 +38,6 @@ YFILE = YDOCS["file"]
 
 
 SERVER_SESSION = str(uuid.uuid4())
-UNDO_MANAGERS = {}
 FORK_DOCUMENTS = {}
 
 
@@ -491,7 +490,7 @@ class TimelineHandler(APIHandler):
                 FORK_DOCUMENTS[idx] = ydoc_factory(fork_ydoc)
 
             undo_manager: UndoManager = FORK_DOCUMENTS[idx].undo_manager
-            UNDO_MANAGERS[idx] = undo_manager
+
             updates_and_timestamps = [(item[0], item[-1]) async for item in room.ystore.read()]
 
             result_timestamps = []
@@ -529,17 +528,12 @@ class UndoRedoHandler(APIHandler):
             steps = int(self.request.query_arguments.get("steps")[0].decode("utf-8"))
             fork_room_id = str(self.request.query_arguments.get("forkRoom")[0].decode("utf-8"))
 
-            undo_manager = UNDO_MANAGERS[fork_room_id]
-
-            if not undo_manager:
-                self.set_status(404)
-                return self.finish({"code": 404, "error": "Undo Manager not found"})
-
             fork_document = FORK_DOCUMENTS[fork_room_id]
-
             if not fork_document:
                 self.set_status(404)
                 return self.finish({"code": 404, "error": "Fork document not found"})
+
+            undo_manager = fork_document.undo_manager
 
             if action == "undo":
                 if undo_manager.can_undo():
@@ -588,6 +582,6 @@ class UndoRedoHandler(APIHandler):
                 break
 
     async def _cleanup_undo_manager(self, room_id: str) -> None:
-        if room_id in UNDO_MANAGERS:
-            del UNDO_MANAGERS[room_id]
-            print(f"UndoManager for {room_id} has been removed.")
+        if room_id in FORK_DOCUMENTS:
+            del FORK_DOCUMENTS[room_id]
+            print(f"Fork Document for {room_id} has been removed.")
