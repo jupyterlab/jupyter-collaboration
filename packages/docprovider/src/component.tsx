@@ -106,6 +106,9 @@ export const TimelineSliderComponent: React.FC<Props> = ({
 
     if (response.code === 200) {
       Notification.success(response.status, { autoClose: 4000 });
+      provider.reconnect();
+      setToggle(false);
+      isFirstChange.current = true;
     } else {
       Notification.error(response.status, { autoClose: 4000 });
     }

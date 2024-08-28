@@ -26,6 +26,7 @@ const DOCUMENT_PROVIDER_URL = 'api/collaboration/room';
 
 export interface IForkProvider {
   connectToForkDoc: (forkRoomId: string, sessionId: string) => Promise<void>;
+  reconnect: () => Promise<void>;
   contentType: string;
   format: string;
 }

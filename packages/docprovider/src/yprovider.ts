@@ -100,6 +100,11 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     Signal.clearData(this);
   }
 
+  async reconnect(): Promise<void> {
+    this._disconnect();
+    this._connect();
+  }
+
   private async _connect(): Promise<void> {
     const session = await requestDocSession(
       this._format,
