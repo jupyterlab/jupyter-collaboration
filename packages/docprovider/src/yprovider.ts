@@ -16,7 +16,7 @@ import { DocumentChange, YDocument } from '@jupyter/ydoc';
 import { Awareness } from 'y-protocols/awareness';
 import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
 
-import { requestDocFork, requestDocSession } from './requests';
+import { requestDocSession } from './requests';
 import { IForkProvider } from './ydrive';
 
 /**
@@ -122,26 +122,8 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     this._yWebsocketProvider.on('connection-close', this._onConnectionClosed);
   }
 
-  async connectToFork(
-    action: 'undo' | 'redo',
-    mode: string,
-    steps: number
-  ): Promise<any> {
-    const session = await requestDocSession(
-      this._format,
-      this._contentType,
-      this._path
-    );
-
+  async connectToForkDoc(forkRoomId: string, sessionId: string): Promise<void> {
     this._disconnect();
-    const response = await requestDocFork(
-      `${session.format}:${session.type}:${session.fileId}`,
-      action,
-      mode,
-      steps
-    );
-    const forkRoomId = response.roomId;
-    const sessionId = response.sessionId;
     this._yWebsocketProvider = new YWebsocketProvider(
       this._serverUrl,
       forkRoomId,
@@ -152,7 +134,6 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         awareness: this._awareness
       }
     );
-    return { session, forkRoomId };
   }
 
   get wsProvider() {

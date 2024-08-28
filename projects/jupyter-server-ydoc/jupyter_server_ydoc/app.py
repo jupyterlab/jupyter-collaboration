@@ -15,8 +15,8 @@ from traitlets import Bool, Float, Type
 
 from .handlers import (
     DocSessionHandler,
-    TimelineForkHandler,
     TimelineHandler,
+    UndoRedoHandler,
     YDocWebSocketHandler,
 )
 from .loaders import FileLoaderMapping
@@ -144,8 +144,8 @@ class YDocExtension(ExtensionApp):
                     },
                 ),
                 (
-                    r"/api/collaboration/fork_room/(.*)",
-                    TimelineForkHandler,
+                    r"/api/collaboration/undo_redo/(.*)",
+                    UndoRedoHandler,
                     {
                         "ywebsocket_server": self.ywebsocket_server,
                     },

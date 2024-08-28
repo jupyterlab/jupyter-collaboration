@@ -25,11 +25,7 @@ const DISABLE_RTC =
 const DOCUMENT_PROVIDER_URL = 'api/collaboration/room';
 
 export interface IForkProvider {
-  connectToFork: (
-    action: 'undo' | 'redo',
-    mode: string,
-    steps: number
-  ) => Promise<any>;
+  connectToForkDoc: (forkRoomId: string, sessionId: string) => Promise<void>;
   contentType: string;
   format: string;
 }

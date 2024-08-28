@@ -11,7 +11,7 @@ import { ServerConnection, Contents } from '@jupyterlab/services';
  * See https://github.com/jupyterlab/jupyter_collaboration
  */
 const DOC_SESSION_URL = 'api/collaboration/session';
-const DOC_FORK_URL = 'api/collaboration/fork_room';
+const DOC_FORK_URL = 'api/collaboration/undo_redo';
 const TIMELINE_URL = 'api/collaboration/timeline';
 
 /**
@@ -99,11 +99,11 @@ export async function requestDocumentTimeline(
   return response;
 }
 
-export async function requestDocFork(
+export async function requestUndoRedo(
   roomid: string,
-  action: 'undo' | 'redo',
-  mode: string,
-  steps: number
+  action: 'undo' | 'redo' | 'restore',
+  steps: number,
+  forkRoom: string
 ): Promise<any> {
   const settings = ServerConnection.makeSettings();
   let url = URLExt.join(
@@ -112,7 +112,7 @@ export async function requestDocFork(
     encodeURIComponent(roomid)
   );
 
-  url = url.concat(`?action=${action}&&mode=${mode}&&steps=${steps}`);
+  url = url.concat(`?action=${action}&&steps=${steps}&&forkRoom=${forkRoom}`);
 
   const body = { method: 'PUT' };
 

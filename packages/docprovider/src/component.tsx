@@ -5,7 +5,11 @@
 
 import React, { useState, useRef } from 'react';
 import '../style/slider.css';
-import { requestDocFork, requestDocumentTimeline } from './requests';
+import {
+  requestUndoRedo,
+  requestDocSession,
+  requestDocumentTimeline
+} from './requests';
 import { historyIcon } from '@jupyterlab/ui-components';
 import { Notification } from '@jupyterlab/apputils';
 import { IForkProvider } from './ydrive';
@@ -23,86 +27,115 @@ export const TimelineSliderComponent: React.FC<Props> = ({
   contentType,
   format
 }) => {
-  const [data, setData] = useState({ roomId: '', timestamps: [] });
+  const [data, setData] = useState({
+    roomId: '',
+    timestamps: [],
+    forkRoom: '',
+    sessionId: ''
+  });
   const [currentTimestampIndex, setCurrentTimestampIndex] = useState(
     data.timestamps.length - 1
   );
-  const [session, setSession]: any = useState();
-  const [forkRoomID, setForkRoomID]: any = useState();
   const [toggle, setToggle] = useState(false);
   const [isBtn, setIsBtn] = useState(false);
 
   const isFirstChange = useRef(true);
+  const isFirstSliderChange = useRef(true);
+  const sessionRef = useRef<any>(null);
 
   async function fetchTimeline(notebookPath: string) {
     try {
-      const response = await requestDocumentTimeline(
-        format,
-        contentType,
-        notebookPath
-      );
+      if (isFirstChange.current) {
+        const response = await requestDocumentTimeline(
+          format,
+          contentType,
+          notebookPath
+        );
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('Not found');
-        } else if (response.status === 503) {
-          throw new Error('WebSocket closed');
-        } else {
-          throw new Error(`Failed to fetch data: ${response.statusText}`);
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('Not found');
+          } else if (response.status === 503) {
+            throw new Error('WebSocket closed');
+          } else {
+            throw new Error(`Failed to fetch data: ${response.statusText}`);
+          }
         }
-      }
-      const text = await response.text();
-      let data = { roomId: '', timestamps: [] };
-      if (text) {
-        data = JSON.parse(text);
-        setData(data);
-        setCurrentTimestampIndex(data.timestamps.length - 1);
-      }
-      setToggle(true);
 
-      return data;
+        const text = await response.text();
+        let data = { roomId: '', timestamps: [], forkRoom: '', sessionId: '' };
+        if (text) {
+          Notification.warning(
+            'Document is now in read-only mode. Changes will not be saved.',
+            { autoClose: 2500 }
+          );
+
+          data = JSON.parse(text);
+          setData(data);
+          setCurrentTimestampIndex(data.timestamps.length - 1);
+          provider.connectToForkDoc(data.forkRoom, data.sessionId);
+
+          sessionRef.current = await requestDocSession(
+            format,
+            contentType,
+            extractFilenameFromURL(apiURL)
+          );
+        }
+        setToggle(true);
+        isFirstChange.current = false;
+
+        return data;
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
     }
   }
+
   const handleRestore = async () => {
-    const response = await requestDocFork(
-      `${session.format}:${session.type}:${session.fileId}`,
-      'undo',
+    if (!sessionRef.current) {
+      console.error('Session is not initialized');
+      return;
+    }
+
+    const response = await requestUndoRedo(
+      `${sessionRef.current.format}:${sessionRef.current.type}:${sessionRef.current.fileId}`,
       'restore',
-      0
+      0,
+      data.forkRoom
     );
+
     if (response.code === 200) {
       Notification.success(response.status, { autoClose: 4000 });
     } else {
       Notification.error(response.status, { autoClose: 4000 });
     }
   };
+
   const handleSliderChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const currentTimestamp = parseInt(event.target.value);
     const steps = Math.abs(currentTimestamp - currentTimestampIndex);
-
     try {
       const action = determineAction(currentTimestamp);
       setCurrentTimestampIndex(currentTimestamp);
 
-      // create fork when first using the slider
-      if (isFirstChange.current) {
+      if (isFirstSliderChange.current) {
         setIsBtn(true);
-        isFirstChange.current = false;
-        const obj = await provider.connectToFork(action, 'original', steps);
-        setForkRoomID(obj.forkRoomId);
-        setSession(obj.session);
-      } else if (session && forkRoomID) {
-        await requestDocFork(
-          `${session.format}:${session.type}:${session.fileId}`,
-          action,
-          'fork',
-          steps
-        );
+        isFirstSliderChange.current = false;
       }
+
+      if (!sessionRef.current) {
+        console.error('Session is not initialized');
+        return;
+      }
+
+      await requestUndoRedo(
+        `${sessionRef.current.format}:${sessionRef.current.type}:${sessionRef.current.fileId}`,
+        action,
+        steps,
+        data.forkRoom
+      );
     } catch (error: any) {
       console.error('Error fetching or applying updates:', error);
     }
