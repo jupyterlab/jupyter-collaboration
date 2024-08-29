@@ -509,8 +509,7 @@ class TimelineHandler(APIHandler):
                 if len(undo_manager.undo_stack) > undo_stack_len:
                     result_timestamps.append(timestamp)
 
-            fork_room = YRoom()
-            fork_room.ydoc = fork_ydoc
+            fork_room = YRoom(ydoc=fork_ydoc)
             self.ywebsocket_server.add_room(idx, fork_room)
 
             data = {
@@ -565,10 +564,6 @@ class UndoRedoHandler(APIHandler):
                     return self.finish({"error": "No more redo operations available"})
             elif action == "restore":
                 try:
-                    root_room = await self._websocket_server.get_room(room_id)
-                    original_ydoc = root_room.ydoc
-                    original_ydoc.apply_update(fork_document.ydoc.get_update())
-
                     # Cleanup undo manager after restoration
                     await self._cleanup_undo_manager(fork_room_id)
 
