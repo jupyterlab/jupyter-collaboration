@@ -181,8 +181,6 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
           const elt = document.getElementById('jp-slider-status-bar');
           if (elt && !timelineWidget.isAttached) {
             Widget.attach(timelineWidget, elt);
-          } else if (!timelineWidget.isAttached) {
-            Widget.attach(timelineWidget, document.body);
           }
         }
       };
