@@ -42,6 +42,7 @@ class DocumentRoom(YRoom):
         self._file_type: str = file_type
         self._file: FileLoader = file
         self._document = YDOCS.get(self._file_type, YFILE)(self.ydoc)
+        self._document.path = self._file.path
 
         self._logger = logger
         self._save_delay = save_delay
@@ -222,6 +223,7 @@ class DocumentRoom(YRoom):
             return
 
         async with self._update_lock:
+            self._document.path = model["path"]
             self._document.source = model["content"]
             self._document.dirty = False
 

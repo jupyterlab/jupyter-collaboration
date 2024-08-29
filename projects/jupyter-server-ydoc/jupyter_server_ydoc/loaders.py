@@ -42,6 +42,7 @@ class FileLoader:
 
         self._watcher = asyncio.create_task(self._watch_file()) if self._poll_interval else None
         self.last_modified = None
+        self._current_path = self.path
 
     @property
     def file_id(self) -> str:
@@ -205,8 +206,13 @@ class FileLoader:
         """
         do_notify = False
         async with self._lock:
+            path = self.path
+            if self._current_path != path:
+                self._current_path = path
+                do_notify = True
+
             # Get model metadata; format and type are not need
-            model = await ensure_async(self._contents_manager.get(self.path, content=False))
+            model = await ensure_async(self._contents_manager.get(path, content=False))
 
             if self.last_modified is not None and self.last_modified < model["last_modified"]:
                 do_notify = True
