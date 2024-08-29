@@ -486,9 +486,17 @@ class TimelineHandler(APIHandler):
             fork_ydoc = Doc()
 
             ydoc_factory = YDOCS.get(content_type)
-            if ydoc_factory is not None:
-                FORK_DOCUMENTS[idx] = ydoc_factory(fork_ydoc)
+            if ydoc_factory is None:
+                self.set_status(404)
+                self.finish(
+                    {
+                        "code": 404,
+                        "error": f"No document factory found for content type: {content_type}",
+                    }
+                )
+                return
 
+            FORK_DOCUMENTS[idx] = ydoc_factory(fork_ydoc)
             undo_manager: UndoManager = FORK_DOCUMENTS[idx].undo_manager
 
             updates_and_timestamps = [(item[0], item[-1]) async for item in room.ystore.read()]
@@ -515,7 +523,8 @@ class TimelineHandler(APIHandler):
             self.finish(json.dumps(data))
 
         except RoomNotFound:
-            return None
+            self.set_status(404)
+            self.finish({"code": 404, "error": "Room not found"})
 
 
 class UndoRedoHandler(APIHandler):
@@ -528,9 +537,10 @@ class UndoRedoHandler(APIHandler):
             steps = int(self.request.query_arguments.get("steps")[0].decode("utf-8"))
             fork_room_id = str(self.request.query_arguments.get("forkRoom")[0].decode("utf-8"))
 
-            fork_document = FORK_DOCUMENTS[fork_room_id]
+            fork_document = FORK_DOCUMENTS.get(fork_room_id)
             if not fork_document:
                 self.set_status(404)
+                self.log.warning(f"Fork document not found for room ID {fork_room_id}")
                 return self.finish({"code": 404, "error": "Fork document not found"})
 
             undo_manager = fork_document.undo_manager
@@ -539,15 +549,19 @@ class UndoRedoHandler(APIHandler):
                 if undo_manager.can_undo():
                     await self._perform_undo_or_redo(undo_manager, "undo", steps)
                     self.set_status(200)
+                    self.log.info(f"Undo operation performed in room {room_id} for {steps} steps")
                     return self.finish({"status": "undone"})
                 else:
+                    self.log.info(f"No more undo operations available in room {room_id}")
                     return self.finish({"error": "No more undo operations available"})
             elif action == "redo":
                 if undo_manager.can_redo():
                     await self._perform_undo_or_redo(undo_manager, "redo", steps)
                     self.set_status(200)
+                    self.log.info(f"Redo operation performed in room {room_id} for {steps} steps")
                     return self.finish({"status": "redone"})
                 else:
+                    self.log.info(f"No more redo operations available in room {room_id}")
                     return self.finish({"error": "No more redo operations available"})
             elif action == "restore":
                 try:
@@ -559,15 +573,17 @@ class UndoRedoHandler(APIHandler):
                     await self._cleanup_undo_manager(fork_room_id)
 
                     self.set_status(200)
+                    self.log.info(f"Document in room {room_id} restored successfully")
                     return self.finish({"code": 200, "status": "Document restored successfully"})
                 except Exception as e:
+                    self.log.error(f"Error during document restore in room {room_id}: {str(e)}")
                     self.set_status(500)
                     return self.finish(
                         {"code": 500, "error": "Internal server error", "message": str(e)}
                     )
 
         except Exception as e:
-            print("Error during undo/redo/restore operation: ", e)
+            self.log.error(f"Error during undo/redo/restore operation in room {room_id}: {str(e)}")
 
     async def _perform_undo_or_redo(
         self, undo_manager: UndoManager, action: str, steps: int
@@ -584,4 +600,4 @@ class UndoRedoHandler(APIHandler):
     async def _cleanup_undo_manager(self, room_id: str) -> None:
         if room_id in FORK_DOCUMENTS:
             del FORK_DOCUMENTS[room_id]
-            print(f"Fork Document for {room_id} has been removed.")
+            self.log.info(f"Fork Document for {room_id} has been removed.")
