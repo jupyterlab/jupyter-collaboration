@@ -25,7 +25,7 @@ export class TimelineWidget extends ReactWidget {
     this.provider = provider;
     this.contentType = contentType;
     this.format = format;
-    this.addClass('timeline-slider-wrapper');
+    this.addClass('jp-timelineSliderWrapper');
   }
 
   render(): JSX.Element {
@@ -46,16 +46,5 @@ export class TimelineWidget extends ReactWidget {
     this.format = this.provider.format;
 
     this.update();
-  }
-  extractFilenameFromURL(url: string): string {
-    try {
-      const parsedURL = new URL(url);
-      const pathname = parsedURL.pathname;
-      const segments = pathname.split('/');
-      return segments[segments.length - 1];
-    } catch (error) {
-      console.error('Invalid URL:', error);
-      return '';
-    }
   }
 }

@@ -3,29 +3,33 @@
 | Distributed under the terms of the Modified BSD License.
 |---------------------------------------------------------------------------- */
 
-.timeline-slider-wrapper .slider-container {
+.jp-timelineSliderWrapper .jp-sliderContainer{
   display: flex;
   align-items: center;
 }
 
+.jp-Slider {
+  height: 4.5px
+}
 
-#slider-status-bar {
+#jp-slider-status-bar {
   display: flex;
 }
 
-.timestamp-display {
+.jp-timestampDisplay {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 6px;
 }
 
-.restore-btn-container {
+.jp-restoreBtnContainer {
   width: 192px;
 }
 
-.restore-btn {
+.jp-ToolbarButtonComponent.jp-restoreBtn {
   cursor: pointer;
-  color: #fff;
+  color: var(--jp-layout-color2);
   width: 100%;
+  background: var(--jp-accept-color-normal)
 }

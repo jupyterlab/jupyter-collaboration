@@ -178,7 +178,7 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
             provider.format
           );
 
-          const elt = document.getElementById('slider-status-bar');
+          const elt = document.getElementById('jp-slider-status-bar');
           if (elt && !timelineWidget.isAttached) {
             Widget.attach(timelineWidget, elt);
           } else if (!timelineWidget.isAttached) {
@@ -206,8 +206,8 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
           sliderItem = new Widget();
           sliderItem.addClass('jp-StatusBar-GroupItem');
           sliderItem.addClass('jp-mod-highlighted');
-          sliderItem.id = 'slider-status-bar';
-          statusBar.registerStatusItem('slider-status-bar', {
+          sliderItem.id = 'jp-slider-status-bar';
+          statusBar.registerStatusItem('jp-slider-status-bar', {
             item: sliderItem,
             align: 'left',
             rank: 4,

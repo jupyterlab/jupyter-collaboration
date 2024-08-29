@@ -174,7 +174,7 @@ export const TimelineSliderComponent: React.FC<Props> = ({
   };
 
   return (
-    <div className="slider-container">
+    <div className="jp-sliderContainer">
       <div
         onClick={() => {
           fetchTimeline(extractFilenameFromURL(apiURL));
@@ -185,31 +185,23 @@ export const TimelineSliderComponent: React.FC<Props> = ({
         <historyIcon.react marginRight="4px" />
       </div>
       {toggle && (
-        <div className="timestamp-display">
+        <div className="jp-timestampDisplay">
           <input
             type="range"
             min={0}
             max={data.timestamps.length - 1}
             value={currentTimestampIndex}
             onChange={handleSliderChange}
-            className="slider"
-            style={{ height: '4.5px' }}
+            className="jp-Slider"
           />
           <div>
-            <strong>
-              {
-                extractFilenameFromURL(apiURL).split('/')[
-                  extractFilenameFromURL(apiURL).split('/').length - 1
-                ]
-              }{' '}
-            </strong>{' '}
+            <strong>{extractFilenameFromURL(apiURL).split('/').pop()} </strong>{' '}
           </div>
           {isBtn && (
-            <div className="restore-btn-container">
+            <div className="jp-restoreBtnContainer">
               <button
                 onClick={handleRestore}
-                className="jp-ToolbarButtonComponent restore-btn"
-                style={{ background: '#1976d2' }}
+                className="jp-ToolbarButtonComponent jp-restoreBtn"
               >
                 Restore version{' '}
                 {formatTimestamp(data.timestamps[currentTimestampIndex])}
