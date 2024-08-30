@@ -100,13 +100,17 @@ def bump(force, skip_if_dirty, spec):
 
     # bump the required version in jupyter-collaboration metapackage
     # to ensure that users can just upgrade `jupyter-collaboration`
-    # and get all fixes for free
+    # and get all fixes for free.
+    # Formatting based on https://stackoverflow.com/questions/70721025/tomlkit-nicely-formatted-array-with-inline-tables
     metapackage = "jupyter-collaboration"
     metapackage_toml_path = HERE / "projects" / metapackage / "pyproject.toml"
     metapackage_toml = tomlkit.parse(metapackage_toml_path.read_text())
-    metapackage_toml["dependencies"] = [
-        key + ">=" + project_pins[key] for key in sorted(project_pins) if key != metapackage
-    ]
+    metapackage_toml.get('project').remove('dependencies')
+    dependencies = tomlkit.array()
+    for key in sorted(project_pins):
+        if key != metapackage.replace('-', '_'):
+            dependencies.add_line(key + ">=" + project_pins[key])
+    metapackage_toml.get('project').add('dependencies', dependencies.multiline(True))
     metapackage_toml_path.write_text(tomlkit.dumps(metapackage_toml))
 
     path = HERE.joinpath("package.json")
