@@ -6,7 +6,6 @@ from __future__ import annotations
 import asyncio
 import json
 import time
-import uuid
 from logging import Logger
 from typing import Any
 from uuid import uuid4
@@ -36,8 +35,7 @@ from .websocketserver import JupyterWebsocketServer, RoomNotFound
 
 YFILE = YDOCS["file"]
 
-
-SERVER_SESSION = str(uuid.uuid4())
+SERVER_SESSION = str(uuid4())
 FORK_DOCUMENTS = {}
 
 

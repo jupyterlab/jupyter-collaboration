@@ -19,16 +19,6 @@ import { requestDocFork, requestDocSession } from './requests';
 import { IForkProvider } from './ydrive';
 
 /**
- * An interface for a document provider.
- */
-export interface IDocumentProvider extends IDisposable {
-  /**
-   * Returns a Promise that resolves when the document provider is ready.
-   */
-  readonly ready: Promise<void>;
-}
-
-/**
  * A class to provide Yjs synchronization over WebSocket.
  *
  * We specify custom messages that the server can interpret. For reference please look in yjs_ws_server.
@@ -102,21 +92,6 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   async reconnect(): Promise<void> {
     this._disconnect();
     this._connect();
-  }
-
-  private async _connect(): Promise<void> {
-    const session = await requestDocSession(
-      this._format,
-      this._contentType,
-      this._path
-    );
-
-    const response = await requestDocFork(`${session.format}:${session.type}:${session.fileId}`);
-    const forkId = response.roomId;
-    this._sharedModel.currentRoomId = forkId;
-    this._sharedModel.addFork(forkId);
-
-    return forkId;
   }
 
   async fork(): Promise<string> {

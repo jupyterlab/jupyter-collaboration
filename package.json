@@ -65,5 +65,8 @@
     "stylelint-prettier": "^3.0.0",
     "typedoc": "~0.23.28",
     "typescript": "~5.0.4"
+  },
+  "resolutions": {
+    "@jupyter/ydoc": "file:.yalc/@jupyter/ydoc"
   }
 }

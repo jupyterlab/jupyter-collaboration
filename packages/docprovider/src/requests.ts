@@ -110,6 +110,38 @@ export async function requestUndoRedo(
 ): Promise<any> {
   const settings = ServerConnection.makeSettings();
   let url = URLExt.join(
+    settings.baseUrl,
+    DOC_FORK_URL,
+    encodeURIComponent(roomid)
+  );
+
+  url = url.concat(`?action=${action}&&steps=${steps}&&forkRoom=${forkRoom}`);
+
+  const body = { method: 'PUT' };
+
+  let response: Response;
+  try {
+    response = await ServerConnection.makeRequest(url, body, settings);
+  } catch (error) {
+    throw new ServerConnection.NetworkError(error as Error);
+  }
+
+  let data: any = await response.text();
+
+  if (data.length > 0) {
+    try {
+      data = JSON.parse(data);
+    } catch (error) {
+      console.log('Not a JSON response body.', response);
+    }
+  }
+
+  if (!response.ok) {
+    throw new ServerConnection.ResponseError(response, data.message || data);
+  }
+
+  return data;
+}
 
 export async function requestDocFork(
   roomid: string,
@@ -121,10 +153,6 @@ export async function requestDocFork(
     encodeURIComponent(roomid)
   );
 
-  url = url.concat(`?action=${action}&&steps=${steps}&&forkRoom=${forkRoom}`);
-
-  const body = { method: 'PUT' };
-=======
   const body = {method: 'PUT'};
 
   let response: Response;
@@ -204,7 +232,6 @@ export async function requestDocDelete(
     method: 'DELETE',
     body: JSON.stringify({ fork_roomid: forkRoomid, root_roomid: rootRoomid })
   };
->>>>>>> f64d251 (Support suggestions)
 
   let response: Response;
   try {
