@@ -39,7 +39,7 @@ class FileLoader:
 
         self._log = log or getLogger(__name__)
         self._subscriptions: dict[str, Callable[[], Coroutine[Any, Any, None]]] = {}
-        self._filepath_subscriptions: dict[str, Callable[[], Coroutine[Any, Any, None]]] = {}
+        self._filepath_subscriptions: dict[str, Callable[[], Coroutine[Any, Any, None] | None]] = {}
 
         self._watcher = asyncio.create_task(self._watch_file()) if self._poll_interval else None
         self.last_modified = None
@@ -85,7 +85,7 @@ class FileLoader:
         self,
         id: str,
         callback: Callable[[], Coroutine[Any, Any, None]],
-        filepath_callback: Callable[[], Coroutine[Any, Any, None] | None] | None = None
+        filepath_callback: Callable[[], Coroutine[Any, Any, None] | None] | None = None,
     ) -> None:
         """
         Subscribe to the file to get notified about out-of-band file changes.
