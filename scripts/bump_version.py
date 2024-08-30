@@ -105,12 +105,12 @@ def bump(force, skip_if_dirty, spec):
     metapackage = "jupyter-collaboration"
     metapackage_toml_path = HERE / "projects" / metapackage / "pyproject.toml"
     metapackage_toml = tomlkit.parse(metapackage_toml_path.read_text())
-    metapackage_toml.get('project').remove('dependencies')
+    metapackage_toml.get("project").remove("dependencies")
     dependencies = tomlkit.array()
     for key in sorted(project_pins):
-        if key != metapackage.replace('-', '_'):
+        if key != metapackage.replace("-", "_"):
             dependencies.add_line(key + ">=" + project_pins[key])
-    metapackage_toml.get('project').add('dependencies', dependencies.multiline(True))
+    metapackage_toml.get("project").add("dependencies", dependencies.multiline(True))
     metapackage_toml_path.write_text(tomlkit.dumps(metapackage_toml))
 
     path = HERE.joinpath("package.json")
