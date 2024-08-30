@@ -39,6 +39,7 @@ class FileLoader:
 
         self._log = log or getLogger(__name__)
         self._subscriptions: dict[str, Callable[[], Coroutine[Any, Any, None]]] = {}
+        self._filepath_subscriptions: dict[str, Callable[[], Coroutine[Any, Any, None]]] = {}
 
         self._watcher = asyncio.create_task(self._watch_file()) if self._poll_interval else None
         self.last_modified = None
@@ -80,7 +81,12 @@ class FileLoader:
             except asyncio.CancelledError:
                 self._log.info(f"file watcher for '{self.file_id}' is cancelled now")
 
-    def observe(self, id: str, callback: Callable[[], Coroutine[Any, Any, None]]) -> None:
+    def observe(
+        self,
+        id: str,
+        callback: Callable[[], Coroutine[Any, Any, None]],
+        filepath_callback: Callable[[], Coroutine[Any, Any, None] | None] | None = None
+    ) -> None:
         """
         Subscribe to the file to get notified about out-of-band file changes.
 
@@ -89,6 +95,8 @@ class FileLoader:
                     callback (Callable): Callback for notifying the room.
         """
         self._subscriptions[id] = callback
+        if filepath_callback is not None:
+            self._filepath_subscriptions[id] = filepath_callback
 
     def unobserve(self, id: str) -> None:
         """
@@ -98,6 +106,8 @@ class FileLoader:
                 id (str): Room ID
         """
         del self._subscriptions[id]
+        if id in self._filepath_subscriptions.keys():
+            del self._filepath_subscriptions[id]
 
     async def load_content(self, format: str, file_type: str) -> dict[str, Any]:
         """
@@ -205,11 +215,12 @@ class FileLoader:
         Notifies subscribed rooms about out-of-band file changes.
         """
         do_notify = False
+        filepath_change = False
         async with self._lock:
             path = self.path
             if self._current_path != path:
                 self._current_path = path
-                do_notify = True
+                filepath_change = True
 
             # Get model metadata; format and type are not need
             model = await ensure_async(self._contents_manager.get(path, content=False))
@@ -218,6 +229,11 @@ class FileLoader:
                 do_notify = True
 
             self.last_modified = model["last_modified"]
+
+        if filepath_change:
+            # Notify filepath change
+            for callback in self._filepath_subscriptions.values():
+                await ensure_async(callback())
 
         if do_notify:
             # Notify out-of-band change
