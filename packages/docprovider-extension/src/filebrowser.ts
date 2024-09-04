@@ -10,12 +10,15 @@ import {
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
 import { Dialog, showDialog } from '@jupyterlab/apputils';
-import { IDocumentWidget } from '@jupyterlab/docregistry';
+import { DocumentWidget, IDocumentWidget } from '@jupyterlab/docregistry';
+import { Widget } from '@lumino/widgets';
 import {
   FileBrowser,
   IDefaultFileBrowser,
   IFileBrowserFactory
 } from '@jupyterlab/filebrowser';
+import { IStatusBar } from '@jupyterlab/statusbar';
+
 import { IEditorTracker } from '@jupyterlab/fileeditor';
 import { ILogger, ILoggerRegistry } from '@jupyterlab/logconsole';
 import { INotebookTracker } from '@jupyterlab/notebook';
@@ -28,10 +31,13 @@ import { YFile, YNotebook } from '@jupyter/ydoc';
 
 import {
   ICollaborativeDrive,
+  IForkProvider,
   IGlobalAwareness,
+  TimelineWidget,
   YDrive
 } from '@jupyter/docprovider';
 import { Awareness } from 'y-protocols/awareness';
+import { URLExt } from '@jupyterlab/coreutils';
 
 /**
  * The command IDs used by the file browser plugin.
@@ -39,6 +45,7 @@ import { Awareness } from 'y-protocols/awareness';
 namespace CommandIDs {
   export const openPath = 'filebrowser:open-path';
 }
+const DOCUMENT_TIMELINE_URL = 'api/collaboration/timeline';
 
 /**
  * The default collaborative drive provider.
@@ -91,7 +98,7 @@ export const ynotebook: JupyterFrontEndPlugin<void> = {
   optional: [ISettingRegistry],
   activate: (
     app: JupyterFrontEnd,
-    drive: ICollaborativeDrive,
+    drive: YDrive,
     settingRegistry: ISettingRegistry | null
   ): void => {
     let disableDocumentWideUndoRedo = true;
@@ -127,6 +134,93 @@ export const ynotebook: JupyterFrontEndPlugin<void> = {
     );
   }
 };
+/**
+ * A plugin to add a timeline slider status item to the status bar.
+ */
+export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
+  id: '@jupyter/docprovider-extension:statusBarTimeline',
+  description: 'Plugin to add a timeline slider to the status bar',
+  autoStart: true,
+  requires: [IStatusBar, ICollaborativeDrive],
+  activate: async (
+    app: JupyterFrontEnd,
+    statusBar: IStatusBar,
+    drive: ICollaborativeDrive
+  ): Promise<void> => {
+    function isYDrive(drive: YDrive | ICollaborativeDrive): drive is YDrive {
+      return 'getProviderForPath' in drive;
+    }
+    try {
+      let sliderItem: Widget | null = null;
+      let timelineWidget: TimelineWidget | null = null;
+
+      const updateTimelineForDocument = async (documentPath: string) => {
+        if (drive && isYDrive(drive)) {
+          // Dispose of the previous timelineWidget if it exists
+          if (timelineWidget) {
+            timelineWidget.dispose();
+            timelineWidget = null;
+          }
+
+          const provider = (await drive.getProviderForPath(
+            documentPath
+          )) as IForkProvider;
+          const fullPath = URLExt.join(
+            app.serviceManager.serverSettings.baseUrl,
+            DOCUMENT_TIMELINE_URL,
+            documentPath.split(':')[1]
+          );
+
+          timelineWidget = new TimelineWidget(
+            fullPath,
+            provider,
+            provider.contentType,
+            provider.format
+          );
+
+          const elt = document.getElementById('jp-slider-status-bar');
+          if (elt && !timelineWidget.isAttached) {
+            Widget.attach(timelineWidget, elt);
+          }
+        }
+      };
+
+      if (app.shell.currentChanged) {
+        app.shell.currentChanged.connect(async (_, args) => {
+          const currentWidget = args.newValue as DocumentWidget;
+          if (timelineWidget) {
+            // Dispose of the timelineWidget when the document is closed
+            timelineWidget.dispose();
+            timelineWidget = null;
+          }
+          if (currentWidget && 'context' in currentWidget) {
+            await updateTimelineForDocument(currentWidget.context.path);
+          }
+        });
+      }
+
+      if (statusBar) {
+        if (!sliderItem) {
+          sliderItem = new Widget();
+          sliderItem.addClass('jp-StatusBar-GroupItem');
+          sliderItem.addClass('jp-mod-highlighted');
+          sliderItem.id = 'jp-slider-status-bar';
+          statusBar.registerStatusItem('jp-slider-status-bar', {
+            item: sliderItem,
+            align: 'left',
+            rank: 4,
+            isActive: () => {
+              const currentWidget = app.shell.currentWidget;
+              return !!currentWidget && 'context' in currentWidget;
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to activate statusBarTimeline plugin:', error);
+    }
+  }
+};
 
 /**
  * The default file browser factory provider.
@@ -144,7 +238,7 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
   ],
   activate: async (
     app: JupyterFrontEnd,
-    drive: ICollaborativeDrive,
+    drive: YDrive,
     fileBrowserFactory: IFileBrowserFactory,
     router: IRouter | null,
     tree: JupyterFrontEnd.ITreeResolver | null,
@@ -292,6 +386,7 @@ namespace Private {
       router.routed.disconnect(listener);
 
       const paths = await tree?.paths;
+
       if (paths?.file || paths?.browser) {
         // Restore the model without populating it.
         await browser.model.restore(browser.id, false);

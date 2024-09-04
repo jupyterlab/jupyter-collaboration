@@ -9,12 +9,13 @@ import time
 import uuid
 from logging import Logger
 from typing import Any
+from uuid import uuid4
 
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS
-from pycrdt import YMessageType, write_var_uint
+from pycrdt import Doc, UndoManager, YMessageType, write_var_uint
 from pycrdt_websocket.websocket_server import YRoom
 from pycrdt_websocket.ystore import BaseYStore
 from tornado import web
@@ -28,13 +29,16 @@ from .utils import (
     LogLevel,
     MessageType,
     decode_file_path,
+    encode_file_path,
     room_id_from_encoded_path,
 )
-from .websocketserver import JupyterWebsocketServer
+from .websocketserver import JupyterWebsocketServer, RoomNotFound
 
 YFILE = YDOCS["file"]
 
+
 SERVER_SESSION = str(uuid.uuid4())
+FORK_DOCUMENTS = {}
 
 
 class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
@@ -459,3 +463,136 @@ class DocSessionHandler(APIHandler):
         )
         self.set_status(201)
         return self.finish(data)
+
+
+class TimelineHandler(APIHandler):
+    def initialize(
+        self, ystore_class: type[BaseYStore], ywebsocket_server: JupyterWebsocketServer
+    ) -> None:
+        self.ystore_class = ystore_class
+        self.ywebsocket_server = ywebsocket_server
+
+    async def get(self, path: str) -> None:
+        idx = uuid4().hex
+        file_id_manager = self.settings["file_id_manager"]
+        file_id = file_id_manager.get_id(path)
+
+        format = str(self.request.query_arguments.get("format")[0].decode("utf-8"))
+        content_type = str(self.request.query_arguments.get("type")[0].decode("utf-8"))
+        encoded_path = encode_file_path(format, content_type, file_id)
+        try:
+            room_id = room_id_from_encoded_path(encoded_path)
+            room: YRoom = await self.ywebsocket_server.get_room(room_id)
+            fork_ydoc = Doc()
+
+            ydoc_factory = YDOCS.get(content_type)
+            if ydoc_factory is None:
+                self.set_status(404)
+                self.finish(
+                    {
+                        "code": 404,
+                        "error": f"No document factory found for content type: {content_type}",
+                    }
+                )
+                return
+
+            FORK_DOCUMENTS[idx] = ydoc_factory(fork_ydoc)
+            undo_manager: UndoManager = FORK_DOCUMENTS[idx].undo_manager
+
+            updates_and_timestamps = [(item[0], item[-1]) async for item in room.ystore.read()]
+
+            result_timestamps = []
+
+            for update, timestamp in updates_and_timestamps:
+                undo_stack_len = len(undo_manager.undo_stack)
+                fork_ydoc.apply_update(update)
+                if len(undo_manager.undo_stack) > undo_stack_len:
+                    result_timestamps.append(timestamp)
+
+            fork_room = YRoom(ydoc=fork_ydoc)
+            self.ywebsocket_server.add_room(idx, fork_room)
+
+            data = {
+                "roomId": room_id,
+                "timestamps": result_timestamps,
+                "forkRoom": idx,
+                "sessionId": SERVER_SESSION,
+            }
+            self.set_status(200)
+            self.finish(json.dumps(data))
+
+        except RoomNotFound:
+            self.set_status(404)
+            self.finish({"code": 404, "error": "Room not found"})
+
+
+class UndoRedoHandler(APIHandler):
+    def initialize(self, ywebsocket_server: JupyterWebsocketServer) -> None:
+        self._websocket_server = ywebsocket_server
+
+    async def put(self, room_id):
+        try:
+            action = str(self.request.query_arguments.get("action")[0].decode("utf-8"))
+            steps = int(self.request.query_arguments.get("steps")[0].decode("utf-8"))
+            fork_room_id = str(self.request.query_arguments.get("forkRoom")[0].decode("utf-8"))
+
+            fork_document = FORK_DOCUMENTS.get(fork_room_id)
+            if not fork_document:
+                self.set_status(404)
+                self.log.warning(f"Fork document not found for room ID {fork_room_id}")
+                return self.finish({"code": 404, "error": "Fork document not found"})
+
+            undo_manager = fork_document.undo_manager
+
+            if action == "undo":
+                if undo_manager.can_undo():
+                    await self._perform_undo_or_redo(undo_manager, "undo", steps)
+                    self.set_status(200)
+                    self.log.info(f"Undo operation performed in room {room_id} for {steps} steps")
+                    return self.finish({"status": "undone"})
+                else:
+                    self.log.info(f"No more undo operations available in room {room_id}")
+                    return self.finish({"error": "No more undo operations available"})
+            elif action == "redo":
+                if undo_manager.can_redo():
+                    await self._perform_undo_or_redo(undo_manager, "redo", steps)
+                    self.set_status(200)
+                    self.log.info(f"Redo operation performed in room {room_id} for {steps} steps")
+                    return self.finish({"status": "redone"})
+                else:
+                    self.log.info(f"No more redo operations available in room {room_id}")
+                    return self.finish({"error": "No more redo operations available"})
+            elif action == "restore":
+                try:
+                    # Cleanup undo manager after restoration
+                    await self._cleanup_undo_manager(fork_room_id)
+
+                    self.set_status(200)
+                    self.log.info(f"Document in room {room_id} restored successfully")
+                    return self.finish({"code": 200, "status": "Document restored successfully"})
+                except Exception as e:
+                    self.log.error(f"Error during document restore in room {room_id}: {str(e)}")
+                    self.set_status(500)
+                    return self.finish(
+                        {"code": 500, "error": "Internal server error", "message": str(e)}
+                    )
+
+        except Exception as e:
+            self.log.error(f"Error during undo/redo/restore operation in room {room_id}: {str(e)}")
+
+    async def _perform_undo_or_redo(
+        self, undo_manager: UndoManager, action: str, steps: int
+    ) -> None:
+        for _ in range(steps):
+            if action == "undo" and len(undo_manager.undo_stack) > 1:
+                undo_manager.undo()
+
+            elif action == "redo" and undo_manager.can_redo():
+                undo_manager.redo()
+            else:
+                break
+
+    async def _cleanup_undo_manager(self, room_id: str) -> None:
+        if room_id in FORK_DOCUMENTS:
+            del FORK_DOCUMENTS[room_id]
+            self.log.info(f"Fork Document for {room_id} has been removed.")

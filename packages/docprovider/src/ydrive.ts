@@ -24,6 +24,13 @@ const DISABLE_RTC =
  */
 const DOCUMENT_PROVIDER_URL = 'api/collaboration/room';
 
+export interface IForkProvider {
+  connectToForkDoc: (forkRoomId: string, sessionId: string) => Promise<void>;
+  reconnect: () => Promise<void>;
+  contentType: string;
+  format: string;
+}
+
 /**
  * A Collaborative implementation for an `IDrive`, talking to the
  * server using the Jupyter REST API and a WebSocket connection.
@@ -56,6 +63,23 @@ export class YDrive extends Drive implements ICollaborativeDrive {
    * SharedModel factory for the YDrive.
    */
   readonly sharedModelFactory: ISharedModelFactory;
+
+  async getProviderForPath(path: string): Promise<IForkProvider> {
+    let key = '';
+    if (path.split('.')[1] === 'ipynb') {
+      key = `json:notebook:${path.split(':')[1]}`;
+    } else if (path.split('.')[1] === 'jcad') {
+      key = `text:jcad:${path.split(':')[1]}`;
+    } else {
+      key = `text:file:${path.split(':')[1]}`;
+    }
+
+    const provider = this._providers.get(key);
+    if (!provider) {
+      throw new Error(`No provider found for path: ${path}`);
+    }
+    return provider;
+  }
 
   /**
    * Dispose of the resources held by the manager.

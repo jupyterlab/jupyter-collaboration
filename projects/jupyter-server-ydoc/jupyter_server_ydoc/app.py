@@ -13,7 +13,12 @@ from pycrdt import Doc
 from pycrdt_websocket.ystore import BaseYStore
 from traitlets import Bool, Float, Type
 
-from .handlers import DocSessionHandler, YDocWebSocketHandler
+from .handlers import (
+    DocSessionHandler,
+    TimelineHandler,
+    UndoRedoHandler,
+    YDocWebSocketHandler,
+)
 from .loaders import FileLoaderMapping
 from .rooms import DocumentRoom
 from .stores import SQLiteYStore
@@ -130,6 +135,21 @@ class YDocExtension(ExtensionApp):
                     },
                 ),
                 (r"/api/collaboration/session/(.*)", DocSessionHandler),
+                (
+                    r"/api/collaboration/timeline/(.*)",
+                    TimelineHandler,
+                    {
+                        "ystore_class": self.ystore_class,
+                        "ywebsocket_server": self.ywebsocket_server,
+                    },
+                ),
+                (
+                    r"/api/collaboration/undo_redo/(.*)",
+                    UndoRedoHandler,
+                    {
+                        "ywebsocket_server": self.ywebsocket_server,
+                    },
+                ),
             ]
         )
 

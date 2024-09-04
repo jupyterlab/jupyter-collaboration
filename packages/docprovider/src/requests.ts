@@ -11,6 +11,8 @@ import { ServerConnection, Contents } from '@jupyterlab/services';
  * See https://github.com/jupyterlab/jupyter_collaboration
  */
 const DOC_SESSION_URL = 'api/collaboration/session';
+const DOC_FORK_URL = 'api/collaboration/undo_redo';
+const TIMELINE_URL = 'api/collaboration/timeline';
 
 /**
  * Document session model
@@ -49,6 +51,70 @@ export async function requestDocSession(
     method: 'PUT',
     body: JSON.stringify({ format, type })
   };
+
+  let response: Response;
+  try {
+    response = await ServerConnection.makeRequest(url, body, settings);
+  } catch (error) {
+    throw new ServerConnection.NetworkError(error as Error);
+  }
+
+  let data: any = await response.text();
+
+  if (data.length > 0) {
+    try {
+      data = JSON.parse(data);
+    } catch (error) {
+      console.log('Not a JSON response body.', response);
+    }
+  }
+
+  if (!response.ok) {
+    throw new ServerConnection.ResponseError(response, data.message || data);
+  }
+
+  return data;
+}
+
+export async function requestDocumentTimeline(
+  format: string,
+  type: string,
+  path: string
+): Promise<any> {
+  const settings = ServerConnection.makeSettings();
+
+  let url = URLExt.join(settings.baseUrl, TIMELINE_URL, path);
+  url = url.concat(`?format=${format}&&type=${type}`);
+  const body = {
+    method: 'GET'
+  };
+
+  let response: Response;
+  try {
+    response = await ServerConnection.makeRequest(url, body, settings);
+  } catch (error) {
+    throw new ServerConnection.NetworkError(error as Error);
+  }
+
+  return response;
+}
+
+export async function requestUndoRedo(
+  roomid: string,
+  action: 'undo' | 'redo' | 'restore',
+  steps: number,
+  forkRoom: string
+): Promise<any> {
+  const settings = ServerConnection.makeSettings();
+  let url = URLExt.join(
+    settings.baseUrl,
+    DOC_FORK_URL,
+    encodeURIComponent(roomid)
+  );
+
+  url = url.concat(`?action=${action}&&steps=${steps}&&forkRoom=${forkRoom}`);
+
+  const body = { method: 'PUT' };
 
   let response: Response;
   try {
