@@ -17,6 +17,7 @@ import { Awareness } from 'y-protocols/awareness';
 import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
 
 import { requestDocSession } from './requests';
+import { IForkProvider } from './ydrive';
 
 /**
  * An interface for a document provider.
@@ -34,7 +35,8 @@ export interface IDocumentProvider extends IDisposable {
  * We specify custom messages that the server can interpret. For reference please look in yjs_ws_server.
  *
  */
-export class WebSocketProvider implements IDocumentProvider {
+
+export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   /**
    * Construct a new WebSocketProvider
    *
@@ -77,7 +79,13 @@ export class WebSocketProvider implements IDocumentProvider {
   get ready(): Promise<void> {
     return this._ready.promise;
   }
+  get contentType(): string {
+    return this._contentType;
+  }
 
+  get format(): string {
+    return this._format;
+  }
   /**
    * Dispose of the resources held by the object.
    */
@@ -89,7 +97,13 @@ export class WebSocketProvider implements IDocumentProvider {
     this._yWebsocketProvider?.off('connection-close', this._onConnectionClosed);
     this._yWebsocketProvider?.off('sync', this._onSync);
     this._yWebsocketProvider?.destroy();
+    this._disconnect();
     Signal.clearData(this);
+  }
+
+  async reconnect(): Promise<void> {
+    this._disconnect();
+    this._connect();
   }
 
   private async _connect(): Promise<void> {
@@ -117,6 +131,30 @@ export class WebSocketProvider implements IDocumentProvider {
 
     this._yWebsocketProvider.on('sync', this._onSync);
     this._yWebsocketProvider.on('connection-close', this._onConnectionClosed);
+  }
+
+  async connectToForkDoc(forkRoomId: string, sessionId: string): Promise<void> {
+    this._disconnect();
+    this._yWebsocketProvider = new YWebsocketProvider(
+      this._serverUrl,
+      forkRoomId,
+      this._sharedModel.ydoc,
+      {
+        disableBc: true,
+        params: { sessionId },
+        awareness: this._awareness
+      }
+    );
+  }
+
+  get wsProvider() {
+    return this._yWebsocketProvider;
+  }
+  private _disconnect(): void {
+    this._yWebsocketProvider?.off('connection-close', this._onConnectionClosed);
+    this._yWebsocketProvider?.off('sync', this._onSync);
+    this._yWebsocketProvider?.destroy();
+    this._yWebsocketProvider = null;
   }
 
   private _onUserChanged(user: User.IManager): void {

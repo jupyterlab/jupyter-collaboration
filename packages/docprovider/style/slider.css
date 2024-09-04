@@ -1,0 +1,35 @@
+/* -----------------------------------------------------------------------------
+| Copyright (c) Jupyter Development Team.
+| Distributed under the terms of the Modified BSD License.
+|---------------------------------------------------------------------------- */
+
+.jp-timelineSliderWrapper .jp-sliderContainer{
+  display: flex;
+  align-items: center;
+}
+
+.jp-Slider {
+  height: 4.5px
+}
+
+#jp-slider-status-bar {
+  display: flex;
+}
+
+.jp-timestampDisplay {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.jp-restoreBtnContainer {
+  width: 192px;
+}
+
+.jp-ToolbarButtonComponent.jp-restoreBtn {
+  cursor: pointer;
+  color: var(--jp-layout-color2);
+  width: 100%;
+  background: var(--jp-accept-color-normal)
+}
