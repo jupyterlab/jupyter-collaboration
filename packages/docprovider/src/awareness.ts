@@ -10,12 +10,7 @@ import { IStream, Stream } from '@lumino/signaling';
 
 import { IAwareness } from '@jupyter/ydoc';
 
-import * as decoding from 'lib0/decoding';
-import * as encoding from 'lib0/encoding';
 import { WebsocketProvider } from 'y-websocket';
-
-import { MessageType } from './utils';
-import { IAwarenessProvider } from './tokens';
 
 export interface IContent {
   type: string;
@@ -36,7 +31,7 @@ export interface IChatMessage {
  */
 export class WebSocketAwarenessProvider
   extends WebsocketProvider
-  implements IAwarenessProvider, IDisposable
+  implements IDisposable
 {
   /**
    * Construct a new WebSocketAwarenessProvider
@@ -57,18 +52,6 @@ export class WebSocketAwarenessProvider
     this._user.userChanged.connect(this._onUserChanged, this);
 
     this._messageStream = new Stream(this);
-
-    this.messageHandlers[MessageType.CHAT] = (
-      encoder,
-      decoder,
-      provider,
-      emitSynced,
-      messageType
-    ) => {
-      const content = decoding.readVarString(decoder);
-      const data = JSON.parse(content) as IChatMessage;
-      this._messageStream.emit(data);
-    };
   }
 
   get isDisposed(): boolean {
@@ -90,22 +73,6 @@ export class WebSocketAwarenessProvider
     this._user.userChanged.disconnect(this._onUserChanged, this);
     this._isDisposed = true;
     this.destroy();
-  }
-
-  /**
-   * Send a message to every collaborator.
-   *
-   * @param msg message
-   */
-  sendMessage(msg: string): void {
-    const data: IContent = {
-      type: 'text',
-      body: msg
-    };
-    const encoder = encoding.createEncoder();
-    encoding.writeVarUint(encoder, MessageType.CHAT);
-    encoding.writeVarString(encoder, JSON.stringify(data));
-    this.ws!.send(encoding.toUint8Array(encoder));
   }
 
   private _onUserChanged(user: User.IManager): void {
