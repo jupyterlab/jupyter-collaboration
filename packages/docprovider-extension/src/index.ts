@@ -8,11 +8,8 @@
 import { JupyterFrontEndPlugin } from '@jupyterlab/application';
 
 import {
-  drive,
-  yfile,
-  ynotebook,
-  defaultFileBrowser,
   logger,
+  rtcContentProvider,
   statusBarTimeline
 } from './filebrowser';
 import { notebookCellExecutor } from './executor';
@@ -21,10 +18,7 @@ import { notebookCellExecutor } from './executor';
  * Export the plugins as default.
  */
 const plugins: JupyterFrontEndPlugin<any>[] = [
-  drive,
-  yfile,
-  ynotebook,
-  defaultFileBrowser,
+  rtcContentProvider,
   logger,
   notebookCellExecutor,
   statusBarTimeline

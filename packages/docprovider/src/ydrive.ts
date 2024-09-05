@@ -3,7 +3,7 @@
 
 import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 import { TranslationBundle } from '@jupyterlab/translation';
-import { Contents, Drive, User } from '@jupyterlab/services';
+import { ContentProviderExtensions, Contents, Drive, IContentProvider, RestContentProvider, SharedDocumentFactory, User } from '@jupyterlab/services';
 import { ISignal, Signal } from '@lumino/signaling';
 
 import { DocumentChange, ISharedDocument, YDocument } from '@jupyter/ydoc';
@@ -12,7 +12,6 @@ import { WebSocketProvider } from './yprovider';
 import {
   ICollaborativeDrive,
   ISharedModelFactory,
-  SharedDocumentFactory
 } from './tokens';
 import { Awareness } from 'y-protocols/awareness';
 
@@ -29,6 +28,125 @@ export interface IForkProvider {
   reconnect: () => Promise<void>;
   contentType: string;
   format: string;
+}
+
+export class RtcContentProvider extends RestContentProvider implements IContentProvider {
+
+  constructor(
+    user: User.IManager,
+    translator: TranslationBundle,
+    globalAwareness: Awareness | null
+  ) {
+    super();
+    this._user = user;
+    this._trans = translator;
+    this._globalAwareness = globalAwareness;
+    this.sharedModelFactory = new SharedModelFactory(this._onCreate);
+    this.name = '';
+    this._providers = new Map<string, WebSocketProvider>();
+  }
+
+  /**
+   * SharedModel factory for the YDrive.
+   */
+  readonly sharedModelFactory: ISharedModelFactory;
+
+  public get extensions(): ContentProviderExtensions {
+    return [{re: '.*', score: 2}];
+  }
+
+  async get(
+    localPath: string,
+    options?: Contents.IFetchOptions
+  ): Promise<Contents.IModel> {
+    console.log('RTC get');
+    if (options && options.format && options.type) {
+      const key = `${options.format}:${options.type}:${localPath}`;
+      const provider = this._providers.get(key);
+
+      if (provider) {
+        // If the document doesn't exist, `super.get` will reject with an
+        // error and the provider will never be resolved.
+        // Use `Promise.all` to reject as soon as possible. The Context will
+        // show a dialog to the user.
+        const [model] = await Promise.all([
+          super.get(localPath, { ...options, content: false }),
+          provider.ready
+        ]);
+        return model;
+      }
+    }
+
+    const model = await super.get(localPath, options);
+    return model;
+  }
+
+  private _onCreate = (
+    options: Contents.ISharedFactoryOptions,
+    sharedModel: YDocument<DocumentChange>
+  ) => {
+    console.log('_onCreate');
+    if (typeof options.format !== 'string') {
+      return;
+    }
+    try {
+      const provider = new WebSocketProvider({
+        url: URLExt.join(this.serverSettings.wsUrl, DOCUMENT_PROVIDER_URL),
+        path: options.path,
+        format: options.format,
+        contentType: options.contentType,
+        model: sharedModel,
+        user: this._user,
+        translator: this._trans
+      });
+
+      // Add the document path in the list of opened ones for this user.
+      const state = this._globalAwareness?.getLocalState() || {};
+      const documents: any[] = state.documents || [];
+      if (!documents.includes(options.path)) {
+        documents.push(`${this.name}:${options.path}`);
+        this._globalAwareness?.setLocalStateField('documents', documents);
+      }
+
+      const key = `${options.format}:${options.contentType}:${options.path}`;
+      this._providers.set(key, provider);
+
+      sharedModel.changed.connect(async (_, change) => {
+        if (!change.stateChange) {
+          return;
+        }
+      });
+
+      sharedModel.disposed.connect(() => {
+        const provider = this._providers.get(key);
+        if (provider) {
+          provider.dispose();
+          this._providers.delete(key);
+        }
+
+        // Remove the document path from the list of opened ones for this user.
+        const state = this._globalAwareness?.getLocalState() || {};
+        const documents: any[] = state.documents || [];
+        const index = documents.indexOf(`${this.name}:${options.path}`);
+        if (index > -1) {
+          documents.splice(index, 1);
+        }
+        this._globalAwareness?.setLocalStateField('documents', documents);
+      });
+    } catch (error) {
+      // Falling back to the contents API if opening the websocket failed
+      //  This may happen if the shared document is not a YDocument.
+      console.error(
+        `Failed to open websocket connection for ${options.path}.\n:${error}`
+      );
+    }
+  };
+
+  private _user: User.IManager;
+  private _trans: TranslationBundle;
+  private _globalAwareness: Awareness | null;
+  private _providers: Map<string, WebSocketProvider>;
+  name: string;
 }
 
 /**
