@@ -5,9 +5,6 @@ import { DocumentChange, IAwareness, YDocument } from '@jupyter/ydoc';
 import { Contents } from '@jupyterlab/services';
 
 import { Token } from '@lumino/coreutils';
-import { IStream } from '@lumino/signaling';
-
-import { IChatMessage } from './awareness';
 
 /**
  * The collaborative drive.
@@ -55,21 +52,4 @@ export interface ISharedModelFactory extends Contents.ISharedFactory {
     type: Contents.ContentType,
     factory: SharedDocumentFactory
   ): void;
-}
-
-/**
- * A provider interface for global awareness features.
- */
-export interface IAwarenessProvider {
-  /**
-   * A signal to subscribe for incoming messages.
-   */
-  readonly messageStream: IStream<this, IChatMessage>;
-
-  /**
-   * Send a message to every collaborator.
-   *
-   * @param msg message
-   */
-  sendMessage(msg: string): void;
 }
