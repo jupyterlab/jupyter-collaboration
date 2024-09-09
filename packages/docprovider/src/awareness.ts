@@ -6,7 +6,6 @@
 import { User } from '@jupyterlab/services';
 
 import { IDisposable } from '@lumino/disposable';
-import { IStream, Stream } from '@lumino/signaling';
 
 import { IAwareness } from '@jupyter/ydoc';
 
@@ -15,12 +14,6 @@ import { WebsocketProvider } from 'y-websocket';
 export interface IContent {
   type: string;
   body: string;
-}
-
-export interface IChatMessage {
-  sender: string;
-  timestamp: number;
-  content: IContent;
 }
 
 /**
@@ -50,19 +43,10 @@ export class WebSocketAwarenessProvider
       .then(() => this._onUserChanged(this._user))
       .catch(e => console.error(e));
     this._user.userChanged.connect(this._onUserChanged, this);
-
-    this._messageStream = new Stream(this);
   }
 
   get isDisposed(): boolean {
     return this._isDisposed;
-  }
-
-  /**
-   * A signal to subscribe for incoming messages.
-   */
-  get messageStream(): IStream<this, IChatMessage> {
-    return this._messageStream;
   }
 
   dispose(): void {
@@ -82,8 +66,6 @@ export class WebSocketAwarenessProvider
   private _isDisposed = false;
   private _user: User.IManager;
   private _awareness: IAwareness;
-
-  private _messageStream: Stream<this, IChatMessage>;
 }
 
 /**
