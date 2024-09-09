@@ -3,104 +3,57 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import { Drive } from '@jupyterlab/services';
 import {
-  ILabShell,
-  IRouter,
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
 import { Dialog, showDialog } from '@jupyterlab/apputils';
 import { DocumentWidget, IDocumentWidget } from '@jupyterlab/docregistry';
 import { Widget } from '@lumino/widgets';
-import {
-  FileBrowser,
-  IDefaultFileBrowser,
-  IFileBrowserFactory
-} from '@jupyterlab/filebrowser';
 import { IStatusBar } from '@jupyterlab/statusbar';
-
 import { IEditorTracker } from '@jupyterlab/fileeditor';
 import { ILogger, ILoggerRegistry } from '@jupyterlab/logconsole';
 import { INotebookTracker } from '@jupyterlab/notebook';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 
-import { CommandRegistry } from '@lumino/commands';
-
 import { YFile, YNotebook } from '@jupyter/ydoc';
 
 import {
-  ICollaborativeDrive,
   IForkProvider,
   IGlobalAwareness,
   TimelineWidget,
-  YDrive
+  RtcContentProvider
 } from '@jupyter/docprovider';
 import { Awareness } from 'y-protocols/awareness';
 import { URLExt } from '@jupyterlab/coreutils';
 
 /**
- * The command IDs used by the file browser plugin.
+ * The RTC content provider.
  */
-namespace CommandIDs {
-  export const openPath = 'filebrowser:open-path';
-}
 const DOCUMENT_TIMELINE_URL = 'api/collaboration/timeline';
 
-/**
- * The default collaborative drive provider.
- */
-export const drive: JupyterFrontEndPlugin<ICollaborativeDrive> = {
-  id: '@jupyter/docprovider-extension:drive',
-  description: 'The default collaborative drive provider',
-  provides: ICollaborativeDrive,
+export const rtcContentProvider: JupyterFrontEndPlugin<void> = {
+  id: '@jupyter/docprovider-extension:content',
+  description: 'The RTC content provider',
+  autoStart: true,
   requires: [ITranslator],
-  optional: [IGlobalAwareness],
+  optional: [IGlobalAwareness, ISettingRegistry],
   activate: (
     app: JupyterFrontEnd,
     translator: ITranslator,
-    globalAwareness: Awareness | null
-  ): ICollaborativeDrive => {
+    globalAwareness: Awareness | null,
+    settingRegistry: ISettingRegistry | null
+  ): void => {
     const trans = translator.load('jupyter_collaboration');
-    const drive = new YDrive(app.serviceManager.user, trans, globalAwareness);
-    app.serviceManager.contents.addDrive(drive);
-    return drive;
-  }
-};
+    const rtcContentProvider = new RtcContentProvider(app.serviceManager.user, trans, globalAwareness);
 
-/**
- * Plugin to register the shared model factory for the content type 'file'.
- */
-export const yfile: JupyterFrontEndPlugin<void> = {
-  id: '@jupyter/docprovider-extension:yfile',
-  description:
-    "Plugin to register the shared model factory for the content type 'file'",
-  autoStart: true,
-  requires: [ICollaborativeDrive],
-  optional: [],
-  activate: (app: JupyterFrontEnd, drive: ICollaborativeDrive): void => {
     const yFileFactory = () => {
       return new YFile();
     };
-    drive.sharedModelFactory.registerDocumentFactory('file', yFileFactory);
-  }
-};
+    rtcContentProvider.sharedModelFactory.registerDocumentFactory('file', yFileFactory);
 
-/**
- * Plugin to register the shared model factory for the content type 'notebook'.
- */
-export const ynotebook: JupyterFrontEndPlugin<void> = {
-  id: '@jupyter/docprovider-extension:ynotebook',
-  description:
-    "Plugin to register the shared model factory for the content type 'notebook'",
-  autoStart: true,
-  requires: [ICollaborativeDrive],
-  optional: [ISettingRegistry],
-  activate: (
-    app: JupyterFrontEnd,
-    drive: YDrive,
-    settingRegistry: ISettingRegistry | null
-  ): void => {
     let disableDocumentWideUndoRedo = true;
 
     // Fetch settings if possible.
@@ -128,12 +81,15 @@ export const ynotebook: JupyterFrontEndPlugin<void> = {
         disableDocumentWideUndoRedo
       });
     };
-    drive.sharedModelFactory.registerDocumentFactory(
+    rtcContentProvider.sharedModelFactory.registerDocumentFactory(
       'notebook',
       yNotebookFactory
     );
+
+    Drive.getContentProviderRegistry().register(rtcContentProvider);
   }
 };
+
 /**
  * A plugin to add a timeline slider status item to the status bar.
  */
@@ -141,49 +97,14 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
   id: '@jupyter/docprovider-extension:statusBarTimeline',
   description: 'Plugin to add a timeline slider to the status bar',
   autoStart: true,
-  requires: [IStatusBar, ICollaborativeDrive],
+  requires: [IStatusBar],
   activate: async (
     app: JupyterFrontEnd,
-    statusBar: IStatusBar,
-    drive: ICollaborativeDrive
+    statusBar: IStatusBar
   ): Promise<void> => {
-    function isYDrive(drive: YDrive | ICollaborativeDrive): drive is YDrive {
-      return 'getProviderForPath' in drive;
-    }
     try {
       let sliderItem: Widget | null = null;
       let timelineWidget: TimelineWidget | null = null;
-
-      const updateTimelineForDocument = async (documentPath: string) => {
-        if (drive && isYDrive(drive)) {
-          // Dispose of the previous timelineWidget if it exists
-          if (timelineWidget) {
-            timelineWidget.dispose();
-            timelineWidget = null;
-          }
-
-          const provider = (await drive.getProviderForPath(
-            documentPath
-          )) as IForkProvider;
-          const fullPath = URLExt.join(
-            app.serviceManager.serverSettings.baseUrl,
-            DOCUMENT_TIMELINE_URL,
-            documentPath.split(':')[1]
-          );
-
-          timelineWidget = new TimelineWidget(
-            fullPath,
-            provider,
-            provider.contentType,
-            provider.format
-          );
-
-          const elt = document.getElementById('jp-slider-status-bar');
-          if (elt && !timelineWidget.isAttached) {
-            Widget.attach(timelineWidget, elt);
-          }
-        }
-      };
 
       if (app.shell.currentChanged) {
         app.shell.currentChanged.connect(async (_, args) => {
@@ -194,7 +115,7 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
             timelineWidget = null;
           }
           if (currentWidget && 'context' in currentWidget) {
-            await updateTimelineForDocument(currentWidget.context.path);
+            // FIXME
           }
         });
       }
@@ -219,50 +140,6 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
     } catch (error) {
       console.error('Failed to activate statusBarTimeline plugin:', error);
     }
-  }
-};
-
-/**
- * The default file browser factory provider.
- */
-export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
-  id: '@jupyter/docprovider-extension:defaultFileBrowser',
-  description: 'The default file browser factory provider',
-  provides: IDefaultFileBrowser,
-  requires: [ICollaborativeDrive, IFileBrowserFactory],
-  optional: [
-    IRouter,
-    JupyterFrontEnd.ITreeResolver,
-    ILabShell,
-    ISettingRegistry
-  ],
-  activate: async (
-    app: JupyterFrontEnd,
-    drive: YDrive,
-    fileBrowserFactory: IFileBrowserFactory,
-    router: IRouter | null,
-    tree: JupyterFrontEnd.ITreeResolver | null,
-    labShell: ILabShell | null
-  ): Promise<IDefaultFileBrowser> => {
-    const { commands } = app;
-
-    app.serviceManager.contents.addDrive(drive);
-
-    // Manually restore and load the default file browser.
-    const defaultBrowser = fileBrowserFactory.createFileBrowser('filebrowser', {
-      auto: false,
-      restore: false,
-      driveName: drive.name
-    });
-    void Private.restoreBrowser(
-      defaultBrowser,
-      commands,
-      router,
-      tree,
-      labShell
-    );
-
-    return defaultBrowser;
   }
 };
 
@@ -359,59 +236,3 @@ export const logger: JupyterFrontEndPlugin<void> = {
     })();
   }
 };
-
-namespace Private {
-  /**
-   * Restores file browser state and overrides state if tree resolver resolves.
-   */
-  export async function restoreBrowser(
-    browser: FileBrowser,
-    commands: CommandRegistry,
-    router: IRouter | null,
-    tree: JupyterFrontEnd.ITreeResolver | null,
-    labShell: ILabShell | null
-  ): Promise<void> {
-    const restoring = 'jp-mod-restoring';
-
-    browser.addClass(restoring);
-
-    if (!router) {
-      await browser.model.restore(browser.id);
-      await browser.model.refresh();
-      browser.removeClass(restoring);
-      return;
-    }
-
-    const listener = async () => {
-      router.routed.disconnect(listener);
-
-      const paths = await tree?.paths;
-
-      if (paths?.file || paths?.browser) {
-        // Restore the model without populating it.
-        await browser.model.restore(browser.id, false);
-        if (paths.file) {
-          await commands.execute(CommandIDs.openPath, {
-            path: paths.file,
-            dontShowBrowser: true
-          });
-        }
-        if (paths.browser) {
-          await commands.execute(CommandIDs.openPath, {
-            path: paths.browser,
-            dontShowBrowser: true
-          });
-        }
-      } else {
-        await browser.model.restore(browser.id);
-        await browser.model.refresh();
-      }
-      browser.removeClass(restoring);
-
-      if (labShell?.isEmpty('main')) {
-        void commands.execute('launcher:create');
-      }
-    };
-    router.routed.connect(listener);
-  }
-}
