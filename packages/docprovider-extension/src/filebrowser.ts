@@ -147,28 +147,31 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
     statusBar: IStatusBar,
     drive: ICollaborativeDrive
   ): Promise<void> => {
-    function isYDrive(drive: YDrive | ICollaborativeDrive): drive is YDrive {
-      return 'getProviderForPath' in drive;
-    }
     try {
       let sliderItem: Widget | null = null;
       let timelineWidget: TimelineWidget | null = null;
 
-      const updateTimelineForDocument = async (documentPath: string) => {
-        if (drive && isYDrive(drive)) {
+      const updateTimelineForDocument = async (
+        documentPath: string,
+        documentId: string
+      ) => {
+        if (drive) {
+          // Remove 'RTC:' from document path
+          documentPath = documentPath.slice(drive.name.length + 1);
           // Dispose of the previous timelineWidget if it exists
           if (timelineWidget) {
             timelineWidget.dispose();
             timelineWidget = null;
           }
 
-          const provider = (await drive.getProviderForPath(
-            documentPath
-          )) as IForkProvider;
+          const [format, type] = documentId.split(':');
+          const provider = drive.providers.get(
+            `${format}:${type}:${documentPath}`
+          ) as IForkProvider;
           const fullPath = URLExt.join(
             app.serviceManager.serverSettings.baseUrl,
             DOCUMENT_TIMELINE_URL,
-            documentPath.split(':')[1]
+            documentPath
           );
 
           timelineWidget = new TimelineWidget(
@@ -194,7 +197,13 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
             timelineWidget = null;
           }
           if (currentWidget && 'context' in currentWidget) {
-            await updateTimelineForDocument(currentWidget.context.path);
+            await currentWidget.context.ready;
+            await updateTimelineForDocument(
+              currentWidget.context.path,
+              currentWidget.context.model.sharedModel.getState(
+                'document_id'
+              ) as string
+            );
           }
         });
       }

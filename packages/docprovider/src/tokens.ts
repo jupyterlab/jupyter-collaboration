@@ -5,6 +5,7 @@ import { DocumentChange, IAwareness, YDocument } from '@jupyter/ydoc';
 import { Contents } from '@jupyterlab/services';
 
 import { Token } from '@lumino/coreutils';
+import { WebSocketProvider } from './yprovider';
 
 /**
  * The collaborative drive.
@@ -36,6 +37,8 @@ export interface ICollaborativeDrive extends Contents.IDrive {
    * SharedModel factory for the YDrive.
    */
   readonly sharedModelFactory: ISharedModelFactory;
+
+  readonly providers: Map<string, WebSocketProvider>;
 }
 
 /**
