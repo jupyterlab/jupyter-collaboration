@@ -54,6 +54,7 @@
   },
   "dependencies": {
     "@jupyter/collaboration": "^3.0.0-beta.6",
+    "@jupyter/collaborativedrive": "^3.0.0-beta.6",
     "@jupyter/docprovider": "^3.0.0-beta.6",
     "@jupyter/ydoc": "^2.0.0 || ^3.0.0-a3",
     "@jupyterlab/application": "^4.2.0",
@@ -99,6 +100,10 @@
         "singleton": true
       },
       "@jupyter/collaboration": {
+        "bundled": true,
+        "singleton": true
+      },
+      "@jupyter/collaborativedrive": {
         "bundled": true,
         "singleton": true
       },

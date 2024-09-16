@@ -29,13 +29,9 @@ import { CommandRegistry } from '@lumino/commands';
 
 import { YFile, YNotebook } from '@jupyter/ydoc';
 
-import {
-  ICollaborativeDrive,
-  IForkProvider,
-  IGlobalAwareness,
-  TimelineWidget,
-  YDrive
-} from '@jupyter/docprovider';
+import { IGlobalAwareness } from '@jupyter/collaborativedrive';
+import { IForkProvider, TimelineWidget, YDrive } from '@jupyter/docprovider';
+import { ICollaborativeDrive } from '@jupyter/collaborativedrive';
 import { Awareness } from 'y-protocols/awareness';
 import { URLExt } from '@jupyterlab/coreutils';
 
@@ -167,7 +163,7 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
           const [format, type] = documentId.split(':');
           const provider = drive.providers.get(
             `${format}:${type}:${documentPath}`
-          ) as IForkProvider;
+          ) as unknown as IForkProvider;
           const fullPath = URLExt.join(
             app.serviceManager.serverSettings.baseUrl,
             DOCUMENT_TIMELINE_URL,
