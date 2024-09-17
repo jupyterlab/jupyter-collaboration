@@ -64,21 +64,8 @@ export class YDrive extends Drive implements ICollaborativeDrive {
    */
   readonly sharedModelFactory: ISharedModelFactory;
 
-  async getProviderForPath(path: string): Promise<IForkProvider> {
-    let key = '';
-    if (path.split('.')[1] === 'ipynb') {
-      key = `json:notebook:${path.split(':')[1]}`;
-    } else if (path.split('.')[1] === 'jcad') {
-      key = `text:jcad:${path.split(':')[1]}`;
-    } else {
-      key = `text:file:${path.split(':')[1]}`;
-    }
-
-    const provider = this._providers.get(key);
-    if (!provider) {
-      throw new Error(`No provider found for path: ${path}`);
-    }
-    return provider;
+  get providers(): Map<string, WebSocketProvider> {
+    return this._providers;
   }
 
   /**
