@@ -1,6 +1,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-dependencies = ["jupyter_collaboration>=3.0.0b3", "jupyter_collaboration_ui>=1.0.0b3", "jupyter_docprovider>=1.0.0b3", "jupyter_server_ydoc>=1.0.0b3"]
+dependencies = ["jupyter_collaboration>=3.0.0b4", "jupyter_collaboration_ui>=1.0.0b4", "jupyter_docprovider>=1.0.0b4", "jupyter_server_ydoc>=1.0.0b4"]
 
 [build-system]
 build-backend = "hatchling.build"
