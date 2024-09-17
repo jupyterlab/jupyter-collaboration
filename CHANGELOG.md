@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 3.0.0beta4
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@3.0.0-beta.3...682d14d569b1a8126486e788bbf870b045897392))
+
+### Enhancements made
+
+- Handle generic document types in timeline [#349](https://github.com/jupyterlab/jupyter-collaboration/pull/349) ([@davidbrochart](https://github.com/davidbrochart))
+- Implementing Collaborative Timeline Slider with Undo/Redo Functionality [#338](https://github.com/jupyterlab/jupyter-collaboration/pull/338) ([@Meriem-BenIsmail](https://github.com/Meriem-BenIsmail))
+
+### Maintenance and upkeep improvements
+
+- Remove unused chat feature [#346](https://github.com/jupyterlab/jupyter-collaboration/pull/346) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Documentation improvements
+
+- Fix readthedocs URL [#344](https://github.com/jupyterlab/jupyter-collaboration/pull/344) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-08-24&to=2024-09-17&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-08-24..2024-09-17&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-08-24..2024-09-17&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2024-08-24..2024-09-17&type=Issues) | [@Meriem-BenIsmail](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AMeriem-BenIsmail+updated%3A2024-08-24..2024-09-17&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 3.0.0beta3
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@3.0.0-beta.2...1b74c437fec5475548e8cf08233c0992dcfdd4f8))
@@ -18,8 +43,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-08-12&to=2024-08-24&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-08-12..2024-08-24&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-08-12..2024-08-24&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2024-08-12..2024-08-24&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 3.0.0beta2
 
