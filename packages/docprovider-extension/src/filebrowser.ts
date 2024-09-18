@@ -243,7 +243,6 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
     IRouter,
     JupyterFrontEnd.ITreeResolver,
     ILabShell,
-    ISettingRegistry,
     ITranslator
   ],
   activate: async (
