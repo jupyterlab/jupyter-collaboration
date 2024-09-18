@@ -239,12 +239,7 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
   description: 'The default file browser factory provider',
   provides: IDefaultFileBrowser,
   requires: [ICollaborativeDrive, IFileBrowserFactory],
-  optional: [
-    IRouter,
-    JupyterFrontEnd.ITreeResolver,
-    ILabShell,
-    ITranslator
-  ],
+  optional: [IRouter, JupyterFrontEnd.ITreeResolver, ILabShell, ITranslator],
   activate: async (
     app: JupyterFrontEnd,
     drive: YDrive,
