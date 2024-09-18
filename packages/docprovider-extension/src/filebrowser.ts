@@ -243,7 +243,8 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
     IRouter,
     JupyterFrontEnd.ITreeResolver,
     ILabShell,
-    ISettingRegistry
+    ISettingRegistry,
+    ITranslator
   ],
   activate: async (
     app: JupyterFrontEnd,
@@ -251,10 +252,11 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
     fileBrowserFactory: IFileBrowserFactory,
     router: IRouter | null,
     tree: JupyterFrontEnd.ITreeResolver | null,
-    labShell: ILabShell | null
+    labShell: ILabShell | null,
+    translator: ITranslator | null
   ): Promise<IDefaultFileBrowser> => {
     const { commands } = app;
-
+    const trans = (translator ?? nullTranslator).load('jupyterlab');
     app.serviceManager.contents.addDrive(drive);
 
     // Manually restore and load the default file browser.
@@ -263,6 +265,12 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
       restore: false,
       driveName: drive.name
     });
+    defaultBrowser.node.setAttribute('role', 'region');
+    defaultBrowser.node.setAttribute(
+      'aria-label',
+      trans.__('File Browser Section')
+    );
+
     void Private.restoreBrowser(
       defaultBrowser,
       commands,
