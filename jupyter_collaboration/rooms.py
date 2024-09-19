@@ -212,7 +212,6 @@ class DocumentRoom(YRoom):
             self._document.source = model["content"]
             self._document.dirty = False
 
-
     def _on_filepath_change(self) -> None:
         """
         Update the document path property.
