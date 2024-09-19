@@ -7,7 +7,7 @@ from pathlib import Path
 import click
 import tomlkit
 from jupyter_releaser.util import get_version, run
-from pkg_resources import parse_version
+from pkg_resources import parse_version  # type: ignore
 
 LERNA_CMD = "jlpm run lerna version --no-push --force-publish --no-git-tag-version"
 
