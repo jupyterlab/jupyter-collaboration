@@ -22,7 +22,11 @@ def increment_version(current, spec):
         spec = f"{curr.major}.{curr.minor + 1}.0.a0"
 
     elif spec == "release":
-        p, x = curr.pre
+        if curr.pre:
+            p, x = curr.pre
+        else:
+            p = None
+
         if p == "a":
             p = "b"
         elif p == "b":
