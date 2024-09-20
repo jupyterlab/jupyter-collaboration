@@ -16,6 +16,9 @@ class FakeFileIDManager:
     def get_path(self, id: str) -> str:
         return self.mapping[id]
 
+    def move(self, id: str, new_path: str) -> None:
+        self.mapping[id] = new_path
+
 
 class FakeContentsManager:
     def __init__(self, model: dict):
