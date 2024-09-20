@@ -77,7 +77,7 @@ async def test_undefined_save_delay_should_not_save_content_after_document_chang
     assert "save" not in cm.actions
 
 
-## The following test should be restored when package versions are fixed.
+# The following test should be restored when package versions are fixed.
 
 # async def test_document_path(rtc_create_mock_document_room):
 #     id = "test-id"
