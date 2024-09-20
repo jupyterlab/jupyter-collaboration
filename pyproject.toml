@@ -105,7 +105,7 @@ filterwarnings = [
     # see https://github.com/dateutil/dateutil/issues/1314
     "ignore:.*datetime.utcfromtimestamp\\(\\) is deprecated.*:DeprecationWarning:",
     # From anyio https://github.com/agronholm/anyio/pull/715
-    'ignore:Unclosed <MemoryObjectSendStream>:ResourceWarning',
+    'ignore:Unclosed <MemoryObjectSendStream:ResourceWarning',
 ]
 
 [tool.mypy]
