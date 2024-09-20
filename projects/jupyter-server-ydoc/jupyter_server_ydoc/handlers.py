@@ -6,7 +6,6 @@ from __future__ import annotations
 import asyncio
 import json
 import time
-import uuid
 from logging import Logger
 from typing import Any
 from uuid import uuid4
@@ -15,7 +14,7 @@ from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS
-from pycrdt import Doc, UndoManager, YMessageType, write_var_uint
+from pycrdt import Doc, Map, UndoManager, YMessageType, write_var_uint
 from pycrdt_websocket.websocket_server import YRoom
 from pycrdt_websocket.ystore import BaseYStore
 from tornado import web
@@ -36,8 +35,7 @@ from .websocketserver import JupyterWebsocketServer, RoomNotFound
 
 YFILE = YDOCS["file"]
 
-
-SERVER_SESSION = str(uuid.uuid4())
+SERVER_SESSION = str(uuid4())
 FORK_DOCUMENTS = {}
 
 
@@ -596,3 +594,119 @@ class UndoRedoHandler(APIHandler):
         if room_id in FORK_DOCUMENTS:
             del FORK_DOCUMENTS[room_id]
             self.log.info(f"Fork Document for {room_id} has been removed.")
+
+
+class DocForkHandler(APIHandler):
+    """
+    Jupyter Server's handler to fork a document.
+    """
+
+    auth_resource = "contents"
+
+    def initialize(
+        self,
+        ywebsocket_server: JupyterWebsocketServer,
+    ) -> None:
+        self._websocket_server = ywebsocket_server
+
+    @web.authenticated
+    @authorized
+    async def put(self, room_id):
+        """
+        Creates a fork of a root document and returns its ID.
+        """
+        idx = uuid4().hex
+
+        root_room = await self._websocket_server.get_room(room_id)
+        update = root_room.ydoc.get_update()
+        fork_ydoc = Doc()
+        fork_ydoc.apply_update(update)
+        fork_room = YRoom(ydoc=fork_ydoc)
+        self._websocket_server.add_room(idx, fork_room)
+        root_room.fork_ydocs.add(fork_ydoc)
+        data = json.dumps({
+            "sessionId": SERVER_SESSION,
+            "roomId": idx,
+        })
+        self.set_status(201)
+        return self.finish(data)
+
+
+class DocMergeHandler(APIHandler):
+    """
+    Jupyter Server's handler to merge a document.
+    """
+
+    auth_resource = "contents"
+
+    def initialize(
+        self,
+        ywebsocket_server: JupyterWebsocketServer,
+    ) -> None:
+        self._websocket_server = ywebsocket_server
+
+    @web.authenticated
+    @authorized
+    async def put(self):
+        """
+        Merges back a fork into a root document.
+        """
+        model = self.get_json_body()
+        fork_roomid = model["fork_roomid"]
+        root_room = await self._websocket_server.get_room(model["root_roomid"])
+        root_ydoc = root_room.ydoc
+        idx = f"fork_{fork_roomid}"
+        root_state = root_ydoc.get("state", type=Map)
+        if idx in root_state:
+            del root_state[idx]
+        else:
+            self.set_status(404)
+            raise RuntimeError(f"Could not find root document fork with ID: {fork_roomid}")
+        fork_room = await self._websocket_server.get_room(fork_roomid)
+        fork_ydoc = fork_room.ydoc
+        fork_update = fork_ydoc.get_update()
+        root_ydoc.apply_update(fork_update)
+        root_room.fork_ydocs.remove(fork_ydoc)
+        fork_state = fork_ydoc.get("state", type=Map)
+        fork_state["merge"] = fork_roomid
+        #self._websocket_server.delete_room(name=fork_roomid)
+        self.set_status(200)
+
+
+class DocDeleteHandler(APIHandler):
+    """
+    Jupyter Server's handler to delete a document.
+    """
+
+    auth_resource = "contents"
+
+    def initialize(
+        self,
+        ywebsocket_server: JupyterWebsocketServer,
+    ) -> None:
+        self._websocket_server = ywebsocket_server
+
+    @web.authenticated
+    @authorized
+    async def delete(self):
+        """
+        Deletes a forked document.
+        """
+        model = self.get_json_body()
+        fork_roomid = model["fork_roomid"]
+        root_room = await self._websocket_server.get_room(model["root_roomid"])
+        root_ydoc = root_room.ydoc
+        idx = f"fork_{fork_roomid}"
+        root_state = root_ydoc.get("state", type=Map)
+        if idx in root_state:
+            del root_state[idx]
+        else:
+            self.set_status(404)
+            raise RuntimeError(f"Could not find root document fork with ID: {fork_roomid}")
+        fork_room = await self._websocket_server.get_room(fork_roomid)
+        fork_ydoc = fork_room.ydoc
+        root_room.fork_ydocs.remove(fork_ydoc)
+        fork_state = fork_ydoc.get("state", type=Map)
+        fork_state["delete"] = fork_roomid
+        #self._websocket_server.delete_room(name=fork_roomid)
+        self.set_status(200)

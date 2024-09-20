@@ -14,6 +14,9 @@ from pycrdt_websocket.ystore import BaseYStore
 from traitlets import Bool, Float, Type
 
 from .handlers import (
+    DocForkHandler,
+    DocDeleteHandler,
+    DocMergeHandler,
     DocSessionHandler,
     TimelineHandler,
     UndoRedoHandler,
@@ -149,6 +152,27 @@ class YDocExtension(ExtensionApp):
                     {
                         "ywebsocket_server": self.ywebsocket_server,
                     },
+                ),
+                (
+                    r"/api/collaboration/fork_room/(.*)",
+                    DocForkHandler,
+                    {
+                        "ywebsocket_server": self.ywebsocket_server,
+                    }
+                ),
+                (
+                    r"/api/collaboration/merge_room",
+                    DocMergeHandler,
+                    {
+                        "ywebsocket_server": self.ywebsocket_server,
+                    }
+                ),
+                (
+                    r"/api/collaboration/delete_room",
+                    DocDeleteHandler,
+                    {
+                        "ywebsocket_server": self.ywebsocket_server,
+                    }
                 ),
             ]
         )
