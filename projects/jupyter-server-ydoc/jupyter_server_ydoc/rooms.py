@@ -42,6 +42,7 @@ class DocumentRoom(YRoom):
         self._file_type: str = file_type
         self._file: FileLoader = file
         self._document = YDOCS.get(self._file_type, YFILE)(self.ydoc)
+        self._document.path = self._file.path
 
         self._logger = logger
         self._save_delay = save_delay
@@ -54,7 +55,7 @@ class DocumentRoom(YRoom):
 
         # Listen for document changes
         self._document.observe(self._on_document_change)
-        self._file.observe(self.room_id, self._on_outofband_change)
+        self._file.observe(self.room_id, self._on_outofband_change, self._on_filepath_change)
 
     @property
     def file_format(self) -> str:
@@ -224,6 +225,12 @@ class DocumentRoom(YRoom):
         async with self._update_lock:
             self._document.source = model["content"]
             self._document.dirty = False
+
+    def _on_filepath_change(self) -> None:
+        """
+        Update the document path property.
+        """
+        self._document.path = self._file.path
 
     def _on_document_change(self, target: str, event: Any) -> None:
         """
