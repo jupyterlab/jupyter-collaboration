@@ -223,7 +223,7 @@ class FileLoader:
                 filepath_change = True
 
             # Get model metadata; format and type are not need
-            model = await ensure_async(self._contents_manager.get(self.path, content=False))
+            model = await ensure_async(self._contents_manager.get(path, content=False))
 
             if self.last_modified is not None and self.last_modified < model["last_modified"]:
                 do_notify = True
