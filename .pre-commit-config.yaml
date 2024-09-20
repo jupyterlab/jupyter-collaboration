@@ -60,7 +60,7 @@ repos:
     rev: v0.991
     hooks:
       - id: mypy
-        exclude: "^binder/jupyter_config\\.py$"
+        exclude: "(^binder/jupyter_config\\.py$)|(^scripts/bump_version\\.py$)"
         args: ["--config-file", "pyproject.toml"]
         additional_dependencies: [tornado, pytest]
         stages: [manual]
