@@ -6,7 +6,7 @@ from pathlib import Path
 
 import click
 from jupyter_releaser.util import get_version, run
-from pkg_resources import parse_version  # type: ignore
+from pkg_resources import parse_version
 
 LERNA_CMD = "jlpm run lerna version --no-push --force-publish --no-git-tag-version"
 
