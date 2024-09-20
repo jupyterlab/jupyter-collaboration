@@ -111,6 +111,7 @@ filterwarnings = [
 [tool.mypy]
 exclude=[
     "^binder/jupyter_config\\.py$",
+    "^scripts/bump_version\\.py$",
     "/setup\\.py$",
 ]
 check_untyped_defs = true
