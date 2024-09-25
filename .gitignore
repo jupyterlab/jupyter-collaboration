@@ -132,3 +132,11 @@ docs/source/changelog.md
 !.yarn/versions
 packages/docprovider/junit.xml
 .jupyter_ystore.db
+
+# Jupyter
+Untitled*
+
+# To easily link against unreleased JupyterLab packages
+# TODO: remove?
+.yalc
+yalc.lock
