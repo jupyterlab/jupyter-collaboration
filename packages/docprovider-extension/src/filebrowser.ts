@@ -38,6 +38,12 @@ import {
 } from '@jupyter/docprovider';
 import { Awareness } from 'y-protocols/awareness';
 import { URLExt } from '@jupyterlab/coreutils';
+import {
+  IDefaultDrive,
+  IUserManager,
+  ServiceManagerPlugin,
+  User
+} from '@jupyterlab/services';
 
 /**
  * The command IDs used by the file browser plugin.
@@ -50,21 +56,33 @@ const DOCUMENT_TIMELINE_URL = 'api/collaboration/timeline';
 /**
  * The default collaborative drive provider.
  */
-export const drive: JupyterFrontEndPlugin<ICollaborativeDrive> = {
+export const drive: ServiceManagerPlugin<YDrive> = {
   id: '@jupyter/docprovider-extension:drive',
+  autoStart: true,
   description: 'The default collaborative drive provider',
-  provides: ICollaborativeDrive,
-  requires: [ITranslator],
-  optional: [IGlobalAwareness],
+  provides: IDefaultDrive,
+  requires: [IUserManager],
+  activate: (_: null, user: User.IManager): YDrive => {
+    const drive = new YDrive(user);
+    return drive;
+  }
+};
+
+export const defaults: JupyterFrontEndPlugin<void> = {
+  id: '@jupyter/docprovider-extension:defaults',
+  autoStart: true,
+  requires: [IDefaultDrive],
+  optional: [IGlobalAwareness, ITranslator],
   activate: (
     app: JupyterFrontEnd,
-    translator: ITranslator,
-    globalAwareness: Awareness | null
-  ): ICollaborativeDrive => {
-    const trans = translator.load('jupyter_collaboration');
-    const drive = new YDrive(app.serviceManager.user, trans, globalAwareness);
-    app.serviceManager.contents.addDrive(drive);
-    return drive;
+    ydrive: YDrive,
+    globalAwareness: Awareness | null,
+    translator: ITranslator | null
+  ): void => {
+    ydrive.translator = (translator ?? nullTranslator).load('jupyterlab');
+    if (globalAwareness) {
+      ydrive.globalAwareness = globalAwareness;
+    }
   }
 };
 
@@ -76,7 +94,7 @@ export const yfile: JupyterFrontEndPlugin<void> = {
   description:
     "Plugin to register the shared model factory for the content type 'file'",
   autoStart: true,
-  requires: [ICollaborativeDrive],
+  requires: [IDefaultDrive],
   optional: [],
   activate: (app: JupyterFrontEnd, drive: ICollaborativeDrive): void => {
     const yFileFactory = () => {
@@ -94,7 +112,7 @@ export const ynotebook: JupyterFrontEndPlugin<void> = {
   description:
     "Plugin to register the shared model factory for the content type 'notebook'",
   autoStart: true,
-  requires: [ICollaborativeDrive],
+  requires: [IDefaultDrive],
   optional: [ISettingRegistry],
   activate: (
     app: JupyterFrontEnd,
@@ -141,7 +159,7 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
   id: '@jupyter/docprovider-extension:statusBarTimeline',
   description: 'Plugin to add a timeline slider to the status bar',
   autoStart: true,
-  requires: [IStatusBar, ICollaborativeDrive],
+  requires: [IStatusBar, IDefaultDrive],
   activate: async (
     app: JupyterFrontEnd,
     statusBar: IStatusBar,
@@ -238,7 +256,7 @@ export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
   id: '@jupyter/docprovider-extension:defaultFileBrowser',
   description: 'The default file browser factory provider',
   provides: IDefaultFileBrowser,
-  requires: [ICollaborativeDrive, IFileBrowserFactory],
+  requires: [IDefaultDrive, IFileBrowserFactory],
   optional: [IRouter, JupyterFrontEnd.ITreeResolver, ILabShell, ITranslator],
   activate: async (
     app: JupyterFrontEnd,
