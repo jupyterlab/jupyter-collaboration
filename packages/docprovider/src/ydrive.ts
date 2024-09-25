@@ -46,7 +46,7 @@ export class YDrive extends Drive implements ICollaborativeDrive {
     translator?: TranslationBundle,
     globalAwareness?: Awareness
   ) {
-    super({ name: 'RTC' });
+    super();
     this._user = user;
     this._trans = translator;
     this._globalAwareness = globalAwareness;

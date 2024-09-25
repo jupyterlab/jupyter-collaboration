@@ -90,6 +90,7 @@
     "extension": true,
     "outputDir": "../../projects/jupyter-docprovider/jupyter_docprovider/labextension",
     "disabledExtensions": [
+      "@jupyterlab/application-extension:default-drive",
       "@jupyterlab/filebrowser-extension:defaultFileBrowser",
       "@jupyterlab/notebook-extension:cell-executor"
     ],
