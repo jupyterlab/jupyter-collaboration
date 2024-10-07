@@ -4,7 +4,7 @@
 |----------------------------------------------------------------------------*/
 /**
  * @packageDocumentation
- * @module collaborativedrive
+ * @module collaborative-drive
  */
 
 export * from './tokens';

@@ -13,7 +13,7 @@ import {
   ICollaborativeDrive,
   ISharedModelFactory,
   SharedDocumentFactory
-} from '@jupyter/collaborativedrive';
+} from '@jupyter/collaborative-drive';
 import { Awareness } from 'y-protocols/awareness';
 
 const DISABLE_RTC =

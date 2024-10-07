@@ -29,9 +29,11 @@ import { CommandRegistry } from '@lumino/commands';
 
 import { YFile, YNotebook } from '@jupyter/ydoc';
 
-import { IGlobalAwareness } from '@jupyter/collaborativedrive';
+import {
+  ICollaborativeDrive,
+  IGlobalAwareness
+} from '@jupyter/collaborative-drive';
 import { IForkProvider, TimelineWidget, YDrive } from '@jupyter/docprovider';
-import { ICollaborativeDrive } from '@jupyter/collaborativedrive';
 import { Awareness } from 'y-protocols/awareness';
 import { URLExt } from '@jupyterlab/coreutils';
 
