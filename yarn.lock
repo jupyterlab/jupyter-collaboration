@@ -2128,7 +2128,9 @@ __metadata:
   resolution: "@jupyter/collaborative-drive@workspace:packages/collaborative-drive"
   dependencies:
     "@jupyter/ydoc": ^2.0.0 || ^3.0.0-a3
-    "@jupyterlab/coreutils": ^6.2.0
+    "@jupyterlab/services": ^7.2.0
+    "@lumino/coreutils": ^2.1.0
+    "@lumino/disposable": ^2.1.0
     rimraf: ^4.1.2
     typescript: ~5.0.4
   languageName: unknown
