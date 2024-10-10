@@ -319,12 +319,12 @@ class DocumentRoom(YRoom):
             self.log.error(msg, exc_info=e)
             self._emit(LogLevel.ERROR, None, msg)
 
-    def _on_awareness_change(self, type: str, changes: tuple[dict[str, Any], Any]):
+    def _on_awareness_change(self, type: str, changes: tuple[dict[str, Any], Any]) -> None:
         if type != "change":
             return
         added_users = changes[0]["added"]
         removed_users = changes[0]["removed"]
-        for i, user in enumerate(added_users):
+        for _, user in enumerate(added_users):
             u = self.awareness.states[user]
             if "user" in u:
                 name = u["user"]["name"]
