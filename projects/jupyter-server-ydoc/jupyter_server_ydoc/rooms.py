@@ -57,9 +57,6 @@ class DocumentRoom(YRoom):
         self._document.observe(self._on_document_change)
         self._file.observe(self.room_id, self._on_outofband_change, self._on_filepath_change)
 
-        # Listen for awareness changes
-        self.awareness.observe(self._on_awareness_change)
-
     @property
     def file_format(self) -> str:
         """Document file format."""
@@ -318,23 +315,6 @@ class DocumentRoom(YRoom):
             msg = f"Error saving file: {self._file.path}\n{e!r}"
             self.log.error(msg, exc_info=e)
             self._emit(LogLevel.ERROR, None, msg)
-
-    def _on_awareness_change(self, type: str, changes: tuple[dict[str, Any], Any]) -> None:
-        if type != "change":
-            return
-        added_users = changes[0]["added"]
-        removed_users = changes[0]["removed"]
-        for user in added_users:
-            u = self.awareness.states[user]
-            if "user" in u:
-                name = u["user"]["name"]
-                self._websocket_server.connected_users[user] = name
-                self.log.debug("Y user joined: %s", name)
-        for user in removed_users:
-            if user in self._websocket_server.connected_users:
-                name = self._websocket_server.connected_users[user]
-                del self._websocket_server.connected_users[user]
-                self.log.debug("Y user left: %s", name)
 
 
 class TransientRoom(YRoom):

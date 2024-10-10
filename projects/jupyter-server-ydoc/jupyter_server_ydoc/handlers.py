@@ -137,6 +137,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                         exception_handler=exception_logger,
                     )
 
+                    # Listen for the changes in GlobalAwareness to update users
+                    self.room.awareness.observe(self._on_global_awareness_event)
+
             try:
                 await self._websocket_server.start_room(self.room)
             except Exception as e:
@@ -379,6 +382,31 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 await self._file_loaders.remove(file_id)
                 self._emit(LogLevel.INFO, "clean", "Loader deleted.")
             del self._room_locks[self._room_id]
+
+    def _on_global_awareness_event(self, type: str, changes: tuple[dict[str, Any], Any]) -> None:
+        """
+        Update the users when the global awareness changes.
+
+
+            Parameters:
+                type: 'update' or 'change' (change is triggered only if the states are modified)
+                changes: the changes
+        """
+        if type != "change":
+            return
+        added_users = changes[0]["added"]
+        removed_users = changes[0]["removed"]
+        for user in added_users:
+            u = self.room.awareness.states[user]
+            if "user" in u:
+                name = u["user"]["name"]
+                self._websocket_server.connected_users[user] = name
+                self.log.debug("Y user joined: %s", name)
+        for user in removed_users:
+            if user in self._websocket_server.connected_users:
+                name = self._websocket_server.connected_users[user]
+                del self._websocket_server.connected_users[user]
+                self.log.debug("Y user left: %s", name)
 
     def check_origin(self, origin):
         """
