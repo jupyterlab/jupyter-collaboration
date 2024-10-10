@@ -4,12 +4,7 @@
 |----------------------------------------------------------------------------*/
 /**
  * @packageDocumentation
- * @module docprovider
+ * @module collaborative-drive
  */
 
-export * from './awareness';
-export * from './notebookCellExecutor';
-export * from './requests';
-export * from './ydrive';
-export * from './yprovider';
-export * from './TimelineSlider';
+export * from './tokens';

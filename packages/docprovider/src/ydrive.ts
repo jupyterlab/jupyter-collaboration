@@ -13,7 +13,7 @@ import {
   ICollaborativeDrive,
   ISharedModelFactory,
   SharedDocumentFactory
-} from './tokens';
+} from '@jupyter/collaborative-drive';
 import { Awareness } from 'y-protocols/awareness';
 
 const DISABLE_RTC =
@@ -251,7 +251,7 @@ export class YDrive extends Drive implements ICollaborativeDrive {
  * Yjs sharedModel factory for real-time collaboration.
  */
 class SharedModelFactory implements ISharedModelFactory {
-  private _documentFactories: Map<Contents.ContentType, SharedDocumentFactory>;
+  documentFactories: Map<Contents.ContentType, SharedDocumentFactory>;
 
   /**
    * Shared model factory constructor
@@ -264,7 +264,7 @@ class SharedModelFactory implements ISharedModelFactory {
       sharedModel: YDocument<DocumentChange>
     ) => void
   ) {
-    this._documentFactories = new Map();
+    this.documentFactories = new Map();
   }
 
   /**
@@ -282,10 +282,10 @@ class SharedModelFactory implements ISharedModelFactory {
     type: Contents.ContentType,
     factory: SharedDocumentFactory
   ) {
-    if (this._documentFactories.has(type)) {
+    if (this.documentFactories.has(type)) {
       throw new Error(`The content type ${type} already exists`);
     }
-    this._documentFactories.set(type, factory);
+    this.documentFactories.set(type, factory);
   }
 
   /**
@@ -307,8 +307,8 @@ class SharedModelFactory implements ISharedModelFactory {
       return;
     }
 
-    if (this._documentFactories.has(options.contentType)) {
-      const factory = this._documentFactories.get(options.contentType)!;
+    if (this.documentFactories.has(options.contentType)) {
+      const factory = this.documentFactories.get(options.contentType)!;
       const sharedModel = factory(options);
       this._onCreate(options, sharedModel);
       return sharedModel;

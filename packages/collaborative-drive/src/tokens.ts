@@ -3,9 +3,9 @@
 
 import { DocumentChange, IAwareness, YDocument } from '@jupyter/ydoc';
 import { Contents } from '@jupyterlab/services';
+import { IDisposable } from '@lumino/disposable';
 
 import { Token } from '@lumino/coreutils';
-import { WebSocketProvider } from './yprovider';
 
 /**
  * The collaborative drive.
@@ -38,7 +38,7 @@ export interface ICollaborativeDrive extends Contents.IDrive {
    */
   readonly sharedModelFactory: ISharedModelFactory;
 
-  readonly providers: Map<string, WebSocketProvider>;
+  readonly providers: Map<string, IDocumentProvider>;
 }
 
 /**
@@ -55,4 +55,16 @@ export interface ISharedModelFactory extends Contents.ISharedFactory {
     type: Contents.ContentType,
     factory: SharedDocumentFactory
   ): void;
+
+  documentFactories: Map<Contents.ContentType, SharedDocumentFactory>;
+}
+
+/**
+ * An interface for a document provider.
+ */
+export interface IDocumentProvider extends IDisposable {
+  /**
+   * Returns a Promise that resolves when the document provider is ready.
+   */
+  readonly ready: Promise<void>;
 }
