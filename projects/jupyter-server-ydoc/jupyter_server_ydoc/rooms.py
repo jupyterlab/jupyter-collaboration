@@ -324,7 +324,7 @@ class DocumentRoom(YRoom):
             return
         added_users = changes[0]["added"]
         removed_users = changes[0]["removed"]
-        for _, user in enumerate(added_users):
+        for user in added_users:
             u = self.awareness.states[user]
             if "user" in u:
                 name = u["user"]["name"]
