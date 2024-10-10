@@ -286,31 +286,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         message_type = message[0]
 
-        if message_type == YMessageType.AWARENESS:
-            # awareness
-            skip = False
-            changes = self.room.awareness.get_changes(message[1:])
-            added_users = changes["added"]
-            removed_users = changes["removed"]
-            for i, user in enumerate(added_users):
-                u = changes["states"][i]
-                if "user" in u:
-                    name = u["user"]["name"]
-                    self._websocket_server.connected_users[user] = name
-                    self.log.debug("Y user joined: %s", name)
-            for user in removed_users:
-                if user in self._websocket_server.connected_users:
-                    name = self._websocket_server.connected_users[user]
-                    del self._websocket_server.connected_users[user]
-                    self.log.debug("Y user left: %s", name)
-            # filter out message depending on changes
-            if skip:
-                self.log.debug(
-                    "Filtered out Y message of type: %s",
-                    YMessageType(message_type).name,
-                )
-                return skip
-
         if message_type == MessageType.CHAT:
             msg = message[2:].decode("utf-8")
 
