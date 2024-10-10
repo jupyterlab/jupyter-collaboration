@@ -71,5 +71,13 @@
     "entryPoint": "./src/index.ts",
     "displayName": "@jupyter/docprovider",
     "tsconfig": "./tsconfig.json"
+  },
+  "jupyterlab": {
+    "sharedPackages": {
+      "@jupyter/collaborative-drive": {
+        "bundled": true,
+        "singleton": true
+      }
+    }
   }
 }
