@@ -2123,7 +2123,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@jupyter/collaborative-drive@workspace:packages/collaborative-drive":
+"@jupyter/collaborative-drive@^3.0.0-beta.6, @jupyter/collaborative-drive@workspace:packages/collaborative-drive":
   version: 0.0.0-use.local
   resolution: "@jupyter/collaborative-drive@workspace:packages/collaborative-drive"
   dependencies:
