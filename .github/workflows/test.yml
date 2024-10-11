@@ -71,6 +71,7 @@ jobs:
           pip install "jupyterlab>=4.0.0,<5"
           pip install -e .
           jlpm
+          jlpm build
 
       - name: Run Tests
         run: |
