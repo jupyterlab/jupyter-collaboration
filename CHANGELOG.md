@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 2.1.3
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/v2.1.2...8c7ecf6ebea442c943a0d9548355589c82b9d9bd))
+
+### Maintenance and upkeep improvements
+
+- Backport 'Fix model format' #368 [#369](https://github.com/jupyterlab/jupyter-collaboration/pull/369) ([@davidbrochart](https://github.com/davidbrochart))
+- Backport 'Fix ignoring AnyIO warnings in tests' #359 [#362](https://github.com/jupyterlab/jupyter-collaboration/pull/362) ([@brichet](https://github.com/brichet))
+- Backport 'Fix mypy' #358 [#361](https://github.com/jupyterlab/jupyter-collaboration/pull/361) ([@brichet](https://github.com/brichet))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-07-24&to=2024-10-11&type=c))
+
+[@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2024-07-24..2024-10-11&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-07-24..2024-10-11&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-07-24..2024-10-11&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajtpio+updated%3A2024-07-24..2024-10-11&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2024-07-24..2024-10-11&type=Issues) | [@Meriem-BenIsmail](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AMeriem-BenIsmail+updated%3A2024-07-24..2024-10-11&type=Issues) | [@shrutiagarwal13](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ashrutiagarwal13+updated%3A2024-07-24..2024-10-11&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 2.1.2
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@2.1.1...1d602b1ea369aaf2ce0ee7298b3035845b504f5f))
@@ -17,8 +35,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-05-08&to=2024-07-24&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-05-08..2024-07-24&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-05-08..2024-07-24&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2024-05-08..2024-07-24&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 2.1.1
 
