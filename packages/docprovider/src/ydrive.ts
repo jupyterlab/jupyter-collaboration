@@ -108,7 +108,9 @@ export class YDrive extends Drive implements ICollaborativeDrive {
           super.get(localPath, { ...options, content: false }),
           provider.ready
         ]);
-        return model;
+        // The server doesn't return a model with a format when content is false,
+        // so set it back.
+        return { ...model, format: options.format };
       }
     }
 
