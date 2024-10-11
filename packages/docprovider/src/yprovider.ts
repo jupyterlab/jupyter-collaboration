@@ -3,12 +3,12 @@
 | Distributed under the terms of the Modified BSD License.
 |----------------------------------------------------------------------------*/
 
+import { IDocumentProvider } from '@jupyter/collaborative-drive';
 import { showErrorMessage, Dialog } from '@jupyterlab/apputils';
 import { User } from '@jupyterlab/services';
 import { TranslationBundle } from '@jupyterlab/translation';
 
 import { PromiseDelegate } from '@lumino/coreutils';
-import { IDisposable } from '@lumino/disposable';
 import { Signal } from '@lumino/signaling';
 
 import { DocumentChange, YDocument } from '@jupyter/ydoc';
@@ -18,16 +18,6 @@ import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
 
 import { requestDocSession } from './requests';
 import { IForkProvider } from './ydrive';
-
-/**
- * An interface for a document provider.
- */
-export interface IDocumentProvider extends IDisposable {
-  /**
-   * Returns a Promise that resolves when the document provider is ready.
-   */
-  readonly ready: Promise<void>;
-}
 
 /**
  * A class to provide Yjs synchronization over WebSocket.

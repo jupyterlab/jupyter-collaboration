@@ -2076,6 +2076,7 @@ __metadata:
   resolution: "@jupyter/collaboration-extension@workspace:packages/collaboration-extension"
   dependencies:
     "@jupyter/collaboration": ^3.0.0-beta.6
+    "@jupyter/collaborative-drive": ^3.0.0-beta.6
     "@jupyter/docprovider": ^3.0.0-beta.6
     "@jupyter/ydoc": ^2.0.0 || ^3.0.0-a3
     "@jupyterlab/application": ^4.2.0
@@ -2122,10 +2123,24 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@jupyter/collaborative-drive@^3.0.0-beta.6, @jupyter/collaborative-drive@workspace:packages/collaborative-drive":
+  version: 0.0.0-use.local
+  resolution: "@jupyter/collaborative-drive@workspace:packages/collaborative-drive"
+  dependencies:
+    "@jupyter/ydoc": ^2.0.0 || ^3.0.0-a3
+    "@jupyterlab/services": ^7.2.0
+    "@lumino/coreutils": ^2.1.0
+    "@lumino/disposable": ^2.1.0
+    rimraf: ^4.1.2
+    typescript: ~5.0.4
+  languageName: unknown
+  linkType: soft
+
 "@jupyter/docprovider-extension@workspace:packages/docprovider-extension":
   version: 0.0.0-use.local
   resolution: "@jupyter/docprovider-extension@workspace:packages/docprovider-extension"
   dependencies:
+    "@jupyter/collaborative-drive": ^3.0.0-beta.6
     "@jupyter/docprovider": ^3.0.0-beta.6
     "@jupyter/ydoc": ^2.0.0 || ^3.0.0-a3
     "@jupyterlab/application": ^4.2.0
@@ -2153,6 +2168,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@jupyter/docprovider@workspace:packages/docprovider"
   dependencies:
+    "@jupyter/collaborative-drive": ^3.0.0-beta.6
     "@jupyter/ydoc": ^2.0.0 || ^3.0.0-a3
     "@jupyterlab/apputils": ^4.2.0
     "@jupyterlab/cells": ^4.2.0
