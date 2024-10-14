@@ -137,8 +137,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                         exception_handler=exception_logger,
                     )
 
-                    # Listen for the changes in GlobalAwareness to update users
-                    self.room.awareness.observe(self._on_global_awareness_event)
+                    if self._room_id == "JupyterLab:globalAwareness":
+                        # Listen for the changes in GlobalAwareness to update users
+                        self.room.awareness.observe(self._on_global_awareness_event)
 
             try:
                 await self._websocket_server.start_room(self.room)
