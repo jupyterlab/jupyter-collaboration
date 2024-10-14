@@ -383,14 +383,13 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 self._emit(LogLevel.INFO, "clean", "Loader deleted.")
             del self._room_locks[self._room_id]
 
-    def _on_global_awareness_event(self, type: str, changes: tuple[dict[str, Any], Any]) -> None:
+    def _on_global_awareness_event(self, topic: str, changes: tuple[dict[str, Any], Any]) -> None:
         """
         Update the users when the global awareness changes.
 
-
             Parameters:
-                type: 'update' or 'change' (change is triggered only if the states are modified)
-                changes: the changes
+                topic (str): `"update"` or `"change"` (`"change"` is triggered only if the states are modified).
+                changes (tuple[dict[str, Any], Any]): The changes and the origin of the changes.
         """
         if type != "change":
             return
@@ -404,8 +403,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 self.log.debug("Y user joined: %s", name)
         for user in removed_users:
             if user in self._websocket_server.connected_users:
-                name = self._websocket_server.connected_users[user]
-                del self._websocket_server.connected_users[user]
+                name = self._websocket_server.connected_users.pop(user)
                 self.log.debug("Y user left: %s", name)
 
     def check_origin(self, origin):
