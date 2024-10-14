@@ -2,7 +2,9 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "lib",
-    "rootDir": "src"
+    "rootDir": "src",
+    // TODO: remove, needed because of the local linking of packages
+    "skipLibCheck": true
   },
   "include": ["src/*"]
 }
