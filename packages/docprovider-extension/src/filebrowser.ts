@@ -46,8 +46,8 @@ namespace CommandIDs {
 const DOCUMENT_TIMELINE_URL = 'api/collaboration/timeline';
 
 const TWO_SESSIONS_WARNING =
-  'You have opened the file %1 twice in this session.\n' +
-  '\nThis is not supported. Please close one view; otherwise, ' +
+  'You have opened the file %1 twice in this session. ' +
+  'This is not supported. Please close one view; otherwise, ' +
   'some of your edits may not be saved properly.';
 
 /**
