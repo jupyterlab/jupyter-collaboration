@@ -31,14 +31,12 @@ Installing JupyterLab Real-Time Collaboration
 
 The development version of the server requires `node <https://nodejs.org/en/download/>`_ and `pip <https://pip.pypa.io/en/stable/installing/>`_.
 
-Once you have installed the dependencies mentioned above, use the following
-steps:
+Once you have installed the dependencies above, use the following steps:
 
 .. code-block:: shell
 
-    pip install --upgrade pip
-    git clone https://github.com/jupyterlab/jupyter_collaboration
-    cd jupyter_collaboration
+    git clone https://github.com/jupyterlab/jupyter-collaboration.git
+    cd jupyter-collaboration
     # install monorepo
     pip install -e ".[dev,test]"
     # install local dependencies as editable
