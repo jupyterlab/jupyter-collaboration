@@ -8,14 +8,14 @@ import json
 import time
 import uuid
 from logging import Logger
-from typing import Any
+from typing import Any, Literal
 from uuid import uuid4
 
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS
-from pycrdt import Doc, UndoManager, YMessageType, write_var_uint
+from pycrdt import Doc, UndoManager, write_var_uint
 from pycrdt_websocket.websocket_server import YRoom
 from pycrdt_websocket.ystore import BaseYStore
 from tornado import web
@@ -141,6 +141,10 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                         log=self.log,
                         exception_handler=exception_logger,
                     )
+
+                    if self._room_id == "JupyterLab:globalAwareness":
+                        # Listen for the changes in GlobalAwareness to update users
+                        self.room.awareness.observe(self._on_global_awareness_event)
 
             try:
                 await self._websocket_server.start_room(self.room)
@@ -293,31 +297,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         message_type = message[0]
 
-        if message_type == YMessageType.AWARENESS:
-            # awareness
-            skip = False
-            changes = self.room.awareness.get_changes(message[1:])
-            added_users = changes["added"]
-            removed_users = changes["removed"]
-            for i, user in enumerate(added_users):
-                u = changes["states"][i]
-                if "user" in u:
-                    name = u["user"]["name"]
-                    self._websocket_server.connected_users[user] = name
-                    self.log.debug("Y user joined: %s", name)
-            for user in removed_users:
-                if user in self._websocket_server.connected_users:
-                    name = self._websocket_server.connected_users[user]
-                    del self._websocket_server.connected_users[user]
-                    self.log.debug("Y user left: %s", name)
-            # filter out message depending on changes
-            if skip:
-                self.log.debug(
-                    "Filtered out Y message of type: %s",
-                    YMessageType(message_type).name,
-                )
-                return skip
-
         if message_type == MessageType.CHAT:
             msg = message[2:].decode("utf-8")
 
@@ -407,6 +386,31 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 await self._file_loaders.remove(file_id)
                 self._emit(LogLevel.INFO, "clean", "Loader deleted.")
             del self._room_locks[self._room_id]
+
+    def _on_global_awareness_event(
+        self, topic: Literal["change", "update"], changes: tuple[dict[str, Any], Any]
+    ) -> None:
+        """
+        Update the users when the global awareness changes.
+
+            Parameters:
+                topic (str): `"update"` or `"change"` (`"change"` is triggered only if the states are modified).
+                changes (tuple[dict[str, Any], Any]): The changes and the origin of the changes.
+        """
+        if topic != "change":
+            return
+        added_users = changes[0]["added"]
+        removed_users = changes[0]["removed"]
+        for user in added_users:
+            u = self.room.awareness.states[user]
+            if "user" in u:
+                name = u["user"]["name"]
+                self._websocket_server.connected_users[user] = name
+                self.log.debug("Y user joined: %s", name)
+        for user in removed_users:
+            if user in self._websocket_server.connected_users:
+                name = self._websocket_server.connected_users.pop(user)
+                self.log.debug("Y user left: %s", name)
 
     def check_origin(self, origin):
         """
