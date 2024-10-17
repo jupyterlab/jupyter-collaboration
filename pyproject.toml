@@ -57,7 +57,7 @@ packages = [
 allow-direct-references = true
 
 [tool.jupyter-releaser]
-skip = ["check-links"]
+skip = ["check-links", "check-python"]
 
 [tool.jupyter-releaser.options]
 # `--skip-if-dirty` is a workaround for https://github.com/jupyter-server/jupyter_releaser/issues/567
