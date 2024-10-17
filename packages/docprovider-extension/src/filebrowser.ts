@@ -45,6 +45,11 @@ namespace CommandIDs {
 }
 const DOCUMENT_TIMELINE_URL = 'api/collaboration/timeline';
 
+const TWO_SESSIONS_WARNING =
+  'The file %1 has been opened with two different views. ' +
+  'This is not supported. Please close this view; otherwise, ' +
+  'some of your edits may not be saved properly.';
+
 /**
  * The default collaborative drive provider.
  */
@@ -306,10 +311,7 @@ export const logger: JupyterFrontEndPlugin<void> = {
           if (emission.level === 'WARNING') {
             showDialog({
               title: trans.__('Warning'),
-              body: trans.__(
-                `Two collaborative sessions are accessing the file ${emission.path} simultaneously.
-                \nOpening the same file using different views simultaneously is not supported. Please, close one view; otherwise, you might lose some of your progress.`
-              ),
+              body: trans.__(TWO_SESSIONS_WARNING, emission.path),
               buttons: [Dialog.okButton()]
             });
           }
@@ -355,11 +357,7 @@ export const logger: JupyterFrontEndPlugin<void> = {
           if (emission.level === 'WARNING') {
             showDialog({
               title: trans.__('Warning'),
-              body: trans.__(
-                `Two collaborative sessions are accessing the file %1 simultaneously.
-                \nOpening a document with multiple views simultaneously is not supported. Please close one view; otherwise, you might lose some of your progress.`,
-                emission.path
-              ),
+              body: trans.__(TWO_SESSIONS_WARNING, emission.path),
               buttons: [Dialog.warnButton({ label: trans.__('Ok') })]
             });
           }
