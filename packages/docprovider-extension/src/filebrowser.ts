@@ -46,8 +46,8 @@ namespace CommandIDs {
 const DOCUMENT_TIMELINE_URL = 'api/collaboration/timeline';
 
 const TWO_SESSIONS_WARNING =
-  'You have opened the file %1 with two separate views. ' +
-  'This is not supported. Please close one view; otherwise, ' +
+  'The file %1 has been opened with two different views. ' +
+  'This is not supported. Please close this view; otherwise, ' +
   'some of your edits may not be saved properly.';
 
 /**
