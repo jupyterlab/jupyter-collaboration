@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 3.0.0rc0
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@3.0.0-beta.8...c80993047517121d207874f57412fdf2348e6afa))
+
+### Enhancements made
+
+- Updates warning message on double file open [#375](https://github.com/jupyterlab/jupyter-collaboration/pull/375) ([@JasonWeill](https://github.com/JasonWeill))
+- Update jupyter_ydoc and pycrdt_websocket dependencies [#367](https://github.com/jupyterlab/jupyter-collaboration/pull/367) ([@brichet](https://github.com/brichet))
+
+### Bugs fixed
+
+- Fix model format [#368](https://github.com/jupyterlab/jupyter-collaboration/pull/368) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Maintenance and upkeep improvements
+
+- Fix bump file [#343](https://github.com/jupyterlab/jupyter-collaboration/pull/343) ([@brichet](https://github.com/brichet))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-10-11&to=2024-10-18&type=c))
+
+[@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2024-10-11..2024-10-18&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-10-11..2024-10-18&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-10-11..2024-10-18&type=Issues) | [@JasonWeill](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AJasonWeill+updated%3A2024-10-11..2024-10-18&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajtpio+updated%3A2024-10-11..2024-10-18&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 3.0.0beta8
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@3.0.0-beta.6...60e55eab4613135b995c8a96f51fac68784edb29))
@@ -24,8 +49,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-09-18&to=2024-10-11&type=c))
 
 [@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2024-09-18..2024-10-11&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-09-18..2024-10-11&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-09-18..2024-10-11&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajtpio+updated%3A2024-09-18..2024-10-11&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2024-09-18..2024-10-11&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 3.0.0beta7
 

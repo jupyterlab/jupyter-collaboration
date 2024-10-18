@@ -1,6 +1,6 @@
 {
   "name": "@jupyter/collaborative-drive",
-  "version": "3.0.0-beta.8",
+  "version": "3.0.0-rc.0",
   "description": "JupyterLab - Collaborative Drive",
   "homepage": "https://github.com/jupyterlab/jupyter-collaboration",
   "bugs": {
