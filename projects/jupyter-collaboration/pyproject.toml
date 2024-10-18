@@ -28,12 +28,12 @@ classifiers = [
     "Framework :: Jupyter :: JupyterLab :: Extensions",
     "Framework :: Jupyter :: JupyterLab :: Extensions :: Prebuilt",
 ]
-dependencies = [
-    "jupyter-server-ydoc>=1.0.0b8",
-    "jupyter-collaboration-ui>=1.0.0b8",
-    "jupyter-docprovider>=1.0.0b8"
-]
 dynamic = ["version"]
+dependencies = [
+    "jupyter_collaboration_ui>=1.0.0rc0",
+    "jupyter_docprovider>=1.0.0rc0",
+    "jupyter_server_ydoc>=1.0.0rc0",
+]
 
 [tool.hatch.version]
 path = "jupyter_collaboration/_version.py"
