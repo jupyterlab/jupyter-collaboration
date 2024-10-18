@@ -1,0 +1,187 @@
+import { DocumentRegistry } from '@jupyterlab/docregistry';
+import { User } from '@jupyterlab/services';
+import { ReactWidget } from '@jupyterlab/ui-components';
+import * as React from 'react';
+
+/**
+ * The namespace for the UsersItem component.
+ */
+export namespace UsersItem {
+  /**
+   * Properties of the component.
+   */
+  export interface IProps {
+    /**
+     * The model of the document.
+     */
+    model: DocumentRegistry.IModel;
+
+    /**
+     * A function to display the user icons, optional.
+     * This function will overwrite the default one, and can be used to handle event on
+     * icons.
+     */
+    iconRenderer?: (props: UsersItem.IIconRendererProps) => JSX.Element;
+  }
+
+  /**
+   * The state of the component.
+   */
+  export interface IState {
+    /**
+     * The user list.
+     */
+    usersList: IUserData[];
+  }
+
+  /**
+   * Properties send to the iconRenderer function.
+   */
+  export interface IIconRendererProps
+    extends React.HTMLAttributes<HTMLElement> {
+    /**
+     * The user.
+     */
+    user: IUserData;
+
+    /**
+     * The document's model.
+     */
+    model?: DocumentRegistry.IModel;
+  }
+
+  /**
+   * The user data type.
+   */
+  export type IUserData = {
+    /**
+     * User id (the client id of the awareness).
+     */
+    userId: number;
+    /**
+     * User data.
+     */
+    userData: User.IIdentity;
+  };
+}
+
+/**
+ * A component displaying the collaborative users of a document.
+ */
+export class UsersItem extends React.Component<
+  UsersItem.IProps,
+  UsersItem.IState
+> {
+  constructor(props: UsersItem.IProps) {
+    super(props);
+    this._model = props.model;
+    this._iconRenderer = props.iconRenderer ?? null;
+    this.state = { usersList: [] };
+  }
+
+  /**
+   * Static method to create a widget.
+   */
+  static createWidget(options: UsersItem.IProps): ReactWidget {
+    return ReactWidget.create(<UsersItem {...options} />);
+  }
+
+  componentDidMount(): void {
+    this._model.sharedModel.awareness.on('change', this._awarenessChange);
+    this._awarenessChange();
+  }
+
+  /**
+   * Filter out the duplicated users, which can happen temporary on reload.
+   */
+  private filterDuplicated(
+    usersList: UsersItem.IUserData[]
+  ): UsersItem.IUserData[] {
+    const newList: UsersItem.IUserData[] = [];
+    const selected = new Set<string>();
+    for (const element of usersList) {
+      if (
+        element?.userData?.username &&
+        !selected.has(element.userData.username)
+      ) {
+        selected.add(element.userData.username);
+        newList.push(element);
+      }
+    }
+    return newList;
+  }
+
+  render(): React.ReactNode {
+    const IconRenderer = this._iconRenderer ?? DefaultUserIcon;
+    return (
+      <div className="jp-user-toolbar-items">
+        {this.filterDuplicated(this.state.usersList).map(user => {
+          if (user.userId !== this._model.sharedModel.awareness.clientID) {
+            return IconRenderer({ user });
+          }
+        })}
+      </div>
+    );
+  }
+
+  /**
+   * Triggered when a change occurs in the document awareness, to build again the users list.
+   */
+  private _awarenessChange = () => {
+    const clients = this._model.sharedModel.awareness.getStates() as Map<
+      number,
+      User.IIdentity
+    >;
+
+    const users: UsersItem.IUserData[] = [];
+    if (clients) {
+      clients.forEach((val, key) => {
+        if (val.user) {
+          users.push({ userId: key, userData: val.user as User.IIdentity });
+        }
+      });
+    }
+    this.setState(old => ({ ...old, usersList: users }));
+  };
+
+  private _model: DocumentRegistry.IModel;
+  private _iconRenderer:
+    | ((props: UsersItem.IIconRendererProps) => JSX.Element)
+    | null;
+}
+
+/**
+ * Default function displaying a user icon.
+ */
+export function DefaultUserIcon(
+  props: UsersItem.IIconRendererProps
+): JSX.Element {
+  let el: JSX.Element;
+  const { userId, userData } = props.user;
+  if (userData.avatar_url) {
+    el = (
+      <div
+        {...props}
+        key={userId}
+        title={userData.display_name}
+        className={'lm-MenuBar-itemIcon jp-MenuBar-imageIcon'}
+      >
+        <img src={userData.avatar_url} alt="" />
+      </div>
+    );
+  } else {
+    el = (
+      <div
+        {...props}
+        key={userId}
+        title={userData.display_name}
+        className={'lm-MenuBar-itemIcon jp-MenuBar-anonymousIcon'}
+        style={{ backgroundColor: userData.color }}
+      >
+        <span>{userData.initials}</span>
+      </div>
+    );
+  }
+
+  return el;
+}
