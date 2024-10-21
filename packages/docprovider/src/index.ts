@@ -15,4 +15,3 @@ export * from './yprovider';
 export * from './TimelineSlider';
 export * from './tokens';
 export * from './forkManager';
-export * from './users-item';
