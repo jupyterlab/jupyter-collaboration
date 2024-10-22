@@ -63,6 +63,7 @@
     "@jupyterlab/fileeditor": "^4.2.0",
     "@jupyterlab/logconsole": "^4.2.0",
     "@jupyterlab/notebook": "^4.2.0",
+    "@jupyterlab/services": "file:.yalc/@jupyterlab/services",
     "@jupyterlab/settingregistry": "^4.2.0",
     "@jupyterlab/translation": "^4.2.0",
     "@lumino/commands": "^2.1.0",
@@ -90,6 +91,7 @@
     "extension": true,
     "outputDir": "../../projects/jupyter-docprovider/jupyter_docprovider/labextension",
     "disabledExtensions": [
+      "@jupyterlab/application-extension:default-drive",
       "@jupyterlab/filebrowser-extension:defaultFileBrowser",
       "@jupyterlab/notebook-extension:cell-executor"
     ],

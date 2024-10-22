@@ -5,8 +5,6 @@
  * @module collaboration-extension
  */
 
-import { JupyterFrontEndPlugin } from '@jupyterlab/application';
-
 import {
   drive,
   yfile,
@@ -20,7 +18,7 @@ import { notebookCellExecutor } from './executor';
 /**
  * Export the plugins as default.
  */
-const plugins: JupyterFrontEndPlugin<any>[] = [
+export default [
   drive,
   yfile,
   ynotebook,
@@ -29,5 +27,3 @@ const plugins: JupyterFrontEndPlugin<any>[] = [
   notebookCellExecutor,
   statusBarTimeline
 ];
-
-export default plugins;
