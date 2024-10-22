@@ -8,6 +8,8 @@ import { User } from '@jupyterlab/services';
 import { ReactWidget } from '@jupyterlab/ui-components';
 import * as React from 'react';
 
+const USERS_ITEM_CLASS = 'jp-toolbar-users-item';
+
 /**
  * The namespace for the UsersItem component.
  */
@@ -19,7 +21,7 @@ export namespace UsersItem {
     /**
      * The model of the document.
      */
-    model: DocumentRegistry.IModel;
+    model: DocumentRegistry.IModel | null;
 
     /**
      * A function to display the user icons, optional.
@@ -92,7 +94,7 @@ export class UsersItem extends React.Component<
   }
 
   componentDidMount(): void {
-    this._model.sharedModel.awareness.on('change', this._awarenessChange);
+    this._model?.sharedModel.awareness.on('change', this._awarenessChange);
     this._awarenessChange();
   }
 
@@ -119,9 +121,12 @@ export class UsersItem extends React.Component<
   render(): React.ReactNode {
     const IconRenderer = this._iconRenderer ?? DefaultUserIcon;
     return (
-      <div className="jp-user-toolbar-items">
+      <div className={USERS_ITEM_CLASS}>
         {this.filterDuplicated(this.state.usersList).map(user => {
-          if (user.userId !== this._model.sharedModel.awareness.clientID) {
+          if (
+            this._model &&
+            user.userId !== this._model.sharedModel.awareness.clientID
+          ) {
             return IconRenderer({ user });
           }
         })}
@@ -133,7 +138,7 @@ export class UsersItem extends React.Component<
    * Triggered when a change occurs in the document awareness, to build again the users list.
    */
   private _awarenessChange = () => {
-    const clients = this._model.sharedModel.awareness.getStates() as Map<
+    const clients = this._model?.sharedModel.awareness.getStates() as Map<
       number,
       User.IIdentity
     >;
@@ -149,7 +154,7 @@ export class UsersItem extends React.Component<
     this.setState(old => ({ ...old, usersList: users }));
   };
 
-  private _model: DocumentRegistry.IModel;
+  private _model: DocumentRegistry.IModel | null;
   private _iconRenderer:
     | ((props: UsersItem.IIconRendererProps) => JSX.Element)
     | null;
