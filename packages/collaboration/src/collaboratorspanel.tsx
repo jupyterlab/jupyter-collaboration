@@ -75,6 +75,7 @@ export class CollaboratorsPanel extends Panel {
     state.forEach((value: ICollaboratorAwareness, key: any) => {
       if (
         this._currentUser.isReady &&
+        value.user &&
         value.user.username !== this._currentUser.identity!.username
       ) {
         collaborators.push(value);
@@ -113,6 +114,10 @@ export class CollaboratorsBody extends ReactWidget {
       let current = '';
       let separator = '';
       let currentFileLocation = '';
+
+      if (!value.user) {
+        return <></>;
+      }
 
       if (value.current) {
         canOpenCurrent = true;

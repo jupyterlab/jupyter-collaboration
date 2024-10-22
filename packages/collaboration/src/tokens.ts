@@ -84,7 +84,7 @@ export interface ICollaboratorAwareness {
   /**
    * The User owning theses data.
    */
-  user: User.IIdentity;
+  user?: User.IIdentity;
 
   /**
    * The current file/context the user is working on.
