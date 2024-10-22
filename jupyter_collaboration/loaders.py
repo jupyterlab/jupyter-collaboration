@@ -106,7 +106,7 @@ class FileLoader:
                 id (str): Room ID
         """
         del self._subscriptions[id]
-        if id in self._filepath_subscriptions.keys():
+        if id in self._filepath_subscriptions:
             del self._filepath_subscriptions[id]
 
     async def load_content(self, format: str, file_type: str) -> dict[str, Any]:
