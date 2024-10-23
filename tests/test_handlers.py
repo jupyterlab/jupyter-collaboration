@@ -9,6 +9,7 @@ from typing import Any
 
 from jupyter_events.logger import EventLogger
 from jupyter_ydoc import YUnicode
+from pycrdt import Text
 from pycrdt_websocket import WebsocketProvider
 
 
@@ -215,3 +216,60 @@ async def test_room_handler_doc_client_should_cleanup_room_file(
 
     await jp_serverapp.web_app.settings["jupyter_server_ydoc"].stop_extension()
     del jp_serverapp.web_app.settings["file_id_manager"]
+
+
+async def test_fork_handler(
+    rtc_create_file,
+    rtc_connect_doc_client,
+    rtc_connect_fork_client,
+    rtc_create_fork_client,
+    rtc_delete_fork_client,
+    rtc_fetch_session,
+):
+    path, _ = await rtc_create_file("test.txt", "Hello")
+
+    root_connect_event = Event()
+
+    def _on_root_change(topic: str, event: Any) -> None:
+        if topic == "source":
+            root_connect_event.set()
+
+    root_ydoc = YUnicode()
+    root_ydoc.observe(_on_root_change)
+
+    resp = await rtc_fetch_session("text", "file", path)
+    data = json.loads(resp.body.decode("utf-8"))
+    file_id = data["fileId"]
+
+    async with await rtc_connect_doc_client("text", "file", path) as ws, WebsocketProvider(
+        root_ydoc.ydoc, ws
+    ):
+        await root_connect_event.wait()
+        resp = await rtc_create_fork_client(f"text:file:{file_id}", True)
+        data = json.loads(resp.body.decode("utf-8"))
+        fork_roomid = data["roomId"]
+        fork_ydoc = YUnicode()
+        fork_connect_event = Event()
+
+        def _on_fork_change(topic: str, event: Any) -> None:
+            if topic == "source":
+                fork_connect_event.set()
+
+        fork_ydoc.observe(_on_fork_change)
+        fork_text = fork_ydoc.ydoc.get("source", type=Text)
+
+        async with await rtc_connect_fork_client(fork_roomid) as ws, WebsocketProvider(
+            fork_ydoc.ydoc, ws
+        ):
+            await fork_connect_event.wait()
+            root_text = root_ydoc.ydoc.get("source", type=Text)
+            root_text += ", World!"
+            await sleep(0.1)
+            assert str(fork_text) == "Hello, World!"
+            fork_text += " Hi!"
+
+        await sleep(0.1)
+        assert str(root_text) == "Hello, World!"
+        await rtc_delete_fork_client(fork_roomid, 1)
+        await sleep(0.1)
+        assert str(root_text) == "Hello, World! Hi!"

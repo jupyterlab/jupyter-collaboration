@@ -14,6 +14,7 @@ from pycrdt_websocket.ystore import BaseYStore
 from traitlets import Bool, Float, Type
 
 from .handlers import (
+    DocForkHandler,
     DocSessionHandler,
     TimelineHandler,
     UndoRedoHandler,
@@ -123,6 +124,13 @@ class YDocExtension(ExtensionApp):
 
         self.handlers.extend(
             [
+                (
+                    r"/api/collaboration/fork/(.*)",
+                    DocForkHandler,
+                    {
+                        "ywebsocket_server": self.ywebsocket_server,
+                    },
+                ),
                 (
                     r"/api/collaboration/room/(.*)",
                     YDocWebSocketHandler,
