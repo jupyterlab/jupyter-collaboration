@@ -222,6 +222,7 @@ async def test_fork_handler(
     rtc_create_file,
     rtc_connect_doc_client,
     rtc_connect_fork_client,
+    rtc_get_forks_client,
     rtc_create_fork_client,
     rtc_delete_fork_client,
     rtc_fetch_session,
@@ -245,9 +246,23 @@ async def test_fork_handler(
         root_ydoc.ydoc, ws
     ):
         await root_connect_event.wait()
+
+        resp = await rtc_create_fork_client(f"text:file:{file_id}", False)
+        data = json.loads(resp.body.decode("utf-8"))
+        fork_roomid0 = data["roomId"]
+
+        resp = await rtc_get_forks_client(f"text:file:{file_id}")
+        data = json.loads(resp.body.decode("utf-8"))
+        assert data == {f"text:file:{file_id}": [fork_roomid0]}
+
         resp = await rtc_create_fork_client(f"text:file:{file_id}", True)
         data = json.loads(resp.body.decode("utf-8"))
-        fork_roomid = data["roomId"]
+        fork_roomid1 = data["roomId"]
+
+        resp = await rtc_get_forks_client(f"text:file:{file_id}")
+        data = json.loads(resp.body.decode("utf-8"))
+        assert data == {f"text:file:{file_id}": [fork_roomid0, fork_roomid1]}
+
         fork_ydoc = YUnicode()
         fork_connect_event = Event()
 
@@ -258,7 +273,7 @@ async def test_fork_handler(
         fork_ydoc.observe(_on_fork_change)
         fork_text = fork_ydoc.ydoc.get("source", type=Text)
 
-        async with await rtc_connect_fork_client(fork_roomid) as ws, WebsocketProvider(
+        async with await rtc_connect_fork_client(fork_roomid1) as ws, WebsocketProvider(
             fork_ydoc.ydoc, ws
         ):
             await fork_connect_event.wait()
@@ -270,6 +285,17 @@ async def test_fork_handler(
 
         await sleep(0.1)
         assert str(root_text) == "Hello, World!"
-        await rtc_delete_fork_client(fork_roomid, 1)
+
+        await rtc_delete_fork_client(fork_roomid0, 1)
+        await sleep(0.1)
+        assert str(root_text) == "Hello, World!"
+        resp = await rtc_get_forks_client(f"text:file:{file_id}")
+        data = json.loads(resp.body.decode("utf-8"))
+        assert data == {f"text:file:{file_id}": [fork_roomid1]}
+
+        await rtc_delete_fork_client(fork_roomid1, 1)
         await sleep(0.1)
         assert str(root_text) == "Hello, World! Hi!"
+        resp = await rtc_get_forks_client(f"text:file:{file_id}")
+        data = json.loads(resp.body.decode("utf-8"))
+        assert data == {f"text:file:{file_id}": []}

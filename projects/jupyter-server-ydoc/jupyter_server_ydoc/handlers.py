@@ -39,7 +39,7 @@ YFILE = YDOCS["file"]
 
 SERVER_SESSION = str(uuid.uuid4())
 FORK_DOCUMENTS = {}
-FORK_ROOMS = {}
+FORK_ROOMS: dict[str, str] = {}
 
 
 class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
@@ -606,8 +606,9 @@ class UndoRedoHandler(APIHandler):
 class DocForkHandler(APIHandler):
     """
     Jupyter Server handler to:
-    - create a fork of a document (optionally synchronizing with the root document),
-    - delete a fork of a document (optionally merging in the root document).
+    - create a fork of a root document (optionally synchronizing with the root document),
+    - delete a fork of a root document (optionally merging back in the root document).
+    - get fork IDs of a root document.
     """
 
     auth_resource = "contents"
@@ -617,6 +618,22 @@ class DocForkHandler(APIHandler):
         ywebsocket_server: JupyterWebsocketServer,
     ) -> None:
         self._websocket_server = ywebsocket_server
+
+    @web.authenticated
+    @authorized
+    async def get(self, root_roomid):
+        """
+        Returns a dictionary of given root room ID to the root's fork room IDs.
+        """
+        self.write(
+            {
+                root_roomid: [
+                    fork_roomid
+                    for fork_roomid, _root_roomid in FORK_ROOMS.items()
+                    if _root_roomid == root_roomid
+                ]
+            }
+        )
 
     @web.authenticated
     @authorized

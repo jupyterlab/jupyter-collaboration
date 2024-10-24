@@ -156,6 +156,18 @@ def rtc_connect_fork_client(jp_http_port, jp_base_url, rtc_fetch_session):
 
 
 @pytest.fixture
+def rtc_get_forks_client(jp_fetch):
+    async def _inner(root_roomid: str) -> Any:
+        return await jp_fetch(
+            "/api/collaboration/fork",
+            root_roomid,
+            method="GET",
+        )
+
+    return _inner
+
+
+@pytest.fixture
 def rtc_create_fork_client(jp_fetch):
     async def _inner(root_roomid: str, sync: bool) -> Any:
         return await jp_fetch(
