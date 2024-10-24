@@ -259,7 +259,7 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - uses: jupyterlab/maintainer-tools/.github/actions/check-links@v1
         with:
-          ignore_links: "../api/*.* ./api/* .*/images/[\\w-]+.png https://docs.github.com/en/.* https://github.com/[^/]+/?$ https://mybinder.org/v2/gh/jupyterlab/jupyter_collaboration/.*"
+          ignore_links: "../api/*.* ./api/* .*/images/[\\w-]+.png https://docs.github.com/en/.* https://github.com/.* https://mybinder.org/v2/gh/jupyterlab/jupyter_collaboration/.*"
 
   ui_tests:
     runs-on: ubuntu-latest
