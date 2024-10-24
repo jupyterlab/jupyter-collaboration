@@ -1,0 +1,34 @@
+"$id": https://schema.jupyter.org/jupyter_collaboration/fork/v1
+"$schema": "http://json-schema.org/draft-07/schema"
+version: 1
+title: Collaborative fork events
+personal-data: true
+description: |
+  Fork events emitted from server-side during a collaborative session.
+type: object
+required:
+  - root_roomid
+  - fork_roomid
+  - username
+  - action
+properties:
+  root_roomid:
+    type: string
+    description: |
+      Root room ID. Usually composed by the file type, format and ID.
+  fork_roomid:
+    type: string
+    description: |
+      Fork root room ID.
+  username:
+    type: string
+    description: |
+      The name of the user who created or deleted the fork.
+  action:
+    enum:
+      - create
+      - delete
+    description: |
+      Possible values:
+      1. create
+      2. delete

@@ -108,7 +108,7 @@ jobs:
         run: |
           python -m pip install "jupyterlab>=4.0.0,<5"
           python -m pip install -e ".[test]" codecov
-          python -m pip install -e projects/jupyter-collaboration-ui -e projects/jupyter-docprovider -e projects/jupyter-server-ydoc
+          python -m pip install -e projects/jupyter-collaboration-ui -e projects/jupyter-docprovider -e "projects/jupyter-server-ydoc[test]"
 
       - name: List installed packages
         run: |
@@ -163,7 +163,7 @@ jobs:
       - name: Install the Python dependencies
         run: |
           pip install -e ".[test]"
-          pip install -e projects/jupyter-collaboration-ui -e projects/jupyter-docprovider -e projects/jupyter-server-ydoc
+          pip install -e projects/jupyter-collaboration-ui -e projects/jupyter-docprovider -e "projects/jupyter-server-ydoc[test]"
 
       - name: Run the unit tests
         run: |
@@ -184,7 +184,7 @@ jobs:
       - name: Install the Python dependencies
         run: |
           pip install -e ".[test]"
-          pip install -e projects/jupyter-collaboration-ui -e projects/jupyter-docprovider -e projects/jupyter-server-ydoc
+          pip install -e projects/jupyter-collaboration-ui -e projects/jupyter-docprovider -e "projects/jupyter-server-ydoc[test]"
 
       - name: List installed packages
         run: |

@@ -41,6 +41,7 @@ dynamic = ["version"]
 [project.optional-dependencies]
 test = [
     "coverage",
+    "dirty-equals",
     "jupyter_server[test]>=2.4.0",
     "jupyter_server_fileid[test]",
     "pytest>=7.0",

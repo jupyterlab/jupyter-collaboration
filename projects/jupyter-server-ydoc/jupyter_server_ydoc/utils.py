@@ -11,7 +11,9 @@ EVENTS_SCHEMA_PATH = EVENTS_FOLDER_PATH / "session.yaml"
 JUPYTER_COLLABORATION_AWARENESS_EVENTS_URI = (
     "https://schema.jupyter.org/jupyter_collaboration/awareness/v1"
 )
+JUPYTER_COLLABORATION_FORK_EVENTS_URI = "https://schema.jupyter.org/jupyter_collaboration/fork/v1"
 AWARENESS_EVENTS_SCHEMA_PATH = EVENTS_FOLDER_PATH / "awareness.yaml"
+FORK_EVENTS_SCHEMA_PATH = EVENTS_FOLDER_PATH / "fork.yaml"
 
 
 class MessageType(IntEnum):
