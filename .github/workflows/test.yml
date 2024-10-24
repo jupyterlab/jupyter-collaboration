@@ -15,12 +15,12 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.13'
 
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
@@ -29,6 +29,7 @@ jobs:
         run: |
           pip install "jupyterlab>=4.0.0,<5"
           pip install -e .
+          pip install -e projects/jupyter-collaboration-ui -e projects/jupyter-docprovider -e projects/jupyter-server-ydoc
           jlpm
 
       - name: Run pre-commit
@@ -61,7 +62,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.13'
 
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
@@ -70,6 +71,9 @@ jobs:
         run: |
           pip install "jupyterlab>=4.0.0,<5"
           pip install -e .
+          pip install -e projects/jupyter-collaboration-ui -e projects/jupyter-docprovider -e projects/jupyter-server-ydoc
+          jupyter labextension develop --overwrite projects/jupyter-collaboration-ui
+          jupyter labextension develop --overwrite projects/jupyter-docprovider
           jlpm
           jlpm build
 
@@ -86,18 +90,16 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.8", "3.11", "3.12"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
         # PyPy is not supported because we use the file_id_manager. See:
         # https://github.com/jupyter-server/jupyter_server_fileid/issues/44
         #include:
         #  - os: ubuntu-latest
         #    python-version: "pypy-3.8"
-        exclude:
-          - os: windows-latest
-            python-version: "3.12"
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
@@ -105,12 +107,14 @@ jobs:
       - name: Install the Python dependencies
         run: |
           python -m pip install "jupyterlab>=4.0.0,<5"
-          pip install -e ".[test]" codecov
+          python -m pip install -e ".[test]" codecov
+          python -m pip install -e projects/jupyter-collaboration-ui -e projects/jupyter-docprovider -e projects/jupyter-server-ydoc
 
       - name: List installed packages
         run: |
           pip freeze
           pip check
+          pip list
 
       - name: Run the tests with Coverage
         if: ${{ !startsWith(matrix.python-version, 'pypy') && !startsWith(runner.os, 'Windows') }}
@@ -159,6 +163,7 @@ jobs:
       - name: Install the Python dependencies
         run: |
           pip install -e ".[test]"
+          pip install -e projects/jupyter-collaboration-ui -e projects/jupyter-docprovider -e projects/jupyter-server-ydoc
 
       - name: Run the unit tests
         run: |
@@ -171,7 +176,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
@@ -179,6 +184,7 @@ jobs:
       - name: Install the Python dependencies
         run: |
           pip install -e ".[test]"
+          pip install -e projects/jupyter-collaboration-ui -e projects/jupyter-docprovider -e projects/jupyter-server-ydoc
 
       - name: List installed packages
         run: |
@@ -195,14 +201,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Build SDist
         shell: bash
         run: |
           pip install build
           find projects/* -maxdepth 0 -type d | xargs -L 1 python -m build --sdist --outdir dist/
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: "sdist"
           path: dist/*.tar.gz
@@ -216,7 +222,7 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
       - name: Download sdist
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
 
       - name: Install From SDist
         shell: bash
@@ -255,7 +261,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - uses: jupyterlab/maintainer-tools/.github/actions/check-links@v1
         with:
@@ -268,7 +274,7 @@ jobs:
     env:
       PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/pw-browsers
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Install dependencies
         run: |
