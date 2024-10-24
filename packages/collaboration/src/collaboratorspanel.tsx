@@ -99,12 +99,13 @@ export class CollaboratorsPanel extends Panel {
     const state = this._awareness.getStates() as any;
     const collaborators: ICollaboratorAwareness[] = [];
 
-    state.forEach((value: ICollaboratorAwareness, key: any) => {
+    state.forEach((value: Partial<ICollaboratorAwareness>, key: any) => {
       if (
         this._currentUser.isReady &&
+        value.user &&
         value.user.username !== this._currentUser.identity!.username
       ) {
-        collaborators.push(value);
+        collaborators.push(value as ICollaboratorAwareness);
       }
     });
     this._collaboratorsChanged.emit(collaborators);
