@@ -26,6 +26,7 @@ from .rooms import DocumentRoom, TransientRoom
 from .utils import (
     JUPYTER_COLLABORATION_AWARENESS_EVENTS_URI,
     JUPYTER_COLLABORATION_EVENTS_URI,
+    JUPYTER_COLLABORATION_FORK_EVENTS_URI,
     LogLevel,
     MessageType,
     decode_file_path,
@@ -654,6 +655,7 @@ class DocForkHandler(APIHandler):
         fork_room = YRoom(ydoc=fork_ydoc)
         self._websocket_server.rooms[fork_roomid] = fork_room
         await self._websocket_server.start_room(fork_room)
+        self._emit_fork_event(self.current_user.username, root_roomid, fork_roomid, "create")
         data = json.dumps(
             {
                 "sessionId": SERVER_SESSION,
@@ -679,4 +681,16 @@ class DocForkHandler(APIHandler):
             fork_update = fork_ydoc.get_update()
             root_ydoc.apply_update(fork_update)
         await self._websocket_server.delete_room(name=fork_roomid)
+        self._emit_fork_event(self.current_user.username, root_roomid, fork_roomid, "delete")
         self.set_status(200)
+
+    def _emit_fork_event(
+        self, username: str, root_roomid: str, fork_roomid: str, action: str
+    ) -> None:
+        data = {
+            "username": username,
+            "root_roomid": root_roomid,
+            "fork_roomid": fork_roomid,
+            "action": action,
+        }
+        self.event_logger.emit(schema_id=JUPYTER_COLLABORATION_FORK_EVENTS_URI, data=data)

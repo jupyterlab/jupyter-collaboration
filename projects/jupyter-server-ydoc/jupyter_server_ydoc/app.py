@@ -26,6 +26,7 @@ from .stores import SQLiteYStore
 from .utils import (
     AWARENESS_EVENTS_SCHEMA_PATH,
     EVENTS_SCHEMA_PATH,
+    FORK_EVENTS_SCHEMA_PATH,
     encode_file_path,
     room_id_from_encoded_path,
 )
@@ -86,6 +87,7 @@ class YDocExtension(ExtensionApp):
         super().initialize()
         self.serverapp.event_logger.register_event_schema(EVENTS_SCHEMA_PATH)
         self.serverapp.event_logger.register_event_schema(AWARENESS_EVENTS_SCHEMA_PATH)
+        self.serverapp.event_logger.register_event_schema(FORK_EVENTS_SCHEMA_PATH)
 
     def initialize_settings(self):
         self.settings.update(

@@ -7,6 +7,7 @@ import json
 from asyncio import Event, sleep
 from typing import Any
 
+from dirty_equals import IsStr
 from jupyter_events.logger import EventLogger
 from jupyter_ydoc import YUnicode
 from pycrdt import Text
@@ -219,6 +220,7 @@ async def test_room_handler_doc_client_should_cleanup_room_file(
 
 
 async def test_fork_handler(
+    jp_serverapp,
     rtc_create_file,
     rtc_connect_doc_client,
     rtc_connect_fork_client,
@@ -227,6 +229,17 @@ async def test_fork_handler(
     rtc_delete_fork_client,
     rtc_fetch_session,
 ):
+    collected_data = []
+
+    async def my_listener(logger: EventLogger, schema_id: str, data: dict) -> None:
+        collected_data.append(data)
+
+    event_logger = jp_serverapp.event_logger
+    event_logger.add_listener(
+        schema_id="https://schema.jupyter.org/jupyter_collaboration/fork/v1",
+        listener=my_listener,
+    )
+
     path, _ = await rtc_create_file("test.txt", "Hello")
 
     root_connect_event = Event()
@@ -241,27 +254,45 @@ async def test_fork_handler(
     resp = await rtc_fetch_session("text", "file", path)
     data = json.loads(resp.body.decode("utf-8"))
     file_id = data["fileId"]
+    root_roomid = f"text:file:{file_id}"
 
     async with await rtc_connect_doc_client("text", "file", path) as ws, WebsocketProvider(
         root_ydoc.ydoc, ws
     ):
         await root_connect_event.wait()
 
-        resp = await rtc_create_fork_client(f"text:file:{file_id}", False)
+        resp = await rtc_create_fork_client(root_roomid, False)
         data = json.loads(resp.body.decode("utf-8"))
         fork_roomid0 = data["roomId"]
 
-        resp = await rtc_get_forks_client(f"text:file:{file_id}")
+        resp = await rtc_get_forks_client(root_roomid)
         data = json.loads(resp.body.decode("utf-8"))
-        assert data == {f"text:file:{file_id}": [fork_roomid0]}
+        assert data == {root_roomid: [fork_roomid0]}
 
-        resp = await rtc_create_fork_client(f"text:file:{file_id}", True)
+        assert collected_data == [
+            {
+                "username": IsStr(),
+                "root_roomid": root_roomid,
+                "fork_roomid": fork_roomid0,
+                "action": "create",
+            }
+        ]
+
+        resp = await rtc_create_fork_client(root_roomid, True)
         data = json.loads(resp.body.decode("utf-8"))
         fork_roomid1 = data["roomId"]
 
-        resp = await rtc_get_forks_client(f"text:file:{file_id}")
+        resp = await rtc_get_forks_client(root_roomid)
         data = json.loads(resp.body.decode("utf-8"))
-        assert data == {f"text:file:{file_id}": [fork_roomid0, fork_roomid1]}
+        assert data == {root_roomid: [fork_roomid0, fork_roomid1]}
+
+        assert len(collected_data) == 2
+        assert collected_data[1] == {
+            "username": IsStr(),
+            "root_roomid": root_roomid,
+            "fork_roomid": fork_roomid1,
+            "action": "create",
+        }
 
         fork_ydoc = YUnicode()
         fork_connect_event = Event()
@@ -289,13 +320,27 @@ async def test_fork_handler(
         await rtc_delete_fork_client(fork_roomid0, 1)
         await sleep(0.1)
         assert str(root_text) == "Hello, World!"
-        resp = await rtc_get_forks_client(f"text:file:{file_id}")
+        resp = await rtc_get_forks_client(root_roomid)
         data = json.loads(resp.body.decode("utf-8"))
-        assert data == {f"text:file:{file_id}": [fork_roomid1]}
+        assert data == {root_roomid: [fork_roomid1]}
+        assert len(collected_data) == 3
+        assert collected_data[2] == {
+            "username": IsStr(),
+            "root_roomid": root_roomid,
+            "fork_roomid": fork_roomid0,
+            "action": "delete",
+        }
 
         await rtc_delete_fork_client(fork_roomid1, 1)
         await sleep(0.1)
         assert str(root_text) == "Hello, World! Hi!"
-        resp = await rtc_get_forks_client(f"text:file:{file_id}")
+        resp = await rtc_get_forks_client(root_roomid)
         data = json.loads(resp.body.decode("utf-8"))
-        assert data == {f"text:file:{file_id}": []}
+        assert data == {root_roomid: []}
+        assert len(collected_data) == 4
+        assert collected_data[3] == {
+            "username": IsStr(),
+            "root_roomid": root_roomid,
+            "fork_roomid": fork_roomid1,
+            "action": "delete",
+        }
