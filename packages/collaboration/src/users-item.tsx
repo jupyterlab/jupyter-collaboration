@@ -127,7 +127,7 @@ export class UsersItem extends React.Component<
             this._model &&
             user.userId !== this._model.sharedModel.awareness.clientID
           ) {
-            return IconRenderer({ user });
+            return IconRenderer({ user, model: this._model });
           }
         })}
       </div>
