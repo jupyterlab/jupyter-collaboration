@@ -5,7 +5,7 @@
 
 import { DocumentRegistry } from '@jupyterlab/docregistry';
 import { User } from '@jupyterlab/services';
-import { ReactWidget } from '@jupyterlab/ui-components';
+import { classes, ReactWidget } from '@jupyterlab/ui-components';
 import * as React from 'react';
 
 const USERS_ITEM_CLASS = 'jp-toolbar-users-item';
@@ -119,7 +119,7 @@ export class UsersItem extends React.Component<
   }
 
   render(): React.ReactNode {
-    const IconRenderer = this._iconRenderer ?? DefaultUserIcon;
+    const IconRenderer = this._iconRenderer ?? DefaultIconRenderer;
     return (
       <div className={USERS_ITEM_CLASS}>
         {this.filterDuplicated(this.state.usersList).map(user => {
@@ -161,34 +161,38 @@ export class UsersItem extends React.Component<
 }
 
 /**
- * Default function displaying a user icon.
+ * Default renderer for the user icon.
  */
-export function DefaultUserIcon(
+export function DefaultIconRenderer(
   props: UsersItem.IIconRendererProps
 ): JSX.Element {
   let el: JSX.Element;
-  const { userId, userData } = props.user;
-  if (userData.avatar_url) {
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { user, model, ...htmlProps } = props;
+
+  const iconClasses = classes('lm-MenuBar-itemIcon', props.className || '');
+  if (user.userData.avatar_url) {
     el = (
       <div
-        {...props}
-        key={userId}
-        title={userData.display_name}
-        className={'lm-MenuBar-itemIcon jp-MenuBar-imageIcon'}
+        {...htmlProps}
+        key={user.userId}
+        title={user.userData.display_name}
+        className={classes(iconClasses, 'jp-MenuBar-imageIcon')}
       >
-        <img src={userData.avatar_url} alt="" />
+        <img src={user.userData.avatar_url} alt="" />
       </div>
     );
   } else {
     el = (
       <div
-        {...props}
-        key={userId}
-        title={userData.display_name}
-        className={'lm-MenuBar-itemIcon jp-MenuBar-anonymousIcon'}
-        style={{ backgroundColor: userData.color }}
+        {...htmlProps}
+        key={user.userId}
+        title={user.userData.display_name}
+        className={classes(iconClasses, 'jp-MenuBar-anonymousIcon')}
+        style={{ backgroundColor: user.userData.color }}
       >
-        <span>{userData.initials}</span>
+        <span>{user.userData.initials}</span>
       </div>
     );
   }
