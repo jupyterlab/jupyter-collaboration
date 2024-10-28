@@ -6,7 +6,7 @@
 import { IDocumentProvider } from '@jupyter/collaborative-drive';
 import { showErrorMessage, Dialog } from '@jupyterlab/apputils';
 import { User } from '@jupyterlab/services';
-import { TranslationBundle } from '@jupyterlab/translation';
+import { nullTranslator, TranslationBundle } from '@jupyterlab/translation';
 
 import { PromiseDelegate } from '@lumino/coreutils';
 import { Signal } from '@lumino/signaling';
@@ -41,7 +41,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     this._sharedModel = options.model;
     this._awareness = options.model.awareness;
     this._yWebsocketProvider = null;
-    this._trans = options.translator;
+    this._trans = options.translator ?? nullTranslator.load('jupyterlab');
 
     const user = options.user;
 
@@ -224,6 +224,6 @@ export namespace WebSocketProvider {
     /**
      * The jupyterlab translator
      */
-    translator: TranslationBundle;
+    translator?: TranslationBundle;
   }
 }

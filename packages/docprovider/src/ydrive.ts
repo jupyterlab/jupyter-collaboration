@@ -43,10 +43,10 @@ export class YDrive extends Drive implements ICollaborativeDrive {
    */
   constructor(
     user: User.IManager,
-    translator: TranslationBundle,
-    globalAwareness: Awareness | null
+    translator?: TranslationBundle,
+    globalAwareness?: Awareness
   ) {
-    super({ name: 'RTC' });
+    super();
     this._user = user;
     this._trans = translator;
     this._globalAwareness = globalAwareness;
@@ -66,6 +66,14 @@ export class YDrive extends Drive implements ICollaborativeDrive {
 
   get providers(): Map<string, WebSocketProvider> {
     return this._providers;
+  }
+
+  set translator(translator: TranslationBundle) {
+    this._trans = translator;
+  }
+
+  set globalAwareness(awareness: Awareness) {
+    this._globalAwareness = awareness;
   }
 
   /**
@@ -243,9 +251,9 @@ export class YDrive extends Drive implements ICollaborativeDrive {
   };
 
   private _user: User.IManager;
-  private _trans: TranslationBundle;
+  private _trans: TranslationBundle | undefined;
   private _providers: Map<string, WebSocketProvider>;
-  private _globalAwareness: Awareness | null;
+  private _globalAwareness: Awareness | undefined;
   private _ydriveFileChanged = new Signal<this, Contents.IChangedArgs>(this);
 }
 
