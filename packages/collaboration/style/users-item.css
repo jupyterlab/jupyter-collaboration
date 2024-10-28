@@ -12,7 +12,7 @@
 .jp-toolbar-users-item .jp-MenuBar-anonymousIcon,
 .jp-toolbar-users-item .jp-MenuBar-imageIcon {
   position: relative;
-  left: 0px;
+  left: 0;
   height: 22px;
   width: 22px;
   box-sizing: border-box;
