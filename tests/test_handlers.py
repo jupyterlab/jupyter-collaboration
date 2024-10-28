@@ -317,7 +317,7 @@ async def test_fork_handler(
         await sleep(0.1)
         assert str(root_text) == "Hello, World!"
 
-        await rtc_delete_fork_client(fork_roomid0, 1)
+        await rtc_delete_fork_client(fork_roomid0, True)
         await sleep(0.1)
         assert str(root_text) == "Hello, World!"
         resp = await rtc_get_forks_client(root_roomid)
@@ -331,7 +331,7 @@ async def test_fork_handler(
             "action": "delete",
         }
 
-        await rtc_delete_fork_client(fork_roomid1, 1)
+        await rtc_delete_fork_client(fork_roomid1, True)
         await sleep(0.1)
         assert str(root_text) == "Hello, World! Hi!"
         resp = await rtc_get_forks_client(root_roomid)

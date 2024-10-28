@@ -673,7 +673,7 @@ class DocForkHandler(APIHandler):
         """
         root_roomid = FORK_ROOMS[fork_roomid]
         del FORK_ROOMS[fork_roomid]
-        if int(self.get_query_argument("merge")):
+        if self.get_query_argument("merge") == "true":
             root_room = await self._websocket_server.get_room(root_roomid)
             root_ydoc = root_room.ydoc
             fork_room = await self._websocket_server.get_room(fork_roomid)

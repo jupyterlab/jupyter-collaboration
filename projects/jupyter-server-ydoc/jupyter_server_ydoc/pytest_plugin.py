@@ -182,12 +182,12 @@ def rtc_create_fork_client(jp_fetch):
 
 @pytest.fixture
 def rtc_delete_fork_client(jp_fetch):
-    async def _inner(fork_roomid: str, merge: int) -> Any:
+    async def _inner(fork_roomid: str, merge: bool) -> Any:
         return await jp_fetch(
             "/api/collaboration/fork",
             fork_roomid,
             method="DELETE",
-            params={"merge": merge},
+            params={"merge": str(merge).lower()},
         )
 
     return _inner
