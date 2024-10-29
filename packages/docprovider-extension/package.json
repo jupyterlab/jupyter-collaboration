@@ -55,7 +55,7 @@
   "dependencies": {
     "@jupyter/collaborative-drive": "^3.0.0-rc.1",
     "@jupyter/docprovider": "^3.0.0-rc.1",
-    "@jupyter/ydoc": "^2.0.0 || ^3.0.0-a3",
+    "@jupyter/ydoc": "^2.0.0 || ^3.0.0",
     "@jupyterlab/application": "^4.2.0",
     "@jupyterlab/apputils": "^4.2.0",
     "@jupyterlab/docregistry": "^4.2.0",
