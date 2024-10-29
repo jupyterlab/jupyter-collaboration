@@ -4,6 +4,74 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 3.0.0
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@2.0.9...fc7cdfbf2c10f61ce4fe3001d8d12fb9f2291e08))
+
+### Enhancements made
+
+- Updates warning message on double file open [#375](https://github.com/jupyterlab/jupyter-collaboration/pull/375) ([@JasonWeill](https://github.com/JasonWeill))
+- Update jupyter_ydoc and pycrdt_websocket dependencies [#367](https://github.com/jupyterlab/jupyter-collaboration/pull/367) ([@brichet](https://github.com/brichet))
+- Add missing aria label to the file browser [#355](https://github.com/jupyterlab/jupyter-collaboration/pull/355) ([@trungleduc](https://github.com/trungleduc))
+- Handle generic document types in timeline [#349](https://github.com/jupyterlab/jupyter-collaboration/pull/349) ([@davidbrochart](https://github.com/davidbrochart))
+- Implementing Collaborative Timeline Slider with Undo/Redo Functionality [#338](https://github.com/jupyterlab/jupyter-collaboration/pull/338) ([@Meriem-BenIsmail](https://github.com/Meriem-BenIsmail))
+- Move fixtures to `jupyter_server_ydoc.pytest_plugin` [#327](https://github.com/jupyterlab/jupyter-collaboration/pull/327) ([@krassowski](https://github.com/krassowski))
+- Start ystore in a task [#303](https://github.com/jupyterlab/jupyter-collaboration/pull/303) ([@davidbrochart](https://github.com/davidbrochart))
+- Log (instead of raise) exceptions when running as a server extension [#295](https://github.com/jupyterlab/jupyter-collaboration/pull/295) ([@Zsailer](https://github.com/Zsailer))
+- handle exception when websocket server start room failed [#289](https://github.com/jupyterlab/jupyter-collaboration/pull/289) ([@jzhang20133](https://github.com/jzhang20133))
+- Add the list of opened shared documents to the user awareness [#287](https://github.com/jupyterlab/jupyter-collaboration/pull/287) ([@brichet](https://github.com/brichet))
+- Split up the backend, frontend, and the docprovider [#280](https://github.com/jupyterlab/jupyter-collaboration/pull/280) ([@krassowski](https://github.com/krassowski))
+- Support server-side execution [#279](https://github.com/jupyterlab/jupyter-collaboration/pull/279) ([@davidbrochart](https://github.com/davidbrochart))
+- Add a public API for getting a read-only view of the shared model [#275](https://github.com/jupyterlab/jupyter-collaboration/pull/275) ([@krassowski](https://github.com/krassowski))
+
+### Bugs fixed
+
+- Add check for user value in CollaboratorsPanel [#383](https://github.com/jupyterlab/jupyter-collaboration/pull/383) ([@martinRenou](https://github.com/martinRenou))
+- Fix model format [#368](https://github.com/jupyterlab/jupyter-collaboration/pull/368) ([@davidbrochart](https://github.com/davidbrochart))
+- Remove the unused `ISettingRegistry` token from the file browser plugin [#356](https://github.com/jupyterlab/jupyter-collaboration/pull/356) ([@trungleduc](https://github.com/trungleduc))
+- Initialize and update the ydoc path property [#342](https://github.com/jupyterlab/jupyter-collaboration/pull/342) ([@brichet](https://github.com/brichet))
+- Fix spurious "File Changed" dialog in JupyterLab 4.1+/Notebook 7.1+ [#337](https://github.com/jupyterlab/jupyter-collaboration/pull/337) ([@krassowski](https://github.com/krassowski))
+- Bump dependencies to fix CI [#335](https://github.com/jupyterlab/jupyter-collaboration/pull/335) ([@krassowski](https://github.com/krassowski))
+- Allow jupyter-ydoc v3.0.0-a3 or higher [#334](https://github.com/jupyterlab/jupyter-collaboration/pull/334) ([@krassowski](https://github.com/krassowski))
+- Fix use of traitlets to configure YStore class [#322](https://github.com/jupyterlab/jupyter-collaboration/pull/322) ([@krassowski](https://github.com/krassowski))
+- Fix for code execution on the Jupyter Server  [#307](https://github.com/jupyterlab/jupyter-collaboration/pull/307) ([@fcollonval](https://github.com/fcollonval))
+- Fix writing settings in page_config [#304](https://github.com/jupyterlab/jupyter-collaboration/pull/304) ([@fcollonval](https://github.com/fcollonval))
+- Rename the docprovider destination name to avoid conficts [#285](https://github.com/jupyterlab/jupyter-collaboration/pull/285) ([@brichet](https://github.com/brichet))
+- Fix releaser [#268](https://github.com/jupyterlab/jupyter-collaboration/pull/268) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Maintenance and upkeep improvements
+
+- Bump jupyter-ydoc v3.0.0 [#388](https://github.com/jupyterlab/jupyter-collaboration/pull/388) ([@davidbrochart](https://github.com/davidbrochart))
+- Fix ignore github links [#385](https://github.com/jupyterlab/jupyter-collaboration/pull/385) ([@davidbrochart](https://github.com/davidbrochart))
+- Update test workflow [#384](https://github.com/jupyterlab/jupyter-collaboration/pull/384) ([@davidbrochart](https://github.com/davidbrochart))
+- Ignore github.com in check-links [#360](https://github.com/jupyterlab/jupyter-collaboration/pull/360) ([@davidbrochart](https://github.com/davidbrochart))
+- Fix ignoring AnyIO warnings in tests [#359](https://github.com/jupyterlab/jupyter-collaboration/pull/359) ([@davidbrochart](https://github.com/davidbrochart))
+- Fix mypy [#358](https://github.com/jupyterlab/jupyter-collaboration/pull/358) ([@brichet](https://github.com/brichet))
+- Extract out ICollaborativeDrive to `@jupyter/collaborative-drive` [#353](https://github.com/jupyterlab/jupyter-collaboration/pull/353) ([@davidbrochart](https://github.com/davidbrochart))
+- Remove unused chat feature [#346](https://github.com/jupyterlab/jupyter-collaboration/pull/346) ([@davidbrochart](https://github.com/davidbrochart))
+- Fix bump file [#343](https://github.com/jupyterlab/jupyter-collaboration/pull/343) ([@brichet](https://github.com/brichet))
+- Remove @jupyter/collaboration dependency from @jupyter/docprovider [#331](https://github.com/jupyterlab/jupyter-collaboration/pull/331) ([@brichet](https://github.com/brichet))
+- Add notebook test for `get_document`, fix fixture when `store=True` [#329](https://github.com/jupyterlab/jupyter-collaboration/pull/329) ([@krassowski](https://github.com/krassowski))
+- Bump pycrdt-websocket v0.14.0 [#320](https://github.com/jupyterlab/jupyter-collaboration/pull/320) ([@davidbrochart](https://github.com/davidbrochart))
+- Update JupyterLab 4.2.0 and fix test start store [#305](https://github.com/jupyterlab/jupyter-collaboration/pull/305) ([@davidbrochart](https://github.com/davidbrochart))
+- Update pycrdt-websocket v0.13.0 [#293](https://github.com/jupyterlab/jupyter-collaboration/pull/293) ([@davidbrochart](https://github.com/davidbrochart))
+- Only include `docprovider` packages in its sdist [#282](https://github.com/jupyterlab/jupyter-collaboration/pull/282) ([@krassowski](https://github.com/krassowski))
+- Workaround shutdown issue with `aiosqlite` for now [#278](https://github.com/jupyterlab/jupyter-collaboration/pull/278) ([@krassowski](https://github.com/krassowski))
+- Fix UI tests [#277](https://github.com/jupyterlab/jupyter-collaboration/pull/277) ([@krassowski](https://github.com/krassowski))
+
+### Documentation improvements
+
+- Fix errors in contributing.rst for setup [#373](https://github.com/jupyterlab/jupyter-collaboration/pull/373) ([@JasonWeill](https://github.com/JasonWeill))
+- Fix readthedocs URL [#344](https://github.com/jupyterlab/jupyter-collaboration/pull/344) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-03-28&to=2024-10-29&type=c))
+
+[@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2024-03-28..2024-10-29&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-03-28..2024-10-29&type=Issues) | [@echarles](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aecharles+updated%3A2024-03-28..2024-10-29&type=Issues) | [@ellisonbg](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aellisonbg+updated%3A2024-03-28..2024-10-29&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Afcollonval+updated%3A2024-03-28..2024-10-29&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-03-28..2024-10-29&type=Issues) | [@JasonWeill](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AJasonWeill+updated%3A2024-03-28..2024-10-29&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajtpio+updated%3A2024-03-28..2024-10-29&type=Issues) | [@jzhang20133](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajzhang20133+updated%3A2024-03-28..2024-10-29&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2024-03-28..2024-10-29&type=Issues) | [@martinRenou](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AmartinRenou+updated%3A2024-03-28..2024-10-29&type=Issues) | [@Meriem-BenIsmail](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AMeriem-BenIsmail+updated%3A2024-03-28..2024-10-29&type=Issues) | [@shrutiagarwal13](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ashrutiagarwal13+updated%3A2024-03-28..2024-10-29&type=Issues) | [@trungleduc](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Atrungleduc+updated%3A2024-03-28..2024-10-29&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AZsailer+updated%3A2024-03-28..2024-10-29&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 3.0.0rc1
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@3.0.0-rc.0...b5fb9787c95ddd2fd9d066d50d6640dc588b9cd8))
@@ -25,8 +93,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-10-18&to=2024-10-24&type=c))
 
 [@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2024-10-18..2024-10-24&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-10-18..2024-10-24&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-10-18..2024-10-24&type=Issues) | [@JasonWeill](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AJasonWeill+updated%3A2024-10-18..2024-10-24&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajtpio+updated%3A2024-10-18..2024-10-24&type=Issues) | [@martinRenou](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AmartinRenou+updated%3A2024-10-18..2024-10-24&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 3.0.0rc0
 
