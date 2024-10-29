@@ -1,6 +1,6 @@
 {
   "entryPointStrategy": "packages",
-  "entryPoints": ["packages/collaboration", "packages/docprovider"],
+  "entryPoints": ["packages/collaboration", "packages/collaborative-drive", "packages/docprovider"],
   "externalSymbolLinkMappings": {
     "@codemirror/state": {
       "Extension": "https://codemirror.net/docs/ref/#state.Extension"
