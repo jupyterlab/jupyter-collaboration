@@ -7,19 +7,41 @@ description: |
   Fork events emitted from server-side during a collaborative session.
 type: object
 required:
-  - root_roomid
   - fork_roomid
+  - fork_info
   - username
   - action
 properties:
-  root_roomid:
-    type: string
-    description: |
-      Root room ID. Usually composed by the file type, format and ID.
   fork_roomid:
     type: string
     description: |
       Fork root room ID.
+  fork_info:
+    type: object
+    description: |
+      Fork root room information.
+    required:
+      - root_roomid
+      - synchronize
+      - title
+      - description
+    properties:
+      root_roomid:
+        type: string
+        description: |
+          Root room ID. Usually composed by the file type, format and ID.
+      synchronize:
+        type: boolean
+        description: |
+          Whether the fork is kept in sync with the root.
+      title:
+        type: string
+        description: |
+          The title of the fork.
+      description:
+        type: string
+        description: |
+          The description of the fork.
   username:
     type: string
     description: |

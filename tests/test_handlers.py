@@ -261,36 +261,53 @@ async def test_fork_handler(
     ):
         await root_connect_event.wait()
 
-        resp = await rtc_create_fork_client(root_roomid, False)
+        resp = await rtc_create_fork_client(root_roomid, False, "my fork0", "is awesome0")
         data = json.loads(resp.body.decode("utf-8"))
-        fork_roomid0 = data["roomId"]
+        fork_roomid0 = data["fork_roomid"]
 
         resp = await rtc_get_forks_client(root_roomid)
         data = json.loads(resp.body.decode("utf-8"))
-        assert data == {root_roomid: [fork_roomid0]}
+        expected_data0 = {
+            fork_roomid0: {
+                "root_roomid": root_roomid,
+                "synchronize": False,
+                "title": "my fork0",
+                "description": "is awesome0",
+            }
+        }
+        assert data == expected_data0
 
         assert collected_data == [
             {
                 "username": IsStr(),
-                "root_roomid": root_roomid,
                 "fork_roomid": fork_roomid0,
+                "fork_info": expected_data0[fork_roomid0],
                 "action": "create",
             }
         ]
 
-        resp = await rtc_create_fork_client(root_roomid, True)
+        resp = await rtc_create_fork_client(root_roomid, True, "my fork1", "is awesome1")
         data = json.loads(resp.body.decode("utf-8"))
-        fork_roomid1 = data["roomId"]
+        fork_roomid1 = data["fork_roomid"]
 
         resp = await rtc_get_forks_client(root_roomid)
         data = json.loads(resp.body.decode("utf-8"))
-        assert data == {root_roomid: [fork_roomid0, fork_roomid1]}
+        expected_data1 = {
+            fork_roomid1: {
+                "root_roomid": root_roomid,
+                "synchronize": True,
+                "title": "my fork1",
+                "description": "is awesome1",
+            }
+        }
+        expected_data = dict(**expected_data0, **expected_data1)
+        assert data == expected_data
 
         assert len(collected_data) == 2
         assert collected_data[1] == {
             "username": IsStr(),
-            "root_roomid": root_roomid,
             "fork_roomid": fork_roomid1,
+            "fork_info": expected_data[fork_roomid1],
             "action": "create",
         }
 
@@ -322,12 +339,12 @@ async def test_fork_handler(
         assert str(root_text) == "Hello, World!"
         resp = await rtc_get_forks_client(root_roomid)
         data = json.loads(resp.body.decode("utf-8"))
-        assert data == {root_roomid: [fork_roomid1]}
+        assert data == expected_data1
         assert len(collected_data) == 3
         assert collected_data[2] == {
             "username": IsStr(),
-            "root_roomid": root_roomid,
             "fork_roomid": fork_roomid0,
+            "fork_info": expected_data[fork_roomid0],
             "action": "delete",
         }
 
@@ -336,11 +353,11 @@ async def test_fork_handler(
         assert str(root_text) == "Hello, World! Hi!"
         resp = await rtc_get_forks_client(root_roomid)
         data = json.loads(resp.body.decode("utf-8"))
-        assert data == {root_roomid: []}
+        assert data == {}
         assert len(collected_data) == 4
         assert collected_data[3] == {
             "username": IsStr(),
-            "root_roomid": root_roomid,
             "fork_roomid": fork_roomid1,
+            "fork_info": expected_data[fork_roomid1],
             "action": "delete",
         }

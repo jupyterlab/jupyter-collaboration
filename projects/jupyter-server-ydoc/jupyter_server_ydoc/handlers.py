@@ -40,7 +40,7 @@ YFILE = YDOCS["file"]
 
 SERVER_SESSION = str(uuid.uuid4())
 FORK_DOCUMENTS = {}
-FORK_ROOMS: dict[str, str] = {}
+FORK_ROOMS: dict[str, dict[str, str]] = {}
 
 
 class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
@@ -624,15 +624,13 @@ class DocForkHandler(APIHandler):
     @authorized
     async def get(self, root_roomid):
         """
-        Returns a dictionary of given root room ID to the root's fork room IDs.
+        Returns a dictionary of fork room ID to fork room information for the given root room ID.
         """
         self.write(
             {
-                root_roomid: [
-                    fork_roomid
-                    for fork_roomid, _root_roomid in FORK_ROOMS.items()
-                    if _root_roomid == root_roomid
-                ]
+                fork_roomid: fork_info
+                for fork_roomid, fork_info in FORK_ROOMS.items()
+                if fork_info["root_roomid"] == root_roomid
             }
         )
 
@@ -644,22 +642,29 @@ class DocForkHandler(APIHandler):
         Optionally keeps the fork in sync with the root.
         """
         fork_roomid = uuid4().hex
-        FORK_ROOMS[fork_roomid] = root_roomid
         root_room = await self._websocket_server.get_room(root_roomid)
         update = root_room.ydoc.get_update()
         fork_ydoc = Doc()
         fork_ydoc.apply_update(update)
         model = self.get_json_body()
-        if model.get("sync"):
+        synchronize = model.get("synchronize", False)
+        if synchronize:
             root_room.ydoc.observe(lambda event: fork_ydoc.apply_update(event.update))
+        FORK_ROOMS[fork_roomid] = fork_info = {
+            "root_roomid": root_roomid,
+            "synchronize": synchronize,
+            "title": model.get("title", ""),
+            "description": model.get("description", ""),
+        }
         fork_room = YRoom(ydoc=fork_ydoc)
         self._websocket_server.rooms[fork_roomid] = fork_room
         await self._websocket_server.start_room(fork_room)
-        self._emit_fork_event(self.current_user.username, root_roomid, fork_roomid, "create")
+        self._emit_fork_event(self.current_user.username, fork_roomid, fork_info, "create")
         data = json.dumps(
             {
                 "sessionId": SERVER_SESSION,
-                "roomId": fork_roomid,
+                "fork_roomid": fork_roomid,
+                "fork_info": fork_info,
             }
         )
         self.set_status(201)
@@ -671,7 +676,8 @@ class DocForkHandler(APIHandler):
         """
         Deletes a forked document, and optionally merges it back in the root document.
         """
-        root_roomid = FORK_ROOMS[fork_roomid]
+        fork_info = FORK_ROOMS[fork_roomid]
+        root_roomid = fork_info["root_roomid"]
         del FORK_ROOMS[fork_roomid]
         if self.get_query_argument("merge") == "true":
             root_room = await self._websocket_server.get_room(root_roomid)
@@ -681,16 +687,16 @@ class DocForkHandler(APIHandler):
             fork_update = fork_ydoc.get_update()
             root_ydoc.apply_update(fork_update)
         await self._websocket_server.delete_room(name=fork_roomid)
-        self._emit_fork_event(self.current_user.username, root_roomid, fork_roomid, "delete")
+        self._emit_fork_event(self.current_user.username, fork_roomid, fork_info, "delete")
         self.set_status(200)
 
     def _emit_fork_event(
-        self, username: str, root_roomid: str, fork_roomid: str, action: str
+        self, username: str, fork_roomid: str, fork_info: dict[str, str], action: str
     ) -> None:
         data = {
             "username": username,
-            "root_roomid": root_roomid,
             "fork_roomid": fork_roomid,
+            "fork_info": fork_info,
             "action": action,
         }
         self.event_logger.emit(schema_id=JUPYTER_COLLABORATION_FORK_EVENTS_URI, data=data)
