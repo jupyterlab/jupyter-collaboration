@@ -68,13 +68,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install "jupyterlab>=4.0.0,<5"
-          pip install -e .
-          pip install -e projects/jupyter-collaboration-ui -e projects/jupyter-docprovider -e projects/jupyter-server-ydoc
-          jupyter labextension develop --overwrite projects/jupyter-collaboration-ui
-          jupyter labextension develop --overwrite projects/jupyter-docprovider
-          jlpm
-          jlpm build
+          yarn dev
 
       - name: Run Tests
         run: |
@@ -107,8 +101,8 @@ jobs:
       - name: Install the Python dependencies
         run: |
           python -m pip install "jupyterlab>=4.0.0,<5"
-          python -m pip install -e ".[test]" codecov
-          python -m pip install -e projects/jupyter-collaboration-ui -e projects/jupyter-docprovider -e "projects/jupyter-server-ydoc[test]"
+          python -m pip install codecov
+          yarn dev
 
       - name: List installed packages
         run: |
@@ -162,8 +156,7 @@ jobs:
 
       - name: Install the Python dependencies
         run: |
-          pip install -e ".[test]"
-          pip install -e projects/jupyter-collaboration-ui -e projects/jupyter-docprovider -e "projects/jupyter-server-ydoc[test]"
+          yarn dev
 
       - name: Run the unit tests
         run: |
@@ -183,8 +176,7 @@ jobs:
 
       - name: Install the Python dependencies
         run: |
-          pip install -e ".[test]"
-          pip install -e projects/jupyter-collaboration-ui -e projects/jupyter-docprovider -e "projects/jupyter-server-ydoc[test]"
+          yarn dev
 
       - name: List installed packages
         run: |

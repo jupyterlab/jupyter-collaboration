@@ -37,13 +37,8 @@ Once you have installed the dependencies above, use the following steps:
 
     git clone https://github.com/jupyterlab/jupyter-collaboration.git
     cd jupyter-collaboration
-    # install monorepo
-    pip install -e ".[dev,test]"
-    # install local dependencies as editable
-    pip install -e projects/jupyter-collaboration-ui -e projects/jupyter-docprovider -e projects/jupyter-server-ydoc
-    # link lab extensions
-    jupyter labextension develop --overwrite projects/jupyter-collaboration-ui
-    jupyter labextension develop --overwrite projects/jupyter-docprovider
+    # install monorepo in dev mode
+    python scripts/dev_install.py
 
 
 If you are using a system-wide Python installation and you only want to install the server for you,
