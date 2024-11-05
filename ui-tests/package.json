@@ -9,7 +9,7 @@
     "test:update": "npx playwright test --update-snapshots"
   },
   "devDependencies": {
-    "@jupyterlab/galata": "^5.1.5",
+    "@jupyterlab/galata": "^5.3.0",
     "@jupyterlab/services": "^7.1.5",
     "@playwright/test": "^1.35.0"
   },
