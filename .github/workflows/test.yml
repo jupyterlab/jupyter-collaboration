@@ -100,7 +100,6 @@ jobs:
 
       - name: Install the Python dependencies
         run: |
-          python -m pip install "jupyterlab>=4.0.0,<5"
           python -m pip install codecov
           yarn dev
 
