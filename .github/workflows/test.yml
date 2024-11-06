@@ -278,7 +278,7 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Install dependencies
         run: |
-          pip install jupyterlab .
+          pip install jupyterlab==4.2.5 jupyter-collaboration==3.0.0
       - name: Install playwright
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
