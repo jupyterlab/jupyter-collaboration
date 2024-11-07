@@ -108,12 +108,12 @@ test.describe('Initialization', () => {
     await guestPage.filebrowser.refresh();
     await guestPage.notebook.open(pathUntitled);
 
-    const nbPanel = await page.notebook.getNotebookInPanel();
+    const nbPanel = await page.notebook.getNotebookInPanelLocator();
     expect.soft(await nbPanel?.screenshot()).toMatchSnapshot(
       'initialization-create-notebook-host.png'
     );
 
-    const nbPanelGuest = await guestPage.notebook.getNotebookInPanel();
+    const nbPanelGuest = await guestPage.notebook.getNotebookInPanelLocator();
     expect(await nbPanelGuest?.screenshot()).toMatchSnapshot(
       'initialization-create-notebook-guest.png'
     );
@@ -133,12 +133,12 @@ test.describe('Initialization', () => {
     await guestPage.notebook.open(exampleNotebook);
     await guestPage.notebook.activate(exampleNotebook);
 
-    const nbPanel = await page.notebook.getNotebookInPanel();
+    const nbPanel = await page.notebook.getNotebookInPanelLocator();
     expect.soft(await nbPanel?.screenshot()).toMatchSnapshot(
       'initialization-open-notebook-host.png'
     );
 
-    const nbPanelGuest = await guestPage.notebook.getNotebookInPanel();
+    const nbPanelGuest = await guestPage.notebook.getNotebookInPanelLocator();
     expect(await nbPanelGuest?.screenshot()).toMatchSnapshot(
       'initialization-open-notebook-guest.png'
     );
@@ -245,7 +245,7 @@ test.describe('Ten clients', () => {
       async () => (await page.notebook.getCellCount()) === numCells + numClients
     );
 
-    const nbPanel = await page.notebook.getNotebookInPanel();
+    const nbPanel = await page.notebook.getNotebookInPanelLocator();
     expect(await nbPanel?.screenshot()).toMatchSnapshot(
       'ten-clients-add-a-new-cell.png'
     );
