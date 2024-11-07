@@ -25,6 +25,7 @@
     "packages/*"
   ],
   "scripts": {
+    "dev": "python scripts/dev_install.py",
     "build": "lerna run build",
     "build:prod": "lerna run build:prod",
     "build:test": "lerna run build:test",
