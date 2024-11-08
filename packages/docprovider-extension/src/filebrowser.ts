@@ -176,7 +176,6 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
             DOCUMENT_TIMELINE_URL,
             documentPath
           );
-
           timelineWidget = new TimelineWidget(
             fullPath,
             provider,

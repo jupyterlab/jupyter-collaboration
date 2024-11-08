@@ -308,7 +308,6 @@ class SharedModelFactory implements ISharedModelFactory {
       // the `sharedModel` will be the default one.
       return;
     }
-
     if (this.documentFactories.has(options.contentType)) {
       const factory = this.documentFactories.get(options.contentType)!;
       const sharedModel = factory(options);

@@ -16,6 +16,7 @@ import {
   statusBarTimeline
 } from './filebrowser';
 import { notebookCellExecutor } from './executor';
+import { forkManagerPlugin } from './forkManager';
 
 /**
  * Export the plugins as default.
@@ -27,7 +28,8 @@ const plugins: JupyterFrontEndPlugin<any>[] = [
   defaultFileBrowser,
   logger,
   notebookCellExecutor,
-  statusBarTimeline
+  statusBarTimeline,
+  forkManagerPlugin
 ];
 
 export default plugins;

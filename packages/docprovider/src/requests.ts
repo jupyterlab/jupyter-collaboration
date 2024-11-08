@@ -14,6 +14,8 @@ const DOC_SESSION_URL = 'api/collaboration/session';
 const DOC_FORK_URL = 'api/collaboration/undo_redo';
 const TIMELINE_URL = 'api/collaboration/timeline';
 
+export const ROOM_FORK_URL = 'api/collaboration/fork';
+
 /**
  * Document session model
  */
@@ -34,6 +36,45 @@ export interface ISessionModel {
    * Server session identifier
    */
   sessionId: string;
+}
+
+/**
+ * Call the API extension
+ *
+ * @param endPoint API REST end point for the extension
+ * @param init Initial values for the request
+ * @returns The response body interpreted as JSON
+ */
+export async function requestAPI<T = any>(
+  endPoint = '',
+  init: RequestInit = {}
+): Promise<T> {
+  // Make request to Jupyter API
+  const settings = ServerConnection.makeSettings();
+  const requestUrl = URLExt.join(settings.baseUrl, endPoint);
+
+  let response: Response;
+  try {
+    response = await ServerConnection.makeRequest(requestUrl, init, settings);
+  } catch (error) {
+    throw new ServerConnection.NetworkError(error as any);
+  }
+
+  let data: any = await response.text();
+
+  if (data.length > 0) {
+    try {
+      data = JSON.parse(data);
+    } catch (error) {
+      console.error('Not a JSON response body.', response);
+    }
+  }
+
+  if (!response.ok) {
+    throw new ServerConnection.ResponseError(response, data.message || data);
+  }
+
+  return data;
 }
 
 export async function requestDocSession(
