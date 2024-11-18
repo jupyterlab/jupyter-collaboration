@@ -20,6 +20,7 @@ type Props = {
   contentType: string;
   format: string;
 };
+const DOCUMENT_TIMELINE_URL = 'api/collaboration/timeline';
 
 export const TimelineSliderComponent: React.FC<Props> = ({
   apiURL,
@@ -147,16 +148,21 @@ export const TimelineSliderComponent: React.FC<Props> = ({
   function determineAction(currentTimestamp: number): 'undo' | 'redo' {
     return currentTimestamp < currentTimestampIndex ? 'undo' : 'redo';
   }
-
   function extractFilenameFromURL(url: string): string {
     try {
       const parsedURL = new URL(url);
       const pathname = parsedURL.pathname;
-      const segments = pathname.split('/');
 
-      return segments.slice(4 - segments.length).join('/');
+      const apiIndex = pathname.indexOf(DOCUMENT_TIMELINE_URL);
+      if (apiIndex === -1) {
+        throw new Error(
+          `API segment "${DOCUMENT_TIMELINE_URL}" not found in URL.`
+        );
+      }
+
+      return pathname.slice(apiIndex + DOCUMENT_TIMELINE_URL.length);
     } catch (error) {
-      console.error('Invalid URL:', error);
+      console.error('Invalid URL or unable to extract filename:', error);
       return '';
     }
   }
