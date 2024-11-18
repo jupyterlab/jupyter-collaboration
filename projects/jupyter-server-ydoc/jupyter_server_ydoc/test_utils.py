@@ -59,7 +59,7 @@ class FakeEventLogger:
 
 
 class Websocket:
-    def __init__(self, websocket, path: str):
+    def __init__(self, websocket: Any, path: str):
         self._websocket = websocket
         self._path = path
         self._send_lock = Lock()
@@ -78,7 +78,7 @@ class Websocket:
             raise StopAsyncIteration()
         return message
 
-    async def send(self, message: bytes):
+    async def send(self, message: bytes) -> None:
         async with self._send_lock:
             await self._websocket.send_bytes(message)
 
