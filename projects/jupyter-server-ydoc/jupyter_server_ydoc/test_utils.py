@@ -6,8 +6,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from jupyter_server import _tz as tz
 from anyio import Lock
+from jupyter_server import _tz as tz
 
 
 class FakeFileIDManager:

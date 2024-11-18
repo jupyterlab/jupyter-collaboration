@@ -11,8 +11,8 @@ else:
 
 import pytest
 from anyio import create_task_group, sleep
-from pycrdt_websocket import WebsocketProvider
 from jupyter_server_ydoc.test_utils import Websocket
+from pycrdt_websocket import WebsocketProvider
 
 jupyter_ydocs = {ep.name: ep.load() for ep in entry_points(group="jupyter_ydoc")}
 

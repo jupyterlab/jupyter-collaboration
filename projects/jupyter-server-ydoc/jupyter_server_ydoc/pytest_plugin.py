@@ -9,14 +9,19 @@ from typing import Any
 
 import nbformat
 import pytest
+from httpx_ws import aconnect_ws
 from jupyter_server_ydoc.loaders import FileLoader
 from jupyter_server_ydoc.rooms import DocumentRoom
 from jupyter_server_ydoc.stores import SQLiteYStore
 from jupyter_ydoc import YNotebook, YUnicode
 from pycrdt_websocket import WebsocketProvider
-from httpx_ws import aconnect_ws
 
-from .test_utils import FakeContentsManager, FakeEventLogger, FakeFileIDManager, Websocket
+from .test_utils import (
+    FakeContentsManager,
+    FakeEventLogger,
+    FakeFileIDManager,
+    Websocket,
+)
 
 
 @pytest.fixture
@@ -139,9 +144,12 @@ def rtc_connect_doc_client(jp_http_port, jp_base_url, rtc_fetch_session):
         resp = await rtc_fetch_session(format, type, path)
         data = json.loads(resp.body.decode("utf-8"))
         room_name = f"{data['format']}:{data['type']}:{data['fileId']}"
-        return aconnect_ws(
-            f"http://127.0.0.1:{jp_http_port}{jp_base_url}api/collaboration/room/{room_name}?sessionId={data['sessionId']}"
-        ), room_name
+        return (
+            aconnect_ws(
+                f"http://127.0.0.1:{jp_http_port}{jp_base_url}api/collaboration/room/{room_name}?sessionId={data['sessionId']}"
+            ),
+            room_name,
+        )
 
     return _inner
 

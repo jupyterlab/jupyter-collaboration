@@ -79,9 +79,7 @@ async def test_room_handler_doc_client_should_connect(rtc_create_file, rtc_conne
     doc.observe(_on_document_change)
 
     websocket, room_name = await rtc_connect_doc_client("text", "file", path)
-    async with websocket as ws, WebsocketProvider(
-        doc.ydoc, Websocket(ws, room_name)
-    ):
+    async with websocket as ws, WebsocketProvider(doc.ydoc, Websocket(ws, room_name)):
         await event.wait()
         await sleep(0.1)
 
@@ -117,9 +115,7 @@ async def test_room_handler_doc_client_should_emit_awareness_event(
     )
 
     websocket, room_name = await rtc_connect_doc_client("text", "file", path)
-    async with websocket as ws, WebsocketProvider(
-        doc.ydoc, Websocket(ws, room_name)
-    ):
+    async with websocket as ws, WebsocketProvider(doc.ydoc, Websocket(ws, room_name)):
         await event.wait()
         await sleep(0.1)
 
@@ -151,9 +147,7 @@ async def test_room_handler_doc_client_should_cleanup_room_file(
     doc.observe(_on_document_change)
 
     websocket, room_name = await rtc_connect_doc_client("text", "file", path)
-    async with websocket as ws, WebsocketProvider(
-        doc.ydoc, Websocket(ws, room_name)
-    ):
+    async with websocket as ws, WebsocketProvider(doc.ydoc, Websocket(ws, room_name)):
         await event.wait()
         await sleep(0.1)
 
@@ -178,9 +172,7 @@ async def test_room_handler_doc_client_should_cleanup_room_file(
 
     try:
         websocket, room_name = await rtc_connect_doc_client("text2", "file2", path2)
-        async with websocket as ws, WebsocketProvider(
-            doc.ydoc, Websocket(ws, room_name)
-        ):
+        async with websocket as ws, WebsocketProvider(doc.ydoc, Websocket(ws, room_name)):
             await event.wait()
             await sleep(0.1)
     except Exception:
@@ -188,9 +180,7 @@ async def test_room_handler_doc_client_should_cleanup_room_file(
 
     try:
         websocket, room_name = await rtc_connect_doc_client("text2", "file2", path2)
-        async with websocket as ws, WebsocketProvider(
-            doc.ydoc, Websocket(ws, room_name)
-        ):
+        async with websocket as ws, WebsocketProvider(doc.ydoc, Websocket(ws, room_name)):
             await event.wait()
             await sleep(0.1)
     except Exception:
