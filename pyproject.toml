@@ -106,6 +106,8 @@ filterwarnings = [
     "ignore:.*datetime.utcfromtimestamp\\(\\) is deprecated.*:DeprecationWarning:",
     # From anyio https://github.com/agronholm/anyio/pull/715
     'ignore:Unclosed <MemoryObjectSendStream:ResourceWarning',
+    # see https://github.com/python/cpython/issues/126259
+    'ignore:unclosed database in <sqlite3.Connection object',
 ]
 
 [tool.mypy]
