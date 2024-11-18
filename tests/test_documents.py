@@ -12,6 +12,7 @@ else:
 import pytest
 from anyio import create_task_group, sleep
 from pycrdt_websocket import WebsocketProvider
+from jupyter_server_ydoc.test_utils import Websocket
 
 jupyter_ydocs = {ep.name: ep.load() for ep in entry_points(group="jupyter_ydoc")}
 
@@ -32,12 +33,12 @@ async def test_dirty(
     await rtc_create_file(file_path)
     jupyter_ydoc = jupyter_ydocs[file_type]()
 
-    async with await rtc_connect_doc_client(file_format, file_type, file_path) as ws:
-        async with WebsocketProvider(jupyter_ydoc.ydoc, ws):
-            for _ in range(2):
-                jupyter_ydoc.dirty = True
-                await sleep(rtc_document_save_delay * 1.5)
-                assert not jupyter_ydoc.dirty
+    websocket, room_name = await rtc_connect_doc_client(file_format, file_type, file_path)
+    async with websocket as ws, WebsocketProvider(jupyter_ydoc.ydoc, Websocket(ws, room_name)):
+        for _ in range(2):
+            jupyter_ydoc.dirty = True
+            await sleep(rtc_document_save_delay * 1.5)
+            assert not jupyter_ydoc.dirty
 
 
 async def cleanup(jp_serverapp):
@@ -59,7 +60,8 @@ async def test_room_concurrent_initialization(
     await rtc_create_file(file_path)
 
     async def connect(file_format, file_type, file_path):
-        async with await rtc_connect_doc_client(file_format, file_type, file_path) as ws:
+        websocket, room_name = await rtc_connect_doc_client(file_format, file_type, file_path)
+        async with websocket as ws:
             pass
 
     t0 = time()
@@ -84,7 +86,8 @@ async def test_room_sequential_opening(
 
     async def connect(file_format, file_type, file_path):
         t0 = time()
-        async with await rtc_connect_doc_client(file_format, file_type, file_path) as ws:
+        websocket, room_name = await rtc_connect_doc_client(file_format, file_type, file_path)
+        async with websocket as ws:
             pass
         t1 = time()
         return t1 - t0

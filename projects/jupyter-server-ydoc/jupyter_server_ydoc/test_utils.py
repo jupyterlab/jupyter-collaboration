@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Any
 
 from jupyter_server import _tz as tz
+from anyio import Lock
 
 
 class FakeFileIDManager:
@@ -55,3 +56,32 @@ class FakeContentsManager:
 class FakeEventLogger:
     def emit(self, schema_id: str, data: dict) -> None:
         print(data)
+
+
+class Websocket:
+    def __init__(self, websocket, path: str):
+        self._websocket = websocket
+        self._path = path
+        self._send_lock = Lock()
+
+    @property
+    def path(self) -> str:
+        return self._path
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self) -> bytes:
+        try:
+            message = await self.recv()
+        except Exception:
+            raise StopAsyncIteration()
+        return message
+
+    async def send(self, message: bytes):
+        async with self._send_lock:
+            await self._websocket.send_bytes(message)
+
+    async def recv(self) -> bytes:
+        b = await self._websocket.receive_bytes()
+        return bytes(b)

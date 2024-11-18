@@ -14,9 +14,9 @@ from jupyter_server_ydoc.rooms import DocumentRoom
 from jupyter_server_ydoc.stores import SQLiteYStore
 from jupyter_ydoc import YNotebook, YUnicode
 from pycrdt_websocket import WebsocketProvider
-from websockets import connect
+from httpx_ws import aconnect_ws
 
-from .test_utils import FakeContentsManager, FakeEventLogger, FakeFileIDManager
+from .test_utils import FakeContentsManager, FakeEventLogger, FakeFileIDManager, Websocket
 
 
 @pytest.fixture
@@ -126,8 +126,8 @@ def rtc_fetch_session(jp_fetch):
 @pytest.fixture
 def rtc_connect_awareness_client(jp_http_port, jp_base_url):
     async def _inner(room_id: str) -> Any:
-        return connect(
-            f"ws://127.0.0.1:{jp_http_port}{jp_base_url}api/collaboration/room/{room_id}"
+        return aconnect_ws(
+            f"http://127.0.0.1:{jp_http_port}{jp_base_url}api/collaboration/room/{room_id}"
         )
 
     return _inner
@@ -138,9 +138,10 @@ def rtc_connect_doc_client(jp_http_port, jp_base_url, rtc_fetch_session):
     async def _inner(format: str, type: str, path: str) -> Any:
         resp = await rtc_fetch_session(format, type, path)
         data = json.loads(resp.body.decode("utf-8"))
-        return connect(
-            f"ws://127.0.0.1:{jp_http_port}{jp_base_url}api/collaboration/room/{data['format']}:{data['type']}:{data['fileId']}?sessionId={data['sessionId']}"
-        )
+        room_name = f"{data['format']}:{data['type']}:{data['fileId']}"
+        return aconnect_ws(
+            f"http://127.0.0.1:{jp_http_port}{jp_base_url}api/collaboration/room/{room_name}?sessionId={data['sessionId']}"
+        ), room_name
 
     return _inner
 
@@ -162,9 +163,8 @@ def rtc_add_doc_to_store(rtc_connect_doc_client):
 
         doc.observe(_on_document_change)
 
-        async with await rtc_connect_doc_client(format, type, path) as ws, WebsocketProvider(
-            doc.ydoc, ws
-        ):
+        websocket, room_name = await rtc_connect_doc_client(format, type, path)
+        async with websocket as ws, WebsocketProvider(doc.ydoc, Websocket(ws, room_name)):
             await event.wait()
             await sleep(0.1)
 
