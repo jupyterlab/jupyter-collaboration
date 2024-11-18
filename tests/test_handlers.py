@@ -8,6 +8,7 @@ from asyncio import Event, sleep
 from typing import Any
 
 from jupyter_events.logger import EventLogger
+from jupyter_server_ydoc.test_utils import Websocket
 from jupyter_ydoc import YUnicode
 from pycrdt_websocket import WebsocketProvider
 
@@ -77,9 +78,8 @@ async def test_room_handler_doc_client_should_connect(rtc_create_file, rtc_conne
     doc = YUnicode()
     doc.observe(_on_document_change)
 
-    async with await rtc_connect_doc_client("text", "file", path) as ws, WebsocketProvider(
-        doc.ydoc, ws
-    ):
+    websocket, room_name = await rtc_connect_doc_client("text", "file", path)
+    async with websocket as ws, WebsocketProvider(doc.ydoc, Websocket(ws, room_name)):
         await event.wait()
         await sleep(0.1)
 
@@ -114,9 +114,8 @@ async def test_room_handler_doc_client_should_emit_awareness_event(
         listener=my_listener,
     )
 
-    async with await rtc_connect_doc_client("text", "file", path) as ws, WebsocketProvider(
-        doc.ydoc, ws
-    ):
+    websocket, room_name = await rtc_connect_doc_client("text", "file", path)
+    async with websocket as ws, WebsocketProvider(doc.ydoc, Websocket(ws, room_name)):
         await event.wait()
         await sleep(0.1)
 
@@ -147,9 +146,8 @@ async def test_room_handler_doc_client_should_cleanup_room_file(
     doc = YUnicode()
     doc.observe(_on_document_change)
 
-    async with await rtc_connect_doc_client("text", "file", path) as ws, WebsocketProvider(
-        doc.ydoc, ws
-    ):
+    websocket, room_name = await rtc_connect_doc_client("text", "file", path)
+    async with websocket as ws, WebsocketProvider(doc.ydoc, Websocket(ws, room_name)):
         await event.wait()
         await sleep(0.1)
 
@@ -173,18 +171,16 @@ async def test_room_handler_doc_client_should_cleanup_room_file(
     path2, _ = await rtc_create_file("test2.txt", "test2")
 
     try:
-        async with await rtc_connect_doc_client("text2", "file2", path2) as ws, WebsocketProvider(
-            doc.ydoc, ws
-        ):
+        websocket, room_name = await rtc_connect_doc_client("text2", "file2", path2)
+        async with websocket as ws, WebsocketProvider(doc.ydoc, Websocket(ws, room_name)):
             await event.wait()
             await sleep(0.1)
     except Exception:
         pass
 
     try:
-        async with await rtc_connect_doc_client("text2", "file2", path2) as ws, WebsocketProvider(
-            doc.ydoc, ws
-        ):
+        websocket, room_name = await rtc_connect_doc_client("text2", "file2", path2)
+        async with websocket as ws, WebsocketProvider(doc.ydoc, Websocket(ws, room_name)):
             await event.wait()
             await sleep(0.1)
     except Exception:
