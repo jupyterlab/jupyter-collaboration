@@ -153,7 +153,7 @@ export const TimelineSliderComponent: React.FC<Props> = ({
       const parsedURL = new URL(url);
       const pathname = parsedURL.pathname;
 
-      const apiIndex = pathname.indexOf(DOCUMENT_TIMELINE_URL);
+      const apiIndex = pathname.lastIndexOf(DOCUMENT_TIMELINE_URL);
       if (apiIndex === -1) {
         throw new Error(
           `API segment "${DOCUMENT_TIMELINE_URL}" not found in URL.`
