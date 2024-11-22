@@ -19,14 +19,15 @@ type Props = {
   provider: IForkProvider;
   contentType: string;
   format: string;
+  documentTimelineUrl: string;
 };
-const DOCUMENT_TIMELINE_URL = 'api/collaboration/timeline';
 
 export const TimelineSliderComponent: React.FC<Props> = ({
   apiURL,
   provider,
   contentType,
-  format
+  format,
+  documentTimelineUrl
 }) => {
   const [data, setData] = useState({
     roomId: '',
@@ -153,14 +154,14 @@ export const TimelineSliderComponent: React.FC<Props> = ({
       const parsedURL = new URL(url);
       const pathname = parsedURL.pathname;
 
-      const apiIndex = pathname.lastIndexOf(DOCUMENT_TIMELINE_URL);
+      const apiIndex = pathname.lastIndexOf(documentTimelineUrl);
       if (apiIndex === -1) {
         throw new Error(
-          `API segment "${DOCUMENT_TIMELINE_URL}" not found in URL.`
+          `API segment "${documentTimelineUrl}" not found in URL.`
         );
       }
 
-      return pathname.slice(apiIndex + DOCUMENT_TIMELINE_URL.length);
+      return pathname.slice(apiIndex + documentTimelineUrl.length);
     } catch (error) {
       console.error('Invalid URL or unable to extract filename:', error);
       return '';

@@ -13,18 +13,21 @@ export class TimelineWidget extends ReactWidget {
   private provider: IForkProvider;
   private contentType: string;
   private format: string;
+  private documentTimelineUrl: string;
 
   constructor(
     apiURL: string,
     provider: IForkProvider,
     contentType: string,
-    format: string
+    format: string,
+    documentTimelineUrl: string
   ) {
     super();
     this.apiURL = apiURL;
     this.provider = provider;
     this.contentType = contentType;
     this.format = format;
+    this.documentTimelineUrl = documentTimelineUrl
     this.addClass('jp-timelineSliderWrapper');
   }
 
@@ -36,6 +39,7 @@ export class TimelineWidget extends ReactWidget {
         provider={this.provider}
         contentType={this.contentType}
         format={this.format}
+        documentTimelineUrl= {this.documentTimelineUrl}
       />
     );
   }
