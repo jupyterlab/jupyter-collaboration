@@ -41,7 +41,6 @@ test.describe('Timeline Slider', () => {
     await page.notebook.createNew();
     await page.notebook.close();
 
-    if(!isTimeline)
     await openNotebook(page, `${tmpPath}/Untitled.ipynb`);
 
     expect(pageErrors).toHaveLength(0);
