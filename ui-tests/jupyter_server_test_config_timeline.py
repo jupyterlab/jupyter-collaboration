@@ -7,7 +7,11 @@
 opens the server to the world and provides access to JupyterLab
 JavaScript objects through the global window variable.
 """
+import os
+from tempfile import mkdtemp
 from typing import Any
+import logging
+
 
 from jupyterlab.galata import configure_jupyter_server
 
@@ -16,5 +20,7 @@ configure_jupyter_server(c)  # noqa
 
 c.ServerApp.base_url = "/api/collaboration/timeline/"
 
+
 # Uncomment to set server log level to debug level
 # c.ServerApp.log_level = "DEBUG"
+
