@@ -61,7 +61,7 @@ async def test_room_concurrent_initialization(
 
     async def connect(file_format, file_type, file_path):
         websocket, room_name = await rtc_connect_doc_client(file_format, file_type, file_path)
-        async with websocket as ws:
+        async with websocket:
             pass
 
     t0 = time()
@@ -87,7 +87,7 @@ async def test_room_sequential_opening(
     async def connect(file_format, file_type, file_path):
         t0 = time()
         websocket, room_name = await rtc_connect_doc_client(file_format, file_type, file_path)
-        async with websocket as ws:
+        async with websocket:
             pass
         t1 = time()
         return t1 - t0
