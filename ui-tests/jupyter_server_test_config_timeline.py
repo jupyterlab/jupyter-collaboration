@@ -4,14 +4,10 @@
 """Server configuration for integration tests.
 
 !! Never use this configuration in production because it
-opens the server to the world and provides access to JupyterLab
+opens the server to the world and provide access to JupyterLab
 JavaScript objects through the global window variable.
 """
-import os
-from tempfile import mkdtemp
 from typing import Any
-import logging
-
 
 from jupyterlab.galata import configure_jupyter_server
 

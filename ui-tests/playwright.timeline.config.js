@@ -1,17 +1,12 @@
-const fs = require('fs');
-const path = require('path');
+/*
+ * Copyright (c) Jupyter Development Team.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
+/**
+ * Configuration for Playwright using default from @jupyterlab/galata
+ */
 const baseConfig = require('@jupyterlab/galata/lib/playwright-config');
-
-// Directory for timeline tests
-const timelineTestDir = path.resolve(
-  process.env.TIMELINE_TEST_DIR || '/tmp/galata-timeline-tests'
-);
-
-// Ensure the test directory exists
-if (!fs.existsSync(timelineTestDir)) {
-  fs.mkdirSync(timelineTestDir, { recursive: true });
-  console.log(`Created timeline test directory: ${timelineTestDir}`);
-}
 
 module.exports = {
   ...baseConfig,
@@ -32,14 +27,7 @@ module.exports = {
       name: 'timeline-tests',
       testMatch: 'tests/**/timeline-*.spec.ts',
       testIgnore: '**/.ipynb_checkpoints/**',
-      retries: process.env.CI ? 2 : 0,
-      timeout: 90000,
-      use: {
-        launchOptions: {
-          slowMo: 30,
-        },
-        tmpPath: timelineTestDir, // Set dynamic tmpPath
-      },
+      timeout: 120 * 1000,
     },
   ],
 };
