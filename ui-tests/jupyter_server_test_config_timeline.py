@@ -19,4 +19,3 @@ c.ServerApp.base_url = "/api/collaboration/timeline/"
 
 # Uncomment to set server log level to debug level
 # c.ServerApp.log_level = "DEBUG"
-

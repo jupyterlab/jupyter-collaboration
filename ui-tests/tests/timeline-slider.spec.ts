@@ -34,7 +34,7 @@ test.describe('Timeline Slider', () => {
   test('should fail if there are console errors when opening from path', async ({ page, tmpPath }) => {
     if (isTimeline) {
       console.log('Skipping this test.');
-      return; 
+      return;
     }
     const pageErrors = await capturePageErrors(page);
 
@@ -51,7 +51,7 @@ test.describe('Timeline Slider', () => {
 
     if (!isTimeline) {
       console.log('Skipping this test.');
-      return; 
+      return;
     }
 
     await page.goto('http://localhost:8888/api/collaboration/timeline')
@@ -69,5 +69,5 @@ test.describe('Timeline Slider', () => {
     await expect(slider).toBeVisible();
 
     expect(pageErrors).toHaveLength(0);
-  }); 
+  });
 });

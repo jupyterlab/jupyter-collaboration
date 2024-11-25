@@ -15,19 +15,19 @@ module.exports = {
     command: 'jlpm start:timeline',
     url: 'http://localhost:8888/api/collaboration/timeline/lab',
     timeout: 120 * 1000,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !process.env.CI
   },
   expect: {
     toMatchSnapshot: {
-      maxDiffPixelRatio: 0.01,
-    },
+      maxDiffPixelRatio: 0.01
+    }
   },
   projects: [
     {
       name: 'timeline-tests',
       testMatch: 'tests/**/timeline-*.spec.ts',
       testIgnore: '**/.ipynb_checkpoints/**',
-      timeout: 120 * 1000,
-    },
-  ],
+      timeout: 120 * 1000
+    }
+  ]
 };

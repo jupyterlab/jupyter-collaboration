@@ -27,7 +27,7 @@ export class TimelineWidget extends ReactWidget {
     this.provider = provider;
     this.contentType = contentType;
     this.format = format;
-    this.documentTimelineUrl = documentTimelineUrl
+    this.documentTimelineUrl = documentTimelineUrl;
     this.addClass('jp-timelineSliderWrapper');
   }
 
@@ -39,7 +39,7 @@ export class TimelineWidget extends ReactWidget {
         provider={this.provider}
         contentType={this.contentType}
         format={this.format}
-        documentTimelineUrl= {this.documentTimelineUrl}
+        documentTimelineUrl={this.documentTimelineUrl}
       />
     );
   }
