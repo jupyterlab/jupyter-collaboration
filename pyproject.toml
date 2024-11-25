@@ -36,11 +36,9 @@ docs = [
     "pydata-sphinx-theme"
 ]
 
-[tool.black]
+[tool.ruff]
 line-length = 100
-
-[tool.isort]
-profile = "black"
+exclude = ["binder"]
 
 [tool.hatch.version]
 source = "nodejs"
