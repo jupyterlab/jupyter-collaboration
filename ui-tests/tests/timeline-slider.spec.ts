@@ -47,7 +47,7 @@ test.describe('Timeline Slider', () => {
     expect(pageErrors).toHaveLength(0);
   });
 
-  test('should display without console errors when baseUrl is set', async ({ page, baseURL }) => {
+  test('should display in status bar without console errors when baseUrl is set', async ({ page, baseURL }) => {
 
     if (!isTimeline) {
       console.log('Skipping this test.');
