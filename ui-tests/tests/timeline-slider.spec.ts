@@ -29,8 +29,9 @@ const isTimeline = parseInt(isTimelineEnv)
 
 test.describe('Timeline Slider', () => {
 
-  isTimeline && test.use({ autoGoto: false })
-
+  if (isTimeline) {
+    test.use({ autoGoto: false });
+  }
   test('should fail if there are console errors when opening from path', async ({ page, tmpPath }) => {
     if (isTimeline) {
       console.log('Skipping this test.');
