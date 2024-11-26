@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 3.0.1
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@3.0.0...9802fd38b041cecb80e1f94be038a2bb798d25b1))
+
+### Bugs fixed
+
+- Fix timeline feature error when base url is set [#402](https://github.com/jupyterlab/jupyter-collaboration/pull/402) ([@Meriem-BenIsmail](https://github.com/Meriem-BenIsmail))
+- Fix open path error with timeline feature [#401](https://github.com/jupyterlab/jupyter-collaboration/pull/401) ([@Meriem-BenIsmail](https://github.com/Meriem-BenIsmail))
+
+### Maintenance and upkeep improvements
+
+- Replace flake8, pyupgrade, isort and black with ruff [#407](https://github.com/jupyterlab/jupyter-collaboration/pull/407) ([@davidbrochart](https://github.com/davidbrochart))
+- Fix tests [#404](https://github.com/jupyterlab/jupyter-collaboration/pull/404) ([@davidbrochart](https://github.com/davidbrochart))
+- Update CI [#396](https://github.com/jupyterlab/jupyter-collaboration/pull/396) ([@trungleduc](https://github.com/trungleduc))
+
+### Documentation improvements
+
+- Add `packages/collaborative-drive` to the typedoc config [#389](https://github.com/jupyterlab/jupyter-collaboration/pull/389) ([@jtpio](https://github.com/jtpio))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-10-29&to=2024-11-26&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-10-29..2024-11-26&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-10-29..2024-11-26&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajtpio+updated%3A2024-10-29..2024-11-26&type=Issues) | [@Meriem-BenIsmail](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AMeriem-BenIsmail+updated%3A2024-10-29..2024-11-26&type=Issues) | [@trungleduc](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Atrungleduc+updated%3A2024-10-29..2024-11-26&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 3.0.0
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@2.0.9...fc7cdfbf2c10f61ce4fe3001d8d12fb9f2291e08))
@@ -69,8 +96,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-03-28&to=2024-10-29&type=c))
 
 [@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2024-03-28..2024-10-29&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-03-28..2024-10-29&type=Issues) | [@echarles](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aecharles+updated%3A2024-03-28..2024-10-29&type=Issues) | [@ellisonbg](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aellisonbg+updated%3A2024-03-28..2024-10-29&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Afcollonval+updated%3A2024-03-28..2024-10-29&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-03-28..2024-10-29&type=Issues) | [@JasonWeill](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AJasonWeill+updated%3A2024-03-28..2024-10-29&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajtpio+updated%3A2024-03-28..2024-10-29&type=Issues) | [@jzhang20133](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajzhang20133+updated%3A2024-03-28..2024-10-29&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2024-03-28..2024-10-29&type=Issues) | [@martinRenou](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AmartinRenou+updated%3A2024-03-28..2024-10-29&type=Issues) | [@Meriem-BenIsmail](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AMeriem-BenIsmail+updated%3A2024-03-28..2024-10-29&type=Issues) | [@shrutiagarwal13](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ashrutiagarwal13+updated%3A2024-03-28..2024-10-29&type=Issues) | [@trungleduc](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Atrungleduc+updated%3A2024-03-28..2024-10-29&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AZsailer+updated%3A2024-03-28..2024-10-29&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 3.0.0rc1
 
