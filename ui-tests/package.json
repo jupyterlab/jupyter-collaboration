@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "start": "jupyter lab --config jupyter_server_test_config.py",
-    "test": "npx playwright test",
+    "start:timeline": "jupyter lab --config jupyter_server_test_config.py --ServerApp.base_url=/api/collaboration/timeline/",
+    "test": "npx playwright test --config=playwright.config.js",
+    "test:timeline": "npx playwright test --config=playwright.timeline.config.js",
     "test:update": "npx playwright test --update-snapshots"
   },
   "devDependencies": {

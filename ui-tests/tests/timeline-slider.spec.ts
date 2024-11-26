@@ -23,16 +23,50 @@ async function openNotebook(page: Page, notebookPath: string) {
   await page.waitForSelector('.jp-Notebook', { state: 'visible' });
 }
 
-test.describe('Open from Path', () => {
 
-  test('should fail if there are console errors', async ({ page, tmpPath }) => {
+const isTimelineEnv = process.env.TIMELINE_FEATURE || "0";
+const isTimeline = parseInt(isTimelineEnv)
+
+test.describe('Timeline Slider', () => {
+
+  if (isTimeline) {
+    test.use({ autoGoto: false });
+  }
+  test('should fail if there are console errors when opening from path', async ({ page, tmpPath }) => {
+    if (isTimeline) {
+      console.log('Skipping this test.');
+      return;
+    }
     const pageErrors = await capturePageErrors(page);
 
     await page.notebook.createNew();
-    await page.notebook.save();
     await page.notebook.close();
 
     await openNotebook(page, `${tmpPath}/Untitled.ipynb`);
+
+    expect(pageErrors).toHaveLength(0);
+  });
+
+  test('should display in status bar without console errors when baseUrl is set', async ({ page, baseURL }) => {
+
+    if (!isTimeline) {
+      console.log('Skipping this test.');
+      return;
+    }
+
+    await page.goto('http://localhost:8888/api/collaboration/timeline')
+
+    const pageErrors = await capturePageErrors(page);
+
+    await page.notebook.createNew();
+
+    const historyIcon = page.locator('.jp-mod-highlighted[title="Document Timeline"]');
+    await expect(historyIcon).toBeVisible();
+
+    await historyIcon.click();
+
+    const slider = page.locator('.jp-timestampDisplay');
+    await expect(slider).toBeVisible();
 
     expect(pageErrors).toHaveLength(0);
   });

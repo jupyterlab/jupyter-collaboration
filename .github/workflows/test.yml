@@ -295,6 +295,7 @@ jobs:
         working-directory: ui-tests
         run: |
           jlpm test
+          TIMELINE_FEATURE=1 jlpm test:timeline
       - name: Upload Playwright Test report
         if: always()
         uses: actions/upload-artifact@v3
