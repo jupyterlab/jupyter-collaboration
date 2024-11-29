@@ -155,6 +155,65 @@ def rtc_connect_doc_client(jp_http_port, jp_base_url, rtc_fetch_session):
 
 
 @pytest.fixture
+def rtc_connect_fork_client(jp_http_port, jp_base_url, rtc_fetch_session):
+    async def _inner(room_id: str) -> Any:
+        return aconnect_ws(
+            f"http://127.0.0.1:{jp_http_port}{jp_base_url}api/collaboration/room/{room_id}"
+        )
+
+    return _inner
+
+
+@pytest.fixture
+def rtc_get_forks_client(jp_fetch):
+    async def _inner(root_roomid: str) -> Any:
+        return await jp_fetch(
+            "/api/collaboration/fork",
+            root_roomid,
+            method="GET",
+        )
+
+    return _inner
+
+
+@pytest.fixture
+def rtc_create_fork_client(jp_fetch):
+    async def _inner(
+        root_roomid: str,
+        synchronize: bool,
+        title: str | None = None,
+        description: str | None = None,
+    ) -> Any:
+        return await jp_fetch(
+            "/api/collaboration/fork",
+            root_roomid,
+            method="PUT",
+            body=json.dumps(
+                {
+                    "synchronize": synchronize,
+                    "title": title,
+                    "description": description,
+                }
+            ),
+        )
+
+    return _inner
+
+
+@pytest.fixture
+def rtc_delete_fork_client(jp_fetch):
+    async def _inner(fork_roomid: str, merge: bool) -> Any:
+        return await jp_fetch(
+            "/api/collaboration/fork",
+            fork_roomid,
+            method="DELETE",
+            params={"merge": str(merge).lower()},
+        )
+
+    return _inner
+
+
+@pytest.fixture
 def rtc_add_doc_to_store(rtc_connect_doc_client):
     event = Event()
 

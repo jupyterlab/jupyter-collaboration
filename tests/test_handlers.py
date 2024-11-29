@@ -7,9 +7,11 @@ import json
 from asyncio import Event, sleep
 from typing import Any
 
+from dirty_equals import IsStr
 from jupyter_events.logger import EventLogger
 from jupyter_server_ydoc.test_utils import Websocket
 from jupyter_ydoc import YUnicode
+from pycrdt import Text
 from pycrdt_websocket import WebsocketProvider
 
 
@@ -211,3 +213,147 @@ async def test_room_handler_doc_client_should_cleanup_room_file(
 
     await jp_serverapp.web_app.settings["jupyter_server_ydoc"].stop_extension()
     del jp_serverapp.web_app.settings["file_id_manager"]
+
+
+async def test_fork_handler(
+    jp_serverapp,
+    rtc_create_file,
+    rtc_connect_doc_client,
+    rtc_connect_fork_client,
+    rtc_get_forks_client,
+    rtc_create_fork_client,
+    rtc_delete_fork_client,
+    rtc_fetch_session,
+):
+    collected_data = []
+
+    async def my_listener(logger: EventLogger, schema_id: str, data: dict) -> None:
+        collected_data.append(data)
+
+    event_logger = jp_serverapp.event_logger
+    event_logger.add_listener(
+        schema_id="https://schema.jupyter.org/jupyter_collaboration/fork/v1",
+        listener=my_listener,
+    )
+
+    path, _ = await rtc_create_file("test.txt", "Hello")
+
+    root_connect_event = Event()
+
+    def _on_root_change(topic: str, event: Any) -> None:
+        if topic == "source":
+            root_connect_event.set()
+
+    root_ydoc = YUnicode()
+    root_ydoc.observe(_on_root_change)
+
+    resp = await rtc_fetch_session("text", "file", path)
+    data = json.loads(resp.body.decode("utf-8"))
+    file_id = data["fileId"]
+    root_roomid = f"text:file:{file_id}"
+
+    websocket, room_name = await rtc_connect_doc_client("text", "file", path)
+    async with websocket as ws, WebsocketProvider(root_ydoc.ydoc, Websocket(ws, room_name)):
+        await root_connect_event.wait()
+
+        resp = await rtc_create_fork_client(root_roomid, False, "my fork0", "is awesome0")
+        data = json.loads(resp.body.decode("utf-8"))
+        fork_roomid0 = data["fork_roomid"]
+
+        resp = await rtc_get_forks_client(root_roomid)
+        data = json.loads(resp.body.decode("utf-8"))
+        expected_data0 = {
+            fork_roomid0: {
+                "root_roomid": root_roomid,
+                "synchronize": False,
+                "title": "my fork0",
+                "description": "is awesome0",
+            }
+        }
+        assert data == expected_data0
+
+        assert collected_data == [
+            {
+                "username": IsStr(),
+                "fork_roomid": fork_roomid0,
+                "fork_info": expected_data0[fork_roomid0],
+                "action": "create",
+            }
+        ]
+
+        resp = await rtc_create_fork_client(root_roomid, True, "my fork1", "is awesome1")
+        data = json.loads(resp.body.decode("utf-8"))
+        fork_roomid1 = data["fork_roomid"]
+
+        resp = await rtc_get_forks_client(root_roomid)
+        data = json.loads(resp.body.decode("utf-8"))
+        expected_data1 = {
+            fork_roomid1: {
+                "root_roomid": root_roomid,
+                "synchronize": True,
+                "title": "my fork1",
+                "description": "is awesome1",
+            }
+        }
+        expected_data = dict(**expected_data0, **expected_data1)
+        assert data == expected_data
+
+        assert len(collected_data) == 2
+        assert collected_data[1] == {
+            "username": IsStr(),
+            "fork_roomid": fork_roomid1,
+            "fork_info": expected_data[fork_roomid1],
+            "action": "create",
+        }
+
+        fork_ydoc = YUnicode()
+        fork_connect_event = Event()
+
+        def _on_fork_change(topic: str, event: Any) -> None:
+            if topic == "source":
+                fork_connect_event.set()
+
+        fork_ydoc.observe(_on_fork_change)
+        fork_text = fork_ydoc.ydoc.get("source", type=Text)
+
+        async with await rtc_connect_fork_client(fork_roomid1) as ws, WebsocketProvider(
+            fork_ydoc.ydoc, Websocket(ws, fork_roomid1)
+        ):
+            await fork_connect_event.wait()
+            root_text = root_ydoc.ydoc.get("source", type=Text)
+            root_text += ", World!"
+            await sleep(0.1)
+            assert str(fork_text) == "Hello, World!"
+            fork_text += " Hi!"
+            await sleep(0.1)
+
+        await sleep(0.1)
+        assert str(root_text) == "Hello, World!"
+
+        await rtc_delete_fork_client(fork_roomid0, True)
+        await sleep(0.1)
+        assert str(root_text) == "Hello, World!"
+        resp = await rtc_get_forks_client(root_roomid)
+        data = json.loads(resp.body.decode("utf-8"))
+        assert data == expected_data1
+        assert len(collected_data) == 3
+        assert collected_data[2] == {
+            "username": IsStr(),
+            "fork_roomid": fork_roomid0,
+            "fork_info": expected_data[fork_roomid0],
+            "action": "delete",
+        }
+
+        await rtc_delete_fork_client(fork_roomid1, True)
+        await sleep(0.1)
+        assert str(root_text) == "Hello, World! Hi!"
+        resp = await rtc_get_forks_client(root_roomid)
+        data = json.loads(resp.body.decode("utf-8"))
+        assert data == {}
+        assert len(collected_data) == 4
+        assert collected_data[3] == {
+            "username": IsStr(),
+            "fork_roomid": fork_roomid1,
+            "fork_info": expected_data[fork_roomid1],
+            "action": "delete",
+        }
