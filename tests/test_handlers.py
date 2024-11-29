@@ -252,9 +252,8 @@ async def test_fork_handler(
     file_id = data["fileId"]
     root_roomid = f"text:file:{file_id}"
 
-    async with await rtc_connect_doc_client("text", "file", path) as ws, WebsocketProvider(
-        root_ydoc.ydoc, ws
-    ):
+    websocket, room_name = await rtc_connect_doc_client("text", "file", path)
+    async with websocket as ws, WebsocketProvider(root_ydoc.ydoc, Websocket(ws, room_name)):
         await root_connect_event.wait()
 
         resp = await rtc_create_fork_client(root_roomid, False, "my fork0", "is awesome0")
