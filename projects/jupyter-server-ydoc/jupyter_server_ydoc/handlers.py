@@ -27,6 +27,7 @@ from .stores import BaseYStore
 from .utils import (
     JUPYTER_COLLABORATION_AWARENESS_EVENTS_URI,
     JUPYTER_COLLABORATION_EVENTS_URI,
+    JUPYTER_COLLABORATION_FORK_EVENTS_URI,
     LogLevel,
     MessageType,
     RoomMessages,
@@ -41,6 +42,7 @@ YFILE = YDOCS["file"]
 
 SERVER_SESSION = str(uuid.uuid4())
 FORK_DOCUMENTS = {}
+FORK_ROOMS: dict[str, dict[str, str]] = {}
 
 
 class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
@@ -625,3 +627,101 @@ class UndoRedoHandler(APIHandler):
         if room_id in FORK_DOCUMENTS:
             del FORK_DOCUMENTS[room_id]
             self.log.info(f"Fork Document for {room_id} has been removed.")
+
+
+class DocForkHandler(APIHandler):
+    """
+    Jupyter Server handler to:
+    - create a fork of a root document (optionally synchronizing with the root document),
+    - delete a fork of a root document (optionally merging back in the root document).
+    - get fork IDs of a root document.
+    """
+
+    auth_resource = "contents"
+
+    def initialize(
+        self,
+        ywebsocket_server: JupyterWebsocketServer,
+    ) -> None:
+        self._websocket_server = ywebsocket_server
+
+    @web.authenticated
+    @authorized
+    async def get(self, root_roomid):
+        """
+        Returns a dictionary of fork room ID to fork room information for the given root room ID.
+        """
+        self.write(
+            {
+                fork_roomid: fork_info
+                for fork_roomid, fork_info in FORK_ROOMS.items()
+                if fork_info["root_roomid"] == root_roomid
+            }
+        )
+
+    @web.authenticated
+    @authorized
+    async def put(self, root_roomid):
+        """
+        Creates a fork of a root document and returns its ID.
+        Optionally keeps the fork in sync with the root.
+        """
+        fork_roomid = uuid4().hex
+        root_room = await self._websocket_server.get_room(root_roomid)
+        update = root_room.ydoc.get_update()
+        fork_ydoc = Doc()
+        fork_ydoc.apply_update(update)
+        model = self.get_json_body()
+        synchronize = model.get("synchronize", False)
+        if synchronize:
+            root_room.ydoc.observe(lambda event: fork_ydoc.apply_update(event.update))
+        FORK_ROOMS[fork_roomid] = fork_info = {
+            "root_roomid": root_roomid,
+            "synchronize": synchronize,
+            "title": model.get("title", ""),
+            "description": model.get("description", ""),
+        }
+        fork_room = YRoom(ydoc=fork_ydoc)
+        self._websocket_server.rooms[fork_roomid] = fork_room
+        await self._websocket_server.start_room(fork_room)
+        self._emit_fork_event(self.current_user.username, fork_roomid, fork_info, "create")
+        data = json.dumps(
+            {
+                "sessionId": SERVER_SESSION,
+                "fork_roomid": fork_roomid,
+                "fork_info": fork_info,
+            }
+        )
+        self.set_status(201)
+        return self.finish(data)
+
+    @web.authenticated
+    @authorized
+    async def delete(self, fork_roomid):
+        """
+        Deletes a forked document, and optionally merges it back in the root document.
+        """
+        fork_info = FORK_ROOMS[fork_roomid]
+        root_roomid = fork_info["root_roomid"]
+        del FORK_ROOMS[fork_roomid]
+        if self.get_query_argument("merge") == "true":
+            root_room = await self._websocket_server.get_room(root_roomid)
+            root_ydoc = root_room.ydoc
+            fork_room = await self._websocket_server.get_room(fork_roomid)
+            fork_ydoc = fork_room.ydoc
+            fork_update = fork_ydoc.get_update()
+            root_ydoc.apply_update(fork_update)
+        await self._websocket_server.delete_room(name=fork_roomid)
+        self._emit_fork_event(self.current_user.username, fork_roomid, fork_info, "delete")
+        self.set_status(200)
+
+    def _emit_fork_event(
+        self, username: str, fork_roomid: str, fork_info: dict[str, str], action: str
+    ) -> None:
+        data = {
+            "username": username,
+            "fork_roomid": fork_roomid,
+            "fork_info": fork_info,
+            "action": action,
+        }
+        self.event_logger.emit(schema_id=JUPYTER_COLLABORATION_FORK_EVENTS_URI, data=data)

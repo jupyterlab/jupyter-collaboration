@@ -76,7 +76,6 @@ export const TimelineSliderComponent: React.FC<Props> = ({
           setData(data);
           setCurrentTimestampIndex(data.timestamps.length - 1);
           provider.connectToForkDoc(data.forkRoom, data.sessionId);
-
           sessionRef.current = await requestDocSession(
             format,
             contentType,
