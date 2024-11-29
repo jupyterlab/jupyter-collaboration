@@ -158,7 +158,7 @@ def rtc_connect_doc_client(jp_http_port, jp_base_url, rtc_fetch_session):
 def rtc_connect_fork_client(jp_http_port, jp_base_url, rtc_fetch_session):
     async def _inner(room_id: str) -> Any:
         return aconnect_ws(
-            f"ws://127.0.0.1:{jp_http_port}{jp_base_url}api/collaboration/room/{room_id}"
+            f"http://127.0.0.1:{jp_http_port}{jp_base_url}api/collaboration/room/{room_id}"
         )
 
     return _inner

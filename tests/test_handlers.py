@@ -325,6 +325,7 @@ async def test_fork_handler(
             await sleep(0.1)
             assert str(fork_text) == "Hello, World!"
             fork_text += " Hi!"
+            await sleep(0.1)
 
         await sleep(0.1)
         assert str(root_text) == "Hello, World!"
