@@ -206,7 +206,8 @@ export class YDrive extends Drive implements ICollaborativeDrive {
         // A change in hash signifies that a save occurred on the server-side
         // (e.g. a collaborator performed the save) - we want to notify the
         // observers about this change so that they can store the new hash value.
-        const model = await this.get(options.path, { content: false });
+        const newPath = sharedModel.state.path ?? options.path;
+        const model = await this.get(newPath as string, { content: false });
 
         this._ydriveFileChanged.emit({
           type: 'save',
