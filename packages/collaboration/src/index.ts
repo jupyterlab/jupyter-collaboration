@@ -11,3 +11,4 @@ export * from './cursors';
 export * from './menu';
 export * from './sharedlink';
 export * from './userinfopanel';
+export * from './users-item';
