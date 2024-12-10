@@ -5,6 +5,7 @@
 
 @import url('./menu.css');
 @import url('./sidepanel.css');
+@import url('./users-item.css');
 
 .jp-shared-link-body {
     user-select: none;
