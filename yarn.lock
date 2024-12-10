@@ -2020,9 +2020,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@jupyter/collaboration-extension@workspace:packages/collaboration-extension"
   dependencies:
-    "@jupyter/collaboration": ^3.1.0-rc.0
-    "@jupyter/collaborative-drive": ^3.1.0-rc.0
-    "@jupyter/docprovider": ^3.1.0-rc.0
+    "@jupyter/collaboration": ^3.1.0
+    "@jupyter/collaborative-drive": ^3.1.0
+    "@jupyter/docprovider": ^3.1.0
     "@jupyter/ydoc": ^2.0.0 || ^3.0.0
     "@jupyterlab/application": ^4.2.0
     "@jupyterlab/apputils": ^4.2.0
@@ -2044,7 +2044,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@jupyter/collaboration@^3.1.0-rc.0, @jupyter/collaboration@workspace:packages/collaboration":
+"@jupyter/collaboration@^3.1.0, @jupyter/collaboration@workspace:packages/collaboration":
   version: 0.0.0-use.local
   resolution: "@jupyter/collaboration@workspace:packages/collaboration"
   dependencies:
@@ -2068,7 +2068,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@jupyter/collaborative-drive@^3.1.0-rc.0, @jupyter/collaborative-drive@workspace:packages/collaborative-drive":
+"@jupyter/collaborative-drive@^3.1.0, @jupyter/collaborative-drive@workspace:packages/collaborative-drive":
   version: 0.0.0-use.local
   resolution: "@jupyter/collaborative-drive@workspace:packages/collaborative-drive"
   dependencies:
@@ -2085,8 +2085,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@jupyter/docprovider-extension@workspace:packages/docprovider-extension"
   dependencies:
-    "@jupyter/collaborative-drive": ^3.1.0-rc.0
-    "@jupyter/docprovider": ^3.1.0-rc.0
+    "@jupyter/collaborative-drive": ^3.1.0
+    "@jupyter/docprovider": ^3.1.0
     "@jupyter/ydoc": ^2.0.0 || ^3.0.0
     "@jupyterlab/application": ^4.2.0
     "@jupyterlab/apputils": ^4.2.0
@@ -2109,11 +2109,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@jupyter/docprovider@^3.1.0-rc.0, @jupyter/docprovider@workspace:packages/docprovider":
+"@jupyter/docprovider@^3.1.0, @jupyter/docprovider@workspace:packages/docprovider":
   version: 0.0.0-use.local
   resolution: "@jupyter/docprovider@workspace:packages/docprovider"
   dependencies:
-    "@jupyter/collaborative-drive": ^3.1.0-rc.0
+    "@jupyter/collaborative-drive": ^3.1.0
     "@jupyter/ydoc": ^2.0.0 || ^3.0.0
     "@jupyterlab/apputils": ^4.2.0
     "@jupyterlab/cells": ^4.2.0
