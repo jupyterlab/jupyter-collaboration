@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { ICollaborativeDrive } from '@jupyter/collaborative-drive';
+import { ICollaborativeContentProvider } from '@jupyter/collaborative-drive';
 import {
   ForkManager,
   IForkManager,
@@ -18,11 +18,14 @@ import {
 export const forkManagerPlugin: JupyterFrontEndPlugin<IForkManager> = {
   id: '@jupyter/docprovider-extension:forkManager',
   autoStart: true,
-  requires: [ICollaborativeDrive],
+  requires: [ICollaborativeContentProvider],
   provides: IForkManagerToken,
-  activate: (app: JupyterFrontEnd, drive: ICollaborativeDrive) => {
+  activate: (
+    app: JupyterFrontEnd,
+    contentProvider: ICollaborativeContentProvider
+  ) => {
     const eventManager = app.serviceManager.events;
-    const manager = new ForkManager({ drive, eventManager });
+    const manager = new ForkManager({ contentProvider, eventManager });
     return manager;
   }
 };
