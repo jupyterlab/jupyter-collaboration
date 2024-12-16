@@ -65,21 +65,14 @@ export class RtcContentProvider
     */
   }
 
+  /**
+   * SharedModel factory for the content provider.
+   */
+  readonly sharedModelFactory: ISharedModelFactory;
+
   get providers(): Map<string, IDocumentProvider> {
     return this._providers;
   }
-
-  /**
-   * A signal emitted when a file operation takes place.
-   */
-  get fileChanged(): ISignal<this, Contents.IChangedArgs> {
-    return this._ydriveFileChanged;
-  }
-
-  /**
-   * SharedModel factory for the YDrive.
-   */
-  readonly sharedModelFactory: ISharedModelFactory;
 
   /**
    * Get a file or directory.
@@ -94,7 +87,6 @@ export class RtcContentProvider
     localPath: string,
     options?: Contents.IFetchOptions
   ): Promise<Contents.IModel> {
-    console.log('RTC get');
     if (options && options.format && options.type) {
       const key = `${options.format}:${options.type}:${localPath}`;
       const provider = this._providers.get(key);
@@ -148,6 +140,13 @@ export class RtcContentProvider
     }
 
     return super.save(localPath, options);
+  }
+
+  /**
+   * A signal emitted when a file operation takes place.
+   */
+  get fileChanged(): ISignal<this, Contents.IChangedArgs> {
+    return this._ydriveFileChanged;
   }
 
   private _onCreate = (
