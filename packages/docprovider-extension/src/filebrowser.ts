@@ -183,38 +183,43 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
         documentPath: string,
         documentId: string
       ) => {
-        // TODO: check if documentId uses RTC
-        if (documentId) {
-          if (contentProvider) {
-            // Dispose of the previous timelineWidget if it exists
-            if (timelineWidget) {
-              timelineWidget.dispose();
-              timelineWidget = null;
-            }
+        if (!documentId) {
+          return;
+        }
+        // Dispose of the previous timelineWidget if it exists
+        if (timelineWidget) {
+          timelineWidget.dispose();
+          timelineWidget = null;
+        }
 
-            const [format, type] = documentId.split(':');
-            const provider = contentProvider.providers.get(
-              `${format}:${type}:${documentPath}`
-            ) as unknown as IForkProvider;
-            const fullPath = URLExt.join(
-              app.serviceManager.serverSettings.baseUrl,
-              DOCUMENT_TIMELINE_URL,
-              documentPath
-            );
+        const [format, type] = documentId.split(':');
+        const provider = contentProvider.providers.get(
+          `${format}:${type}:${documentPath}`
+        );
+        if (!provider) {
+          // this can happen for documents which are not provisioned with RTC
+          return;
+        }
 
-            timelineWidget = new TimelineWidget(
-              fullPath,
-              provider,
-              provider.contentType,
-              provider.format,
-              DOCUMENT_TIMELINE_URL
-            );
+        const forkProvider = provider as unknown as IForkProvider;
 
-            const elt = document.getElementById('jp-slider-status-bar');
-            if (elt && !timelineWidget.isAttached) {
-              Widget.attach(timelineWidget, elt);
-            }
-          }
+        const fullPath = URLExt.join(
+          app.serviceManager.serverSettings.baseUrl,
+          DOCUMENT_TIMELINE_URL,
+          documentPath
+        );
+
+        timelineWidget = new TimelineWidget(
+          fullPath,
+          forkProvider,
+          forkProvider.contentType,
+          forkProvider.format,
+          DOCUMENT_TIMELINE_URL
+        );
+
+        const elt = document.getElementById('jp-slider-status-bar');
+        if (elt && !timelineWidget.isAttached) {
+          Widget.attach(timelineWidget, elt);
         }
       };
 
@@ -257,13 +262,13 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
                 currentWidget.context &&
                 typeof currentWidget.context.path === 'string'
               ) {
-                const documentPath = currentWidget.context.path;
                 const documentId =
                   currentWidget.context.model.sharedModel.getState(
                     'document_id'
                   ) as string;
-                // TODO
-                return !!documentId && documentPath.split(':')[0] === 'RTC';
+                return (
+                  !!documentId && !!currentWidget.context.model.collaborative
+                );
               }
               return false;
             }

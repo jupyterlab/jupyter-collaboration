@@ -57,12 +57,6 @@ export class RtcContentProvider
     this._serverSettings = options.serverSettings;
     this.sharedModelFactory = new SharedModelFactory(this._onCreate);
     this._providers = new Map<string, WebSocketProvider>();
-    /*
-    super.fileChanged.connect((_, change) => {
-      // pass through any events from the Drive superclass
-      this._ydriveFileChanged.emit(change);
-    });
-    */
   }
 
   /**
