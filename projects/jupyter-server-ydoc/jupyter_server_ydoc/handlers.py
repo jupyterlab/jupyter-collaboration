@@ -676,7 +676,10 @@ class DocForkHandler(APIHandler):
         """
         Deletes a forked document, and optionally merges it back in the root document.
         """
-        fork_info = FORK_ROOMS[fork_roomid]
+        fork_info = FORK_ROOMS.get(fork_roomid, None)
+        if fork_info is None:
+            self.set_status(404)
+            return self.finish({"code": 404, "error": "Fork room does not exist"})
         root_roomid = fork_info["root_roomid"]
         del FORK_ROOMS[fork_roomid]
         if self.get_query_argument("merge") == "true":
