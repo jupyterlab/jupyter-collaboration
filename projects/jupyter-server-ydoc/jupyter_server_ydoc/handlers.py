@@ -642,7 +642,12 @@ class DocForkHandler(APIHandler):
         Optionally keeps the fork in sync with the root.
         """
         fork_roomid = uuid4().hex
-        root_room = await self._websocket_server.get_room(root_roomid)
+        try:
+            root_room = await self._websocket_server.get_room(root_roomid)
+        except RoomNotFound:
+            self.set_status(404)
+            return self.finish({"code": 404, "error": "Root room not found"})
+
         update = root_room.ydoc.get_update()
         fork_ydoc = Doc()
         fork_ydoc.apply_update(update)
@@ -676,7 +681,10 @@ class DocForkHandler(APIHandler):
         """
         Deletes a forked document, and optionally merges it back in the root document.
         """
-        fork_info = FORK_ROOMS[fork_roomid]
+        fork_info = FORK_ROOMS.get(fork_roomid, None)
+        if fork_info is None:
+            self.set_status(404)
+            return self.finish({"code": 404, "error": "Fork room not found"})
         root_roomid = fork_info["root_roomid"]
         del FORK_ROOMS[fork_roomid]
         if self.get_query_argument("merge") == "true":
