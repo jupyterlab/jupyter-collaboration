@@ -4,45 +4,44 @@
  */
 
 import {
-  ILabShell,
-  IRouter,
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
 import { Dialog, showDialog } from '@jupyterlab/apputils';
 import { DocumentWidget, IDocumentWidget } from '@jupyterlab/docregistry';
 import { Widget } from '@lumino/widgets';
-import {
-  FileBrowser,
-  IDefaultFileBrowser,
-  IFileBrowserFactory
-} from '@jupyterlab/filebrowser';
-import { IStatusBar } from '@jupyterlab/statusbar';
 
-import { IEditorTracker } from '@jupyterlab/fileeditor';
+import { IStatusBar } from '@jupyterlab/statusbar';
+import { ContentsManager } from '@jupyterlab/services';
+
+import {
+  IEditorTracker,
+  IEditorWidgetFactory,
+  FileEditorFactory
+} from '@jupyterlab/fileeditor';
 import { ILogger, ILoggerRegistry } from '@jupyterlab/logconsole';
-import { INotebookTracker } from '@jupyterlab/notebook';
+import {
+  INotebookTracker,
+  INotebookWidgetFactory,
+  NotebookWidgetFactory
+} from '@jupyterlab/notebook';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { ITranslator, nullTranslator } from '@jupyterlab/translation';
-
-import { CommandRegistry } from '@lumino/commands';
 
 import { YFile, YNotebook } from '@jupyter/ydoc';
 
 import {
-  ICollaborativeDrive,
+  ICollaborativeContentProvider,
   IGlobalAwareness
 } from '@jupyter/collaborative-drive';
-import { IForkProvider, TimelineWidget, YDrive } from '@jupyter/docprovider';
+import {
+  IForkProvider,
+  TimelineWidget,
+  RtcContentProvider
+} from '@jupyter/docprovider';
 import { Awareness } from 'y-protocols/awareness';
 import { URLExt } from '@jupyterlab/coreutils';
 
-/**
- * The command IDs used by the file browser plugin.
- */
-namespace CommandIDs {
-  export const openPath = 'filebrowser:open-path';
-}
 const DOCUMENT_TIMELINE_URL = 'api/collaboration/timeline';
 
 const TWO_SESSIONS_WARNING =
@@ -50,26 +49,43 @@ const TWO_SESSIONS_WARNING =
   'This is not supported. Please close this view; otherwise, ' +
   'some of your edits may not be saved properly.';
 
-/**
- * The default collaborative drive provider.
- */
-export const drive: JupyterFrontEndPlugin<ICollaborativeDrive> = {
-  id: '@jupyter/docprovider-extension:drive',
-  description: 'The default collaborative drive provider',
-  provides: ICollaborativeDrive,
-  requires: [ITranslator],
-  optional: [IGlobalAwareness],
-  activate: (
-    app: JupyterFrontEnd,
-    translator: ITranslator,
-    globalAwareness: Awareness | null
-  ): ICollaborativeDrive => {
-    const trans = translator.load('jupyter_collaboration');
-    const drive = new YDrive(app.serviceManager.user, trans, globalAwareness);
-    app.serviceManager.contents.addDrive(drive);
-    return drive;
-  }
-};
+export const rtcContentProvider: JupyterFrontEndPlugin<ICollaborativeContentProvider> =
+  {
+    id: '@jupyter/docprovider-extension:content-provider',
+    description: 'The RTC content provider',
+    provides: ICollaborativeContentProvider,
+    requires: [ITranslator],
+    optional: [IGlobalAwareness],
+    activate: (
+      app: JupyterFrontEnd,
+      translator: ITranslator,
+      globalAwareness: Awareness | null
+    ): ICollaborativeContentProvider => {
+      const trans = translator.load('jupyter_collaboration');
+      const defaultDrive = (app.serviceManager.contents as ContentsManager)
+        .defaultDrive;
+      if (!defaultDrive) {
+        throw Error(
+          'Cannot initialize content provider: default drive property not accessible on contents manager instance.'
+        );
+      }
+      const registry = defaultDrive.contentProviderRegistry;
+      if (!registry) {
+        throw Error(
+          'Cannot initialize content provider: no content provider registry.'
+        );
+      }
+      const rtcContentProvider = new RtcContentProvider({
+        apiEndpoint: '/api/contents',
+        serverSettings: defaultDrive.serverSettings,
+        user: app.serviceManager.user,
+        trans,
+        globalAwareness
+      });
+      registry.register('rtc', rtcContentProvider);
+      return rtcContentProvider;
+    }
+  };
 
 /**
  * Plugin to register the shared model factory for the content type 'file'.
@@ -79,13 +95,20 @@ export const yfile: JupyterFrontEndPlugin<void> = {
   description:
     "Plugin to register the shared model factory for the content type 'file'",
   autoStart: true,
-  requires: [ICollaborativeDrive],
-  optional: [],
-  activate: (app: JupyterFrontEnd, drive: ICollaborativeDrive): void => {
+  requires: [ICollaborativeContentProvider, IEditorWidgetFactory],
+  activate: (
+    app: JupyterFrontEnd,
+    contentProvider: ICollaborativeContentProvider,
+    editorFactory: FileEditorFactory.IFactory
+  ): void => {
     const yFileFactory = () => {
       return new YFile();
     };
-    drive.sharedModelFactory.registerDocumentFactory('file', yFileFactory);
+    contentProvider.sharedModelFactory.registerDocumentFactory(
+      'file',
+      yFileFactory
+    );
+    editorFactory.contentProviderId = 'rtc';
   }
 };
 
@@ -97,11 +120,12 @@ export const ynotebook: JupyterFrontEndPlugin<void> = {
   description:
     "Plugin to register the shared model factory for the content type 'notebook'",
   autoStart: true,
-  requires: [ICollaborativeDrive],
+  requires: [ICollaborativeContentProvider, INotebookWidgetFactory],
   optional: [ISettingRegistry],
   activate: (
     app: JupyterFrontEnd,
-    drive: YDrive,
+    contentProvider: ICollaborativeContentProvider,
+    notebookFactory: NotebookWidgetFactory.IFactory,
     settingRegistry: ISettingRegistry | null
   ): void => {
     let disableDocumentWideUndoRedo = true;
@@ -131,10 +155,11 @@ export const ynotebook: JupyterFrontEndPlugin<void> = {
         disableDocumentWideUndoRedo
       });
     };
-    drive.sharedModelFactory.registerDocumentFactory(
+    contentProvider.sharedModelFactory.registerDocumentFactory(
       'notebook',
       yNotebookFactory
     );
+    notebookFactory.contentProviderId = 'rtc';
   }
 };
 /**
@@ -144,11 +169,11 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
   id: '@jupyter/docprovider-extension:statusBarTimeline',
   description: 'Plugin to add a timeline slider to the status bar',
   autoStart: true,
-  requires: [IStatusBar, ICollaborativeDrive],
+  requires: [IStatusBar, ICollaborativeContentProvider],
   activate: async (
     app: JupyterFrontEnd,
     statusBar: IStatusBar,
-    drive: ICollaborativeDrive
+    contentProvider: ICollaborativeContentProvider
   ): Promise<void> => {
     try {
       let sliderItem: Widget | null = null;
@@ -158,39 +183,43 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
         documentPath: string,
         documentId: string
       ) => {
-        if (documentId && documentPath.split(':')[0] === 'RTC') {
-          if (drive) {
-            // Remove 'RTC:' from document path
-            documentPath = documentPath.slice(drive.name.length + 1);
-            // Dispose of the previous timelineWidget if it exists
-            if (timelineWidget) {
-              timelineWidget.dispose();
-              timelineWidget = null;
-            }
+        if (!documentId) {
+          return;
+        }
+        // Dispose of the previous timelineWidget if it exists
+        if (timelineWidget) {
+          timelineWidget.dispose();
+          timelineWidget = null;
+        }
 
-            const [format, type] = documentId.split(':');
-            const provider = drive.providers.get(
-              `${format}:${type}:${documentPath}`
-            ) as unknown as IForkProvider;
-            const fullPath = URLExt.join(
-              app.serviceManager.serverSettings.baseUrl,
-              DOCUMENT_TIMELINE_URL,
-              documentPath
-            );
+        const [format, type] = documentId.split(':');
+        const provider = contentProvider.providers.get(
+          `${format}:${type}:${documentPath}`
+        );
+        if (!provider) {
+          // this can happen for documents which are not provisioned with RTC
+          return;
+        }
 
-            timelineWidget = new TimelineWidget(
-              fullPath,
-              provider,
-              provider.contentType,
-              provider.format,
-              DOCUMENT_TIMELINE_URL
-            );
+        const forkProvider = provider as unknown as IForkProvider;
 
-            const elt = document.getElementById('jp-slider-status-bar');
-            if (elt && !timelineWidget.isAttached) {
-              Widget.attach(timelineWidget, elt);
-            }
-          }
+        const fullPath = URLExt.join(
+          app.serviceManager.serverSettings.baseUrl,
+          DOCUMENT_TIMELINE_URL,
+          documentPath
+        );
+
+        timelineWidget = new TimelineWidget(
+          fullPath,
+          forkProvider,
+          forkProvider.contentType,
+          forkProvider.format,
+          DOCUMENT_TIMELINE_URL
+        );
+
+        const elt = document.getElementById('jp-slider-status-bar');
+        if (elt && !timelineWidget.isAttached) {
+          Widget.attach(timelineWidget, elt);
         }
       };
 
@@ -233,12 +262,13 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
                 currentWidget.context &&
                 typeof currentWidget.context.path === 'string'
               ) {
-                const documentPath = currentWidget.context.path;
                 const documentId =
                   currentWidget.context.model.sharedModel.getState(
                     'document_id'
                   ) as string;
-                return !!documentId && documentPath.split(':')[0] === 'RTC';
+                return (
+                  !!documentId && !!currentWidget.context.model.collaborative
+                );
               }
               return false;
             }
@@ -248,52 +278,6 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
     } catch (error) {
       console.error('Failed to activate statusBarTimeline plugin:', error);
     }
-  }
-};
-
-/**
- * The default file browser factory provider.
- */
-export const defaultFileBrowser: JupyterFrontEndPlugin<IDefaultFileBrowser> = {
-  id: '@jupyter/docprovider-extension:defaultFileBrowser',
-  description: 'The default file browser factory provider',
-  provides: IDefaultFileBrowser,
-  requires: [ICollaborativeDrive, IFileBrowserFactory],
-  optional: [IRouter, JupyterFrontEnd.ITreeResolver, ILabShell, ITranslator],
-  activate: async (
-    app: JupyterFrontEnd,
-    drive: YDrive,
-    fileBrowserFactory: IFileBrowserFactory,
-    router: IRouter | null,
-    tree: JupyterFrontEnd.ITreeResolver | null,
-    labShell: ILabShell | null,
-    translator: ITranslator | null
-  ): Promise<IDefaultFileBrowser> => {
-    const { commands } = app;
-    const trans = (translator ?? nullTranslator).load('jupyterlab');
-    app.serviceManager.contents.addDrive(drive);
-
-    // Manually restore and load the default file browser.
-    const defaultBrowser = fileBrowserFactory.createFileBrowser('filebrowser', {
-      auto: false,
-      restore: false,
-      driveName: drive.name
-    });
-    defaultBrowser.node.setAttribute('role', 'region');
-    defaultBrowser.node.setAttribute(
-      'aria-label',
-      trans.__('File Browser Section')
-    );
-
-    void Private.restoreBrowser(
-      defaultBrowser,
-      commands,
-      router,
-      tree,
-      labShell
-    );
-
-    return defaultBrowser;
   }
 };
 
@@ -383,59 +367,3 @@ export const logger: JupyterFrontEndPlugin<void> = {
     })();
   }
 };
-
-namespace Private {
-  /**
-   * Restores file browser state and overrides state if tree resolver resolves.
-   */
-  export async function restoreBrowser(
-    browser: FileBrowser,
-    commands: CommandRegistry,
-    router: IRouter | null,
-    tree: JupyterFrontEnd.ITreeResolver | null,
-    labShell: ILabShell | null
-  ): Promise<void> {
-    const restoring = 'jp-mod-restoring';
-
-    browser.addClass(restoring);
-
-    if (!router) {
-      await browser.model.restore(browser.id);
-      await browser.model.refresh();
-      browser.removeClass(restoring);
-      return;
-    }
-
-    const listener = async () => {
-      router.routed.disconnect(listener);
-
-      const paths = await tree?.paths;
-
-      if (paths?.file || paths?.browser) {
-        // Restore the model without populating it.
-        await browser.model.restore(browser.id, false);
-        if (paths.file) {
-          await commands.execute(CommandIDs.openPath, {
-            path: paths.file,
-            dontShowBrowser: true
-          });
-        }
-        if (paths.browser) {
-          await commands.execute(CommandIDs.openPath, {
-            path: paths.browser,
-            dontShowBrowser: true
-          });
-        }
-      } else {
-        await browser.model.restore(browser.id);
-        await browser.model.refresh();
-      }
-      browser.removeClass(restoring);
-
-      if (labShell?.isEmpty('main')) {
-        void commands.execute('launcher:create');
-      }
-    };
-    router.routed.connect(listener);
-  }
-}

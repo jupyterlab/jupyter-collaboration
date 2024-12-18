@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { ICollaborativeDrive } from '@jupyter/collaborative-drive';
+import { ICollaborativeContentProvider } from '@jupyter/collaborative-drive';
 import { URLExt } from '@jupyterlab/coreutils';
 import { Event } from '@jupyterlab/services';
 import { ISignal, Signal } from '@lumino/signaling';
@@ -22,8 +22,8 @@ export const JUPYTER_COLLABORATION_FORK_EVENTS_URI =
 
 export class ForkManager implements IForkManager {
   constructor(options: ForkManager.IOptions) {
-    const { drive, eventManager } = options;
-    this._drive = drive;
+    const { contentProvider, eventManager } = options;
+    this._contentProvider = contentProvider;
     this._eventManager = eventManager;
     this._eventManager.stream.connect(this._handleEvent, this);
   }
@@ -81,14 +81,12 @@ export class ForkManager implements IForkManager {
     type: string;
   }): IForkProvider | undefined {
     const { documentPath, format, type } = options;
-    const drive = this._drive;
-    if (drive) {
-      const driveName = drive.name;
-      let docPath = documentPath;
-      if (documentPath.startsWith(driveName)) {
-        docPath = documentPath.slice(driveName.length + 1);
-      }
-      const provider = drive.providers.get(`${format}:${type}:${docPath}`);
+    const contentProvider = this._contentProvider;
+    if (contentProvider) {
+      const docPath = documentPath;
+      const provider = contentProvider.providers.get(
+        `${format}:${type}:${docPath}`
+      );
       return provider as IForkProvider | undefined;
     }
     return;
@@ -112,7 +110,7 @@ export class ForkManager implements IForkManager {
   }
 
   private _disposed = false;
-  private _drive: ICollaborativeDrive | undefined;
+  private _contentProvider: ICollaborativeContentProvider | undefined;
   private _eventManager: Event.IManager | undefined;
   private _forkAddedSignal = new Signal<ForkManager, IForkChangedEvent>(this);
   private _forkDeletedSignal = new Signal<ForkManager, IForkChangedEvent>(this);
@@ -120,7 +118,7 @@ export class ForkManager implements IForkManager {
 
 export namespace ForkManager {
   export interface IOptions {
-    drive: ICollaborativeDrive;
+    contentProvider: ICollaborativeContentProvider;
     eventManager: Event.IManager;
   }
 }
