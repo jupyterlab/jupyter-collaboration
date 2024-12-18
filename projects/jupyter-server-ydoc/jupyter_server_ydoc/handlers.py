@@ -646,7 +646,7 @@ class DocForkHandler(APIHandler):
             root_room = await self._websocket_server.get_room(root_roomid)
         except RoomNotFound:
             self.set_status(404)
-            return self.finish({"code": 404, "error": "Room not found"})
+            return self.finish({"code": 404, "error": "Root room not found"})
 
         update = root_room.ydoc.get_update()
         fork_ydoc = Doc()
@@ -684,7 +684,7 @@ class DocForkHandler(APIHandler):
         fork_info = FORK_ROOMS.get(fork_roomid, None)
         if fork_info is None:
             self.set_status(404)
-            return self.finish({"code": 404, "error": "Fork room does not exist"})
+            return self.finish({"code": 404, "error": "Fork room not found"})
         root_roomid = fork_info["root_roomid"]
         del FORK_ROOMS[fork_roomid]
         if self.get_query_argument("merge") == "true":
