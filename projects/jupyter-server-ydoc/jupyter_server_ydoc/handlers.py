@@ -642,7 +642,12 @@ class DocForkHandler(APIHandler):
         Optionally keeps the fork in sync with the root.
         """
         fork_roomid = uuid4().hex
-        root_room = await self._websocket_server.get_room(root_roomid)
+        try:
+            root_room = await self._websocket_server.get_room(root_roomid)
+        except RoomNotFound:
+            self.set_status(404)
+            self.finish({"code": 404, "error": "Room not found"})
+
         update = root_room.ydoc.get_update()
         fork_ydoc = Doc()
         fork_ydoc.apply_update(update)
