@@ -262,13 +262,8 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
                 currentWidget.context &&
                 typeof currentWidget.context.path === 'string'
               ) {
-                const documentId =
-                  currentWidget.context.model.sharedModel.getState(
-                    'document_id'
-                  ) as string;
-                return (
-                  !!documentId && !!currentWidget.context.model.collaborative
-                );
+                const documentPath = currentWidget.context.path;
+                return documentPath.split(':')[0] === 'RTC';
               }
               return false;
             }
