@@ -30,7 +30,7 @@ test = [
     "jupyter-server-ydoc[test] @ {root:uri}/projects/jupyter-server-ydoc",
 ]
 docs = [
-    "jupyterlab>=4.0.0",
+    "jupyterlab>=4.4.0a2",
     "sphinx",
     "myst-parser",
     "pydata-sphinx-theme"
