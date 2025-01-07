@@ -27,7 +27,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install "jupyterlab>=4.0.0,<5"
+          pip install "jupyterlab>=4.4.0a2,<5"
           jlpm install
 
       - name: Run pre-commit
