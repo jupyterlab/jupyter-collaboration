@@ -111,7 +111,7 @@ export const rtcGlobalAwarenessPlugin: JupyterFrontEndPlugin<IAwareness> = {
       const data: any = await state.toJSON();
       const current: string = data['layout-restorer:data']?.main?.current || '';
 
-      if (current.match(/^\w+:RTC:/)) {
+      if (current.match(/^\w+:\w+/)) {
         awareness.setLocalStateField('current', current);
       } else {
         awareness.setLocalStateField('current', null);
