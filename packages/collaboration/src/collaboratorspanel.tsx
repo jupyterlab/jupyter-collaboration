@@ -166,7 +166,7 @@ export function Collaborator(props: {
     const fileTypes = props.docRegistry
       ?.getFileTypesForPath(document)
       ?.filter(ft => ft.icon !== undefined);
-    const icon = fileTypes ? fileTypes[0].icon! : fileIcon;
+    const icon = fileTypes?.length ? fileTypes[0].icon : fileIcon;
     const iconClass: string | undefined = fileTypes
       ? fileTypes[0].iconClass
       : undefined;
