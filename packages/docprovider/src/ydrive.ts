@@ -163,9 +163,9 @@ export class RtcContentProvider
 
       // Add the document path in the list of opened ones for this user.
       const state = this._globalAwareness?.getLocalState() || {};
-      const documents: any[] = state.documents || [];
+      const documents: string[] = state.documents || [];
       if (!documents.includes(options.path)) {
-        documents.push(`${this._prefix}:${options.path}`);
+        documents.push(options.path);
         this._globalAwareness?.setLocalStateField('documents', documents);
       }
 
@@ -214,7 +214,7 @@ export class RtcContentProvider
         // Remove the document path from the list of opened ones for this user.
         const state = this._globalAwareness?.getLocalState() || {};
         const documents: any[] = state.documents || [];
-        const index = documents.indexOf(`${this._prefix}:${options.path}`);
+        const index = documents.indexOf(options.path);
         if (index > -1) {
           documents.splice(index, 1);
         }
@@ -235,7 +235,6 @@ export class RtcContentProvider
   private _providers: Map<string, WebSocketProvider>;
   private _ydriveFileChanged = new Signal<this, Contents.IChangedArgs>(this);
   private _serverSettings: ServerConnection.ISettings;
-  private _prefix = 'RTC'; // TODO
 }
 
 /**
