@@ -41,11 +41,11 @@
   "dependencies": {
     "@codemirror/state": "^6.2.0",
     "@codemirror/view": "^6.7.0",
-    "@jupyterlab/apputils": "^4.0.5",
-    "@jupyterlab/coreutils": "^6.0.5",
-    "@jupyterlab/docregistry": "^4.0.5",
-    "@jupyterlab/services": "^7.0.5",
-    "@jupyterlab/ui-components": "^4.0.5",
+    "@jupyterlab/apputils": "^4.4.0-alpha.2",
+    "@jupyterlab/coreutils": "^6.4.0-alpha.2",
+    "@jupyterlab/docregistry": "^4.4.0-alpha.2",
+    "@jupyterlab/services": "^7.4.0-alpha.2",
+    "@jupyterlab/ui-components": "^4.4.0-alpha.2",
     "@lumino/coreutils": "^2.1.0",
     "@lumino/signaling": "^2.0.0",
     "@lumino/virtualdom": "^2.0.0",
@@ -57,7 +57,7 @@
   "devDependencies": {
     "@types/react": "~18.3.1",
     "rimraf": "^4.1.2",
-    "typescript": "~5.0.4"
+    "typescript": "~5.1.6"
   },
   "publishConfig": {
     "access": "public"

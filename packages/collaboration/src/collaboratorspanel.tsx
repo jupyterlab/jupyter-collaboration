@@ -155,16 +155,16 @@ export function Collaborator(props: {
   let currentMain = '';
 
   if (collaborator.current) {
+    // Discard widget tracker prefix (e.g. `notebook:` or `editor:`)
     const path = collaborator.current.split(':');
-    currentMain = `${path[1]}:${path[2]}`;
+    currentMain = `${path[1]}`;
   }
 
   const documents: string[] = collaborator.documents || [];
 
   const docs = documents.map(document => {
-    const path = document.split(':');
     const fileTypes = props.docRegistry
-      ?.getFileTypesForPath(path[1])
+      ?.getFileTypesForPath(document)
       ?.filter(ft => ft.icon !== undefined);
     const icon = fileTypes ? fileTypes[0].icon! : fileIcon;
     const iconClass: string | undefined = fileTypes
@@ -172,14 +172,13 @@ export function Collaborator(props: {
       : undefined;
 
     return {
-      filepath: path[1],
       filename:
-        path[1].length > 40
-          ? path[1]
+        document.length > 40
+          ? document
               .slice(0, 10)
               .concat('…')
-              .concat(path[1].slice(path[1].length - 15))
-          : path[1],
+              .concat(document.slice(document.length - 15))
+          : document,
       fileLocation: document,
       icon,
       iconClass
@@ -242,7 +241,10 @@ export function Collaborator(props: {
                   className={'jp-DirListing-itemIcon'}
                   stylesheet={'listing'}
                 />
-                <span className={'jp-DirListing-itemText'} title={doc.filepath}>
+                <span
+                  className={'jp-DirListing-itemText'}
+                  title={doc.fileLocation}
+                >
                   {doc.filename}
                 </span>
               </li>

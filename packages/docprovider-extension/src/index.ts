@@ -8,10 +8,9 @@
 import { JupyterFrontEndPlugin } from '@jupyterlab/application';
 
 import {
-  drive,
+  rtcContentProvider,
   yfile,
   ynotebook,
-  defaultFileBrowser,
   logger,
   statusBarTimeline
 } from './filebrowser';
@@ -21,11 +20,10 @@ import { forkManagerPlugin } from './forkManager';
 /**
  * Export the plugins as default.
  */
-const plugins: JupyterFrontEndPlugin<any>[] = [
-  drive,
+const plugins: JupyterFrontEndPlugin<unknown>[] = [
+  rtcContentProvider,
   yfile,
   ynotebook,
-  defaultFileBrowser,
   logger,
   notebookCellExecutor,
   statusBarTimeline,

@@ -1,8 +1,8 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { DocumentChange, IAwareness, YDocument } from '@jupyter/ydoc';
-import { Contents } from '@jupyterlab/services';
+import { IAwareness } from '@jupyter/ydoc';
+import { Contents, SharedDocumentFactory } from '@jupyterlab/services';
 import { IDisposable } from '@lumino/disposable';
 
 import { Token } from '@lumino/coreutils';
@@ -10,9 +10,10 @@ import { Token } from '@lumino/coreutils';
 /**
  * The collaborative drive.
  */
-export const ICollaborativeDrive = new Token<ICollaborativeDrive>(
-  '@jupyter/collaboration-extension:ICollaborativeDrive'
-);
+export const ICollaborativeContentProvider =
+  new Token<ICollaborativeContentProvider>(
+    '@jupyter/collaboration-extension:ICollaborativeContentProvider'
+  );
 
 /**
  * The global awareness token.
@@ -21,18 +22,7 @@ export const IGlobalAwareness = new Token<IAwareness>(
   '@jupyter/collaboration:IGlobalAwareness'
 );
 
-/**
- * A document factory for registering shared models
- */
-export type SharedDocumentFactory = (
-  options: Contents.ISharedFactoryOptions
-) => YDocument<DocumentChange>;
-
-/**
- * A Collaborative implementation for an `IDrive`, talking to the
- * server using the Jupyter REST API and a WebSocket connection.
- */
-export interface ICollaborativeDrive extends Contents.IDrive {
+export interface ICollaborativeContentProvider {
   /**
    * SharedModel factory for the YDrive.
    */

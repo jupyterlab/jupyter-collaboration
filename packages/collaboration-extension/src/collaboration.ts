@@ -111,7 +111,9 @@ export const rtcGlobalAwarenessPlugin: JupyterFrontEndPlugin<IAwareness> = {
       const data: any = await state.toJSON();
       const current: string = data['layout-restorer:data']?.main?.current || '';
 
-      if (current.match(/^\w+:RTC:/)) {
+      // For example matches `notebook:Untitled.ipynb` or `editor:untitled.txt`,
+      // but not when in launcher or terminal.
+      if (current.match(/^\w+:.+/)) {
         awareness.setLocalStateField('current', current);
       } else {
         awareness.setLocalStateField('current', null);
