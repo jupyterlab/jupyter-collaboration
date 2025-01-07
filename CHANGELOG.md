@@ -4,11 +4,35 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 4.0.0alpha0
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@3.1.0...2e1419ac48059fd830e74d7f91d48ac13d84daba))
+
+### Enhancements made
+
+- Gracefully handling non-existing fork room [#420](https://github.com/jupyterlab/jupyter-collaboration/pull/420) ([@trungleduc](https://github.com/trungleduc))
+- Use content providers to remove RTC prefix [#418](https://github.com/jupyterlab/jupyter-collaboration/pull/418) ([@krassowski](https://github.com/krassowski))
+- Users item toolbar [#379](https://github.com/jupyterlab/jupyter-collaboration/pull/379) ([@brichet](https://github.com/brichet))
+
+### Bugs fixed
+
+- Fix collaborators panel breaking on opening files without known extension [#427](https://github.com/jupyterlab/jupyter-collaboration/pull/427) ([@krassowski](https://github.com/krassowski))
+
+### Maintenance and upkeep improvements
+
+- Update event schema version type [#421](https://github.com/jupyterlab/jupyter-collaboration/pull/421) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-12-10&to=2025-01-07&type=c))
+
+[@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2024-12-10..2025-01-07&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-12-10..2025-01-07&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-12-10..2025-01-07&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajtpio+updated%3A2024-12-10..2025-01-07&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2024-12-10..2025-01-07&type=Issues) | [@martinRenou](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AmartinRenou+updated%3A2024-12-10..2025-01-07&type=Issues) | [@trungleduc](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Atrungleduc+updated%3A2024-12-10..2025-01-07&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 3.1.0
 
 No merged PRs
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 3.1.0rc0
 
