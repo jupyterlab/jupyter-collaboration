@@ -1,7 +1,7 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { ICollaborativeDrive } from '@jupyter/collaborative-drive';
+import { ICollaborativeContentProvider } from '@jupyter/collaborative-drive';
 import {
   ForkManager,
   JUPYTER_COLLABORATION_FORK_EVENTS_URI
@@ -11,10 +11,9 @@ import { Signal } from '@lumino/signaling';
 import { requestAPI } from '../requests';
 jest.mock('../requests');
 
-const driveMock = {
-  name: 'rtc',
+const contentProviderMock = {
   providers: new Map()
-} as ICollaborativeDrive;
+} as ICollaborativeContentProvider;
 const stream = new Signal({});
 const eventManagerMock = {
   stream: stream as any
@@ -24,7 +23,7 @@ describe('@jupyter/docprovider', () => {
   let manager: ForkManager;
   beforeEach(() => {
     manager = new ForkManager({
-      drive: driveMock,
+      contentProvider: contentProviderMock,
       eventManager: eventManagerMock
     });
   });
