@@ -54,7 +54,7 @@ test('should copy the shared link in clipboard', async ({ page }) => {
   await expect(dialog).not.toBeVisible();
 
   let clipboardText1 = await page.evaluate(() => navigator.clipboard.readText());
-  expect(clipboardText1).toBe('http://localhost:8888/lab/tree/RTC%3Atests-user-menu-should-copy-the-shared-link-in-clipboard');
+  expect(clipboardText1).toBe('http://localhost:8888/lab/tree/tests-user-menu-should-copy-the-shared-link-in-clipboard');
 });
 
 test('should copy the shared link with filepath', async ({ page }) => {
@@ -67,7 +67,7 @@ test('should copy the shared link with filepath', async ({ page }) => {
   await expect(dialog).not.toBeVisible();
 
   let clipboardText1 = await page.evaluate(() => navigator.clipboard.readText());
-  expect(clipboardText1).toBe('http://localhost:8888/lab/tree/RTC%3Atests-user-menu-should-copy-the-shared-link-with-filepath/Untitled.ipynb');
+  expect(clipboardText1).toBe('http://localhost:8888/lab/tree/tests-user-menu-should-copy-the-shared-link-with-filepath/Untitled.ipynb');
 });
 
 
@@ -87,5 +87,5 @@ test('should copy the shared link with filepath', async ({ page }) => {
 //   await expect(dialog).not.toBeVisible();
 
 //   let clipboardText1 = await page.evaluate(() => navigator.clipboard.readText());
-//   expect(clipboardText1).toBe('http://localhost:8888/lab/tree/RTC%3Atests-user-menu-should-copy-the-shared-link-in-clipboard');
+//   expect(clipboardText1).toBe('http://localhost:8888/lab/tree/tests-user-menu-should-copy-the-shared-link-in-clipboard');
 // });

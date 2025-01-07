@@ -3,16 +3,22 @@
 
 import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 import { TranslationBundle } from '@jupyterlab/translation';
-import { Contents, Drive, User } from '@jupyterlab/services';
+import {
+  Contents,
+  IContentProvider,
+  RestContentProvider,
+  SharedDocumentFactory,
+  ServerConnection,
+  User
+} from '@jupyterlab/services';
 import { ISignal, Signal } from '@lumino/signaling';
 
 import { DocumentChange, ISharedDocument, YDocument } from '@jupyter/ydoc';
 
 import { WebSocketProvider } from './yprovider';
 import {
-  ICollaborativeDrive,
-  ISharedModelFactory,
-  SharedDocumentFactory
+  IDocumentProvider,
+  ISharedModelFactory
 } from '@jupyter/collaborative-drive';
 import { Awareness } from 'y-protocols/awareness';
 
@@ -31,53 +37,35 @@ export interface IForkProvider {
   format: string;
 }
 
-/**
- * A Collaborative implementation for an `IDrive`, talking to the
- * server using the Jupyter REST API and a WebSocket connection.
- */
-export class YDrive extends Drive implements ICollaborativeDrive {
-  /**
-   * Construct a new drive object.
-   *
-   * @param user - The user manager to add the identity to the awareness of documents.
-   */
-  constructor(
-    user: User.IManager,
-    translator: TranslationBundle,
-    globalAwareness: Awareness | null
-  ) {
-    super({ name: 'RTC' });
-    this._user = user;
-    this._trans = translator;
-    this._globalAwareness = globalAwareness;
-    this._providers = new Map<string, WebSocketProvider>();
+namespace RtcContentProvider {
+  export interface IOptions extends RestContentProvider.IOptions {
+    user: User.IManager;
+    trans: TranslationBundle;
+    globalAwareness: Awareness | null;
+  }
+}
 
+export class RtcContentProvider
+  extends RestContentProvider
+  implements IContentProvider
+{
+  constructor(options: RtcContentProvider.IOptions) {
+    super(options);
+    this._user = options.user;
+    this._trans = options.trans;
+    this._globalAwareness = options.globalAwareness;
+    this._serverSettings = options.serverSettings;
     this.sharedModelFactory = new SharedModelFactory(this._onCreate);
-    super.fileChanged.connect((_, change) => {
-      // pass through any events from the Drive superclass
-      this._ydriveFileChanged.emit(change);
-    });
+    this._providers = new Map<string, WebSocketProvider>();
   }
 
   /**
-   * SharedModel factory for the YDrive.
+   * SharedModel factory for the content provider.
    */
   readonly sharedModelFactory: ISharedModelFactory;
 
-  get providers(): Map<string, WebSocketProvider> {
+  get providers(): Map<string, IDocumentProvider> {
     return this._providers;
-  }
-
-  /**
-   * Dispose of the resources held by the manager.
-   */
-  dispose(): void {
-    if (this.isDisposed) {
-      return;
-    }
-    this._providers.forEach(p => p.dispose());
-    this._providers.clear();
-    super.dispose();
   }
 
   /**
@@ -88,8 +76,6 @@ export class YDrive extends Drive implements ICollaborativeDrive {
    * @param options: The options used to fetch the file.
    *
    * @returns A promise which resolves with the file content.
-   *
-   * Uses the [Jupyter Notebook API](http://petstore.swagger.io/?url=https://raw.githubusercontent.com/jupyter/notebook/master/notebook/services/api/api.yaml#!/contents) and validates the response model.
    */
   async get(
     localPath: string,
@@ -166,7 +152,7 @@ export class YDrive extends Drive implements ICollaborativeDrive {
     }
     try {
       const provider = new WebSocketProvider({
-        url: URLExt.join(this.serverSettings.wsUrl, DOCUMENT_PROVIDER_URL),
+        url: URLExt.join(this._serverSettings.wsUrl, DOCUMENT_PROVIDER_URL),
         path: options.path,
         format: options.format,
         contentType: options.contentType,
@@ -177,9 +163,9 @@ export class YDrive extends Drive implements ICollaborativeDrive {
 
       // Add the document path in the list of opened ones for this user.
       const state = this._globalAwareness?.getLocalState() || {};
-      const documents: any[] = state.documents || [];
+      const documents: string[] = state.documents || [];
       if (!documents.includes(options.path)) {
-        documents.push(`${this.name}:${options.path}`);
+        documents.push(options.path);
         this._globalAwareness?.setLocalStateField('documents', documents);
       }
 
@@ -228,7 +214,7 @@ export class YDrive extends Drive implements ICollaborativeDrive {
         // Remove the document path from the list of opened ones for this user.
         const state = this._globalAwareness?.getLocalState() || {};
         const documents: any[] = state.documents || [];
-        const index = documents.indexOf(`${this.name}:${options.path}`);
+        const index = documents.indexOf(options.path);
         if (index > -1) {
           documents.splice(index, 1);
         }
@@ -245,9 +231,10 @@ export class YDrive extends Drive implements ICollaborativeDrive {
 
   private _user: User.IManager;
   private _trans: TranslationBundle;
-  private _providers: Map<string, WebSocketProvider>;
   private _globalAwareness: Awareness | null;
+  private _providers: Map<string, WebSocketProvider>;
   private _ydriveFileChanged = new Signal<this, Contents.IChangedArgs>(this);
+  private _serverSettings: ServerConnection.ISettings;
 }
 
 /**
