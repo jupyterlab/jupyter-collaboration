@@ -262,8 +262,7 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
                 currentWidget.context &&
                 typeof currentWidget.context.path === 'string'
               ) {
-                const documentPath = currentWidget.context.path;
-                return documentPath.split(':')[0] === 'RTC';
+                return !!currentWidget.context.model.collaborative;
               }
               return false;
             }
