@@ -105,7 +105,9 @@ export class CollaboratorsPanel extends Panel {
         value.user &&
         value.user.username !== this._currentUser.identity!.username
       ) {
-        const uniqueKey = `${value.user.username}-${value.current || 'no-current'}`;
+        const uniqueKey = `${value.user.username}-${
+          value.current || 'no-current'
+        }`;
         if (!collaboratorsMap.has(uniqueKey)) {
           collaboratorsMap.set(uniqueKey, value as ICollaboratorAwareness);
         }
@@ -136,8 +138,10 @@ export function CollaboratorsBody(props: {
 
   return (
     <div className={COLLABORATORS_LIST_CLASS}>
-      {collaborators.map((collaborator) => {
-        const uniqueKey = `${collaborator.user.username}-${collaborator.current || 'no-current'}`;
+      {collaborators.map(collaborator => {
+        const uniqueKey = `${collaborator.user.username}-${
+          collaborator.current || 'no-current'
+        }`;
         return (
           <Collaborator
             key={uniqueKey}
