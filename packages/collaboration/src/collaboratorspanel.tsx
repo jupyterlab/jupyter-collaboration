@@ -97,8 +97,8 @@ export class CollaboratorsPanel extends Panel {
    */
   private _onAwarenessChanged = () => {
     const state = this._awareness.getStates() as any;
-    const collaborators: ICollaboratorAwareness[] = [];
-    const collaborators_keys: Set<string> = new Set();
+    const collaboratorsMap = new Map<string, ICollaboratorAwareness>();
+
     state.forEach((value: Partial<ICollaboratorAwareness>, key: any) => {
       if (
         this._currentUser.isReady &&
@@ -106,14 +106,13 @@ export class CollaboratorsPanel extends Panel {
         value.user.username !== this._currentUser.identity!.username
       ) {
         const uniqueKey = `${value.user.username}-${value.current || 'no-current'}`;
-
-        if (!collaborators_keys.has(uniqueKey)) { 
-          collaborators.push(value as ICollaboratorAwareness);
-          collaborators_keys.add(uniqueKey);
+        if (!collaboratorsMap.has(uniqueKey)) {
+          collaboratorsMap.set(uniqueKey, value as ICollaboratorAwareness);
         }
       }
     });
-    this._collaboratorsChanged.emit(collaborators);
+    // Convert map to array to maintain the same emit interface
+    this._collaboratorsChanged.emit(Array.from(collaboratorsMap.values()));
   };
   private _currentUser: User.IManager;
   private _awareness: Awareness;
