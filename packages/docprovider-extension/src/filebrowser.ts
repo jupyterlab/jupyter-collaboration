@@ -257,20 +257,7 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
               const currentWidget = app.shell
                 .currentWidget as DocumentWidget | null;
 
-              if (
-                currentWidget &&
-                currentWidget.context &&
-                typeof currentWidget.context.path === 'string'
-              ) {
-                const documentId =
-                  currentWidget.context.model.sharedModel.getState(
-                    'document_id'
-                  ) as string;
-                return (
-                  !!documentId && !!currentWidget.context.model.collaborative
-                );
-              }
-              return false;
+              return currentWidget?.context?.model?.collaborative || false;
             }
           });
         }
