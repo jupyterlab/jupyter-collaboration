@@ -257,8 +257,7 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
               const currentWidget = app.shell
                 .currentWidget as DocumentWidget | null;
 
-                return currentWidget?.context?.model?.collaborative || false;
-
+              return currentWidget?.context?.model?.collaborative || false;
             }
           });
         }
