@@ -97,7 +97,7 @@ export class CollaboratorsPanel extends Panel {
    */
   private _onAwarenessChanged = () => {
     const state = this._awareness.getStates() as any;
-    const collaborators: ICollaboratorAwareness[] = [];
+    const collaboratorsMap = new Map<string, ICollaboratorAwareness>();
 
     state.forEach((value: Partial<ICollaboratorAwareness>, key: any) => {
       if (
@@ -105,10 +105,16 @@ export class CollaboratorsPanel extends Panel {
         value.user &&
         value.user.username !== this._currentUser.identity!.username
       ) {
-        collaborators.push(value as ICollaboratorAwareness);
+        const uniqueKey = `${value.user.username}-${
+          value.current || 'no-current'
+        }`;
+        if (!collaboratorsMap.has(uniqueKey)) {
+          collaboratorsMap.set(uniqueKey, value as ICollaboratorAwareness);
+        }
       }
     });
-    this._collaboratorsChanged.emit(collaborators);
+    // Convert map to array to maintain the same emit interface
+    this._collaboratorsChanged.emit(Array.from(collaboratorsMap.values()));
   };
   private _currentUser: User.IManager;
   private _awareness: Awareness;
@@ -132,9 +138,13 @@ export function CollaboratorsBody(props: {
 
   return (
     <div className={COLLABORATORS_LIST_CLASS}>
-      {collaborators.map((collaborator, i) => {
+      {collaborators.map(collaborator => {
+        const uniqueKey = `${collaborator.user.username}-${
+          collaborator.current || 'no-current'
+        }`;
         return (
           <Collaborator
+            key={uniqueKey}
             collaborator={collaborator}
             fileopener={props.fileopener}
             docRegistry={props.docRegistry}
