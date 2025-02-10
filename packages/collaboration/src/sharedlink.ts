@@ -113,8 +113,8 @@ export async function showSharedLinkDialog({
   if (canCreateShare) {
     const serverName = PageConfig.getOption('baseUrl').split(
       PageConfig.getOption('hubUser')
-    )[1];
-    let readableServerName = serverName.replace(/\/$/, '');
+    )[1].replace(/\//g, '');
+    let readableServerName = serverName;
     if (readableServerName === '') {
       readableServerName = 'default';
     }
@@ -390,7 +390,7 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
     const headerRow = document.createElement('tr');
     headerRow.innerHTML = `
       <th>${this._trans.__('Shared with')}</th>
-      <th>${this._trans.__('Shared Since')}</th>
+      <th>${this._trans.__('Shared since')}</th>
       <th>${this._trans.__('Actions')}</th>
     `;
     table.appendChild(headerRow);
