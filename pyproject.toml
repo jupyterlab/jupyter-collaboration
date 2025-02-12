@@ -106,8 +106,6 @@ filterwarnings = [
     'ignore:Unclosed <MemoryObjectSendStream:ResourceWarning',
     # see https://github.com/python/cpython/issues/126259
     'ignore:unclosed database in <sqlite3.Connection object',
-    # remove when this is merged: https://github.com/jupyter-server/jupyter_server/pull/1481
-    'ignore:The `version` property of an event schema must be a string'
 ]
 
 [tool.mypy]
