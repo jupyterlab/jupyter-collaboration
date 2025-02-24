@@ -27,6 +27,7 @@ classifiers = [
     "Framework :: Jupyter :: JupyterLab :: Extensions :: Prebuilt",
 ]
 dependencies = [
+    "jupyterlab>=4.0.0,<4.3.0",
     "jupyter_server>=2.0.0,<3.0.0",
     "jupyter_ydoc>=2.1.2,<3.0.0",
     "pycrdt",
