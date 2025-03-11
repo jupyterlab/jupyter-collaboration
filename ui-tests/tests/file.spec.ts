@@ -84,7 +84,6 @@ test.describe('File Editing', () => {
 
       // Ensure we save the file
       // Due to the current "feature" of collab that it forces auto-save, we should not need to sent Ctrl+S but added so this doesn't break in future
-      console.log(await tab.getAttribute("class"));
       await expect(tab).toHaveClass(/jp-mod-dirty/);
       await page.keyboard.press("Control+S");
       await expect(tab).not.toHaveClass(/jp-mod-dirty/);
