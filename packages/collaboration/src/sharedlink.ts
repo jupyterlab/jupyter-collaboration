@@ -93,7 +93,9 @@ export async function showSharedLinkDialog({
           (serverOwner === PageConfig.getOption('hubUser') &&
             userData.scopes.includes('shares!user')) ||
           userData.scopes.includes('shares!user=' + serverOwner) ||
-          userData.scopes.includes('shares!server=' + serverOwner + '/' + serverName + '/')
+          userData.scopes.includes(
+            'shares!server=' + serverOwner + '/' + serverName + '/'
+          )
         ) {
           // If the user has the required permissions, we can create a share
           canCreateShare = true;
@@ -118,7 +120,9 @@ export async function showSharedLinkDialog({
             (serverOwner === PageConfig.getOption('hubUser') &&
               userData.scopes.includes('servers!user')) ||
             userData.scopes.includes('servers!user=' + serverOwner) ||
-            userData.scopes.includes('servers!server=' + serverOwner + '/' + serverName + '/') ||
+            userData.scopes.includes(
+              'servers!server=' + serverOwner + '/' + serverName + '/'
+            ) ||
             userData.scopes.includes('admin:servers')
           ) {
             canControlServer = true;
@@ -225,24 +229,38 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
   private async loadUsers(): Promise<void> {
     // If possible, download the users list for the UI
     if (this._canListUsers) {
-      const usersResponse = await fetch(`${this._hubApiUrl}/users`, {
+      let offset = 0;
+      const limit = 200;
+      let usersData: any[] = [];
+      let hasMore = true;
+
+      while (hasMore) {
+      const usersResponse = await fetch(
+        `${this._hubApiUrl}/users?limit=${limit}&offset=${offset}`,
+        {
         headers: {
           Authorization: `token ${this._token}`
         }
-      });
-      const usersData = await usersResponse.json();
+        }
+      );
+      const data = await usersResponse.json();
+      usersData = usersData.concat(data);
+      hasMore = data.length === limit;
+      offset += limit;
+      }
+
       const sharedUserNames = new Set(
-        this._shares
-          .filter(share => share.type === 'user')
-          .map(share => share.name)
+      this._shares
+        .filter(share => share.type === 'user')
+        .map(share => share.name)
       );
       // We remove from the list the current user and the users that already have a share
       this._users = usersData
-        .filter(
-          (user: any) =>
-            user.name !== this._serverOwner && !sharedUserNames.has(user.name)
-        )
-        .map((user: any) => ({ ...user, type: 'user' }));
+      .filter(
+        (user: any) =>
+        user.name !== this._serverOwner && !sharedUserNames.has(user.name)
+      )
+      .map((user: any) => ({ ...user, type: 'user' }));
     }
     // If possible, download the groups list for the UI and add them to the users list
     if (this._canListGroups) {
@@ -289,9 +307,13 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
 
   private async createShare(sharewith: any, type: any): Promise<void> {
     // If the issuer can control the server, we add the "servers!server" scope to the share to let other users start/stop the server
-    const scopes = ['access:servers!server=' + this._serverOwner + '/' + this._serverName];
+    const scopes = [
+      'access:servers!server=' + this._serverOwner + '/' + this._serverName
+    ];
     if (this._canControlServer) {
-      scopes.push('servers!server=' + this._serverOwner + '/' + this._serverName);
+      scopes.push(
+        'servers!server=' + this._serverOwner + '/' + this._serverName
+      );
     }
 
     await fetch(
