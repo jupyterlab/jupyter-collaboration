@@ -45,20 +45,21 @@ export async function showSharedLinkDialog({
     )
   );
 
-  const serverOwner = PageConfig.getOption('hubServerUser');
-  const serverName = PageConfig.getOption('hubServerName');
   let canCreateShare = false;
   let canListUsers = false;
   let canListGroups = false;
   let canControlServer = false;
   let hubApiUrl = '';
+  let serverName = '';
+  let serverOwner = '';
 
-  // If hubPrefix or hubHost or hubUser is set, we are behind a JupyterHub
+  // If hubUser is set, we are behind a JupyterHub
   if (
-    PageConfig.getOption('hubPrefix') ||
-    PageConfig.getOption('hubHost') ||
-    PageConfig.getOption('hubUser')
+    PageConfig.getOption('hubUser') !== ''
   ) {
+    // Get server name and owner
+    serverOwner = PageConfig.getOption('hubServerUser');
+    serverName = PageConfig.getOption('hubServerName');
     // Prepare the Hub API URL
     const protocol = window.location.protocol;
     const hostname =
