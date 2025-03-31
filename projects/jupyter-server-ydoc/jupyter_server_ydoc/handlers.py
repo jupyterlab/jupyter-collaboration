@@ -19,7 +19,7 @@ from pycrdt import Doc, UndoManager, write_var_uint
 from pycrdt_websocket.websocket_server import YRoom
 from pycrdt_websocket.ystore import BaseYStore
 from tornado import web
-from tornado.websocket import WebSocketHandler
+from tornado.websocket import WebSocketClosedError, WebSocketHandler
 
 from .loaders import FileLoaderMapping
 from .rooms import DocumentRoom, TransientRoom
@@ -276,6 +276,10 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         # needed to be compatible with WebsocketServer (websocket.send)
         try:
             self.write_message(message, binary=True)
+        except WebSocketClosedError:
+            # Handle error when trying to send a message while the websocket is closed.
+            # It occurs when closing a collaborative document.
+            pass
         except Exception as e:
             self.log.error("Failed to write message", exc_info=e)
 
