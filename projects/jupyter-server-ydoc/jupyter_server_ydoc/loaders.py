@@ -153,6 +153,9 @@ class FileLoader:
                     path, format=model["format"], type=model["type"], content=False
                 )
             )
+            # Skip saving if file is not writable"
+            if not m["writable"]:
+                return None
 
             if self.last_modified == m["last_modified"]:
                 self._log.info("Saving file: %s", path)
