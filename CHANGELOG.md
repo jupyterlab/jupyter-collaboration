@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 4.0.0rc0
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@4.0.0-beta.0...2f4c44f70f17bab9b4e7611357cddf9220eafba0))
+
+### Maintenance and upkeep improvements
+
+- Bump to jupyterlab v4.4.0 [#458](https://github.com/jupyterlab/jupyter-collaboration/pull/458) ([@davidbrochart](https://github.com/davidbrochart))
+- Bump min required `jupyter_events` version to 0.11 [#453](https://github.com/jupyterlab/jupyter-collaboration/pull/453) ([@krassowski](https://github.com/krassowski))
+- Bump jupyter_server [#444](https://github.com/jupyterlab/jupyter-collaboration/pull/444) ([@brichet](https://github.com/brichet))
+- Update github actions to v4 [#441](https://github.com/jupyterlab/jupyter-collaboration/pull/441) ([@brichet](https://github.com/brichet))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2025-01-28&to=2025-04-04&type=c))
+
+[@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2025-01-28..2025-04-04&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2025-01-28..2025-04-04&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2025-01-28..2025-04-04&type=Issues) | [@Hyrla](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AHyrla+updated%3A2025-01-28..2025-04-04&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2025-01-28..2025-04-04&type=Issues) | [@ykazakov](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aykazakov+updated%3A2025-01-28..2025-04-04&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 4.0.0beta0
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@4.0.0-alpha.0...bd4b23ac71b346bded151a4628abc6e7d5305de2))
@@ -22,8 +41,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2025-01-07&to=2025-01-28&type=c))
 
 [@andrii-i](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aandrii-i+updated%3A2025-01-07..2025-01-28&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2025-01-07..2025-01-28&type=Issues) | [@Meriem-BenIsmail](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AMeriem-BenIsmail+updated%3A2025-01-07..2025-01-28&type=Issues) | [@nzinfo](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Anzinfo+updated%3A2025-01-07..2025-01-28&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 4.0.0alpha0
 

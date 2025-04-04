@@ -30,9 +30,9 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "jupyter_collaboration_ui>=2.0.0b0",
-    "jupyter_docprovider>=2.0.0b0",
-    "jupyter_server_ydoc>=2.0.0b0",
+    "jupyter_collaboration_ui>=2.0.0rc0",
+    "jupyter_docprovider>=2.0.0rc0",
+    "jupyter_server_ydoc>=2.0.0rc0",
 ]
 
 [tool.hatch.version]
