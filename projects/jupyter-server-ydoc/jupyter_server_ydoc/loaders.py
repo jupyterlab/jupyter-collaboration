@@ -153,7 +153,7 @@ class FileLoader:
                     path, format=model["format"], type=model["type"], content=False
                 )
             )
-            # Skip saving if file is not writable"
+            # Skip saving if file is not writable
             if not m["writable"]:
                 return None
 
