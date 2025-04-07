@@ -271,13 +271,16 @@ def rtc_create_mock_document_room():
         last_modified: datetime | None = None,
         save_delay: float | None = None,
         store: SQLiteYStore | None = None,
+        writable: bool = False,
     ) -> tuple[FakeContentsManager, FileLoader, DocumentRoom]:
         paths = {id: path}
 
         if last_modified is None:
-            cm = FakeContentsManager({"content": content})
+            cm = FakeContentsManager({"content": content, "writable": writable})
         else:
-            cm = FakeContentsManager({"last_modified": datetime.now(), "content": content})
+            cm = FakeContentsManager(
+                {"last_modified": datetime.now(), "content": content, "writable": writable}
+            )
 
         loader = FileLoader(
             id,

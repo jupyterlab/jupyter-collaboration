@@ -51,7 +51,9 @@ async def test_defined_save_delay_should_save_content_after_document_change(
     rtc_create_mock_document_room,
 ):
     content = "test"
-    cm, _, room = rtc_create_mock_document_room("test-id", "test.txt", content, save_delay=0.01)
+    cm, _, room = rtc_create_mock_document_room(
+        "test-id", "test.txt", content, save_delay=0.01, writable=True
+    )
 
     await room.initialize()
     room._document.source = "Test 2"
