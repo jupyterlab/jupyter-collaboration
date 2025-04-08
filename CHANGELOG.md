@@ -4,11 +4,36 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 3.1.1
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@3.1.0...70b6d738a53308e4b62c814163a8673f8e965019))
+
+### Enhancements made
+
+- Users item toolbar [#379](https://github.com/jupyterlab/jupyter-collaboration/pull/379) ([@brichet](https://github.com/brichet))
+
+### Bugs fixed
+
+- 3.x: Fix pinnings [#459](https://github.com/jupyterlab/jupyter-collaboration/pull/459) ([@martinRenou](https://github.com/martinRenou))
+- Fix collaborators panel breaking on opening files without known extension [#427](https://github.com/jupyterlab/jupyter-collaboration/pull/427) ([@krassowski](https://github.com/krassowski))
+
+### Maintenance and upkeep improvements
+
+- Bump min required `jupyter_events` version to 0.11 [#453](https://github.com/jupyterlab/jupyter-collaboration/pull/453) ([@krassowski](https://github.com/krassowski))
+- Update event schema version type [#421](https://github.com/jupyterlab/jupyter-collaboration/pull/421) ([@davidbrochart](https://github.com/davidbrochart))
+- Update github actions to v4 [#441](https://github.com/jupyterlab/jupyter-collaboration/pull/441) ([@brichet](https://github.com/brichet))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-12-10&to=2025-04-08&type=c))
+
+[@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2024-12-10..2025-04-08&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-12-10..2025-04-08&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-12-10..2025-04-08&type=Issues) | [@Hyrla](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AHyrla+updated%3A2024-12-10..2025-04-08&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajtpio+updated%3A2024-12-10..2025-04-08&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2024-12-10..2025-04-08&type=Issues) | [@lumberbot-app](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Alumberbot-app+updated%3A2024-12-10..2025-04-08&type=Issues) | [@martinRenou](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AmartinRenou+updated%3A2024-12-10..2025-04-08&type=Issues) | [@meeseeksmachine](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ameeseeksmachine+updated%3A2024-12-10..2025-04-08&type=Issues) | [@ykazakov](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aykazakov+updated%3A2024-12-10..2025-04-08&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 3.1.0
 
 No merged PRs
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 3.1.0rc0
 
