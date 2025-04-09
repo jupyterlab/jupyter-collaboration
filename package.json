@@ -1,7 +1,7 @@
 {
   "name": "@jupyter/real-time-collaboration",
   "private": true,
-  "version": "3.1.1",
+  "version": "3.1.2",
   "description": "JupyterLab Extension enabling Real-Time Collaboration",
   "keywords": [
     "jupyter",
