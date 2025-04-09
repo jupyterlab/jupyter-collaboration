@@ -31,7 +31,7 @@ jobs:
           jlpm install
 
       - name: Run pre-commit
-        uses: pre-commit/action@v3
+        uses: pre-commit/action@v3.0.1
         with:
           extra_args: --all-files --hook-stage=manual
 
