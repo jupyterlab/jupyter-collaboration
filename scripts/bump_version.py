@@ -109,7 +109,8 @@ def bump(force, skip_if_dirty, spec):
     dependencies = tomlkit.array()
     for key in sorted(project_pins):
         if key != metapackage.replace("-", "_"):
-            dependencies.add_line(key + ">=" + project_pins[key])
+            next_major = f"{parse_version(project_pins[key]).major + 1}"
+            dependencies.add_line(key + ">=" + project_pins[key] + ",<" + next_major)
     metapackage_toml.get("project").add("dependencies", dependencies.multiline(True))
     metapackage_toml_path.write_text(tomlkit.dumps(metapackage_toml))
 
