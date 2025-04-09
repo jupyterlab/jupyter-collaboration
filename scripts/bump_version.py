@@ -111,7 +111,8 @@ def bump(force, skip_if_dirty, spec):
     dependencies = tomlkit.array()
     for key in sorted(project_pins):
         if key != metapackage.replace("-", "_"):
-            dependencies.add_line(key + ">=" + project_pins[key])
+            next_major = f"{parse_version(project_pins[key]).major + 1}"
+            dependencies.add_line(key + ">=" + project_pins[key] + ",<" + next_major)
     # re-add other dependencies
     for dependency in old_dependencies:
         requirement = Requirement.parse(dependency)
