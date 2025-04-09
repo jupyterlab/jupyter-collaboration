@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 4.0.1
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@4.0.0...7f1646a600291d8f9625df6c3fe1d1403063de9d))
+
+### Bugs fixed
+
+- Fix version pins in bump script [#461](https://github.com/jupyterlab/jupyter-collaboration/pull/461) ([@brichet](https://github.com/brichet))
+- Fix empty collaborators list when file without icon is opened [#465](https://github.com/jupyterlab/jupyter-collaboration/pull/465) ([@krassowski](https://github.com/krassowski))
+- Fix jupyterlab dependency dropped by the version bump script [#463](https://github.com/jupyterlab/jupyter-collaboration/pull/463) ([@krassowski](https://github.com/krassowski))
+
+### Maintenance and upkeep improvements
+
+- Update the pre-commit action to v3.0.1 [#467](https://github.com/jupyterlab/jupyter-collaboration/pull/467) ([@brichet](https://github.com/brichet))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2025-04-07&to=2025-04-09&type=c))
+
+[@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2025-04-07..2025-04-09&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2025-04-07..2025-04-09&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2025-04-07..2025-04-09&type=Issues) | [@meeseeksmachine](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ameeseeksmachine+updated%3A2025-04-07..2025-04-09&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 4.0.0
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@3.1.0...996367692c97d10a85aef21c9d76a5d44f260de5))
@@ -35,8 +57,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2024-12-10&to=2025-04-07&type=c))
 
 [@andrii-i](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aandrii-i+updated%3A2024-12-10..2025-04-07&type=Issues) | [@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2024-12-10..2025-04-07&type=Issues) | [@Darshan808](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ADarshan808+updated%3A2024-12-10..2025-04-07&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2024-12-10..2025-04-07&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2024-12-10..2025-04-07&type=Issues) | [@Hyrla](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AHyrla+updated%3A2024-12-10..2025-04-07&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajtpio+updated%3A2024-12-10..2025-04-07&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2024-12-10..2025-04-07&type=Issues) | [@lumberbot-app](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Alumberbot-app+updated%3A2024-12-10..2025-04-07&type=Issues) | [@martinRenou](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AmartinRenou+updated%3A2024-12-10..2025-04-07&type=Issues) | [@Meriem-BenIsmail](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AMeriem-BenIsmail+updated%3A2024-12-10..2025-04-07&type=Issues) | [@nzinfo](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Anzinfo+updated%3A2024-12-10..2025-04-07&type=Issues) | [@trungleduc](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Atrungleduc+updated%3A2024-12-10..2025-04-07&type=Issues) | [@ykazakov](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aykazakov+updated%3A2024-12-10..2025-04-07&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 4.0.0rc0
 
