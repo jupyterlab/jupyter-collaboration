@@ -115,7 +115,6 @@ def bump(force, skip_if_dirty, spec):
     # re-add other dependencies
     for dependency in old_dependencies:
         requirement = Requirement.parse(dependency)
-        print(requirement.project_name, project_pins)
         if requirement.project_name.replace("-", "_") not in project_pins:
             dependencies.add_line(dependency)
     metapackage_toml.get("project").add("dependencies", dependencies.multiline(True))
