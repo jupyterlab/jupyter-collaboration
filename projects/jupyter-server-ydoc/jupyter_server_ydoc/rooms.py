@@ -285,9 +285,9 @@ class DocumentRoom(YRoom):
                     "content": self._document.source,
                 }
             )
-            async with self._update_lock:
-                self._document.dirty = False
-                if saved_model:
+            if saved_model:
+                async with self._update_lock:
+                    self._document.dirty = False
                     self._document.hash = saved_model["hash"]
 
             self._emit(LogLevel.INFO, "save", "Content saved.")
