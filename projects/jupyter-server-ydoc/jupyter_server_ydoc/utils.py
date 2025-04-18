@@ -20,6 +20,7 @@ class MessageType(IntEnum):
     SYNC = 0
     AWARENESS = 1
     CHAT = 125
+    SAVE = 100
 
 
 class LogLevel(Enum):

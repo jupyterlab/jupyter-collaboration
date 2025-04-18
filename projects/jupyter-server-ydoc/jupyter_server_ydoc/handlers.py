@@ -274,6 +274,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         Send a message to the client.
         """
         # needed to be compatible with WebsocketServer (websocket.send)
+        print("\nYocWebsockethandler is send a message!\n")
         try:
             self.write_message(message, binary=True)
         except Exception as e:
@@ -290,8 +291,21 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         On message receive.
         """
-        message_type = message[0]
-
+        m = message[0]
+        # Here I am getting sync message.
+        # But payload seems to be incorrect.
+        # My thought is that if autosave is off and users manually saves there must be diff.
+        # So we sync, but i need to figure out the payload's style
+        message_type = m
+        if m == MessageType.CHAT:
+            print("Chat")
+        elif m == MessageType.SYNC:
+            print("Sync")
+        elif m == MessageType.AWARENESS:
+            print("Awarness")
+        elif m == MessageType.SAVE:
+            print("Save")
+        print(message_type)
         if message_type == MessageType.CHAT:
             msg = message[2:].decode("utf-8")
 
@@ -320,11 +334,14 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         On connection close.
         """
         # stop serving this client
+        print("\n\n", "Websocket is closed, ", self.room.clients, self, "\n\n")
         self._message_queue.put_nowait(b"")
-        if isinstance(self.room, DocumentRoom) and self.room.clients == [self]:
+        print("conditions->", isinstance(self.room, DocumentRoom), self.room.clients == {self})
+        if isinstance(self.room, DocumentRoom) and self.room.clients == {self}:
             # no client in this room after we disconnect
             # keep the document for a while in case someone reconnects
             self.log.info("Cleaning room: %s", self._room_id)
+            print("\n\nTask created!\n\n")
             self.room.cleaner = asyncio.create_task(self._clean_room())
         if self._room_id != "JupyterLab:globalAwareness":
             self._emit_awareness_event(self.current_user.username, "leave")
@@ -360,6 +377,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         contains a copy of the document. In addition, we remove the file if there is no rooms
         subscribed to it.
         """
+        print("\nCleaning the room after delay of: ", self._cleanup_delay, "\n")
         assert isinstance(self.room, DocumentRoom)
 
         if self._cleanup_delay is None:

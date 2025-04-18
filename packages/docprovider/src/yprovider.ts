@@ -160,6 +160,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   };
 
   private _onSync = (isSynced: boolean) => {
+    console.log('on _onSync');
     if (isSynced) {
       if (this._yWebsocketProvider) {
         this._yWebsocketProvider.off('sync', this._onSync);

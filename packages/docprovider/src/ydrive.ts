@@ -1,6 +1,8 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
+console.log('Inside ydrive!');
+
 import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 import { TranslationBundle } from '@jupyterlab/translation';
 import {
@@ -20,7 +22,11 @@ import {
   IDocumentProvider,
   ISharedModelFactory
 } from '@jupyter/collaborative-drive';
+import { messageSync } from 'y-websocket';
 import { Awareness } from 'y-protocols/awareness';
+import { encodeStateAsUpdate } from 'yjs';
+import * as syncProtocol from 'y-protocols/sync';
+import { writeVarUint, createEncoder, toUint8Array } from 'lib0/encoding';
 
 const DISABLE_RTC =
   PageConfig.getOption('disableRTC') === 'true' ? true : false;
@@ -50,6 +56,7 @@ export class RtcContentProvider
   implements IContentProvider
 {
   constructor(options: RtcContentProvider.IOptions) {
+    console.log('RTC content provider activated!');
     super(options);
     this._user = options.user;
     this._trans = options.trans;
@@ -81,6 +88,7 @@ export class RtcContentProvider
     localPath: string,
     options?: Contents.IFetchOptions
   ): Promise<Contents.IModel> {
+    console.log('Wow, get is being called!');
     if (options && options.format && options.type) {
       const key = `${options.format}:${options.type}:${localPath}`;
       const provider = this._providers.get(key);
@@ -118,12 +126,40 @@ export class RtcContentProvider
     options: Partial<Contents.IModel> = {}
   ): Promise<Contents.IModel> {
     // Check that there is a provider - it won't e.g. if the document model is not collaborative.
+    console.log("Wow inside ydrive's save!", localPath, options);
     if (options.format && options.type) {
       const key = `${options.format}:${options.type}:${localPath}`;
       const provider = this._providers.get(key);
 
       if (provider) {
+        // // Gpt thing
+        // // Send a "save" opcode (e.g., MessageType.DKP_SAVE = 100) with the encoded state
+        // const update = encodeStateAsUpdate(provider.wsProvider?.doc!);
+
+        // const payload = new Uint8Array(1 + update.length);
+        // payload[0] = 0; // your custom opcode for save
+        // payload.set(update, 1);
+        // // gpt gave this, it's working fine but server is not sure about payload. So I might need to
+        // // format playload differently
+        // // after server starts recognizing saves
+        // // I need to do below, if above task seems very diffcult, i might first finish below's
+        // // bind autosave settings to file, and send it also
+        // // now see handlers.py line 289
+
+        // provider.wsProvider?.ws?.send(payload);
+        const update = encodeStateAsUpdate(provider.wsProvider?.doc!);
+
+        const encoder = createEncoder();
+        writeVarUint(encoder, messageSync); // → 0 = "sync channel"
+        syncProtocol.writeUpdate(encoder, update); // → writes subtype=2 + payload
+        const msg = toUint8Array(encoder);
+        console.log('First bytes: ', msg[0], msg[1]);
+
+        // 3. fire‑and‑forget
+        provider.wsProvider?.ws?.send(msg);
+
         // Save is done from the backend
+        // provider.wsProvider?.ws?.send('0');
         const fetchOptions: Contents.IFetchOptions = {
           type: options.type,
           format: options.format,
@@ -147,6 +183,7 @@ export class RtcContentProvider
     options: Contents.ISharedFactoryOptions,
     sharedModel: YDocument<DocumentChange>
   ) => {
+    console.log('On create!');
     if (typeof options.format !== 'string') {
       return;
     }

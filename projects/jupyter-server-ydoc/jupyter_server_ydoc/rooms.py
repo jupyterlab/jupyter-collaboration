@@ -41,6 +41,13 @@ class DocumentRoom(YRoom):
         self._file_format: str = file_format
         self._file_type: str = file_type
         self._file: FileLoader = file
+
+        async def testing():
+            while True:
+                await asyncio.sleep(2)
+                print("Clients length: ", self.clients)
+
+        asyncio.create_task(testing())
         self._document = YDOCS.get(self._file_type, YFILE)(self.ydoc, self.awareness)
         self._document.path = self._file.path
 
@@ -247,6 +254,7 @@ class DocumentRoom(YRoom):
             document. This tasks are debounced (60 seconds by default) so we
             need to cancel previous tasks before creating a new one.
         """
+        print("Document change detected", target, event)
         if self._update_lock.locked():
             return
 
