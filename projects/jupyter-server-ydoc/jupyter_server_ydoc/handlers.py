@@ -259,7 +259,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     )
 
                 # Clean up the room and delete the file loader
-                if len(self.room.clients) == 0 or self.room.clients == [self]:
+                if len(self.room.clients) == 0 or self.room.clients == {self}:
                     self._message_queue.put_nowait(b"")
                     self._cleanup_delay = 0
                     await self._clean_room()
@@ -321,7 +321,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         # stop serving this client
         self._message_queue.put_nowait(b"")
-        if isinstance(self.room, DocumentRoom) and self.room.clients == [self]:
+        if isinstance(self.room, DocumentRoom) and self.room.clients == {self}:
             # no client in this room after we disconnect
             # keep the document for a while in case someone reconnects
             self.log.info("Cleaning room: %s", self._room_id)
