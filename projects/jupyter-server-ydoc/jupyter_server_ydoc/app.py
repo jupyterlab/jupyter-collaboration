@@ -105,7 +105,7 @@ class YDocExtension(ExtensionApp):
         page_config.setdefault("serverSideExecution", self.server_side_execution)
 
         # Set configurable parameters to YStore class
-        ystore_class: type[BaseYStore] = partial(self.ystore_class, config=self.config)
+        ystore_class: BaseYStore = partial(self.ystore_class, config=self.config)  # type:ignore[assignment]
 
         self.ywebsocket_server = JupyterWebsocketServer(
             rooms_ready=False,
