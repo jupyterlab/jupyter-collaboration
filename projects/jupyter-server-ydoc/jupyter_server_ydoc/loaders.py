@@ -203,13 +203,28 @@ class FileLoader:
         if self._poll_interval is None:
             return
 
+        consecutive_error_logs = 0
+        max_consecutive_logs = 3
+        suppression_logged = False
+
         while True:
             try:
                 await asyncio.sleep(self._poll_interval)
                 try:
                     await self.maybe_notify()
+                    consecutive_error_logs = 0
+                    suppression_logged = False
                 except Exception as e:
-                    self._log.error(f"Error watching file: {self.path}\n{e!r}", exc_info=e)
+                    if consecutive_error_logs < max_consecutive_logs:
+                        self._log.error(f"Error watching file: {self.path}\n{e!r}", exc_info=e)
+                        consecutive_error_logs += 1
+                    elif not suppression_logged:
+                        self._log.warning(
+                            "Too many errors while watching %s — suppressing further logs.",
+                            self.path,
+                        )
+                        suppression_logged = True
+
             except asyncio.CancelledError:
                 break
 
