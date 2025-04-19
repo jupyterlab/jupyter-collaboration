@@ -16,7 +16,7 @@ from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS
 from pycrdt import Doc, UndoManager, write_var_uint
-from pycrdt_websocket.websocket_server import YRoom
+from pycrdt_websocket.yroom import YRoom
 from pycrdt_websocket.ystore import BaseYStore
 from tornado import web
 from tornado.websocket import WebSocketHandler
@@ -66,6 +66,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
     _message_queue: asyncio.Queue[Any]
     _background_tasks: set[asyncio.Task]
     _room_locks: dict[str, asyncio.Lock] = {}
+    room: YRoom | None
 
     def _room_lock(self, room_id: str) -> asyncio.Lock:
         if room_id not in self._room_locks:
@@ -117,7 +118,10 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
                     file = self._file_loaders[file_id]
                     updates_file_path = f".{file_type}:{file_id}.y"
-                    ystore = self._ystore_class(path=updates_file_path, log=self.log)
+                    ystore = self._ystore_class(
+                        path=updates_file_path,
+                        log=self.log,  # type:ignore[call-arg]
+                    )
                     self.room = DocumentRoom(
                         self._room_id,
                         file_format,
@@ -219,7 +223,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             raise web.HTTPError(403)
         return await super().get(*args, **kwargs)
 
-    async def open(self, room_id):
+    async def open(self, room_id: str):  # type:ignore[override]
         """
         On connection open.
         """
