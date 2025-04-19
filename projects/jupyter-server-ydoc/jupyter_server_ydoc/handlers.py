@@ -66,7 +66,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
     _message_queue: asyncio.Queue[Any]
     _background_tasks: set[asyncio.Task]
     _room_locks: dict[str, asyncio.Lock] = {}
-    room: YRoom | None
 
     def _room_lock(self, room_id: str) -> asyncio.Lock:
         if room_id not in self._room_locks:
@@ -186,7 +185,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self._websocket_server = ywebsocket_server
         self._message_queue = asyncio.Queue()
         self._room_id = ""
-        self.room = None
+        self.room = None  # type:ignore
 
     @property
     def path(self):
@@ -223,7 +222,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             raise web.HTTPError(403)
         return await super().get(*args, **kwargs)
 
-    async def open(self, room_id: str):  # type:ignore[override]
+    async def open(self, room_id: str) -> None:  # type:ignore[override]
         """
         On connection open.
         """
@@ -313,8 +312,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     task = asyncio.create_task(
                         client.send(bytes([MessageType.CHAT]) + write_var_uint(len(data)) + data)
                     )
-                    self._websocket_server.background_tasks.add(task)
-                    task.add_done_callback(self._websocket_server.background_tasks.discard)
+                    self._websocket_server.background_tasks.add(task)  # type:ignore[attr-defined]
+                    task.add_done_callback(self._websocket_server.background_tasks.discard)  # type:ignore[attr-defined]
 
         self._message_queue.put_nowait(message)
         self._websocket_server.ypatch_nb += 1
@@ -653,7 +652,7 @@ class DocForkHandler(APIHandler):
             return self.finish({"code": 404, "error": "Root room not found"})
 
         update = root_room.ydoc.get_update()
-        fork_ydoc = Doc()
+        fork_ydoc: Doc = Doc()
         fork_ydoc.apply_update(update)
         model = self.get_json_body()
         synchronize = model.get("synchronize", False)
