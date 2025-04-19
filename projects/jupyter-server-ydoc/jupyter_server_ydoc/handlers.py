@@ -8,7 +8,7 @@ import json
 import time
 import uuid
 from logging import Logger
-from typing import Any, Literal
+from typing import Any
 from uuid import uuid4
 
 from jupyter_server.auth import authorized
@@ -389,9 +389,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 self._emit(LogLevel.INFO, "clean", "Loader deleted.")
             del self._room_locks[self._room_id]
 
-    def _on_global_awareness_event(
-        self, topic: Literal["change", "update"], changes: tuple[dict[str, Any], Any]
-    ) -> None:
+    def _on_global_awareness_event(self, topic: str, changes: tuple[dict[str, Any], Any]) -> None:
         """
         Update the users when the global awareness changes.
 
@@ -492,7 +490,7 @@ class TimelineHandler(APIHandler):
         try:
             room_id = room_id_from_encoded_path(encoded_path)
             room: YRoom = await self.ywebsocket_server.get_room(room_id)
-            fork_ydoc = Doc()
+            fork_ydoc: Doc = Doc()
 
             ydoc_factory = YDOCS.get(content_type)
             if ydoc_factory is None:
@@ -508,7 +506,9 @@ class TimelineHandler(APIHandler):
             FORK_DOCUMENTS[idx] = ydoc_factory(fork_ydoc)
             undo_manager: UndoManager = FORK_DOCUMENTS[idx].undo_manager
 
-            updates_and_timestamps = [(item[0], item[-1]) async for item in room.ystore.read()]
+            ystore = room.ystore
+            assert ystore
+            updates_and_timestamps = [(item[0], item[-1]) async for item in ystore.read()]
 
             result_timestamps = []
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from functools import partial
-from typing import cast, Literal
+from typing import Literal
 
 from jupyter_server.extension.application import ExtensionApp
 from jupyter_ydoc import ydocs as YDOCS
@@ -105,7 +105,7 @@ class YDocExtension(ExtensionApp):
         page_config.setdefault("serverSideExecution", self.server_side_execution)
 
         # Set configurable parameters to YStore class
-        ystore_class = partial(cast(BaseYStore, self.ystore_class), config=self.config)
+        ystore_class: type[BaseYStore] = partial(self.ystore_class, config=self.config)
 
         self.ywebsocket_server = JupyterWebsocketServer(
             rooms_ready=False,
