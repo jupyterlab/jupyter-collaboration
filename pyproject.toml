@@ -138,7 +138,3 @@ module = [
     "terminado"
 ]
 ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = ["pycrdt_websocket.*"]
-follow_untyped_imports = true
