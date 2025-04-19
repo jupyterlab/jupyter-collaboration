@@ -7,9 +7,10 @@ import asyncio
 from logging import Logger
 from typing import Any, Callable
 
-from pycrdt_websocket.websocket_server import WebsocketServer, YRoom
+from pycrdt_websocket.websocket import Websocket
+from pycrdt_websocket.websocket_server import WebsocketServer
+from pycrdt_websocket.yroom import YRoom
 from pycrdt_websocket.ystore import BaseYStore
-from tornado.websocket import WebSocketHandler
 
 
 class RoomNotFound(LookupError):
@@ -132,7 +133,7 @@ class JupyterWebsocketServer(WebsocketServer):
         await self.start_room(room)
         return room
 
-    async def serve(self, websocket: WebSocketHandler) -> None:
+    async def serve(self, websocket: Websocket) -> None:
         # start monitoring here as the event loop is not yet available when initializing the object
         if self.monitor_task is None:
             self.monitor_task = asyncio.create_task(self._monitor())

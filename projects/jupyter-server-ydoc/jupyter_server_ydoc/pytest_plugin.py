@@ -240,7 +240,12 @@ def rtc_add_doc_to_store(rtc_connect_doc_client):
 
 def rtc_create_SQLite_store_factory(jp_serverapp):
     async def _inner(type: str, path: str, content: str) -> DocumentRoom:
-        db = SQLiteYStore(path=f"{type}:{path}", config=jp_serverapp.config)
+        db = SQLiteYStore(
+            path=f"{type}:{path}",
+            # `SQLiteYStore` here is a subclass of booth `LoggingConfigurable`
+            # and `pycrdt_websocket.ystore.SQLiteYStore`, but mypy gets lost:
+            config=jp_serverapp.config,  # type:ignore[call-arg]
+        )
         _ = create_task(db.start())
         await db.started.wait()
 
