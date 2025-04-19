@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import time
 import uuid
 from logging import Logger
 from typing import Any, Literal
@@ -15,7 +14,7 @@ from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS
-from pycrdt import Doc, UndoManager, write_var_uint
+from pycrdt import Doc, UndoManager
 from pycrdt_websocket.websocket_server import YRoom
 from pycrdt_websocket.ystore import BaseYStore
 from tornado import web
@@ -28,7 +27,6 @@ from .utils import (
     JUPYTER_COLLABORATION_EVENTS_URI,
     JUPYTER_COLLABORATION_FORK_EVENTS_URI,
     LogLevel,
-    MessageType,
     decode_file_path,
     encode_file_path,
     room_id_from_encoded_path,
@@ -290,28 +288,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         On message receive.
         """
-        message_type = message[0]
-
-        if message_type == MessageType.CHAT:
-            msg = message[2:].decode("utf-8")
-
-            user = self.current_user
-            data = json.dumps(
-                {
-                    "sender": user.username,
-                    "timestamp": time.time(),
-                    "content": json.loads(msg),
-                }
-            ).encode("utf8")
-
-            for client in self.room.clients:
-                if client != self:
-                    task = asyncio.create_task(
-                        client.send(bytes([MessageType.CHAT]) + write_var_uint(len(data)) + data)
-                    )
-                    self._websocket_server.background_tasks.add(task)
-                    task.add_done_callback(self._websocket_server.background_tasks.discard)
-
         self._message_queue.put_nowait(message)
         self._websocket_server.ypatch_nb += 1
 
