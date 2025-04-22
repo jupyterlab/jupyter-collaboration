@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 4.0.2
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@4.0.1...a7af554ac4e3865cf397cf57cbd61e4dd9facee3))
+
+### Bugs fixed
+
+- Force analysis of `pycrdt_websocket` imports, fix types [#476](https://github.com/jupyterlab/jupyter-collaboration/pull/476) ([@krassowski](https://github.com/krassowski))
+- Fix cleanup logic and suppress repetitive error logs [#475](https://github.com/jupyterlab/jupyter-collaboration/pull/475) ([@Darshan808](https://github.com/Darshan808))
+- Reset dirty state only when the file is saved [#472](https://github.com/jupyterlab/jupyter-collaboration/pull/472) ([@Darshan808](https://github.com/Darshan808))
+
+### Maintenance and upkeep improvements
+
+- Remove suspected unused code [#478](https://github.com/jupyterlab/jupyter-collaboration/pull/478) ([@krassowski](https://github.com/krassowski))
+
+### Documentation improvements
+
+- Fix "Edit on GitHub" link in documentation [#471](https://github.com/jupyterlab/jupyter-collaboration/pull/471) ([@Darshan808](https://github.com/Darshan808))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2025-04-09&to=2025-04-22&type=c))
+
+[@Darshan808](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ADarshan808+updated%3A2025-04-09..2025-04-22&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2025-04-09..2025-04-22&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2025-04-09..2025-04-22&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 4.0.1
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@4.0.0...7f1646a600291d8f9625df6c3fe1d1403063de9d))
@@ -23,8 +49,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2025-04-07&to=2025-04-09&type=c))
 
 [@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2025-04-07..2025-04-09&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2025-04-07..2025-04-09&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2025-04-07..2025-04-09&type=Issues) | [@meeseeksmachine](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ameeseeksmachine+updated%3A2025-04-07..2025-04-09&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 4.0.0
 
