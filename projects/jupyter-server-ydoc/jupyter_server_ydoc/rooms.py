@@ -9,7 +9,7 @@ from typing import Any, Callable
 
 from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
-from pycrdt_websocket.websocket_server import YRoom
+from pycrdt_websocket.yroom import YRoom
 from pycrdt_websocket.ystore import BaseYStore, YDocNotFound
 
 from .loaders import FileLoader
@@ -103,7 +103,7 @@ class DocumentRoom(YRoom):
             It is important to set the ready property in the parent class (`self.ready = True`),
             this setter will subscribe for updates on the shared document.
         """
-        if self.ready:  # type: ignore[has-type]
+        if self.ready:
             return
 
         self.log.info("Initializing room %s", self._room_id)

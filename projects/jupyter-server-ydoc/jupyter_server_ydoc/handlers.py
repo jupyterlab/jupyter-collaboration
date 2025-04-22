@@ -7,7 +7,7 @@ import asyncio
 import json
 import uuid
 from logging import Logger
-from typing import Any, Literal
+from typing import Any
 from uuid import uuid4
 
 from jupyter_server.auth import authorized
@@ -15,7 +15,7 @@ from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS
 from pycrdt import Doc, UndoManager
-from pycrdt_websocket.websocket_server import YRoom
+from pycrdt_websocket.yroom import YRoom
 from pycrdt_websocket.ystore import BaseYStore
 from tornado import web
 from tornado.websocket import WebSocketHandler
@@ -115,7 +115,10 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
                     file = self._file_loaders[file_id]
                     updates_file_path = f".{file_type}:{file_id}.y"
-                    ystore = self._ystore_class(path=updates_file_path, log=self.log)
+                    ystore = self._ystore_class(
+                        path=updates_file_path,
+                        log=self.log,  # type:ignore[call-arg]
+                    )
                     self.room = DocumentRoom(
                         self._room_id,
                         file_format,
@@ -180,7 +183,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self._websocket_server = ywebsocket_server
         self._message_queue = asyncio.Queue()
         self._room_id = ""
-        self.room = None
+        self.room = None  # type:ignore
 
     @property
     def path(self):
@@ -217,7 +220,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             raise web.HTTPError(403)
         return await super().get(*args, **kwargs)
 
-    async def open(self, room_id):
+    async def open(self, room_id: str) -> None:  # type:ignore[override]
         """
         On connection open.
         """
@@ -362,9 +365,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 self._emit(LogLevel.INFO, "clean", "Loader deleted.")
             del self._room_locks[self._room_id]
 
-    def _on_global_awareness_event(
-        self, topic: Literal["change", "update"], changes: tuple[dict[str, Any], Any]
-    ) -> None:
+    def _on_global_awareness_event(self, topic: str, changes: tuple[dict[str, Any], Any]) -> None:
         """
         Update the users when the global awareness changes.
 
@@ -465,7 +466,7 @@ class TimelineHandler(APIHandler):
         try:
             room_id = room_id_from_encoded_path(encoded_path)
             room: YRoom = await self.ywebsocket_server.get_room(room_id)
-            fork_ydoc = Doc()
+            fork_ydoc: Doc = Doc()
 
             ydoc_factory = YDOCS.get(content_type)
             if ydoc_factory is None:
@@ -481,7 +482,9 @@ class TimelineHandler(APIHandler):
             FORK_DOCUMENTS[idx] = ydoc_factory(fork_ydoc)
             undo_manager: UndoManager = FORK_DOCUMENTS[idx].undo_manager
 
-            updates_and_timestamps = [(item[0], item[-1]) async for item in room.ystore.read()]
+            ystore = room.ystore
+            assert ystore
+            updates_and_timestamps = [(item[0], item[-1]) async for item in ystore.read()]
 
             result_timestamps = []
 
@@ -625,7 +628,7 @@ class DocForkHandler(APIHandler):
             return self.finish({"code": 404, "error": "Root room not found"})
 
         update = root_room.ydoc.get_update()
-        fork_ydoc = Doc()
+        fork_ydoc: Doc = Doc()
         fork_ydoc.apply_update(update)
         model = self.get_json_body()
         synchronize = model.get("synchronize", False)
