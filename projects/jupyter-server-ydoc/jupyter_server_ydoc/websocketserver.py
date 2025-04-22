@@ -39,7 +39,7 @@ class JupyterWebsocketServer(WebsocketServer):
 
     def __init__(
         self,
-        ystore_class: BaseYStore,
+        ystore_class: type[BaseYStore],
         rooms_ready: bool = True,
         auto_clean_rooms: bool = True,
         exception_handler: Callable[[Exception, Logger], bool] | None = None,
