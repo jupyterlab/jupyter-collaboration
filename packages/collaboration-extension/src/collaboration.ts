@@ -21,7 +21,6 @@ import { URLExt } from '@jupyterlab/coreutils';
 import { ServerConnection } from '@jupyterlab/services';
 import { IStateDB, StateDB } from '@jupyterlab/statedb';
 import { ITranslator, nullTranslator } from '@jupyterlab/translation';
-import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
 import { Menu, MenuBar } from '@lumino/widgets';
 
