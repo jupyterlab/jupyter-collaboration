@@ -290,12 +290,15 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         On message receive.
         """
-        m = message[0]
-        # Here I am getting sync message.
-        # But payload seems to be incorrect.
-        # My thought is that if autosave is off and users manually saves there must be diff.
-        # So we sync, but i need to figure out the payload's style
-        message_type = m
+        if message == "save_to_disc":
+            try:
+                self.room._saving_document = asyncio.create_task(
+                    self.room._maybe_save_document(self.room._saving_document)
+                )
+            except Exception:
+                self.log.error("Couldn't save content from room: %s", self._room_id)
+
+        message_type = message[0]
         if message_type == MessageType.CHAT:
             msg = message[2:].decode("utf-8")
 
