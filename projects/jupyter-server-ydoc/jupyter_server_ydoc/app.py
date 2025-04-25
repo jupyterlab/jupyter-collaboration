@@ -204,7 +204,6 @@ class YDocExtension(ExtensionApp):
         if isinstance(room, DocumentRoom):
             if copy:
                 update = room.ydoc.get_update()
-                print("This is the update received!", update)
 
                 fork_ydoc = Doc()
                 fork_ydoc.apply_update(update)

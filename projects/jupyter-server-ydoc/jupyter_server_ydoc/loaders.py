@@ -141,7 +141,6 @@ class FileLoader:
         ### Note:
             If there is changes on disk, this method will raise an OutOfBandChanges exception.
         """
-        print("\nTrying to save ", self.path)
         async with self._lock:
             path = self.path
             if model["type"] not in {"directory", "file", "notebook"}:
@@ -218,7 +217,6 @@ class FileLoader:
         """
         Notifies subscribed rooms about out-of-band file changes.
         """
-        print("\n", "len(subscriptions): ", self.number_of_subscriptions, "\n")
         do_notify = False
         filepath_change = False
         async with self._lock:

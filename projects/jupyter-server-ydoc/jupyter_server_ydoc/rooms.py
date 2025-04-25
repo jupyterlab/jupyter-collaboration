@@ -41,13 +41,6 @@ class DocumentRoom(YRoom):
         self._file_format: str = file_format
         self._file_type: str = file_type
         self._file: FileLoader = file
-
-        async def testing():
-            while True:
-                await asyncio.sleep(2)
-                print("Clients length: ", self.clients)
-
-        asyncio.create_task(testing())
         self._document = YDOCS.get(self._file_type, YFILE)(self.ydoc, self.awareness)
         self._document.path = self._file.path
 
@@ -254,7 +247,18 @@ class DocumentRoom(YRoom):
             document. This tasks are debounced (60 seconds by default) so we
             need to cancel previous tasks before creating a new one.
         """
-        print("Document change detected", target, event)
+        # Collect autosave values from all clients
+        autosave_states = [
+            state.get("autosave", True)
+            for state in self.awareness.states.values()
+            if state  # skip empty states
+        ]
+
+        # Enable autosave if at least one client has it turned on
+        autosave = any(autosave_states)
+
+        if not autosave:
+            return
         if self._update_lock.locked():
             return
 
@@ -273,7 +277,6 @@ class DocumentRoom(YRoom):
         """
         if self._save_delay is None:
             return
-
         if saving_document is not None and not saving_document.done():
             # the document is being saved, cancel that
             saving_document.cancel()
