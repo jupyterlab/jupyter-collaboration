@@ -9,6 +9,7 @@ import uuid
 from logging import Logger
 from typing import Any
 from uuid import uuid4
+from typing import cast
 
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
@@ -293,8 +294,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         if message == "save_to_disc":
             try:
-                self.room._saving_document = asyncio.create_task(
-                    self.room._maybe_save_document(self.room._saving_document)
+                room = cast(DocumentRoom, self.room)
+                room._saving_document = asyncio.create_task(
+                    room._maybe_save_document(room._saving_document)
                 )
             except Exception:
                 self.log.error("Couldn't save content from room: %s", self._room_id)
