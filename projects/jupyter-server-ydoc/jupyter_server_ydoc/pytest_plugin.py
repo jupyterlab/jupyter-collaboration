@@ -276,7 +276,7 @@ def rtc_create_mock_document_room():
         last_modified: datetime | None = None,
         save_delay: float | None = None,
         store: SQLiteYStore | None = None,
-        writable: bool = False,
+        writable: bool = True,
     ) -> tuple[FakeContentsManager, FileLoader, DocumentRoom]:
         paths = {id: path}
 
