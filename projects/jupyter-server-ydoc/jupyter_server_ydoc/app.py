@@ -105,7 +105,7 @@ class YDocExtension(ExtensionApp):
         page_config.setdefault("serverSideExecution", self.server_side_execution)
 
         # Set configurable parameters to YStore class
-        ystore_class = partial(self.ystore_class, config=self.config)
+        ystore_class: type[BaseYStore] = partial(self.ystore_class, config=self.config)  # type:ignore[assignment]
 
         self.ywebsocket_server = JupyterWebsocketServer(
             rooms_ready=False,
@@ -205,7 +205,7 @@ class YDocExtension(ExtensionApp):
             if copy:
                 update = room.ydoc.get_update()
 
-                fork_ydoc = Doc()
+                fork_ydoc: Doc = Doc()
                 fork_ydoc.apply_update(update)
 
                 return YDOCS.get(room.file_type, YDOCS["file"])(fork_ydoc)
