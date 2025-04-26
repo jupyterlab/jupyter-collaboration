@@ -80,10 +80,6 @@ export const rtcContentProvider: JupyterFrontEndPlugin<ICollaborativeContentProv
         ? await settingRegistry.load('@jupyterlab/docmanager-extension:plugin')
         : null;
 
-      // Force autosave to be true by default initially
-      if (docmanagerSettings) {
-        void docmanagerSettings.set('autosave', true);
-      }
       const rtcContentProvider = new RtcContentProvider({
         apiEndpoint: '/api/contents',
         serverSettings: defaultDrive.serverSettings,
