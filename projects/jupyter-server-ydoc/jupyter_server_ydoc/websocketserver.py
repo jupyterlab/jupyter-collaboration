@@ -7,10 +7,10 @@ import asyncio
 from logging import Logger
 from typing import Any, Callable
 
-from pycrdt_websocket.websocket import Websocket
-from pycrdt_websocket.websocket_server import WebsocketServer
-from pycrdt_websocket.yroom import YRoom
-from pycrdt_websocket.ystore import BaseYStore
+from pycrdt.websocket import Websocket
+from pycrdt.websocket.websocket_server import WebsocketServer
+from pycrdt.websocket.yroom import YRoom
+from pycrdt.store import BaseYStore
 
 
 class RoomNotFound(LookupError):

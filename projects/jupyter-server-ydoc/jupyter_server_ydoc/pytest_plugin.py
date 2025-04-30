@@ -14,7 +14,7 @@ from jupyter_server_ydoc.loaders import FileLoader
 from jupyter_server_ydoc.rooms import DocumentRoom
 from jupyter_server_ydoc.stores import SQLiteYStore
 from jupyter_ydoc import YNotebook, YUnicode
-from pycrdt_websocket import WebsocketProvider
+from pycrdt.websocket import WebsocketProvider
 
 from .test_utils import (
     FakeContentsManager,
