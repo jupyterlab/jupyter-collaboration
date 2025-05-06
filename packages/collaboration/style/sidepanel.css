@@ -156,12 +156,15 @@
   margin: 0.25em 0;
 }
 
-.jp-UserInfo-Field > .jp-UserInfo-Field-title {
+.jp-UserInfo-Field > label {
   font-weight: bold;
 }
 
 .jp-UserInfo-Field > input {
   border: none;
+}
+
+.jp-UserInfo-Field > input:not(:disabled) {
   cursor: pointer;
   background-color: var(--jp-input-background);
 }

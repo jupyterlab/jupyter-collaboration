@@ -82,8 +82,15 @@ export class UserDetailsBody extends ReactWidget {
    */
   private _onChange = (
     event: React.ChangeEvent<HTMLInputElement>,
-    field: keyof User.IIdentity
+    field: string
   ) => {
+    const updatableFields = (this._userManager.permissions?.[
+      'updatable_fields'
+    ] || []) as string[];
+    if (!updatableFields?.includes(field)) {
+      return;
+    }
+
     this._userUpdate[field as keyof Omit<User.IIdentity, 'username'>] =
       event.target.value;
   };
@@ -99,20 +106,20 @@ export class UserDetailsBody extends ReactWidget {
     return (
       <div className="jp-UserInfo-Details">
         {Object.keys(this._userManager.identity).map((field: string) => {
+          const id = `jp-UserInfo-Value-${field}`;
           return (
             <div key={field} className="jp-UserInfo-Field">
-              <span className="jp-UserInfo-Field-title">{field}</span>
-              {updatableFields?.includes(field) ? (
-                <input
-                  type={'text'}
-                  onInput={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    this._onChange(event, field)
-                  }
-                  defaultValue={this._userManager.identity![field] as string}
-                />
-              ) : (
-                <span>{this._userManager.identity![field] as string}</span>
-              )}
+              <label htmlFor={id}>{field}</label>
+              <input
+                type={'text'}
+                name={field}
+                id={id}
+                onInput={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  this._onChange(event, field)
+                }
+                defaultValue={this._userManager.identity![field] as string}
+                disabled={!updatableFields?.includes(field)}
+              />
             </div>
           );
         })}
