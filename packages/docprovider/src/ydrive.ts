@@ -22,9 +22,17 @@ import {
 } from '@jupyter/collaborative-drive';
 import { Awareness } from 'y-protocols/awareness';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import * as encoding from 'lib0/encoding';
 
 const DISABLE_RTC =
   PageConfig.getOption('disableRTC') === 'true' ? true : false;
+
+const SAVE_MESSAGE = (() => {
+  const encoder = encoding.createEncoder();
+  encoding.writeVarUint(encoder, 2);
+  encoding.writeVarString(encoder, 'save');
+  return encoding.toUint8Array(encoder);
+})();
 
 /**
  * The url for the default drive service.
@@ -126,7 +134,7 @@ export class RtcContentProvider
       const provider = this._providers.get(key);
 
       if (provider) {
-        provider.wsProvider?.ws?.send('save_to_disc');
+        provider.wsProvider?.ws?.send(SAVE_MESSAGE);
         const fetchOptions: Contents.IFetchOptions = {
           type: options.type,
           format: options.format,

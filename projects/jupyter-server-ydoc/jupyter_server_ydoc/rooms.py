@@ -270,6 +270,17 @@ class DocumentRoom(YRoom):
             self._maybe_save_document(self._saving_document)
         )
 
+    def _save_to_disc(self):
+        """
+        Called when manual save is triggered. Helpful when autosave is turned off.
+        """
+        if self._update_lock.locked():
+            return
+
+        self._saving_document = asyncio.create_task(
+            self._maybe_save_document(self._saving_document)
+        )
+
     async def _maybe_save_document(self, saving_document: asyncio.Task | None) -> None:
         """
         Saves the content of the document to disk.
