@@ -51,9 +51,7 @@ async def test_defined_save_delay_should_save_content_after_document_change(
     rtc_create_mock_document_room,
 ):
     content = "test"
-    cm, _, room = rtc_create_mock_document_room(
-        "test-id", "test.txt", content, save_delay=0.01, writable=True
-    )
+    cm, _, room = rtc_create_mock_document_room("test-id", "test.txt", content, save_delay=0.01)
 
     await room.initialize()
     room._document.source = "Test 2"
@@ -77,6 +75,50 @@ async def test_undefined_save_delay_should_not_save_content_after_document_chang
     await asyncio.sleep(0.15)
 
     assert "save" not in cm.actions
+
+
+async def test_should_not_save_content_when_all_clients_have_autosave_disabled(
+    rtc_create_mock_document_room,
+):
+    content = "test"
+    cm, _, room = rtc_create_mock_document_room("test-id", "test.txt", content, save_delay=0.01)
+
+    # Disable autosave for all existing clients
+    for state in room.awareness._states.values():
+        if state is not None:
+            state["autosave"] = False
+
+    # Inject a dummy client with autosave disabled
+    room.awareness._states[9999] = {"autosave": False}
+
+    await room.initialize()
+    room._document.source = "Test 2"
+
+    await asyncio.sleep(0.15)
+
+    assert "save" not in cm.actions
+
+
+async def test_should_save_content_when_at_least_one_client_has_autosave_enabled(
+    rtc_create_mock_document_room,
+):
+    content = "test"
+    cm, _, room = rtc_create_mock_document_room("test-id", "test.txt", content, save_delay=0.01)
+
+    # Disable autosave for all existing clients
+    for state in room.awareness._states.values():
+        if state is not None:
+            state["autosave"] = False
+
+    # Inject a dummy client with autosave enabled
+    room.awareness._states[10000] = {"autosave": True}
+
+    await room.initialize()
+    room._document.source = "Test 2"
+
+    await asyncio.sleep(0.15)
+
+    assert "save" in cm.actions
 
 
 # The following test should be restored when package versions are fixed.
