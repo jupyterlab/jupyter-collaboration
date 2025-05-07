@@ -1,8 +1,8 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from pycrdt_websocket.ystore import SQLiteYStore as _SQLiteYStore
-from pycrdt_websocket.ystore import TempFileYStore as _TempFileYStore
+from pycrdt.store import SQLiteYStore as _SQLiteYStore
+from pycrdt.store import TempFileYStore as _TempFileYStore
 from traitlets import Int, Unicode
 from traitlets.config import LoggingConfigurable
 
