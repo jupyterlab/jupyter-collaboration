@@ -96,7 +96,8 @@ export class UserDetailsBody extends ReactWidget {
   };
 
   render() {
-    if (!this._userManager.identity) {
+    const identity = this._userManager.identity;
+    if (!identity) {
       return <div className="jp-UserInfo-Details">Error loading user info</div>;
     }
     const updatableFields = (this._userManager.permissions?.[
@@ -105,7 +106,7 @@ export class UserDetailsBody extends ReactWidget {
 
     return (
       <div className="jp-UserInfo-Details">
-        {Object.keys(this._userManager.identity).map((field: string) => {
+        {Object.keys(identity).map((field: string) => {
           const id = `jp-UserInfo-Value-${field}`;
           return (
             <div key={field} className="jp-UserInfo-Field">
@@ -117,7 +118,7 @@ export class UserDetailsBody extends ReactWidget {
                 onInput={(event: React.ChangeEvent<HTMLInputElement>) =>
                   this._onChange(event, field)
                 }
-                defaultValue={this._userManager.identity![field] as string}
+                defaultValue={identity[field] as string}
                 disabled={!updatableFields?.includes(field)}
               />
             </div>
