@@ -142,3 +142,38 @@
   box-shadow: 0 2px 2px -2px rgb(0 0 0 / 24%);
 
 }
+
+/************************************************************
+                User Info Details
+*************************************************************/
+.jp-UserInfo-Field {
+  display: flex;
+  justify-content: space-between;
+}
+
+.jp-UserInfo-Field > label,
+.jp-UserInfo-Field > input {
+  padding: 0.5em 1em;
+  margin: 0.25em 0;
+}
+
+.jp-UserInfo-Field > label {
+  font-weight: bold;
+}
+
+.jp-UserInfo-Field > input {
+  border: none;
+}
+
+.jp-UserInfo-Field > input:not(:disabled) {
+  cursor: pointer;
+  background-color: var(--jp-input-background);
+}
+
+.jp-UserInfo-Field > input:focus {
+  border: solid 1px var(--jp-cell-editor-active-border-color);
+}
+
+.jp-UserInfo-Field > input:focus-visible {
+  outline: none;
+}
