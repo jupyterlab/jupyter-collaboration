@@ -294,7 +294,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         On message receive.
         """
         message_type = message[0]
-        if message_type == MessageType.UPDATE:
+        if message_type == MessageType.RAW:
             msg = message[2:].decode("utf-8")
             if msg == "save":
                 try:

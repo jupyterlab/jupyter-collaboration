@@ -27,9 +27,11 @@ import * as encoding from 'lib0/encoding';
 const DISABLE_RTC =
   PageConfig.getOption('disableRTC') === 'true' ? true : false;
 
+const RAW_MESSAGE_TYPE = 2;
+
 const SAVE_MESSAGE = (() => {
   const encoder = encoding.createEncoder();
-  encoding.writeVarUint(encoder, 2);
+  encoding.writeVarUint(encoder, RAW_MESSAGE_TYPE);
   encoding.writeVarString(encoder, 'save');
   return encoding.toUint8Array(encoder);
 })();
