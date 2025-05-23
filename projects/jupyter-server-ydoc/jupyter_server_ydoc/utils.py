@@ -19,6 +19,7 @@ FORK_EVENTS_SCHEMA_PATH = EVENTS_FOLDER_PATH / "fork.yaml"
 class MessageType(IntEnum):
     SYNC = 0
     AWARENESS = 1
+    RAW = 2
     CHAT = 125
 
 

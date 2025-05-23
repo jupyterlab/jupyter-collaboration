@@ -247,6 +247,33 @@ class DocumentRoom(YRoom):
             document. This tasks are debounced (60 seconds by default) so we
             need to cancel previous tasks before creating a new one.
         """
+        # Collect autosave values from all clients
+        autosave_states = [
+            state.get("autosave", True)
+            for state in self.awareness.states.values()
+            if state  # skip empty states
+        ]
+
+        # If no states exist (e.g., during tests), force autosave to be True
+        if not autosave_states:
+            autosave_states = [True]
+
+        # Enable autosave if at least one client has it turned on
+        autosave = any(autosave_states)
+
+        if not autosave:
+            return
+        if self._update_lock.locked():
+            return
+
+        self._saving_document = asyncio.create_task(
+            self._maybe_save_document(self._saving_document)
+        )
+
+    def _save_to_disc(self):
+        """
+        Called when manual save is triggered. Helpful when autosave is turned off.
+        """
         if self._update_lock.locked():
             return
 
@@ -265,7 +292,6 @@ class DocumentRoom(YRoom):
         """
         if self._save_delay is None:
             return
-
         if saving_document is not None and not saving_document.done():
             # the document is being saved, cancel that
             saving_document.cancel()

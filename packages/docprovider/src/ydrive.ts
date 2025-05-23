@@ -21,9 +21,20 @@ import {
   ISharedModelFactory
 } from '@jupyter/collaborative-drive';
 import { Awareness } from 'y-protocols/awareness';
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import * as encoding from 'lib0/encoding';
 
 const DISABLE_RTC =
   PageConfig.getOption('disableRTC') === 'true' ? true : false;
+
+const RAW_MESSAGE_TYPE = 2;
+
+const SAVE_MESSAGE = (() => {
+  const encoder = encoding.createEncoder();
+  encoding.writeVarUint(encoder, RAW_MESSAGE_TYPE);
+  encoding.writeVarString(encoder, 'save');
+  return encoding.toUint8Array(encoder);
+})();
 
 /**
  * The url for the default drive service.
@@ -42,6 +53,7 @@ namespace RtcContentProvider {
     user: User.IManager;
     trans: TranslationBundle;
     globalAwareness: Awareness | null;
+    docmanagerSettings: ISettingRegistry.ISettings | null;
   }
 }
 
@@ -57,6 +69,7 @@ export class RtcContentProvider
     this._serverSettings = options.serverSettings;
     this.sharedModelFactory = new SharedModelFactory(this._onCreate);
     this._providers = new Map<string, WebSocketProvider>();
+    this._docmanagerSettings = options.docmanagerSettings;
   }
 
   /**
@@ -123,7 +136,7 @@ export class RtcContentProvider
       const provider = this._providers.get(key);
 
       if (provider) {
-        // Save is done from the backend
+        provider.wsProvider?.ws?.send(SAVE_MESSAGE);
         const fetchOptions: Contents.IFetchOptions = {
           type: options.type,
           format: options.format,
@@ -150,6 +163,19 @@ export class RtcContentProvider
     if (typeof options.format !== 'string') {
       return;
     }
+    // Set initial autosave value, used to determine backend autosave (default: true)
+    const autosave =
+      (this._docmanagerSettings?.composite?.['autosave'] as boolean) ?? true;
+
+    sharedModel.awareness.setLocalStateField('autosave', autosave);
+
+    // Watch for changes in settings
+    this._docmanagerSettings?.changed.connect(() => {
+      const newAutosave =
+        (this._docmanagerSettings?.composite?.['autosave'] as boolean) ?? true;
+      sharedModel.awareness.setLocalStateField('autosave', newAutosave);
+    });
+
     try {
       const provider = new WebSocketProvider({
         url: URLExt.join(this._serverSettings.wsUrl, DOCUMENT_PROVIDER_URL),
@@ -235,6 +261,7 @@ export class RtcContentProvider
   private _providers: Map<string, WebSocketProvider>;
   private _ydriveFileChanged = new Signal<this, Contents.IChangedArgs>(this);
   private _serverSettings: ServerConnection.ISettings;
+  private _docmanagerSettings: ISettingRegistry.ISettings | null;
 }
 
 /**
