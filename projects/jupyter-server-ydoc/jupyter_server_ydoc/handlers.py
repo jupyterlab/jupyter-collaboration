@@ -34,6 +34,7 @@ from .utils import (
 )
 from .websocketserver import JupyterWebsocketServer, RoomNotFound
 from .utils import MessageType
+from pycrdt import Decoder
 
 YFILE = YDOCS["file"]
 
@@ -293,16 +294,17 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         On message receive.
         """
-        message_type = message[0]
-        if message_type == MessageType.RAW:
-            msg = message[2:].decode("utf-8")
+        decoder = Decoder(message)
+        header = decoder.read_var_uint()
+        if header == MessageType.RAW:
+            msg = decoder.read_var_string()
             if msg == "save":
                 try:
                     room = cast(DocumentRoom, self.room)
                     room._save_to_disc()
                 except Exception:
                     self.log.error("Couldn't save content from room: %s", self._room_id)
-                return
+            return
 
         self._message_queue.put_nowait(message)
         self._websocket_server.ypatch_nb += 1
