@@ -18,7 +18,30 @@ Jupyter Collaboration consists of several Python packages and frontend extension
 - **pycrdt-store**:
   Persistence layer for CRDT documents. Uses an SQLite-backed store (`.jupyter_ystore.db`) by default to checkpoint document history. Enables autosave and document state recovery after restarts or offline periods.
 
-![Architecture](../images/architecture.svg)
+<div align="center">
+
+```{mermaid}
+  graph TD
+    subgraph "Frontend Clients"
+      JL["JupyterLab Client"]
+      NB["Notebook Client"]
+    end
+
+    subgraph "Jupyter Server"
+      COLLAB["Collaboration Layer"]
+      WS["WebSocket Provider (pycrdt-websocket)"]
+      YDOC["Shared YDoc"]
+      STORE["Persistent Store (pycrdt-store)"]
+    end
+
+    JL -->|WebSocket| COLLAB
+    NB -->|WebSocket| COLLAB
+    COLLAB --> WS
+    WS --> YDOC
+    YDOC --> STORE
+```
+
+</div>
 
 ## Early attempts
 
