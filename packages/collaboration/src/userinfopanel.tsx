@@ -63,14 +63,14 @@ export class UserInfoBody
   implements Dialog.IBodyWidget<User.IManager>
 {
   private _userManager: User.IManager;
-  private _translation: IRenderMime.TranslationBundle;
+  private _trans: IRenderMime.TranslationBundle;
   /**
    * Constructs a new settings widget.
    */
   constructor(props: UserInfoProps) {
     super();
     this._userManager = props.userManager;
-    this._translation = props.translation;
+    this._trans = props.translation;
   }
 
   get user(): User.IManager {
@@ -90,7 +90,7 @@ export class UserInfoBody
       body: new UserDetailsBody({
         userManager: this._userManager
       }),
-      title: this._translation.__('User Details')
+      title: this._trans.__('User Details')
     }).then(async result => {
       if (result.button.accept) {
         // Call the Jupyter Server API to update the user field
@@ -110,7 +110,7 @@ export class UserInfoBody
           }
 
           if (!response.ok) {
-            const errorMsg = this._translation.__('Failed to update user data');
+            const errorMsg = this._trans.__('Failed to update user data');
             throw new Error(errorMsg);
           }
 
