@@ -153,7 +153,7 @@ export const rtcPanelPlugin: JupyterFrontEndPlugin<void> = {
 
     const currentUserPanel = new UserInfoPanel({
       userManager: user,
-      translation: trans
+      trans
     });
     currentUserPanel.title.label = trans.__('User info');
     currentUserPanel.title.caption = trans.__('User information');

@@ -20,7 +20,7 @@ import { UserDetailsBody, UserIconComponent } from './components';
  */
 type UserInfoProps = {
   userManager: User.IManager;
-  translation: IRenderMime.TranslationBundle;
+  trans: IRenderMime.TranslationBundle;
 };
 
 export class UserInfoPanel extends Panel {
@@ -36,7 +36,7 @@ export class UserInfoPanel extends Panel {
     if (this._profile.isReady) {
       this._body = new UserInfoBody({
         userManager: this._profile,
-        translation: options.translation
+        trans: options.trans
       });
       this.addWidget(this._body);
       this.update();
@@ -45,7 +45,7 @@ export class UserInfoPanel extends Panel {
         .then(() => {
           this._body = new UserInfoBody({
             userManager: this._profile,
-            translation: options.translation
+            trans: options.trans
           });
           this.addWidget(this._body);
           this.update();
@@ -70,7 +70,7 @@ export class UserInfoBody
   constructor(props: UserInfoProps) {
     super();
     this._userManager = props.userManager;
-    this._trans = props.translation;
+    this._trans = props.trans;
   }
 
   get user(): User.IManager {
