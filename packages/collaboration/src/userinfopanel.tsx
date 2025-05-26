@@ -5,32 +5,48 @@ import { Dialog, ReactWidget, showDialog } from '@jupyterlab/apputils';
 
 import { ServerConnection, User } from '@jupyterlab/services';
 
+import { URLExt } from '@jupyterlab/coreutils';
+
+import { IRenderMime } from '@jupyterlab/rendermime-interfaces';
+
 import { Panel } from '@lumino/widgets';
 
 import * as React from 'react';
 
 import { UserDetailsBody, UserIconComponent } from './components';
-import { URLExt } from '@jupyterlab/coreutils';
+
+/**
+ * The properties for the UserInfoBody.
+ */
+type UserInfoProps = {
+  userManager: User.IManager;
+  translation: IRenderMime.TranslationBundle;
+};
 
 export class UserInfoPanel extends Panel {
   private _profile: User.IManager;
   private _body: UserInfoBody | null;
 
-  constructor(user: User.IManager) {
+  constructor(options: UserInfoProps) {
     super({});
     this.addClass('jp-UserInfoPanel');
-
-    this._profile = user;
+    this._profile = options.userManager;
     this._body = null;
 
     if (this._profile.isReady) {
-      this._body = new UserInfoBody({ userManager: this._profile });
+      this._body = new UserInfoBody({
+        userManager: this._profile,
+        translation: options.translation
+      });
       this.addWidget(this._body);
       this.update();
     } else {
       this._profile.ready
         .then(() => {
-          this._body = new UserInfoBody({ userManager: this._profile });
+          this._body = new UserInfoBody({
+            userManager: this._profile,
+            translation: options.translation
+          });
           this.addWidget(this._body);
           this.update();
         })
@@ -40,13 +56,6 @@ export class UserInfoPanel extends Panel {
 }
 
 /**
- * The properties for the UserInfoBody.
- */
-type UserInfoBodyProps = {
-  userManager: User.IManager;
-};
-
-/**
  * A SettingsWidget for the user.
  */
 export class UserInfoBody
@@ -54,13 +63,14 @@ export class UserInfoBody
   implements Dialog.IBodyWidget<User.IManager>
 {
   private _userManager: User.IManager;
-
+  private _translation: IRenderMime.TranslationBundle;
   /**
    * Constructs a new settings widget.
    */
-  constructor(props: UserInfoBodyProps) {
+  constructor(props: UserInfoProps) {
     super();
     this._userManager = props.userManager;
+    this._translation = props.translation;
   }
 
   get user(): User.IManager {
@@ -80,7 +90,7 @@ export class UserInfoBody
       body: new UserDetailsBody({
         userManager: this._userManager
       }),
-      title: 'User Details'
+      title: this._translation.__('User Details')
     }).then(async result => {
       if (result.button.accept) {
         // Call the Jupyter Server API to update the user field
@@ -100,7 +110,8 @@ export class UserInfoBody
           }
 
           if (!response.ok) {
-            throw new Error('Failed to update user data');
+            const errorMsg = this._translation.__('Failed to update user data');
+            throw new Error(errorMsg);
           }
 
           // Refresh user information
