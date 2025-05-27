@@ -47,6 +47,35 @@ test('collaboration panel should contains two items', async ({ page }) => {
   expect(panel.locator('.jp-CollaboratorsList .jp-Collaborator')).toHaveCount(0);
 });
 
+test.describe('User info panel', () => {
+  test('should contain the user info icon', async ({ page }) => {
+    const panel = await openPanel(page);
+    const userInfoIcon = panel.locator('.jp-UserInfo-Icon');
+    expect(userInfoIcon).toHaveCount(1);
+  });
+
+  test('should open the user info dialog', async ({ page }) => {
+    const panel = await openPanel(page);
+    const userInfoIcon = panel.locator('.jp-UserInfo-Icon');
+    await userInfoIcon.click();
+
+    const dialog = page.locator('.jp-Dialog-body');
+    expect(dialog).toHaveCount(1);
+
+    const userInfoPanel = page.locator('.jp-UserInfoPanel');
+    expect(userInfoPanel).toHaveCount(1);
+
+    const userName = page.locator('input[name="display_name"]');
+    expect(userName).toHaveCount(1);
+    expect(await userName.inputValue()).toBe('jovyan');
+
+    const cancelButton = page.locator(
+      '.jp-Dialog-button .jp-Dialog-buttonLabel:has-text("Cancel")'
+    );
+    await cancelButton.click();
+    expect(dialog).toHaveCount(0);
+  });
+});
 
 test.describe('One client', () => {
   let guestPage: IJupyterLabPageFixture;

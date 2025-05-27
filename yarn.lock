@@ -2112,6 +2112,7 @@ __metadata:
     "@jupyterlab/apputils": ^4.4.0
     "@jupyterlab/coreutils": ^6.4.0
     "@jupyterlab/docregistry": ^4.4.0
+    "@jupyterlab/rendermime-interfaces": ^3.12.0
     "@jupyterlab/services": ^7.4.0
     "@jupyterlab/ui-components": ^4.4.0
     "@lumino/coreutils": ^2.2.1
