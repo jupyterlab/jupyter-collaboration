@@ -33,7 +33,8 @@ docs = [
     "jupyterlab>=4.4.0",
     "sphinx",
     "myst-parser",
-    "pydata-sphinx-theme"
+    "pydata-sphinx-theme",
+    "sphinxcontrib-mermaid"
 ]
 
 [tool.ruff]
