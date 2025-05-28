@@ -93,7 +93,7 @@ test('should open JupyterHub sharing dialog', async ({ page }) => {
   await page.waitForSelector('.jp-ManageSharesBody-user-item');
 
   expect(await dialog.locator('.jp-Dialog-content').screenshot()).toMatchSnapshot(
-    'shared-link-dialog-hub2.png'
+    'shared-link-dialog-hub.png'
   );
 
   // Copy the link
