@@ -4,8 +4,10 @@
 import {
   Annotation,
   EditorSelection,
+  EditorState,
   Extension,
-  Facet
+  Facet,
+  StateField,
 } from '@codemirror/state';
 import {
   EditorView,
@@ -15,7 +17,11 @@ import {
   RectangleMarker,
   tooltips,
   ViewPlugin,
-  ViewUpdate
+  ViewUpdate,
+  Tooltip,
+  showTooltip,
+  Decoration,
+  DecorationSet,
 } from '@codemirror/view';
 import { User } from '@jupyterlab/services';
 import { JSONExt } from '@lumino/coreutils';
@@ -277,6 +283,39 @@ const userHover = hoverTooltip(
 );
 
 /**
+ * Extension displaying display name on the cursor currently typing
+ */
+const userTypingTooltipField = StateField.define<readonly Tooltip[]>({
+  create: (state) => getUserTypingTooltips(state),
+  update: (tooltips, tr) => {
+    if (!tr.docChanged && !tr.selection) return tooltips;
+    return getUserTypingTooltips(tr.state);
+  },
+  provide: (f) => showTooltip.computeN([f], (state) => state.field(f)),
+});
+
+function getUserTypingTooltips(state: EditorState): readonly Tooltip[] {
+  const { awareness } = state.facet(editorAwarenessFacet);
+  const localAwarenessState = awareness.getLocalState() as IAwarenessState | null;
+
+  if (localAwarenessState && localAwarenessState.state.cursors?.length > 0) {
+    return localAwarenessState.state.cursors.map((cursor: { head: { index: any; }; }) => ({
+      pos: cursor.head.index,
+      above: true,
+      create: () => {
+        const dom = document.createElement("div");
+        dom.classList.add("jp-remote-userInfo");
+        dom.style.backgroundColor = localAwarenessState.user?.color ?? "darkgrey";
+        dom.textContent = localAwarenessState.user?.display_name ?? "Anonymous";
+        return { dom };
+      },
+    }));
+  }
+
+  return [];
+}
+
+/**
  * Extension defining a new editor layer storing the remote selections
  */
 const remoteSelectionLayer = layer({
@@ -428,6 +467,7 @@ const showCollaborators = ViewPlugin.fromClass(
         remoteCursorsLayer,
         remoteSelectionLayer,
         userHover,
+        userTypingTooltipField,
         // As we use relative positioning of widget, the tooltip must be positioned absolutely
         // And we attach the tooltip to the body to avoid overflow rules
         tooltips({ position: 'absolute', parent: document.body })
