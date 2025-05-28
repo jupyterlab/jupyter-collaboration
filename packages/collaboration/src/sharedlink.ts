@@ -25,6 +25,81 @@ export interface ISharedLinkDialogOptions {
   translator?: ITranslator | null;
 }
 
+namespace HubAPI {
+  /**
+   * Share data retrieved from JupyterHub `/shares/{owner}` endpoint.
+   *
+   * https://jupyterhub.readthedocs.io/en/stable/reference/rest-api.html#operation/get-shares-owner
+   */
+  export interface IShare {
+    /**
+     * When the share was first granted.
+     */
+    created_at: string;
+    /**
+     * The user being shared with (exactly one of 'user' or 'group' will be non-null, the other will be null).
+     */
+    group: {
+      name: string;
+    } | null;
+    /**
+     * The group being shared with (exactly one of 'user' or 'group' will be non-null, the other will be null).
+     */
+    user: {
+      name: string;
+    } | null;
+  }
+  /**
+   * User data retrieved from JupyterHub `/users` endpoint.
+   *
+   * https://jupyterhub.readthedocs.io/en/stable/reference/rest-api.html#operation/get-users
+   */
+  export interface IUser {
+    /**
+     * The user's name
+     */
+    name: string;
+    /**
+     * The kind of the object.
+     */
+    kind: 'user';
+  }
+
+  /**
+   * Group data retrieved from JupyterHub `/groups` endpoint.
+   *
+   * https://jupyterhub.readthedocs.io/en/stable/reference/rest-api.html#operation/get-groups
+   */
+  export interface IGroup {
+    /**
+     * The geoups's name
+     */
+    name: string;
+    /**
+     * The kind of the object.
+     */
+    kind: 'group';
+  }
+}
+
+/**
+ * Simplified share data.
+ */
+interface IShareData {
+  /**
+   * Name of the user or group.
+   */
+  name: string;
+  /**
+   * Whether this is a user or groups share.
+   */
+  type: 'user' | 'group';
+  /**
+   * When the share was first granted.
+   */
+  createdAt: string;
+}
+
 /**
  * Show the shared link dialog
  *
@@ -180,9 +255,13 @@ export async function showSharedLinkDialog({
   }
 }
 
+type ShareRecipient = (HubAPI.IUser | HubAPI.IGroup) & {
+  type: 'user' | 'group';
+};
+
 class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
-  private _users: any[] = [];
-  private _shares: any[] = [];
+  private _recipients: ShareRecipient[] = [];
+  private _shares: IShareData[] = [];
   private _searchInput: HTMLInputElement | null = null;
   private _searchResults: HTMLDivElement | null = null;
   private _sharesContainer: HTMLDivElement | null = null;
@@ -199,11 +278,11 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
     private _trans: TranslationBundle
   ) {
     super();
-    this.populateBody(this.node);
+    this._populateBody(this.node);
     this.addClass('jp-shared-link-body');
-    this.loadShares().then(() => {
-      this.updateSharesList().then(() => {
-        this.loadUsers();
+    this._loadShares().then(() => {
+      this._updateSharesList().then(() => {
+        this._loadUsers();
       });
     });
   }
@@ -223,12 +302,12 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
     super.onBeforeDetach(msg);
   }
 
-  private async loadUsers(): Promise<void> {
+  private async _loadUsers(): Promise<void> {
     // If possible, download the users list for the UI
     if (this._canListUsers) {
       let offset = 0;
       const limit = 200;
-      let usersData: any[] = [];
+      let usersData: HubAPI.IUser[] = [];
       let hasMore = true;
 
       while (hasMore) {
@@ -252,12 +331,12 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
           .map(share => share.name)
       );
       // We remove from the list the current user and the users that already have a share
-      this._users = usersData
+      this._recipients = usersData
         .filter(
-          (user: any) =>
+          (user: HubAPI.IUser) =>
             user.name !== this._serverOwner && !sharedUserNames.has(user.name)
         )
-        .map((user: any) => ({ ...user, type: 'user' }));
+        .map((user: HubAPI.IUser) => ({ ...user, type: 'user' }));
     }
     // If possible, download the groups list for the UI and add them to the users list
     if (this._canListGroups) {
@@ -272,20 +351,20 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
           .filter(share => share.type === 'group')
           .map(share => share.name)
       );
-      this._users = this._users.concat(
+      this._recipients = this._recipients.concat(
         groupsData
-          .filter((group: any) => !sharedGroupNames.has(group.name))
-          .map((group: any) => ({ name: group.name, type: 'group' }))
+          .filter((group: HubAPI.IGroup) => !sharedGroupNames.has(group.name))
+          .map((group: HubAPI.IGroup) => ({ name: group.name, type: 'group' }))
       );
     }
 
     // Sort users and groups by name in alphabetical order
-    this._users.sort((a, b) => a.name.localeCompare(b.name));
+    this._recipients.sort((a, b) => a.name.localeCompare(b.name));
 
-    this.updateSearchResults();
+    this._updateSearchResults();
   }
 
-  private async loadShares(): Promise<void> {
+  private async _loadShares(): Promise<void> {
     const sharesResponse = await fetch(
       `${this._hubApiUrl}/shares/${this._serverOwner}/${this._serverName}`,
       {
@@ -295,14 +374,17 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
       }
     );
     const sharesData = await sharesResponse.json();
-    this._shares = sharesData.items.map((item: any) => ({
+    this._shares = sharesData.items.map((item: HubAPI.IShare) => ({
       name: item.user?.name || item.group?.name,
       createdAt: item.created_at,
       type: item.user ? 'user' : 'group'
     }));
   }
 
-  private async createShare(sharewith: any, type: any): Promise<void> {
+  private async _createShare(
+    sharewith: ShareRecipient,
+    type: string
+  ): Promise<void> {
     // If the issuer can control the server, we add the "servers!server" scope to the share to let other users start/stop the server
     const scopes = [
       'access:servers!server=' + this._serverOwner + '/' + this._serverName
@@ -329,7 +411,10 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
     );
   }
 
-  private async deleteShare(sharewith: any, type: any): Promise<void> {
+  private async _deleteShare(
+    sharewith: IShareData,
+    type: string
+  ): Promise<void> {
     await fetch(
       `${this._hubApiUrl}/shares/${this._serverOwner}/${this._serverName}`,
       {
@@ -344,7 +429,7 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
     );
   }
 
-  private populateBody(dialogBody: HTMLElement): void {
+  private _populateBody(dialogBody: HTMLElement): void {
     // Add search input
     const searchContainer = document.createElement('div');
     searchContainer.classList.add('jp-ManageSharesBody-search-container');
@@ -355,7 +440,7 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
       'Type to search for a user or a group to share your server with...'
     );
     this._searchInput.addEventListener('input', () => {
-      this.updateSearchResults();
+      this._updateSearchResults();
     });
     searchContainer.appendChild(this._searchInput);
     dialogBody.appendChild(searchContainer);
@@ -390,14 +475,14 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
     );
   }
 
-  private updateSearchResults(): void {
+  private _updateSearchResults(): void {
     if (!this._searchResults) {
       return;
     }
     this._searchResults.innerHTML = '';
     const query = this._searchInput?.value || '';
 
-    const filteredUsers = this._users.filter(
+    const filteredUsers = this._recipients.filter(
       user =>
         user.name.toLowerCase().includes(query.toLowerCase()) || query === ''
     );
@@ -411,22 +496,22 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
         userElement.textContent = user.name;
       }
       userElement.addEventListener('click', async () => {
-        await this.createShare(user, user.type);
-        await this.loadShares();
-        await this.updateSharesList();
+        await this._createShare(user, user.type);
+        await this._loadShares();
+        await this._updateSharesList();
         // Removing the new user from the search results
         const sharedUserNames = new Set(this._shares.map(share => share.name));
-        this._users = this._users.filter(
-          (user: any) =>
+        this._recipients = this._recipients.filter(
+          (user: ShareRecipient) =>
             user.name !== this._serverOwner && !sharedUserNames.has(user.name)
         );
-        this.updateSearchResults();
+        this._updateSearchResults();
       });
       this._searchResults?.appendChild(userElement);
     });
   }
 
-  private async updateSharesList(): Promise<void> {
+  private async _updateSharesList(): Promise<void> {
     if (!this._sharesContainer) {
       return;
     }
@@ -487,19 +572,19 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
         revokeButton.textContent = this._trans.__('Revoke');
         revokeButton.classList.add('jp-mod-styled');
         revokeButton.addEventListener('click', async () => {
-          await this.deleteShare(share, share.type);
-          await this.loadShares();
-          await this.updateSharesList();
-          await this.loadUsers();
+          await this._deleteShare(share, share.type);
+          await this._loadShares();
+          await this._updateSharesList();
+          await this._loadUsers();
           // Removing the new user from the search results
           const sharedUserNames = new Set(
             this._shares.map(share => share.name)
           );
-          this._users = this._users.filter(
-            (user: any) =>
+          this._recipients = this._recipients.filter(
+            (user: ShareRecipient) =>
               user.name !== this._serverOwner && !sharedUserNames.has(user.name)
           );
-          await this.updateSearchResults();
+          this._updateSearchResults();
         });
         actionsCell.appendChild(revokeButton);
         row.appendChild(actionsCell);
@@ -524,7 +609,7 @@ class SharedLinkBody extends Widget implements Dialog.IBodyWidget {
   ) {
     super();
     this._warning = document.createElement('div');
-    this.populateBody(this.node);
+    this._populateBody(this.node);
     this.addClass('jp-shared-link-body');
   }
 
@@ -545,15 +630,15 @@ class SharedLinkBody extends Widget implements Dialog.IBodyWidget {
 
   protected onAfterAttach(msg: Message): void {
     super.onAfterAttach(msg);
-    this._tokenCheckbox?.addEventListener('change', this.onTokenChange);
+    this._tokenCheckbox?.addEventListener('change', this._onTokenChange);
   }
 
   protected onBeforeDetach(msg: Message): void {
-    this._tokenCheckbox?.removeEventListener('change', this.onTokenChange);
+    this._tokenCheckbox?.removeEventListener('change', this._onTokenChange);
     super.onBeforeDetach(msg);
   }
 
-  private updateContent(withToken: boolean): void {
+  private _updateContent(withToken: boolean): void {
     this._warning.innerHTML = '';
     const urlInput =
       this.node.querySelector<HTMLInputElement>('input[readonly]');
@@ -620,12 +705,12 @@ class SharedLinkBody extends Widget implements Dialog.IBodyWidget {
     }
   }
 
-  private onTokenChange = (e: Event) => {
+  private _onTokenChange = (e: Event) => {
     const target = e.target as HTMLInputElement;
-    this.updateContent(target?.checked);
+    this._updateContent(target?.checked);
   };
 
-  private populateBody(dialogBody: HTMLElement): void {
+  private _populateBody(dialogBody: HTMLElement): void {
     dialogBody.insertAdjacentHTML(
       'afterbegin',
       `<input readonly value="${this._url}">`
@@ -640,7 +725,7 @@ class SharedLinkBody extends Widget implements Dialog.IBodyWidget {
         this._trans.__('Include token in URL')
       );
       dialogBody.insertAdjacentElement('beforeend', this._warning);
-      this.updateContent(false);
+      this._updateContent(false);
     }
   }
 }
