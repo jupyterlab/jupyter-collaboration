@@ -7,17 +7,17 @@
   user-select: none;
 }
 
-.search-container {
+.jp-ManageSharesBody-search-container {
   margin-bottom: 10px;
 }
 
-.search-input {
+.jp-ManageSharesBody-search-input {
   width: 100%;
   padding: 5px;
   margin-top: 5px;
 }
 
-.search-results {
+.jp-ManageSharesBody-search-results {
   height: 10em;
   overflow-y: auto;
   border: 1px solid var(--jp-border-color0);
@@ -25,16 +25,16 @@
   flex-shrink: 0;
 }
 
-.user-item {
+.jp-ManageSharesBody-user-item {
   padding: 5px;
   cursor: pointer;
 }
 
-.user-item:hover {
+.jp-ManageSharesBody-user-item:hover {
   background-color: var(--jp-border-color3);
 }
 
-.selected-users {
+.jp-ManageSharesBody-selected-users {
   margin-top: 10px;
   height: 10em;
   overflow-y: auto;
@@ -42,18 +42,18 @@
   flex-shrink: 0;
 }
 
-.url-input {
+.jp-ManageSharesBody-url-input {
   width: 100%;
   padding: 5px;
   margin-top: 10px;
 }
 
-.shares-table {
+.jp-ManageSharesBody-shares-table {
   width: 100%;
 }
 
-.shares-table td:nth-child(2),
-.shares-table td:nth-child(3) {
+.jp-ManageSharesBody-shares-table td:nth-child(2),
+.jp-ManageSharesBody-shares-table td:nth-child(3) {
   text-align: center;
 }
 

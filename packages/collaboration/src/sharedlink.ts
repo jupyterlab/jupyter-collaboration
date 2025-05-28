@@ -138,7 +138,7 @@ export async function showSharedLinkDialog({
       readableServerName = 'default';
     }
     return showDialog({
-      title: trans.__('Share Jupyter Server ') + readableServerName,
+      title: trans.__('Share Jupyter Server %1', readableServerName),
       body: new ManageSharesBody(
         url.toString(),
         serverName,
@@ -349,10 +349,10 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
   private populateBody(dialogBody: HTMLElement): void {
     // Add search input
     const searchContainer = document.createElement('div');
-    searchContainer.classList.add('search-container');
+    searchContainer.classList.add('jp-ManageSharesBody-search-container');
     this._searchInput = document.createElement('input');
     this._searchInput.type = 'text';
-    this._searchInput.classList.add('search-input');
+    this._searchInput.classList.add('jp-ManageSharesBody-search-input');
     this._searchInput.placeholder = this._trans.__(
       'Type to search for a user or a group to share your server with...'
     );
@@ -364,17 +364,17 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
 
     // Add search results container
     this._searchResults = document.createElement('div');
-    this._searchResults.classList.add('search-results');
+    this._searchResults.classList.add('jp-ManageSharesBody-search-results');
     dialogBody.appendChild(this._searchResults);
 
     // Add selected users container
     this._sharesContainer = document.createElement('div');
-    this._sharesContainer.classList.add('selected-users');
+    this._sharesContainer.classList.add('jp-ManageSharesBody-selected-users');
     dialogBody.appendChild(this._sharesContainer);
 
     dialogBody.insertAdjacentHTML(
       'beforeend',
-      `<input readonly value="${this._url}" class="url-input">`
+      `<input readonly value="${this._url}" class="jp-ManageSharesBody-url-input">`
     );
     dialogBody.insertAdjacentHTML('beforeend', '<br>');
     dialogBody.insertAdjacentText(
@@ -406,7 +406,7 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
 
     filteredUsers.forEach(user => {
       const userElement = document.createElement('div');
-      userElement.classList.add('user-item');
+      userElement.classList.add('jp-ManageSharesBody-user-item');
       userElement.textContent = user.name;
       userElement.addEventListener('click', async () => {
         await this.createShare(user, user.type);
@@ -431,14 +431,18 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
     this._sharesContainer.innerHTML = '';
 
     const table = document.createElement('table');
-    table.classList.add('shares-table');
+    table.classList.add('jp-ManageSharesBody-shares-table');
 
     const headerRow = document.createElement('tr');
-    headerRow.innerHTML = `
-      <th>${this._trans.__('Shared with')}</th>
-      <th>${this._trans.__('Shared since')}</th>
-      <th>${this._trans.__('Actions')}</th>
-    `;
+    const thSharedWith = document.createElement('th');
+    thSharedWith.textContent = this._trans.__('Shared with');
+    const thSharedSince = document.createElement('th');
+    thSharedSince.textContent = this._trans.__('Shared since');
+    const thActions = document.createElement('th');
+    thActions.textContent = this._trans.__('Actions');
+    headerRow.appendChild(thSharedWith);
+    headerRow.appendChild(thSharedSince);
+    headerRow.appendChild(thActions);
     table.appendChild(headerRow);
 
     if (this._shares.length === 0) {
@@ -453,6 +457,18 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
     } else {
       this._shares.forEach(share => {
         const row = document.createElement('tr');
+
+        // Shared with cell
+        const sharedWithCell = document.createElement('td');
+        if (share.type === 'group') {
+          sharedWithCell.textContent = this._trans.__('Group %1', share.name);
+        } else {
+          sharedWithCell.textContent = share.name;
+        }
+        row.appendChild(sharedWithCell);
+
+        // Shared since cell
+        const sharedSinceCell = document.createElement('td');
         const formattedDate = new Date(share.createdAt).toLocaleString([], {
           hour: '2-digit',
           minute: '2-digit',
@@ -460,17 +476,11 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
           month: '2-digit',
           day: '2-digit'
         });
+        sharedSinceCell.textContent = formattedDate;
+        row.appendChild(sharedSinceCell);
 
-        row.innerHTML = `
-        <td>${
-          share.type === 'group'
-            ? this._trans.__('Group ') + share.name
-            : share.name
-        }</td>
-        <td>${formattedDate}</td>
-        <td></td>
-      `;
-
+        // Actions cell
+        const actionsCell = document.createElement('td');
         const revokeButton = document.createElement('button');
         revokeButton.textContent = this._trans.__('Revoke');
         revokeButton.classList.add('jp-mod-styled');
@@ -489,8 +499,9 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
           );
           await this.updateSearchResults();
         });
+        actionsCell.appendChild(revokeButton);
+        row.appendChild(actionsCell);
 
-        row.querySelector('td:last-child')?.appendChild(revokeButton);
         table.appendChild(row);
       });
     }
