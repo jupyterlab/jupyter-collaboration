@@ -405,7 +405,11 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
     filteredUsers.forEach(user => {
       const userElement = document.createElement('div');
       userElement.classList.add('jp-ManageSharesBody-user-item');
-      userElement.textContent = user.name;
+      if (user.type === 'group') {
+        userElement.textContent = this._trans.__('Group %1', user.name);
+      } else {
+        userElement.textContent = user.name;
+      }
       userElement.addEventListener('click', async () => {
         await this.createShare(user, user.type);
         await this.loadShares();
