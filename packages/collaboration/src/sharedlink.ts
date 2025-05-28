@@ -54,9 +54,7 @@ export async function showSharedLinkDialog({
   let serverOwner = '';
 
   // If hubUser is set, we are behind a JupyterHub
-  if (
-    PageConfig.getOption('hubUser') !== ''
-  ) {
+  if (PageConfig.getOption('hubUser') !== '') {
     // Get server name and owner
     serverOwner = PageConfig.getOption('hubServerUser');
     serverName = PageConfig.getOption('hubServerName');
@@ -234,32 +232,32 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
       let hasMore = true;
 
       while (hasMore) {
-      const usersResponse = await fetch(
-        `${this._hubApiUrl}/users?limit=${limit}&offset=${offset}`,
-        {
-        headers: {
-          Authorization: `token ${this._token}`
-        }
-        }
-      );
-      const data = await usersResponse.json();
-      usersData = usersData.concat(data);
-      hasMore = data.length === limit;
-      offset += limit;
+        const usersResponse = await fetch(
+          `${this._hubApiUrl}/users?limit=${limit}&offset=${offset}`,
+          {
+            headers: {
+              Authorization: `token ${this._token}`
+            }
+          }
+        );
+        const data = await usersResponse.json();
+        usersData = usersData.concat(data);
+        hasMore = data.length === limit;
+        offset += limit;
       }
 
       const sharedUserNames = new Set(
-      this._shares
-        .filter(share => share.type === 'user')
-        .map(share => share.name)
+        this._shares
+          .filter(share => share.type === 'user')
+          .map(share => share.name)
       );
       // We remove from the list the current user and the users that already have a share
       this._users = usersData
-      .filter(
-        (user: any) =>
-        user.name !== this._serverOwner && !sharedUserNames.has(user.name)
-      )
-      .map((user: any) => ({ ...user, type: 'user' }));
+        .filter(
+          (user: any) =>
+            user.name !== this._serverOwner && !sharedUserNames.has(user.name)
+        )
+        .map((user: any) => ({ ...user, type: 'user' }));
     }
     // If possible, download the groups list for the UI and add them to the users list
     if (this._canListGroups) {
