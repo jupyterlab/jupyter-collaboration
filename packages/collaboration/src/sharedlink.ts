@@ -455,10 +455,12 @@ class ManageSharesBody extends Widget implements Dialog.IBodyWidget {
     this._sharesContainer.classList.add('jp-ManageSharesBody-selected-users');
     dialogBody.appendChild(this._sharesContainer);
 
-    dialogBody.insertAdjacentHTML(
-      'beforeend',
-      `<input readonly value="${this._url}" class="jp-ManageSharesBody-url-input">`
-    );
+    const input = document.createElement('input');
+    input.classList.add('jp-ManageSharesBody-url-input');
+    input.readOnly = true;
+    input.value = this._url;
+    dialogBody.appendChild(input);
+
     dialogBody.insertAdjacentHTML('beforeend', '<br>');
     dialogBody.insertAdjacentText(
       'beforeend',
@@ -711,10 +713,10 @@ class SharedLinkBody extends Widget implements Dialog.IBodyWidget {
   };
 
   private _populateBody(dialogBody: HTMLElement): void {
-    dialogBody.insertAdjacentHTML(
-      'afterbegin',
-      `<input readonly value="${this._url}">`
-    );
+    const input = document.createElement('input');
+    input.readOnly = true;
+    input.value = this._url;
+    dialogBody.appendChild(input);
 
     if (this._token) {
       const label = dialogBody.appendChild(document.createElement('label'));
