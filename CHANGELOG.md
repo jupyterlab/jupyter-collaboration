@@ -4,11 +4,25 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 4.1.0rc0
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@4.1.0-beta.0...5c61a17e0f5e4db2f9a5474fe661ab1c7be8c3a8))
+
+### Enhancements made
+
+- Add a UI to let users share their servers to other users and groups [#438](https://github.com/jupyterlab/jupyter-collaboration/pull/438) ([@Hyrla](https://github.com/Hyrla))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2025-05-27&to=2025-05-28&type=c))
+
+[@Hyrla](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AHyrla+updated%3A2025-05-27..2025-05-28&type=Issues) | [@ykazakov](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aykazakov+updated%3A2025-05-27..2025-05-28&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 4.1.0beta0
 
 No merged PRs
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 4.1.0alpha0
 
