@@ -12,7 +12,7 @@ from jupyter_events.logger import EventLogger
 from jupyter_server_ydoc.test_utils import Websocket
 from jupyter_ydoc import YUnicode
 from pycrdt import Text
-from pycrdt_websocket import WebsocketProvider
+from pycrdt.websocket import WebsocketProvider
 
 
 async def test_session_handler_should_create_session_id(
