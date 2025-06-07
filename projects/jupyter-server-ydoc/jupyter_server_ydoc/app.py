@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from functools import partial
-from typing import Literal
+from typing import Literal, cast
 
 from jupyter_server.extension.application import ExtensionApp
 from jupyter_ydoc import ydocs as YDOCS
@@ -208,7 +208,9 @@ class YDocExtension(ExtensionApp):
             if not create:
                 return None
 
-            file_format, file_type, file_id = decode_file_path(room_id)
+            file_format_str, file_type, file_id = decode_file_path(room_id)
+            # cast down so mypy won’t complain when we pass this into DocumentRoom
+            file_format = cast(Literal["json", "text"], file_format_str)
             updates_file_path = f".{file_type}:{file_id}.y"
             ystore = self.ystore_class(
                 path=updates_file_path,
