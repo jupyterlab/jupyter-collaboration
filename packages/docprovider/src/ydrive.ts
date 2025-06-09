@@ -11,6 +11,7 @@ import {
   ServerConnection,
   User
 } from '@jupyterlab/services';
+import { PromiseDelegate } from '@lumino/coreutils';
 import { ISignal, Signal } from '@lumino/signaling';
 
 import { DocumentChange, ISharedDocument, YDocument } from '@jupyter/ydoc';
@@ -22,6 +23,7 @@ import {
 } from '@jupyter/collaborative-drive';
 import { Awareness } from 'y-protocols/awareness';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
 
 const DISABLE_RTC =
@@ -136,7 +138,47 @@ export class RtcContentProvider
       const provider = this._providers.get(key);
 
       if (provider) {
-        provider.wsProvider?.ws?.send(SAVE_MESSAGE);
+        const ws = provider.wsProvider?.ws;
+        if (ws) {
+          const delegate = new PromiseDelegate<void>();
+          const handler = (event: MessageEvent) => {
+            const data = new Uint8Array(event.data);
+            const decoder = decoding.createDecoder(data);
+            try {
+              const messageType = decoding.readVarUint(decoder);
+              if (messageType !== RAW_MESSAGE_TYPE) {
+                return;
+              }
+            } catch {
+              return;
+            }
+            const rawReply = decoding.readVarString(decoder);
+            let reply: {
+              'response-to': 'save';
+              status: 'success' | 'skipped' | 'failed';
+            } | null = null;
+            try {
+              reply = JSON.parse(rawReply);
+            } catch (e) {
+              console.debug('The raw reply received was not a JSON reply');
+            }
+            if (reply && reply['response-to'] === 'save') {
+              if (reply.status === 'success') {
+                delegate.resolve();
+              } else if (reply.status === 'failed') {
+                delegate.reject('Saving failed');
+              } else if (reply.status === 'skipped') {
+                delegate.reject('Model update was already in progress');
+              } else {
+                delegate.reject('Unrecognised save reply');
+              }
+            }
+          };
+          ws.addEventListener('message', handler);
+          ws.send(SAVE_MESSAGE);
+          await delegate.promise;
+          ws.removeEventListener('message', handler);
+        }
         const fetchOptions: Contents.IFetchOptions = {
           type: options.type,
           format: options.format,

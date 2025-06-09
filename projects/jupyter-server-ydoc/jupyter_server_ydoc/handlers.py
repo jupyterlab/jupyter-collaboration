@@ -15,7 +15,7 @@ from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS
-from pycrdt import Doc, UndoManager
+from pycrdt import Doc, Encoder, UndoManager
 from pycrdt_websocket.yroom import YRoom
 from pycrdt_websocket.ystore import BaseYStore
 from tornado import web
@@ -273,7 +273,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             if self._room_id != "JupyterLab:globalAwareness":
                 self._emit_awareness_event(self.current_user.username, "join")
 
-    async def send(self, message):
+    async def send(self, message: bytes):
         """
         Send a message to the client.
         """
@@ -301,13 +301,33 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             if msg == "save":
                 try:
                     room = cast(DocumentRoom, self.room)
-                    room._save_to_disc()
+                    save_task = room._save_to_disc()
+                    # task may be missing if save was already in progress
+                    if save_task:
+                        await save_task
+                        await self.send(
+                            self._encode_json_message({"response-to": "save", "status": "success"})
+                        )
+                    else:
+                        await self.send(
+                            self._encode_json_message({"response-to": "save", "status": "skipped"})
+                        )
                 except Exception:
                     self.log.error("Couldn't save content from room: %s", self._room_id)
+                    await self.send(
+                        self._encode_json_message({"response-to": "save", "status": "failed"})
+                    )
             return
 
         self._message_queue.put_nowait(message)
         self._websocket_server.ypatch_nb += 1
+
+    def _encode_json_message(self, message: dict):
+        RAW_MESSAGE_TYPE = 2
+        encoder = Encoder()
+        encoder.write_var_uint(RAW_MESSAGE_TYPE)
+        encoder.write_var_string(json.dumps(message))
+        return encoder.to_bytes()
 
     def on_close(self) -> None:
         """
