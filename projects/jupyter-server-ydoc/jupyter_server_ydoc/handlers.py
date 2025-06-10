@@ -273,7 +273,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             if self._room_id != "JupyterLab:globalAwareness":
                 self._emit_awareness_event(self.current_user.username, "join")
 
-    async def send(self, message: bytes):
+    async def send(self, message: bytes) -> None:
         """
         Send a message to the client.
         """
@@ -322,7 +322,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self._message_queue.put_nowait(message)
         self._websocket_server.ypatch_nb += 1
 
-    def _encode_json_message(self, message: dict):
+    def _encode_json_message(self, message: dict) -> bytes:
         RAW_MESSAGE_TYPE = 2
         encoder = Encoder()
         encoder.write_var_uint(RAW_MESSAGE_TYPE)
