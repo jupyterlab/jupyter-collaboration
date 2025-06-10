@@ -38,6 +38,13 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[project.urls]
+Documentation = "https://jupyterlab-realtime-collaboration.readthedocs.io/"
+Repository = "https://github.com/jupyterlab/jupyter-collaboration"
+Changelog = "https://jupyterlab-realtime-collaboration.readthedocs.io/en/latest/changelog.html"
+Source = "https://github.com/jupyterlab/jupyter-collaboration/tree/main/projects/jupyter-server-ydoc"
+Issues = "https://github.com/jupyterlab/jupyter-collaboration/issues/new/choose"
+
 [project.optional-dependencies]
 test = [
     "coverage",
