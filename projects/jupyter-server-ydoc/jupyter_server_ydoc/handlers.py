@@ -323,9 +323,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self._websocket_server.ypatch_nb += 1
 
     def _encode_json_message(self, message: dict) -> bytes:
-        RAW_MESSAGE_TYPE = 2
         encoder = Encoder()
-        encoder.write_var_uint(RAW_MESSAGE_TYPE)
+        encoder.write_var_uint(MessageType.RAW)
         encoder.write_var_string(json.dumps(message))
         return encoder.to_bytes()
 
