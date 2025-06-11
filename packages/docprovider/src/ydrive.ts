@@ -168,7 +168,7 @@ export class RtcContentProvider
               } else if (reply.status === 'failed') {
                 delegate.reject('Saving failed');
               } else if (reply.status === 'skipped') {
-                delegate.reject('Model update was already in progress');
+                delegate.reject('Saving already in progress');
               } else {
                 delegate.reject('Unrecognised save reply');
               }
