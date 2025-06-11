@@ -120,7 +120,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     updates_file_path = f".{file_type}:{file_id}.y"
                     ystore = self._ystore_class(
                         path=updates_file_path,
-                        log=self.log,  # type:ignore[call-arg]
+                        log=self.log,
                     )
                     self.room = DocumentRoom(
                         self._room_id,
