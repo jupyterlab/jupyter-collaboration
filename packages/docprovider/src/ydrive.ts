@@ -31,13 +31,6 @@ const DISABLE_RTC =
 
 const RAW_MESSAGE_TYPE = 2;
 
-const SAVE_MESSAGE = (() => {
-  const encoder = encoding.createEncoder();
-  encoding.writeVarUint(encoder, RAW_MESSAGE_TYPE);
-  encoding.writeVarString(encoder, 'save');
-  return encoding.toUint8Array(encoder);
-})();
-
 /**
  * The url for the default drive service.
  */
@@ -136,6 +129,7 @@ export class RtcContentProvider
     if (options.format && options.type) {
       const key = `${options.format}:${options.type}:${localPath}`;
       const provider = this._providers.get(key);
+      const saveId = ++this._saveCounter;
 
       if (provider) {
         const ws = provider.wsProvider?.ws;
@@ -154,7 +148,8 @@ export class RtcContentProvider
             }
             const rawReply = decoding.readVarString(decoder);
             let reply: {
-              'response-to': 'save';
+              type: 'save';
+              responseTo: number;
               status: 'success' | 'skipped' | 'failed';
             } | null = null;
             try {
@@ -162,7 +157,11 @@ export class RtcContentProvider
             } catch (e) {
               console.debug('The raw reply received was not a JSON reply');
             }
-            if (reply && reply['response-to'] === 'save') {
+            if (
+              reply &&
+              reply['type'] === 'save' &&
+              reply['responseTo'] === saveId
+            ) {
               if (reply.status === 'success') {
                 delegate.resolve();
               } else if (reply.status === 'failed') {
@@ -170,12 +169,17 @@ export class RtcContentProvider
               } else if (reply.status === 'skipped') {
                 delegate.reject('Saving already in progress');
               } else {
-                delegate.reject('Unrecognised save reply');
+                delegate.reject('Unrecognised save reply status');
               }
             }
           };
           ws.addEventListener('message', handler);
-          ws.send(SAVE_MESSAGE);
+          const encoder = encoding.createEncoder();
+          encoding.writeVarUint(encoder, RAW_MESSAGE_TYPE);
+          encoding.writeVarString(encoder, 'save');
+          encoding.writeVarUint(encoder, saveId);
+          const saveMessage = encoding.toUint8Array(encoder);
+          ws.send(saveMessage);
           await delegate.promise;
           ws.removeEventListener('message', handler);
         }
@@ -298,6 +302,7 @@ export class RtcContentProvider
   };
 
   private _user: User.IManager;
+  private _saveCounter = 0;
   private _trans: TranslationBundle;
   private _globalAwareness: Awareness | null;
   private _providers: Map<string, WebSocketProvider>;

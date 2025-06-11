@@ -299,6 +299,11 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         if header == MessageType.RAW:
             msg = decoder.read_var_string()
             if msg == "save":
+                save_id = decoder.read_var_uint()
+                save_reply = {
+                    "type": "save",
+                    "responseTo": save_id,
+                }
                 try:
                     room = cast(DocumentRoom, self.room)
                     save_task = room._save_to_disc()
@@ -306,17 +311,15 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     if save_task:
                         await save_task
                         await self.send(
-                            self._encode_json_message({"response-to": "save", "status": "success"})
+                            self._encode_json_message({**save_reply, "status": "success"})
                         )
                     else:
                         await self.send(
-                            self._encode_json_message({"response-to": "save", "status": "skipped"})
+                            self._encode_json_message({**save_reply, "status": "skipped"})
                         )
                 except Exception:
                     self.log.error("Couldn't save content from room: %s", self._room_id)
-                    await self.send(
-                        self._encode_json_message({"response-to": "save", "status": "failed"})
-                    )
+                    await self.send(self._encode_json_message({**save_reply, "status": "failed"}))
             return
 
         self._message_queue.put_nowait(message)
