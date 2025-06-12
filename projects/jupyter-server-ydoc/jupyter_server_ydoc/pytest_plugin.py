@@ -14,13 +14,13 @@ from jupyter_server_ydoc.loaders import FileLoader
 from jupyter_server_ydoc.rooms import DocumentRoom
 from jupyter_server_ydoc.stores import SQLiteYStore
 from jupyter_ydoc import YNotebook, YUnicode
-from pycrdt_websocket import WebsocketProvider
+from pycrdt import Provider
+from pycrdt.websocket.websocket import HttpxWebsocket
 
 from .test_utils import (
     FakeContentsManager,
     FakeEventLogger,
     FakeFileIDManager,
-    Websocket,
 )
 
 
@@ -231,7 +231,7 @@ def rtc_add_doc_to_store(rtc_connect_doc_client):
         doc.observe(_on_document_change)
 
         websocket, room_name = await rtc_connect_doc_client(format, type, path)
-        async with websocket as ws, WebsocketProvider(doc.ydoc, Websocket(ws, room_name)):
+        async with websocket as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
             await event.wait()
             await sleep(0.1)
 
@@ -243,7 +243,7 @@ def rtc_create_SQLite_store_factory(jp_serverapp):
         db = SQLiteYStore(
             path=f"{type}:{path}",
             # `SQLiteYStore` here is a subclass of booth `LoggingConfigurable`
-            # and `pycrdt_websocket.ystore.SQLiteYStore`, but mypy gets lost:
+            # and `pycrdt.store.SQLiteYStore`, but mypy gets lost:
             config=jp_serverapp.config,  # type:ignore[call-arg]
         )
         _ = create_task(db.start())

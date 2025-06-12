@@ -9,10 +9,9 @@ from typing import Any
 
 from dirty_equals import IsStr
 from jupyter_events.logger import EventLogger
-from jupyter_server_ydoc.test_utils import Websocket
 from jupyter_ydoc import YUnicode
-from pycrdt import Text
-from pycrdt_websocket import WebsocketProvider
+from pycrdt import Text, Provider
+from pycrdt.websocket.websocket import HttpxWebsocket
 
 
 async def test_session_handler_should_create_session_id(
@@ -81,7 +80,7 @@ async def test_room_handler_doc_client_should_connect(rtc_create_file, rtc_conne
     doc.observe(_on_document_change)
 
     websocket, room_name = await rtc_connect_doc_client("text", "file", path)
-    async with websocket as ws, WebsocketProvider(doc.ydoc, Websocket(ws, room_name)):
+    async with websocket as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
         await event.wait()
         await sleep(0.1)
 
@@ -117,7 +116,7 @@ async def test_room_handler_doc_client_should_emit_awareness_event(
     )
 
     websocket, room_name = await rtc_connect_doc_client("text", "file", path)
-    async with websocket as ws, WebsocketProvider(doc.ydoc, Websocket(ws, room_name)):
+    async with websocket as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
         await event.wait()
         await sleep(0.1)
 
@@ -149,7 +148,7 @@ async def test_room_handler_doc_client_should_cleanup_room_file(
     doc.observe(_on_document_change)
 
     websocket, room_name = await rtc_connect_doc_client("text", "file", path)
-    async with websocket as ws, WebsocketProvider(doc.ydoc, Websocket(ws, room_name)):
+    async with websocket as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
         await event.wait()
         await sleep(0.1)
 
@@ -174,7 +173,7 @@ async def test_room_handler_doc_client_should_cleanup_room_file(
 
     try:
         websocket, room_name = await rtc_connect_doc_client("text2", "file2", path2)
-        async with websocket as ws, WebsocketProvider(doc.ydoc, Websocket(ws, room_name)):
+        async with websocket as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
             await event.wait()
             await sleep(0.1)
     except Exception:
@@ -182,7 +181,7 @@ async def test_room_handler_doc_client_should_cleanup_room_file(
 
     try:
         websocket, room_name = await rtc_connect_doc_client("text2", "file2", path2)
-        async with websocket as ws, WebsocketProvider(doc.ydoc, Websocket(ws, room_name)):
+        async with websocket as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
             await event.wait()
             await sleep(0.1)
     except Exception:
@@ -253,7 +252,7 @@ async def test_fork_handler(
     root_roomid = f"text:file:{file_id}"
 
     websocket, room_name = await rtc_connect_doc_client("text", "file", path)
-    async with websocket as ws, WebsocketProvider(root_ydoc.ydoc, Websocket(ws, room_name)):
+    async with websocket as ws, Provider(root_ydoc.ydoc, HttpxWebsocket(ws, room_name)):
         await root_connect_event.wait()
 
         resp = await rtc_create_fork_client(root_roomid, False, "my fork0", "is awesome0")
@@ -316,8 +315,8 @@ async def test_fork_handler(
         fork_ydoc.observe(_on_fork_change)
         fork_text = fork_ydoc.ydoc.get("source", type=Text)
 
-        async with await rtc_connect_fork_client(fork_roomid1) as ws, WebsocketProvider(
-            fork_ydoc.ydoc, Websocket(ws, fork_roomid1)
+        async with await rtc_connect_fork_client(fork_roomid1) as ws, Provider(
+            fork_ydoc.ydoc, HttpxWebsocket(ws, fork_roomid1)
         ):
             await fork_connect_event.wait()
             root_text = root_ydoc.ydoc.get("source", type=Text)
