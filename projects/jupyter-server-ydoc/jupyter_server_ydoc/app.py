@@ -84,6 +84,8 @@ class YDocExtension(ExtensionApp):
         model.""",
     )
 
+    _room_locks: dict[str, asyncio.Lock] = {}
+
     def initialize(self):
         super().initialize()
         self.serverapp.event_logger.register_event_schema(EVENTS_SCHEMA_PATH)
@@ -143,6 +145,7 @@ class YDocExtension(ExtensionApp):
                         "file_loaders": self.file_loaders,
                         "ystore_class": ystore_class,
                         "ywebsocket_server": self.ywebsocket_server,
+                        "_room_locks": self._room_locks,
                     },
                 ),
                 (r"/api/collaboration/session/(.*)", DocSessionHandler),
@@ -163,6 +166,11 @@ class YDocExtension(ExtensionApp):
                 ),
             ]
         )
+
+    def _room_lock(self, room_id: str) -> asyncio.Lock:
+        if room_id not in self._room_locks:
+            self._room_locks[room_id] = asyncio.Lock()
+        return self._room_locks[room_id]
 
     async def get_document(
         self: YDocExtension,
@@ -201,50 +209,50 @@ class YDocExtension(ExtensionApp):
         if not self.ywebsocket_server.started.is_set():
             asyncio.create_task(self.ywebsocket_server.start())
             await self.ywebsocket_server.started.wait()
-
-        try:
-            room = await self.ywebsocket_server.get_room(room_id)
-        except RoomNotFound:
-            if not create:
-                return None
-
-            file_format_str, file_type, file_id = decode_file_path(room_id)
-            # cast down so mypy won’t complain when we pass this into DocumentRoom
-            file_format = cast(Literal["json", "text"], file_format_str)
-            updates_file_path = f".{file_type}:{file_id}.y"
-            ystore = self.ystore_class(
-                path=updates_file_path,
-                log=self.log,
-            )
-            # Create a new room
-            room = DocumentRoom(
-                room_id,
-                file_format,
-                file_type,
-                self.file_loaders[file_id],
-                self.serverapp.event_logger,
-                ystore,
-                self.log,
-                exception_handler=exception_logger,
-                save_delay=self.document_save_delay,
-            )
-            await room.initialize()
+        async with self._room_lock(room_id):
             try:
-                await self.ywebsocket_server.start_room(room)
-                self.ywebsocket_server.add_room(room_id, room)
-                self.log.info(f"Created and started room: {room_id}")
-            except Exception as e:
-                self.log.error("Room %s failed to start on websocket server", room_id)
-                # Clean room
-                await room.stop()
-                self.log.info("Room %s deleted", room_id)
-                file = self.file_loaders[file_id]
-                if file.number_of_subscriptions == 0 or (
-                    file.number_of_subscriptions == 1 and room_id in file._subscriptions
-                ):
-                    self.log.info("Deleting file %s", file.path)
-                    await self.file_loaders.remove(file_id)
-                raise e
+                room = await self.ywebsocket_server.get_room(room_id)
+            except RoomNotFound:
+                if not create:
+                    return None
+
+                file_format_str, file_type, file_id = decode_file_path(room_id)
+                # cast down so mypy won’t complain when we pass this into DocumentRoom
+                file_format = cast(Literal["json", "text"], file_format_str)
+                updates_file_path = f".{file_type}:{file_id}.y"
+                ystore = self.ystore_class(
+                    path=updates_file_path,
+                    log=self.log,
+                )
+                # Create a new room
+                room = DocumentRoom(
+                    room_id,
+                    file_format,
+                    file_type,
+                    self.file_loaders[file_id],
+                    self.serverapp.event_logger,
+                    ystore,
+                    self.log,
+                    exception_handler=exception_logger,
+                    save_delay=self.document_save_delay,
+                )
+                await room.initialize()
+                try:
+                    await self.ywebsocket_server.start_room(room)
+                    self.ywebsocket_server.add_room(room_id, room)
+                    self.log.info(f"Created and started room: {room_id}")
+                except Exception as e:
+                    self.log.error("Room %s failed to start on websocket server", room_id)
+                    # Clean room
+                    await room.stop()
+                    self.log.info("Room %s deleted", room_id)
+                    file = self.file_loaders[file_id]
+                    if file.number_of_subscriptions == 0 or (
+                        file.number_of_subscriptions == 1 and room_id in file._subscriptions
+                    ):
+                        self.log.info("Deleting file %s", file.path)
+                        await self.file_loaders.remove(file_id)
+                    raise e
 
         if isinstance(room, DocumentRoom):
             if copy:
