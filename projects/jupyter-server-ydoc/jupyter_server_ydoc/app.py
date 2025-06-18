@@ -145,7 +145,7 @@ class YDocExtension(ExtensionApp):
                         "file_loaders": self.file_loaders,
                         "ystore_class": ystore_class,
                         "ywebsocket_server": self.ywebsocket_server,
-                        "_room_locks": self._room_locks,
+                        "room_locks": self._room_locks,
                     },
                 ),
                 (r"/api/collaboration/session/(.*)", DocSessionHandler),
