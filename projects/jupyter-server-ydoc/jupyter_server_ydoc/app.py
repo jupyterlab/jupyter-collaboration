@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from functools import partial
 from typing import Literal, cast
+from collections import defaultdict
 
 from jupyter_server.extension.application import ExtensionApp
 from jupyter_ydoc import ydocs as YDOCS
@@ -84,7 +85,7 @@ class YDocExtension(ExtensionApp):
         model.""",
     )
 
-    _room_locks: dict[str, asyncio.Lock] = {}
+    _room_locks: dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
 
     def initialize(self):
         super().initialize()
@@ -167,11 +168,6 @@ class YDocExtension(ExtensionApp):
             ]
         )
 
-    def _room_lock(self, room_id: str) -> asyncio.Lock:
-        if room_id not in self._room_locks:
-            self._room_locks[room_id] = asyncio.Lock()
-        return self._room_locks[room_id]
-
     async def get_document(
         self: YDocExtension,
         *,
@@ -209,7 +205,7 @@ class YDocExtension(ExtensionApp):
         if not self.ywebsocket_server.started.is_set():
             asyncio.create_task(self.ywebsocket_server.start())
             await self.ywebsocket_server.started.wait()
-        async with self._room_lock(room_id):
+        async with self._room_locks[room_id]:
             try:
                 room = await self.ywebsocket_server.get_room(room_id)
             except RoomNotFound:
