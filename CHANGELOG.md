@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 4.1.0
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@4.0.2...2c47bc0e69e9c621caaa3cacaac5244b4b4c464c))
+
+### Enhancements made
+
+- Add dialog to update user info [#482](https://github.com/jupyterlab/jupyter-collaboration/pull/482) ([@brichet](https://github.com/brichet))
+- Respect autosave setting in RTC backend [#479](https://github.com/jupyterlab/jupyter-collaboration/pull/479) ([@Darshan808](https://github.com/Darshan808))
+- Add a UI to let users share their servers to other users and groups [#438](https://github.com/jupyterlab/jupyter-collaboration/pull/438) ([@Hyrla](https://github.com/Hyrla))
+
+### Bugs fixed
+
+- Fix confirmation on manual saving [#490](https://github.com/jupyterlab/jupyter-collaboration/pull/490) ([@krassowski](https://github.com/krassowski))
+- Fix translation loading in share link dialog [#488](https://github.com/jupyterlab/jupyter-collaboration/pull/488) ([@krassowski](https://github.com/krassowski))
+
+### Documentation improvements
+
+- Add URLs to `pyproject.toml` files [#491](https://github.com/jupyterlab/jupyter-collaboration/pull/491) ([@krassowski](https://github.com/krassowski))
+- Add Current Implementation section to docs [#484](https://github.com/jupyterlab/jupyter-collaboration/pull/484) ([@Darshan808](https://github.com/Darshan808))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2025-04-22&to=2025-07-02&type=c))
+
+[@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2025-04-22..2025-07-02&type=Issues) | [@Darshan808](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ADarshan808+updated%3A2025-04-22..2025-07-02&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2025-04-22..2025-07-02&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2025-04-22..2025-07-02&type=Issues) | [@Hyrla](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AHyrla+updated%3A2025-04-22..2025-07-02&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2025-04-22..2025-07-02&type=Issues) | [@manics](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Amanics+updated%3A2025-04-22..2025-07-02&type=Issues) | [@ykazakov](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aykazakov+updated%3A2025-04-22..2025-07-02&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 4.1.0rc0
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@4.1.0-beta.0...5c61a17e0f5e4db2f9a5474fe661ab1c7be8c3a8))
@@ -17,8 +45,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2025-05-27&to=2025-05-28&type=c))
 
 [@Hyrla](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AHyrla+updated%3A2025-05-27..2025-05-28&type=Issues) | [@ykazakov](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aykazakov+updated%3A2025-05-27..2025-05-28&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 4.1.0beta0
 
