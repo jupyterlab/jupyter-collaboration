@@ -11,6 +11,7 @@ import {
   ServerConnection,
   User
 } from '@jupyterlab/services';
+import { PromiseDelegate } from '@lumino/coreutils';
 import { ISignal, Signal } from '@lumino/signaling';
 
 import { DocumentChange, ISharedDocument, YDocument } from '@jupyter/ydoc';
@@ -22,19 +23,13 @@ import {
 } from '@jupyter/collaborative-drive';
 import { Awareness } from 'y-protocols/awareness';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
 
 const DISABLE_RTC =
   PageConfig.getOption('disableRTC') === 'true' ? true : false;
 
 const RAW_MESSAGE_TYPE = 2;
-
-const SAVE_MESSAGE = (() => {
-  const encoder = encoding.createEncoder();
-  encoding.writeVarUint(encoder, RAW_MESSAGE_TYPE);
-  encoding.writeVarString(encoder, 'save');
-  return encoding.toUint8Array(encoder);
-})();
 
 /**
  * The url for the default drive service.
@@ -134,9 +129,60 @@ export class RtcContentProvider
     if (options.format && options.type) {
       const key = `${options.format}:${options.type}:${localPath}`;
       const provider = this._providers.get(key);
+      const saveId = ++this._saveCounter;
 
       if (provider) {
-        provider.wsProvider?.ws?.send(SAVE_MESSAGE);
+        const ws = provider.wsProvider?.ws;
+        if (ws) {
+          const delegate = new PromiseDelegate<void>();
+          const handler = (event: MessageEvent) => {
+            const data = new Uint8Array(event.data);
+            const decoder = decoding.createDecoder(data);
+            try {
+              const messageType = decoding.readVarUint(decoder);
+              if (messageType !== RAW_MESSAGE_TYPE) {
+                return;
+              }
+            } catch {
+              return;
+            }
+            const rawReply = decoding.readVarString(decoder);
+            let reply: {
+              type: 'save';
+              responseTo: number;
+              status: 'success' | 'skipped' | 'failed';
+            } | null = null;
+            try {
+              reply = JSON.parse(rawReply);
+            } catch (e) {
+              console.debug('The raw reply received was not a JSON reply');
+            }
+            if (
+              reply &&
+              reply['type'] === 'save' &&
+              reply['responseTo'] === saveId
+            ) {
+              if (reply.status === 'success') {
+                delegate.resolve();
+              } else if (reply.status === 'failed') {
+                delegate.reject('Saving failed');
+              } else if (reply.status === 'skipped') {
+                delegate.reject('Saving already in progress');
+              } else {
+                delegate.reject('Unrecognised save reply status');
+              }
+            }
+          };
+          ws.addEventListener('message', handler);
+          const encoder = encoding.createEncoder();
+          encoding.writeVarUint(encoder, RAW_MESSAGE_TYPE);
+          encoding.writeVarString(encoder, 'save');
+          encoding.writeVarUint(encoder, saveId);
+          const saveMessage = encoding.toUint8Array(encoder);
+          ws.send(saveMessage);
+          await delegate.promise;
+          ws.removeEventListener('message', handler);
+        }
         const fetchOptions: Contents.IFetchOptions = {
           type: options.type,
           format: options.format,
@@ -256,6 +302,7 @@ export class RtcContentProvider
   };
 
   private _user: User.IManager;
+  private _saveCounter = 0;
   private _trans: TranslationBundle;
   private _globalAwareness: Awareness | null;
   private _providers: Map<string, WebSocketProvider>;

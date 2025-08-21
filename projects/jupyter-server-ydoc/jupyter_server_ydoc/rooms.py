@@ -280,6 +280,7 @@ class DocumentRoom(YRoom):
         self._saving_document = asyncio.create_task(
             self._maybe_save_document(self._saving_document)
         )
+        return self._saving_document
 
     async def _maybe_save_document(self, saving_document: asyncio.Task | None) -> None:
         """
