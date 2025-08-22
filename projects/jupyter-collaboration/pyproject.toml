@@ -30,11 +30,18 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "jupyter_collaboration_ui>=2.1.0rc0,<3",
-    "jupyter_docprovider>=2.1.0rc0,<3",
-    "jupyter_server_ydoc>=2.1.0rc0,<3",
+    "jupyter_collaboration_ui>=2.1.0,<3",
+    "jupyter_docprovider>=2.1.0,<3",
+    "jupyter_server_ydoc>=2.1.0,<3",
     "jupyterlab>=4.4.0,<5.0.0",
 ]
+
+[project.urls]
+Documentation = "https://jupyterlab-realtime-collaboration.readthedocs.io/"
+Repository = "https://github.com/jupyterlab/jupyter-collaboration"
+Changelog = "https://jupyterlab-realtime-collaboration.readthedocs.io/en/latest/changelog.html"
+Source = "https://github.com/jupyterlab/jupyter-collaboration/tree/main/projects/jupyter-collaboration"
+Issues = "https://github.com/jupyterlab/jupyter-collaboration/issues/new/choose"
 
 [tool.hatch.version]
 path = "jupyter_collaboration/_version.py"

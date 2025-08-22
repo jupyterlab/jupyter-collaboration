@@ -9,8 +9,8 @@ from typing import Any, Callable
 
 from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
-from pycrdt_websocket.yroom import YRoom
-from pycrdt_websocket.ystore import BaseYStore, YDocNotFound
+from pycrdt.websocket import YRoom
+from pycrdt.store import BaseYStore, YDocNotFound
 
 from .loaders import FileLoader
 from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, OutOfBandChanges
@@ -280,6 +280,7 @@ class DocumentRoom(YRoom):
         self._saving_document = asyncio.create_task(
             self._maybe_save_document(self._saving_document)
         )
+        return self._saving_document
 
     async def _maybe_save_document(self, saving_document: asyncio.Task | None) -> None:
         """

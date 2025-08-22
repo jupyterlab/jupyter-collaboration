@@ -11,8 +11,8 @@ else:
 
 import pytest
 from anyio import create_task_group, sleep
-from jupyter_server_ydoc.test_utils import Websocket
-from pycrdt_websocket import WebsocketProvider
+from pycrdt import Provider
+from pycrdt.websocket.websocket import HttpxWebsocket
 
 jupyter_ydocs = {ep.name: ep.load() for ep in entry_points(group="jupyter_ydoc")}
 
@@ -34,7 +34,7 @@ async def test_dirty(
     jupyter_ydoc = jupyter_ydocs[file_type]()
 
     websocket, room_name = await rtc_connect_doc_client(file_format, file_type, file_path)
-    async with websocket as ws, WebsocketProvider(jupyter_ydoc.ydoc, Websocket(ws, room_name)):
+    async with websocket as ws, Provider(jupyter_ydoc.ydoc, HttpxWebsocket(ws, room_name)):
         for _ in range(2):
             jupyter_ydoc.dirty = True
             await sleep(rtc_document_save_delay * 1.5)
