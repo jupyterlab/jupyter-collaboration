@@ -44,7 +44,7 @@ repos:
       - id: mypy
         exclude: "(^binder/jupyter_config\\.py$)|(^scripts/bump_version\\.py$)|(/setup\\.py$)"
         args: ["--config-file", "pyproject.toml"]
-        additional_dependencies: [tornado, pytest, 'pycrdt-websocket<0.16.0']
+        additional_dependencies: [tornado, pytest, 'pycrdt-websocket>=0.16.0,<0.17.0']
         stages: [manual]
 
   - repo: https://github.com/sirosen/check-jsonschema
