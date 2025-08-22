@@ -16,8 +16,8 @@ from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS
 from pycrdt import Doc, Encoder, UndoManager
-from pycrdt_websocket.yroom import YRoom
-from pycrdt_websocket.ystore import BaseYStore
+from pycrdt.store import BaseYStore
+from pycrdt.websocket import YRoom
 from tornado import web
 from tornado.websocket import WebSocketHandler
 
@@ -120,7 +120,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     updates_file_path = f".{file_type}:{file_id}.y"
                     ystore = self._ystore_class(
                         path=updates_file_path,
-                        log=self.log,  # type:ignore[call-arg]
+                        log=self.log,
                     )
                     self.room = DocumentRoom(
                         self._room_id,
