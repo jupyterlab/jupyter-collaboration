@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 4.1.1
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@4.1.0...b488a2b2e532dddca27ed4827c142c6147fe51ed))
+
+### Maintenance and upkeep improvements
+
+- Bump `pycrdt-websocket` to `v0.16.0` [#493](https://github.com/jupyterlab/jupyter-collaboration/pull/493) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2025-07-02&to=2025-08-27&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2025-07-02..2025-08-27&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2025-07-02..2025-08-27&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2025-07-02..2025-08-27&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 4.1.0
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@4.0.2...2c47bc0e69e9c621caaa3cacaac5244b4b4c464c))
@@ -29,8 +45,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2025-04-22&to=2025-07-02&type=c))
 
 [@brichet](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2025-04-22..2025-07-02&type=Issues) | [@Darshan808](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ADarshan808+updated%3A2025-04-22..2025-07-02&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2025-04-22..2025-07-02&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2025-04-22..2025-07-02&type=Issues) | [@Hyrla](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AHyrla+updated%3A2025-04-22..2025-07-02&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2025-04-22..2025-07-02&type=Issues) | [@manics](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Amanics+updated%3A2025-04-22..2025-07-02&type=Issues) | [@ykazakov](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aykazakov+updated%3A2025-04-22..2025-07-02&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 4.1.0rc0
 
