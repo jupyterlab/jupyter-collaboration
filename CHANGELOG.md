@@ -131,6 +131,14 @@ No merged PRs
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@3.1.0...996367692c97d10a85aef21c9d76a5d44f260de5))
 
+> [!IMPORTANT]
+> This version requires migration from `ICollaborativeDrive` to `ICollaborativeContentProvider` token for access to shared factory and forks:
+> 
+> ```diff
+> - import { ICollaborativeDrive } from '@jupyter/collaborative-drive';
+> + import { ICollaborativeContentProvider } from '@jupyter/collaborative-drive';
+> ```
+
 ### Enhancements made
 
 - Gracefully handling non-existing fork room [#420](https://github.com/jupyterlab/jupyter-collaboration/pull/420) ([@trungleduc](https://github.com/trungleduc))
