@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 
 import { IAwareness } from '@jupyter/ydoc';
-import { Contents, SharedDocumentFactory } from '@jupyterlab/services';
+import { Contents, IContentProvider, SharedDocumentFactory } from '@jupyterlab/services';
 import { IDisposable } from '@lumino/disposable';
 
 import { Token } from '@lumino/coreutils';
@@ -22,7 +22,7 @@ export const IGlobalAwareness = new Token<IAwareness>(
   '@jupyter/collaboration:IGlobalAwareness'
 );
 
-export interface ICollaborativeContentProvider {
+export interface ICollaborativeContentProvider extends IContentProvider {
   /**
    * SharedModel factory for the YDrive.
    */
