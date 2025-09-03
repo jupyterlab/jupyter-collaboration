@@ -134,7 +134,7 @@ No merged PRs
 > [!IMPORTANT]
 > This version requires migration from `ICollaborativeDrive` to `ICollaborativeContentProvider` token for access to shared factory and forks:
 >
-> 
+>
 > ```diff
 > - import { ICollaborativeDrive } from '@jupyter/collaborative-drive';
 > + import { ICollaborativeContentProvider } from '@jupyter/collaborative-drive';
