@@ -2,7 +2,11 @@
 // Distributed under the terms of the Modified BSD License.
 
 import { IAwareness } from '@jupyter/ydoc';
-import { Contents, IContentProvider, SharedDocumentFactory } from '@jupyterlab/services';
+import {
+  Contents,
+  IContentProvider,
+  SharedDocumentFactory
+} from '@jupyterlab/services';
 import { IDisposable } from '@lumino/disposable';
 
 import { Token } from '@lumino/coreutils';
