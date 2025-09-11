@@ -77,6 +77,30 @@ async def test_document_ttl_from_settings(rtc_create_mock_document_room, jp_conf
     assert store.document_ttl == 3600
 
 
+async def test_compression_from_settings(rtc_create_mock_document_room, jp_configurable_serverapp):
+    argv = [
+        "--SQLiteYStore.compress_function=gzip.compress",
+        "--SQLiteYStore.decompress_function=gzip.decompress",
+    ]
+
+    app = jp_configurable_serverapp(argv=argv)
+
+    id = "test-compression"
+    content = "test_compression_content"
+    rtc_create_SQLite_store = rtc_create_SQLite_store_factory(app)
+    store = await rtc_create_SQLite_store("file", id, content)
+
+    assert store.compress_function == "gzip.compress"
+    assert store.decompress_function == "gzip.decompress"
+
+    test_data = b"Hello, world! This is test data for compression."
+    compressed = store._compress(test_data)
+    decompressed = store._decompress(compressed)
+
+    assert compressed != test_data
+    assert decompressed == test_data
+
+
 @pytest.mark.parametrize("copy", [True, False])
 async def test_get_document_file(rtc_create_file, jp_serverapp, copy):
     path, content = await rtc_create_file("test.txt", "test", store=True)
