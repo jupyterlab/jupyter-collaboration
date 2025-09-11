@@ -17,7 +17,7 @@ class SQLiteYStoreMetaclass(type(LoggingConfigurable), type(_SQLiteYStore)):  # 
     pass
 
 
-def import_from_dotted_path(dotted_path: str) -> Callable:
+def import_from_dotted_path(dotted_path: str) -> Callable | None:
     """Import a function from a dotted import path.
 
     Args:
