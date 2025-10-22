@@ -6,7 +6,6 @@ import { TranslationBundle } from '@jupyterlab/translation';
 import {
   Contents,
   IContentProvider,
-  RestContentProvider,
   SharedDocumentFactory,
   ServerConnection,
   User
@@ -44,22 +43,23 @@ export interface IForkProvider {
 }
 
 namespace RtcContentProvider {
-  export interface IOptions extends RestContentProvider.IOptions {
+  export interface IOptions {
     user: User.IManager;
     trans: TranslationBundle;
+    drive: Contents.IDrive;
+    serverSettings: ServerConnection.ISettings;
     globalAwareness: Awareness | null;
     docmanagerSettings: ISettingRegistry.ISettings | null;
   }
 }
 
 export class RtcContentProvider
-  extends RestContentProvider
   implements IContentProvider
 {
   constructor(options: RtcContentProvider.IOptions) {
-    super(options);
     this._user = options.user;
     this._trans = options.trans;
+    this._drive = options.drive;
     this._globalAwareness = options.globalAwareness;
     this._serverSettings = options.serverSettings;
     this.sharedModelFactory = new SharedModelFactory(this._onCreate);
@@ -99,7 +99,7 @@ export class RtcContentProvider
         // Use `Promise.all` to reject as soon as possible. The Context will
         // show a dialog to the user.
         const [model] = await Promise.all([
-          super.get(localPath, { ...options, content: false }),
+          this._drive.get(localPath, { ...options, content: false }),
           provider.ready
         ]);
         // The server doesn't return a model with a format when content is false,
@@ -108,7 +108,7 @@ export class RtcContentProvider
       }
     }
 
-    return super.get(localPath, options);
+    return this._drive.get(localPath, options);
   }
 
   /**
@@ -192,7 +192,7 @@ export class RtcContentProvider
       }
     }
 
-    return super.save(localPath, options);
+    return this._drive.save(localPath, options);
   }
 
   /**
@@ -301,6 +301,7 @@ export class RtcContentProvider
     }
   };
 
+  private _drive: Contents.IDrive;
   private _user: User.IManager;
   private _saveCounter = 0;
   private _trans: TranslationBundle;
