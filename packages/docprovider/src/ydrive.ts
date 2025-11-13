@@ -194,6 +194,10 @@ export class RtcContentProvider
           content: false
         };
         return this.get(localPath, fetchOptions);
+      } else {
+        console.warn(
+          `Could not find a provider for ${localPath}, falling back to REST API save`
+        );
       }
     }
 
