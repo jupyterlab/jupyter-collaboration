@@ -54,6 +54,7 @@ namespace RtcContentProvider {
     trans: TranslationBundle;
     globalAwareness: Awareness | null;
     docmanagerSettings: ISettingRegistry.ISettings | null;
+    fileChanged?: ISignal<Contents.IDrive, Contents.IChangedArgs>;
   }
 }
 
@@ -70,6 +71,7 @@ export class RtcContentProvider
     this.sharedModelFactory = new SharedModelFactory(this._onCreate);
     this._providers = new Map<string, WebSocketProvider>();
     this._docmanagerSettings = options.docmanagerSettings;
+    this._driveFileChanged = options.fileChanged;
   }
 
   /**
@@ -208,7 +210,7 @@ export class RtcContentProvider
    * A signal emitted when a file operation takes place.
    */
   get fileChanged(): ISignal<this, Contents.IChangedArgs> {
-    return this._ydriveFileChanged;
+    return this._providerFileChanged;
   }
 
   private _onCreate = (
@@ -302,6 +304,35 @@ export class RtcContentProvider
         }
       };
 
+      // The information about file being renamed can come from two places:
+      // - from the sharedModel via changed signal with documentChange
+      // - from the fileChanged signal of the drive
+      // Neither method is foolproof:
+      // - the shared model approach can be delayed as the change needs to be
+      //   reflected by the server and come back, in which case we get a race condition
+      // - the fileChanged signal is emitted with a larger delay for renames of collaborators
+      // Thus we need both.
+      const handleFileChangedSignal = (
+        _: Contents.IDrive,
+        change: Contents.IChangedArgs
+      ) => {
+        if (change.type !== 'rename') {
+          return;
+        }
+        const oldPath = change.oldValue?.path;
+        const newPath = change.newValue?.path;
+        if (oldPath !== path) {
+          return;
+        }
+        handlePathChange({
+          oldValue: oldPath,
+          newValue: newPath,
+          name: 'path'
+        });
+      };
+
+      this._driveFileChanged?.connect(handleFileChangedSignal);
+
       sharedModel.changed.connect(async (_, change) => {
         if (!change.stateChange) {
           return;
@@ -333,7 +364,7 @@ export class RtcContentProvider
         const newPath = sharedModel.state.path ?? options.path;
         const model = await this.get(newPath as string, { content: false });
 
-        this._ydriveFileChanged.emit({
+        this._providerFileChanged.emit({
           type: 'save',
           newValue: { ...model, hash: hashChange.newValue },
           // we do not have the old model because it was discarded when server made the change,
@@ -357,6 +388,9 @@ export class RtcContentProvider
           documents.splice(index, 1);
         }
         this._globalAwareness?.setLocalStateField('documents', documents);
+
+        // Disconnect signal
+        this._driveFileChanged?.disconnect(handleFileChangedSignal);
       });
     } catch (error) {
       // Falling back to the contents API if opening the websocket failed
@@ -372,7 +406,10 @@ export class RtcContentProvider
   private _trans: TranslationBundle;
   private _globalAwareness: Awareness | null;
   private _providers: Map<string, WebSocketProvider>;
-  private _ydriveFileChanged = new Signal<this, Contents.IChangedArgs>(this);
+  // This is for emitting signals to be proxied to `Drive.fileChanged`
+  private _providerFileChanged = new Signal<this, Contents.IChangedArgs>(this);
+  // This is for listening to `Drive.fileChanged` signal
+  private _driveFileChanged?: ISignal<Contents.IDrive, Contents.IChangedArgs>;
   private _serverSettings: ServerConnection.ISettings;
   private _docmanagerSettings: ISettingRegistry.ISettings | null;
 }
