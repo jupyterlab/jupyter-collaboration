@@ -14,7 +14,12 @@ import {
 import { PromiseDelegate } from '@lumino/coreutils';
 import { ISignal, Signal } from '@lumino/signaling';
 
-import { DocumentChange, ISharedDocument, YDocument } from '@jupyter/ydoc';
+import {
+  DocumentChange,
+  ISharedDocument,
+  StateChange,
+  YDocument
+} from '@jupyter/ydoc';
 
 import { WebSocketProvider } from './yprovider';
 import {
@@ -241,13 +246,70 @@ export class RtcContentProvider
         this._globalAwareness?.setLocalStateField('documents', documents);
       }
 
-      const key = `${options.format}:${options.contentType}:${options.path}`;
+      let path = options.path;
+      let key = `${options.format}:${options.contentType}:${path}`;
       this._providers.set(key, provider);
+
+      const handlePathChange = (
+        pathChange: StateChange<string | undefined>
+      ) => {
+        const oldPath = pathChange.oldValue;
+        const newPath = pathChange.newValue;
+        if (!oldPath || !newPath) {
+          // This is expected when shared model initializes and the path is first populated
+          console.debug('New or old path not given', pathChange);
+          return;
+        }
+
+        const oldKey = `${options.format}:${options.contentType}:${oldPath}`;
+        if (oldKey !== key) {
+          console.error(
+            'The computed old provider key is different from the current key'
+          );
+          return;
+        }
+        const newKey = `${options.format}:${options.contentType}:${newPath}`;
+
+        // Check if the provider is still registered (it may have been disposed if document was closed)
+        const provider = this._providers.get(oldKey);
+        if (!provider) {
+          console.warn(
+            `Could not find a provider to update after rename ${oldKey}, ${newKey}`
+          );
+          return;
+        }
+
+        // Re-register the provider under the new key
+        this._providers.set(newKey, provider);
+        this._providers.delete(oldKey);
+
+        // Update the provider key so that it can be disposed correctly when shared document closes
+        key = newKey;
+        path = newPath;
+
+        // Update the documents field
+        const state = this._globalAwareness?.getLocalState() || {};
+        const documents: string[] = state.documents || [];
+        const oldPathIndex = documents.indexOf(oldPath);
+        if (documents.includes(oldPath) && !documents.includes(newPath)) {
+          documents.splice(oldPathIndex, 1);
+          documents.push(newPath);
+          this._globalAwareness?.setLocalStateField('documents', documents);
+        }
+      };
 
       sharedModel.changed.connect(async (_, change) => {
         if (!change.stateChange) {
           return;
         }
+
+        const pathChanges = change.stateChange.filter(
+          change => change.name === 'path'
+        );
+        for (const pathChange of pathChanges) {
+          handlePathChange(pathChange);
+        }
+
         const hashChanges = change.stateChange.filter(
           change => change.name === 'hash'
         );
@@ -285,8 +347,8 @@ export class RtcContentProvider
 
         // Remove the document path from the list of opened ones for this user.
         const state = this._globalAwareness?.getLocalState() || {};
-        const documents: any[] = state.documents || [];
-        const index = documents.indexOf(options.path);
+        const documents: string[] = state.documents || [];
+        const index = documents.indexOf(path);
         if (index > -1) {
           documents.splice(index, 1);
         }
