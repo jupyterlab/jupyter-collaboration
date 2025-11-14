@@ -66,7 +66,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
     _message_queue: asyncio.Queue[Any]
     _background_tasks: set[asyncio.Task]
-    _room_locks: dict[str, asyncio.Lock] = {}
 
     def _room_lock(self, room_id: str) -> asyncio.Lock:
         if room_id not in self._room_locks:
@@ -173,6 +172,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         ywebsocket_server: JupyterWebsocketServer,
         file_loaders: FileLoaderMapping,
         ystore_class: type[BaseYStore],
+        room_locks: dict[str, asyncio.Lock] | None = None,
         document_cleanup_delay: float | None = 60.0,
         document_save_delay: float | None = 1.0,
     ) -> None:
@@ -187,6 +187,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self._message_queue = asyncio.Queue()
         self._room_id = ""
         self.room = None  # type:ignore
+        self._room_locks = room_locks if room_locks is not None else {}
 
     @property
     def path(self):
