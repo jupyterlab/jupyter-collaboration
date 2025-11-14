@@ -175,7 +175,7 @@ test.describe('Initialization', () => {
     // Save the notebook manually
     await page.notebook.save();
 
-    // Wait a three seconds to make sure the cell does not jump
+    // Wait three seconds to make sure the cell does not jump
     await page.waitForTimeout(3000);
 
     // The save operation should not trigger a PUT to the renamed path,
