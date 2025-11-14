@@ -146,6 +146,52 @@ test.describe('Initialization', () => {
     await page.notebook.close(true);
     await guestPage.notebook.close(true);
   });
+
+  test('Rename a notebook', async({ page, tmpPath }) => {
+    await page.filebrowser.refresh();
+    await page.notebook.open(exampleNotebook);
+    await page.notebook.activate(exampleNotebook);
+
+    // Enter edit mode on cell number three
+    await page.notebook.enterCellEditingMode(3);
+    expect(await page.notebook.isCellInEditingMode(3)).toBe(true);
+
+    const oldPath = `${tmpPath}/${exampleNotebook}`;
+    const newPath = `${tmpPath}/differentName.ipynb`;
+
+    // Rename notebook
+    await page.contents.renameFile(oldPath, newPath);
+
+    // Intercept REST API save endpoint
+    let savedUsingRestAPI = false;
+    const saveRoutePattern = `**/api/contents/${newPath}**`;
+    await page.route(saveRoutePattern, route => {
+      if (route.request().method() === 'PUT') {
+        savedUsingRestAPI = true;
+      }
+      route.continue();
+    });
+
+    // Save the notebook manually
+    await page.notebook.save();
+
+    // Wait three seconds to make sure the cell does not jump
+    await page.waitForTimeout(3000);
+
+    // The save operation should not trigger a PUT to the renamed path,
+    // instead the save request should have gone through the websocket.
+    expect.soft(savedUsingRestAPI).toBe(false);
+
+    // This tests against a out-of-band reloads that can cause
+    // change of active cell and of the notebook edit/command mode
+    expect(await page.notebook.isCellInEditingMode(3)).toBe(true);
+
+    // Cleanup network route
+    await page.unroute(saveRoutePattern);
+
+    // Rename it back for cleanup
+    await page.contents.renameFile(newPath, oldPath);
+  });
 });
 
 test.describe('Ten clients', () => {

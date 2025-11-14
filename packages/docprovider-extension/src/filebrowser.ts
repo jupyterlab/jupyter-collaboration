@@ -86,7 +86,8 @@ export const rtcContentProvider: JupyterFrontEndPlugin<ICollaborativeContentProv
         user: app.serviceManager.user,
         trans,
         globalAwareness,
-        docmanagerSettings
+        docmanagerSettings,
+        fileChanged: defaultDrive.fileChanged
       });
       registry.register('rtc', rtcContentProvider);
       return rtcContentProvider;
