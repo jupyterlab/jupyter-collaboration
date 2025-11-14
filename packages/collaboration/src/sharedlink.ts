@@ -134,12 +134,11 @@ export async function showSharedLinkDialog({
     serverOwner = PageConfig.getOption('hubServerUser');
     serverName = PageConfig.getOption('hubServerName');
     // Prepare the Hub API URL
-    const protocol = window.location.protocol;
-    const hostname =
-      PageConfig.getOption('hubHost') || window.location.hostname;
-    const port = window.location.port;
+    // hubHost is the full Origin (`proto://hostname:port`)
+    // or an empty string, making hubApiUrl an absolute path on the current origin
+    const hubHost = PageConfig.getOption('hubHost') || '';
     const prefix = PageConfig.getOption('hubPrefix');
-    hubApiUrl = `${protocol}//${hostname}:${port}${prefix}api`;
+    hubApiUrl = `${hubHost}${prefix}api`;
     // Check Hub version for share compatibility (>= 5.0)
     const response = await fetch(hubApiUrl, {
       // A GET request on base API url returns the Hub version

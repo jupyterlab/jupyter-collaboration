@@ -15,7 +15,7 @@ test('should open JupyterHub sharing dialog', async ({ page }) => {
     document.body.dataset['hubUser'] = 'jovyan';
     document.body.dataset['hubServerUser'] = 'jovyan';
     document.body.dataset['hubServerName'] = 'my-server';
-    document.body.dataset['hubHost'] = 'localhost';
+    document.body.dataset['hubHost'] = '';
     document.body.dataset['hubPrefix'] = '/hub/';
   });
 
