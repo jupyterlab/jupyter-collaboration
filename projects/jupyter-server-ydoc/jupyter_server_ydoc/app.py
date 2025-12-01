@@ -50,6 +50,14 @@ class YDocExtension(ExtensionApp):
         saving changes from the front-end.""",
     )
 
+    file_stop_poll_on_errors_after = Float(
+        7 * 24 * 60 * 60,
+        allow_none=True,
+        config=True,
+        help="""The duration in seconds to stop polling a file after consecutive errors.
+        Defaults to 7 days, if None then polling will not stop on errors.""",
+    )
+
     document_cleanup_delay = Float(
         60,
         allow_none=True,
@@ -121,7 +129,10 @@ class YDocExtension(ExtensionApp):
         # the global app settings in which the file id manager will register
         # itself maybe at a later time.
         self.file_loaders = FileLoaderMapping(
-            self.serverapp.web_app.settings, self.log, self.file_poll_interval
+            self.serverapp.web_app.settings,
+            self.log,
+            self.file_poll_interval,
+            file_stop_poll_on_errors_after=self.file_stop_poll_on_errors_after,
         )
 
         self.handlers.extend(
