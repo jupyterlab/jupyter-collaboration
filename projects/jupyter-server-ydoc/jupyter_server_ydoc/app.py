@@ -51,11 +51,11 @@ class YDocExtension(ExtensionApp):
     )
 
     file_stop_poll_on_errors_after = Float(
-        7 * 24 * 60 * 60,
+        24 * 60 * 60,
         allow_none=True,
         config=True,
         help="""The duration in seconds to stop polling a file after consecutive errors.
-        Defaults to 7 days, if None then polling will not stop on errors.""",
+        Defaults to 24 hours, if None then polling will not stop on errors.""",
     )
 
     document_cleanup_delay = Float(
