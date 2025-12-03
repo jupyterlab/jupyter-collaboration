@@ -1,5 +1,17 @@
 # Configuration
 
+User Settings
+-----------------
+
+To change your username, display name, or color:
+
+1. Click the **Collaboration** icon in the left sidebar
+2. In the **User Info** section, click your user icon
+3. Edit your details in the form that appears
+
+![User settings](images/rtc_user_settings.png)
+
+
 By default, any change made to a document is saved to disk in an SQLite database file called
 `.jupyter_ystore.db` in the directory where JupyterLab was launched. This file helps in
 preserving the timeline of documents, for instance between JupyterLab sessions, or when a user
