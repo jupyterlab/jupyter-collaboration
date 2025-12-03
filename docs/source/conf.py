@@ -63,7 +63,7 @@ html_theme_options = {
     "show_toc_level": 1,
     "navbar_align": "left",
     "navbar_end": ["navbar-icon-links.html"],
-    "footer_items": ["copyright.html"],
+    "footer_start": ["copyright.html"],
 }
 
 # Output for github to be used in links
