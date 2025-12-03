@@ -26,9 +26,24 @@ pip install jupyter-collaboration
 ```
 
 The new collaborative editing feature enables collaboration in real-time
-between multiple clients without user roles. When sharing the URL of a
-document to other users, they will have access to the same environment you
-are working on (they can e.g. write and execute the cells of a notebook).
+between multiple clients without user roles.
+
+Sharing Notebooks
+-----------------
+
+To share a notebook with collaborators:
+
+1. Click the **Share** button in the top-right corner
+2. Copy the generated URL and send it to your collaborators
+
+Collaborators will have full access to your JupyterLab environment, including the ability to edit and execute cells.
+
+**Notes:**
+
+- For network access, share your machine's IP address or use ``--ip=0.0.0.0`` for easier configuration
+- Set a custom token with ``--LabApp.token=<your-token>`` to simplify the URL
+- For remote access, use a tunnel service like [ngrok](<https://ngrok.com/>)
+- Exposing your server publicly can pose security risks
 
 Moreover, you can see the cursors from other users with an anonymous
 username, a username that will disappear in a few seconds to make room
