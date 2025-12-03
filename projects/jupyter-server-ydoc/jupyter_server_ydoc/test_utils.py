@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any
+from tornado.web import HTTPError
 
 from jupyter_server import _tz as tz
 
@@ -40,6 +41,8 @@ class FakeContentsManager:
     def get(
         self, path: str, content: bool = True, format: str | None = None, type: str | None = None
     ) -> dict:
+        if not self.model:
+            raise HTTPError(404, f"File not found: {path}")
         self.actions.append("get")
         return self.model
 
