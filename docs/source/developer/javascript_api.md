@@ -2,7 +2,7 @@
 
 % Distributed under the terms of the Modified BSD License.
 
-# JavaScript APIDP
+# JavaScript API
 
 % this doc exists as a resolvable link target
 

@@ -2,7 +2,7 @@
 
 % Distributed under the terms of the Modified BSD License.
 
-# Developer documentationDP
+# Developer documentation
 
 If you're reading this section, you're probably interested in contributing to
 Jupyter. Welcome and thanks for your interest in contributing!
