@@ -140,7 +140,6 @@ class DocumentRoom(YRoom):
             if not read_from_source:
                 # if YStore updates and source file are out-of-sync, resync updates with source
                 if self._document.source != model["content"]:
-                    # TODO: Delete document from the store.
                     self._emit(
                         LogLevel.INFO,
                         "initialize",
@@ -151,6 +150,14 @@ class DocumentRoom(YRoom):
                         self._file.path,
                         self.ystore.__class__.__name__,
                     )
+                    # FIX: Clear the document content BEFORE loading from file to prevent
+                    # cell duplication. When out-of-sync is detected, the YDoc contains
+                    # content from the YStore that may have corrupted state (e.g., from
+                    # previous duplications). If we don't clear it, the set() method will
+                    # try to MERGE the YStore content with the file content instead of
+                    # REPLACING it, which causes cell duplication.
+                    # See: https://github.com/jupyterlab/jupyterlab/issues/14031
+                    self._clear_document()
                     read_from_source = True
 
             if read_from_source:
@@ -177,6 +184,28 @@ class DocumentRoom(YRoom):
             data["msg"] = msg
 
         self._logger.emit(schema_id=JUPYTER_COLLABORATION_EVENTS_URI, data=data)
+
+    def _clear_document(self) -> None:
+        """
+        Clears the document content to allow a clean reload from file.
+
+        This is necessary when an out-of-sync condition is detected between the
+        YStore and the file. Without clearing, the set() method would try to
+        merge the existing content with the new content, potentially causing
+        cell duplication in notebooks.
+
+        For notebooks (YNotebook), this clears the cells array. The metadata
+        and state will be properly updated by the subsequent set() call.
+        """
+        # Check if the document has a ycells attribute (notebooks)
+        if hasattr(self._document, "ycells"):
+            # Use a transaction to ensure atomic operation
+            with self._document.ydoc.transaction():
+                self._document.ycells.clear()
+            self.log.info(
+                "Cleared document content in room %s to prevent duplication",
+                self._room_id,
+            )
 
     async def stop(self) -> None:
         """

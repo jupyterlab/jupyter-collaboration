@@ -227,8 +227,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         On connection open.
         """
-        self.create_task(self._websocket_server.serve(self))
-
         if isinstance(self.room, DocumentRoom):
             # Close the connection if the document session expired
             session_id = self.get_query_argument("sessionId", "")
@@ -237,16 +235,20 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     1003,
                     f"Document session {session_id} expired. You need to reload this browser tab.",
                 )
+                return
 
             # cancel the deletion of the room if it was scheduled
             if self.room.cleaner is not None:
                 self.room.cleaner.cancel()
 
             try:
-                # Initialize the room
+                # FIX: Initialize the room BEFORE starting to serve clients.
+                # This prevents a race condition where SYNC_STEP1 is sent before
+                # the document is loaded, causing cell duplication when the client
+                # responds with SYNC_STEP2.
+                # See: https://github.com/jupyterlab/jupyterlab/issues/14031
                 async with self._room_lock(self._room_id):
                     await self.room.initialize()
-                self._emit_awareness_event(self.current_user.username, "join")
             except Exception as e:
                 _, _, file_id = decode_file_path(self._room_id)
                 file = self._file_loaders[file_id]
@@ -267,9 +269,15 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     self._message_queue.put_nowait(b"")
                     self._cleanup_delay = 0
                     await self._clean_room()
+                return  # Don't start serving if initialization failed
 
+            # NOW start serving - after successful initialization
+            self.create_task(self._websocket_server.serve(self))
             self._emit(LogLevel.INFO, "initialize", "New client connected.")
+            self._emit_awareness_event(self.current_user.username, "join")
         else:
+            # TransientRoom (e.g., awareness) - no initialization needed
+            self.create_task(self._websocket_server.serve(self))
             if self._room_id != "JupyterLab:globalAwareness":
                 self._emit_awareness_event(self.current_user.username, "join")
 
