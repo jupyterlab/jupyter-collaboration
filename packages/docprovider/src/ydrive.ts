@@ -54,14 +54,12 @@ namespace RtcContentProvider {
     globalAwareness: Awareness | null;
     serverSettings: ServerConnection.ISettings;
     docmanagerSettings: ISettingRegistry.ISettings | null;
-    currentDrive: Contents.IDrive,
+    currentDrive: Contents.IDrive;
     fileChanged?: ISignal<Contents.IDrive, Contents.IChangedArgs>;
   }
 }
 
-export class RtcContentProvider
-  implements IContentProvider
-{
+export class RtcContentProvider implements IContentProvider {
   constructor(options: RtcContentProvider.IOptions) {
     this._user = options.user;
     this._trans = options.trans;
@@ -107,14 +105,11 @@ export class RtcContentProvider
         // show a dialog to the user.
         const [model] = await Promise.all([
           // Not calling get() with options.contentProviderId otherwise it's an infinite loop
-          this._currentDrive.get(
-            localPath,
-            {
-              ...options,
-              content: false,
-              contentProviderId: undefined
-            }
-          ),
+          this._currentDrive.get(localPath, {
+            ...options,
+            content: false,
+            contentProviderId: undefined
+          }),
           provider.ready
         ]);
         // The server doesn't return a model with a format when content is false,
@@ -124,10 +119,10 @@ export class RtcContentProvider
     }
 
     // Not calling get() with options.contentProviderId otherwise it's an infinite loop
-    return this._currentDrive.get(
-      localPath,
-      { ...options, contentProviderId: undefined }
-    );
+    return this._currentDrive.get(localPath, {
+      ...options,
+      contentProviderId: undefined
+    });
   }
 
   /**
@@ -215,7 +210,10 @@ export class RtcContentProvider
       }
     }
 
-    return this._currentDrive.save(localPath, {...options, contentProviderId: undefined});
+    return this._currentDrive.save(localPath, {
+      ...options,
+      contentProviderId: undefined
+    });
   }
 
   /**
