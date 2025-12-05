@@ -68,7 +68,7 @@ pre-commit run
 
 which should run any autoformatting on your code
 and tell you about any errors it couldn't fix automatically.
-You may also install [black integration](https://github.com/psf/black#editor-integration)
+You may also install [ruff integration](https://docs.astral.sh/ruff/editors/)
 into your text editor to format code automatically.
 
 If you have already committed files before setting up the pre-commit
@@ -86,7 +86,7 @@ running other instances of Jupyter Server. You can try the following steps:
 
 1. Uninstall all instances of the `jupyter-collaboration` package. These include any installations you made using
    pip or conda
-2. Run `python3 -m pip install -e .` in the jupyter_collaboration repository to install jupyter_collaboration from there
+2. Run `python3 -m pip install -e .` in the jupyter-collaboration repository to install `jupyter-collaboration` from there
 3. Launch with `python3 -m jupyter_server --port 8989`, and check that the browser is pointing to `localhost:8989`
    (rather than the default 8888). You don't necessarily have to launch with port 8989, as long as you use
    a port that is neither the default nor in use, then it should be fine.
@@ -98,13 +98,12 @@ Install dependencies:
 
 ```
 pip install -e .[dev,test]
-pip install -e examples/simple  # to test the examples
 ```
 
 To run the Python tests, use:
 
 ```
-pytest jupyter_collaboration
+pytest
 ```
 
 ## Building the Docs
@@ -112,18 +111,10 @@ pytest jupyter_collaboration
 To build the documentation you'll need [Sphinx](http://www.sphinx-doc.org/en/master/),
 [pandoc](https://pandoc.org/) and a few other packages.
 
-To install (and activate) a [conda environment] named `jupyter_collaboration_docs`
-containing all the necessary packages (except pandoc), use:
+To install the necessary packages with `pip`:
 
 ```
-conda env create -f docs/environment.yml
-conda activate jupyter_collaboration_docs
-```
-
-If you want to install the necessary packages with `pip` instead:
-
-```
-pip install -r docs/doc-requirements.txt
+pip install -e .[docs]
 ```
 
 Once you have installed the required packages, you can build the docs with:
