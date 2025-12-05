@@ -49,7 +49,7 @@ jupyter server
 
 ### Code Styling
 
-`jupyter_collaboration` has adopted automatic code formatting so you shouldn't
+`jupyter-collaboration` has adopted automatic code formatting so you shouldn't
 need to worry too much about your code style.
 As long as your code is valid,
 the pre-commit hook should take care of how it should look.
@@ -84,7 +84,7 @@ running with the `--hook-stage manual` argument.
 If you do not see that your Jupyter Server is not running on dev mode, it's possible that you are
 running other instances of Jupyter Server. You can try the following steps:
 
-1. Uninstall all instances of the jupyter_collaboration package. These include any installations you made using
+1. Uninstall all instances of the `jupyter-collaboration` package. These include any installations you made using
    pip or conda
 2. Run `python3 -m pip install -e .` in the jupyter_collaboration repository to install jupyter_collaboration from there
 3. Launch with `python3 -m jupyter_server --port 8989`, and check that the browser is pointing to `localhost:8989`
