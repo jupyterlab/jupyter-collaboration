@@ -29,14 +29,21 @@ authors = [
 ]
 dependencies = [
     "jupyter_server>=2.15.0,<3.0.0",
-    "jupyter_ydoc>=2.1.2,<4.0.0,!=3.0.0,!=3.0.1",
+    "jupyter_ydoc>=3.0.3,<4.0.0",
     "pycrdt",
-    "pycrdt-websocket>=0.15.0,<0.16.0",
-    "jupyter_events>=0.10.0",
+    "pycrdt-websocket>=0.16.0,<0.17.0",
+    "jupyter_events>=0.11.0",
     "jupyter_server_fileid>=0.7.0,<1",
     "jsonschema>=4.18.0"
 ]
 dynamic = ["version"]
+
+[project.urls]
+Documentation = "https://jupyterlab-realtime-collaboration.readthedocs.io/"
+Repository = "https://github.com/jupyterlab/jupyter-collaboration"
+Changelog = "https://jupyterlab-realtime-collaboration.readthedocs.io/en/latest/changelog.html"
+Source = "https://github.com/jupyterlab/jupyter-collaboration/tree/main/projects/jupyter-server-ydoc"
+Issues = "https://github.com/jupyterlab/jupyter-collaboration/issues/new/choose"
 
 [project.optional-dependencies]
 test = [

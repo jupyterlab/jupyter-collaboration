@@ -1,0 +1,62 @@
+/* -----------------------------------------------------------------------------
+| Copyright (c) Jupyter Development Team.
+| Distributed under the terms of the Modified BSD License.
+|---------------------------------------------------------------------------- */
+
+.jp-shared-link-body {
+  user-select: none;
+}
+
+.jp-ManageSharesBody-search-container {
+  margin-bottom: 10px;
+}
+
+.jp-ManageSharesBody-search-input {
+  width: 100%;
+  padding: 5px;
+  margin-top: 5px;
+}
+
+.jp-ManageSharesBody-search-results {
+  height: 10em;
+  overflow-y: auto;
+  border: 1px solid var(--jp-border-color0);
+  padding: 5px;
+  flex-shrink: 0;
+}
+
+.jp-ManageSharesBody-user-item {
+  padding: 5px;
+  cursor: pointer;
+}
+
+.jp-ManageSharesBody-user-item:hover {
+  background-color: var(--jp-border-color3);
+}
+
+.jp-ManageSharesBody-selected-users {
+  margin-top: 10px;
+  height: 10em;
+  overflow-y: auto;
+  border: 1px solid var(--jp-border-color0);
+  flex-shrink: 0;
+}
+
+.jp-ManageSharesBody-url-input {
+  width: 100%;
+  padding: 5px;
+  margin-top: 10px;
+}
+
+.jp-ManageSharesBody-shares-table {
+  width: 100%;
+}
+
+.jp-ManageSharesBody-shares-table td:nth-child(2),
+.jp-ManageSharesBody-shares-table td:nth-child(3) {
+  text-align: center;
+}
+
+.jp-Dialog-content:has(.jp-shared-link-body) {
+    max-height: 750px;
+}

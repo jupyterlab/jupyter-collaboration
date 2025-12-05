@@ -14,13 +14,13 @@ from jupyter_server_ydoc.loaders import FileLoader
 from jupyter_server_ydoc.rooms import DocumentRoom
 from jupyter_server_ydoc.stores import SQLiteYStore
 from jupyter_ydoc import YNotebook, YUnicode
-from pycrdt_websocket import WebsocketProvider
+from pycrdt import Provider
+from pycrdt.websocket.websocket import HttpxWebsocket
 
 from .test_utils import (
     FakeContentsManager,
     FakeEventLogger,
     FakeFileIDManager,
-    Websocket,
 )
 
 
@@ -231,7 +231,7 @@ def rtc_add_doc_to_store(rtc_connect_doc_client):
         doc.observe(_on_document_change)
 
         websocket, room_name = await rtc_connect_doc_client(format, type, path)
-        async with websocket as ws, WebsocketProvider(doc.ydoc, Websocket(ws, room_name)):
+        async with websocket as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
             await event.wait()
             await sleep(0.1)
 
@@ -240,7 +240,12 @@ def rtc_add_doc_to_store(rtc_connect_doc_client):
 
 def rtc_create_SQLite_store_factory(jp_serverapp):
     async def _inner(type: str, path: str, content: str) -> DocumentRoom:
-        db = SQLiteYStore(path=f"{type}:{path}", config=jp_serverapp.config)
+        db = SQLiteYStore(
+            path=f"{type}:{path}",
+            # `SQLiteYStore` here is a subclass of booth `LoggingConfigurable`
+            # and `pycrdt.store.SQLiteYStore`, but mypy gets lost:
+            config=jp_serverapp.config,  # type:ignore[call-arg]
+        )
         _ = create_task(db.start())
         await db.started.wait()
 
@@ -271,13 +276,16 @@ def rtc_create_mock_document_room():
         last_modified: datetime | None = None,
         save_delay: float | None = None,
         store: SQLiteYStore | None = None,
+        writable: bool = True,
     ) -> tuple[FakeContentsManager, FileLoader, DocumentRoom]:
         paths = {id: path}
 
         if last_modified is None:
-            cm = FakeContentsManager({"content": content})
+            cm = FakeContentsManager({"content": content, "writable": writable})
         else:
-            cm = FakeContentsManager({"last_modified": datetime.now(), "content": content})
+            cm = FakeContentsManager(
+                {"last_modified": datetime.now(), "content": content, "writable": writable}
+            )
 
         loader = FileLoader(
             id,

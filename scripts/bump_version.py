@@ -7,7 +7,8 @@ from pathlib import Path
 import click
 import tomlkit
 from jupyter_releaser.util import get_version, run
-from pkg_resources import parse_version
+from pkg_resources import parse_version, Requirement
+
 
 LERNA_CMD = "jlpm run lerna version --no-push --force-publish --no-git-tag-version"
 
@@ -105,11 +106,18 @@ def bump(force, skip_if_dirty, spec):
     metapackage = "jupyter-collaboration"
     metapackage_toml_path = HERE / "projects" / metapackage / "pyproject.toml"
     metapackage_toml = tomlkit.parse(metapackage_toml_path.read_text())
+    old_dependencies = metapackage_toml.get("project").get("dependencies")
     metapackage_toml.get("project").remove("dependencies")
     dependencies = tomlkit.array()
     for key in sorted(project_pins):
         if key != metapackage.replace("-", "_"):
-            dependencies.add_line(key + ">=" + project_pins[key])
+            next_major = f"{parse_version(project_pins[key]).major + 1}"
+            dependencies.add_line(key + ">=" + project_pins[key] + ",<" + next_major)
+    # re-add other dependencies
+    for dependency in old_dependencies:
+        requirement = Requirement.parse(dependency)
+        if requirement.project_name.replace("-", "_") not in project_pins:
+            dependencies.add_line(dependency)
     metapackage_toml.get("project").add("dependencies", dependencies.multiline(True))
     metapackage_toml_path.write_text(tomlkit.dumps(metapackage_toml))
 

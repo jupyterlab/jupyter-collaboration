@@ -24,7 +24,7 @@ release = "0.3.0"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["myst_parser", "sphinx.ext.autodoc"]
+extensions = ["myst_parser", "sphinx.ext.autodoc", "sphinxcontrib.mermaid"]
 
 templates_path = ["_templates"]
 exclude_patterns = ["ts/**"]
@@ -58,20 +58,21 @@ html_theme_options = {
             "type": "local",
         }
     ],
-    "github_url": "https://github.com/jupyterlab/jupyter_collaboration",
+    "github_url": "https://github.com/jupyterlab/jupyter-collaboration",
     "use_edit_page_button": True,
     "show_toc_level": 1,
     "navbar_align": "left",
     "navbar_end": ["navbar-icon-links.html"],
-    "footer_items": ["copyright.html"],
+    "footer_start": ["copyright.html"],
 }
 
 # Output for github to be used in links
 html_context = {
     "github_user": "jupyterlab",  # Username
-    "github_repo": "jupyter_collaboration",  # Repo name
+    "github_repo": "jupyter-collaboration",  # Repo name
     "github_version": "main",  # Version
-    "conf_py_path": "/docs/source/",  # Path in the checkout to the docs root
+    "doc_path": "docs/source",  # Path from repo root to the docs folder
+    "conf_py_path": "/docs/source",  # Path in the checkout to the docs root
 }
 
 myst_heading_anchors = 3

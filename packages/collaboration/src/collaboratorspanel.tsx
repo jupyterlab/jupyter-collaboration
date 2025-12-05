@@ -177,7 +177,7 @@ export function Collaborator(props: {
       ?.getFileTypesForPath(document)
       ?.filter(ft => ft.icon !== undefined);
     const icon = fileTypes?.length ? fileTypes[0].icon : fileIcon;
-    const iconClass: string | undefined = fileTypes
+    const iconClass: string | undefined = fileTypes?.length
       ? fileTypes[0].iconClass
       : undefined;
 

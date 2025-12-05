@@ -26,8 +26,8 @@ conda install -c conda-forge jupyter-collaboration
 
 ### Testing
 
-See [CONTRIBUTING](./docs/source/developer/contributing.rst#running-tests).
+See [CONTRIBUTING](./docs/source/developer/contributing.md#running-tests).
 
 ## Contributing
 
-If you are interested in contributing to the project, see [CONTRIBUTING](./docs/source/developer/contributing.rst).
+If you are interested in contributing to the project, see [CONTRIBUTING](./docs/source/developer/contributing.md).

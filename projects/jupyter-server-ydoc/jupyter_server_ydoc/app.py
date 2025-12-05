@@ -10,7 +10,7 @@ from jupyter_server.extension.application import ExtensionApp
 from jupyter_ydoc import ydocs as YDOCS
 from jupyter_ydoc.ybasedoc import YBaseDoc
 from pycrdt import Doc
-from pycrdt_websocket.ystore import BaseYStore
+from pycrdt.store import BaseYStore
 from traitlets import Bool, Float, Type
 
 from .handlers import (
@@ -48,6 +48,14 @@ class YDocExtension(ExtensionApp):
         help="""The period in seconds to check for file changes on disk.
         Defaults to 1s, if 0 then file changes will only be checked when
         saving changes from the front-end.""",
+    )
+
+    file_stop_poll_on_errors_after = Float(
+        24 * 60 * 60,
+        allow_none=True,
+        config=True,
+        help="""The duration in seconds to stop polling a file after consecutive errors.
+        Defaults to 24 hours, if None then polling will not stop on errors.""",
     )
 
     document_cleanup_delay = Float(
@@ -105,7 +113,7 @@ class YDocExtension(ExtensionApp):
         page_config.setdefault("serverSideExecution", self.server_side_execution)
 
         # Set configurable parameters to YStore class
-        ystore_class = partial(self.ystore_class, config=self.config)
+        ystore_class: type[BaseYStore] = partial(self.ystore_class, config=self.config)  # type:ignore[assignment]
 
         self.ywebsocket_server = JupyterWebsocketServer(
             rooms_ready=False,
@@ -121,7 +129,10 @@ class YDocExtension(ExtensionApp):
         # the global app settings in which the file id manager will register
         # itself maybe at a later time.
         self.file_loaders = FileLoaderMapping(
-            self.serverapp.web_app.settings, self.log, self.file_poll_interval
+            self.serverapp.web_app.settings,
+            self.log,
+            self.file_poll_interval,
+            file_stop_poll_on_errors_after=self.file_stop_poll_on_errors_after,
         )
 
         self.handlers.extend(
@@ -205,7 +216,7 @@ class YDocExtension(ExtensionApp):
             if copy:
                 update = room.ydoc.get_update()
 
-                fork_ydoc = Doc()
+                fork_ydoc: Doc = Doc()
                 fork_ydoc.apply_update(update)
 
                 return YDOCS.get(room.file_type, YDOCS["file"])(fork_ydoc)

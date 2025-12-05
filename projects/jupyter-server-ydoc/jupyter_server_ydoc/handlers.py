@@ -5,19 +5,19 @@ from __future__ import annotations
 
 import asyncio
 import json
-import time
 import uuid
 from logging import Logger
-from typing import Any, Literal
+from typing import Any
 from uuid import uuid4
+from typing import cast
 
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS
-from pycrdt import Doc, UndoManager, write_var_uint
-from pycrdt_websocket.websocket_server import YRoom
-from pycrdt_websocket.ystore import BaseYStore
+from pycrdt import Doc, Encoder, UndoManager
+from pycrdt.store import BaseYStore
+from pycrdt.websocket import YRoom
 from tornado import web
 from tornado.websocket import WebSocketHandler
 
@@ -28,12 +28,13 @@ from .utils import (
     JUPYTER_COLLABORATION_EVENTS_URI,
     JUPYTER_COLLABORATION_FORK_EVENTS_URI,
     LogLevel,
-    MessageType,
     decode_file_path,
     encode_file_path,
     room_id_from_encoded_path,
 )
 from .websocketserver import JupyterWebsocketServer, RoomNotFound
+from .utils import MessageType
+from pycrdt import Decoder
 
 YFILE = YDOCS["file"]
 
@@ -117,7 +118,10 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
                     file = self._file_loaders[file_id]
                     updates_file_path = f".{file_type}:{file_id}.y"
-                    ystore = self._ystore_class(path=updates_file_path, log=self.log)
+                    ystore = self._ystore_class(
+                        path=updates_file_path,
+                        log=self.log,
+                    )
                     self.room = DocumentRoom(
                         self._room_id,
                         file_format,
@@ -182,7 +186,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self._websocket_server = ywebsocket_server
         self._message_queue = asyncio.Queue()
         self._room_id = ""
-        self.room = None
+        self.room = None  # type:ignore
 
     @property
     def path(self):
@@ -219,7 +223,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             raise web.HTTPError(403)
         return await super().get(*args, **kwargs)
 
-    async def open(self, room_id):
+    async def open(self, room_id: str) -> None:  # type:ignore[override]
         """
         On connection open.
         """
@@ -259,7 +263,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     )
 
                 # Clean up the room and delete the file loader
-                if len(self.room.clients) == 0 or self.room.clients == [self]:
+                if len(self.room.clients) == 0 or self.room.clients == {self}:
                     self._message_queue.put_nowait(b"")
                     self._cleanup_delay = 0
                     await self._clean_room()
@@ -269,7 +273,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             if self._room_id != "JupyterLab:globalAwareness":
                 self._emit_awareness_event(self.current_user.username, "join")
 
-    async def send(self, message):
+    async def send(self, message: bytes) -> None:
         """
         Send a message to the client.
         """
@@ -290,30 +294,42 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         On message receive.
         """
-        message_type = message[0]
-
-        if message_type == MessageType.CHAT:
-            msg = message[2:].decode("utf-8")
-
-            user = self.current_user
-            data = json.dumps(
-                {
-                    "sender": user.username,
-                    "timestamp": time.time(),
-                    "content": json.loads(msg),
+        decoder = Decoder(message)
+        header = decoder.read_var_uint()
+        if header == MessageType.RAW:
+            msg = decoder.read_var_string()
+            if msg == "save":
+                save_id = decoder.read_var_uint()
+                save_reply = {
+                    "type": "save",
+                    "responseTo": save_id,
                 }
-            ).encode("utf8")
-
-            for client in self.room.clients:
-                if client != self:
-                    task = asyncio.create_task(
-                        client.send(bytes([MessageType.CHAT]) + write_var_uint(len(data)) + data)
-                    )
-                    self._websocket_server.background_tasks.add(task)
-                    task.add_done_callback(self._websocket_server.background_tasks.discard)
+                try:
+                    room = cast(DocumentRoom, self.room)
+                    save_task = room._save_to_disc()
+                    # task may be missing if save was already in progress
+                    if save_task:
+                        await save_task
+                        await self.send(
+                            self._encode_json_message({**save_reply, "status": "success"})
+                        )
+                    else:
+                        await self.send(
+                            self._encode_json_message({**save_reply, "status": "skipped"})
+                        )
+                except Exception:
+                    self.log.error("Couldn't save content from room: %s", self._room_id)
+                    await self.send(self._encode_json_message({**save_reply, "status": "failed"}))
+            return
 
         self._message_queue.put_nowait(message)
         self._websocket_server.ypatch_nb += 1
+
+    def _encode_json_message(self, message: dict) -> bytes:
+        encoder = Encoder()
+        encoder.write_var_uint(MessageType.RAW)
+        encoder.write_var_string(json.dumps(message))
+        return encoder.to_bytes()
 
     def on_close(self) -> None:
         """
@@ -321,7 +337,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         # stop serving this client
         self._message_queue.put_nowait(b"")
-        if isinstance(self.room, DocumentRoom) and self.room.clients == [self]:
+        if isinstance(self.room, DocumentRoom) and self.room.clients == {self}:
             # no client in this room after we disconnect
             # keep the document for a while in case someone reconnects
             self.log.info("Cleaning room: %s", self._room_id)
@@ -386,9 +402,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 self._emit(LogLevel.INFO, "clean", "Loader deleted.")
             del self._room_locks[self._room_id]
 
-    def _on_global_awareness_event(
-        self, topic: Literal["change", "update"], changes: tuple[dict[str, Any], Any]
-    ) -> None:
+    def _on_global_awareness_event(self, topic: str, changes: tuple[dict[str, Any], Any]) -> None:
         """
         Update the users when the global awareness changes.
 
@@ -489,7 +503,7 @@ class TimelineHandler(APIHandler):
         try:
             room_id = room_id_from_encoded_path(encoded_path)
             room: YRoom = await self.ywebsocket_server.get_room(room_id)
-            fork_ydoc = Doc()
+            fork_ydoc: Doc = Doc()
 
             ydoc_factory = YDOCS.get(content_type)
             if ydoc_factory is None:
@@ -505,7 +519,9 @@ class TimelineHandler(APIHandler):
             FORK_DOCUMENTS[idx] = ydoc_factory(fork_ydoc)
             undo_manager: UndoManager = FORK_DOCUMENTS[idx].undo_manager
 
-            updates_and_timestamps = [(item[0], item[-1]) async for item in room.ystore.read()]
+            ystore = room.ystore
+            assert ystore
+            updates_and_timestamps = [(item[0], item[-1]) async for item in ystore.read()]
 
             result_timestamps = []
 
@@ -649,7 +665,7 @@ class DocForkHandler(APIHandler):
             return self.finish({"code": 404, "error": "Root room not found"})
 
         update = root_room.ydoc.get_update()
-        fork_ydoc = Doc()
+        fork_ydoc: Doc = Doc()
         fork_ydoc.apply_update(update)
         model = self.get_json_body()
         synchronize = model.get("synchronize", False)
