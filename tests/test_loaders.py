@@ -43,6 +43,45 @@ async def test_FileLoader_with_watcher():
         await loader.clean()
 
 
+async def test_FileLoader_with_watcher_errors(caplog):
+    id = "file-4567"
+    path = "myfile.txt"
+    paths = {}
+    paths[id] = path
+
+    cm = FakeContentsManager({"last_modified": datetime.now(timezone.utc)})
+
+    loader = FileLoader(
+        id,
+        FakeFileIDManager(paths),
+        cm,
+        poll_interval=0.1,
+        max_consecutive_logs=2,
+        stop_poll_on_errors_after=1,
+    )
+    await loader.load_content("text", "file")
+
+    try:
+        cm.model = {}
+        await asyncio.sleep(0.5)
+        logs = [r.getMessage() for r in caplog.records]
+        assert logs == [
+            "Error watching file myfile.txt: HTTP 404: Not Found (File not found: myfile.txt)",
+            "Error watching file myfile.txt: HTTP 404: Not Found (File not found: myfile.txt)",
+            "Too many errors while watching myfile.txt - suppressing further logs.",
+        ]
+
+        await asyncio.sleep(1)
+        logs = [r.getMessage() for r in caplog.records]
+        assert len(logs) == 4
+        assert (
+            logs[-1]
+            == "Stopping watching file due to consecutive errors over 1 seconds: myfile.txt"
+        )
+    finally:
+        await loader.clean()
+
+
 async def test_FileLoader_without_watcher():
     id = "file-4567"
     path = "myfile.txt"

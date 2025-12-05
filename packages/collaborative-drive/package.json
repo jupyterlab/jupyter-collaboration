@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@jupyter/ydoc": "^2.1.3 || ^3.0.0",
-    "@jupyterlab/services": "^7.4.0",
+    "@jupyterlab/services": "^7.5.0",
     "@lumino/coreutils": "^2.2.1",
     "@lumino/disposable": "^2.1.4"
   },

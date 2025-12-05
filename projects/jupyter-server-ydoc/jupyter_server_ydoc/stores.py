@@ -7,7 +7,11 @@ from traitlets import Int, Unicode
 from traitlets.config import LoggingConfigurable
 
 
-class TempFileYStore(_TempFileYStore):
+class TempFileYStoreMetaclass(type(LoggingConfigurable), type(_TempFileYStore)):  # type: ignore
+    pass
+
+
+class TempFileYStore(LoggingConfigurable, _TempFileYStore, metaclass=TempFileYStoreMetaclass):
     prefix_dir = "jupyter_ystore_"
 
 
