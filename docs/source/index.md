@@ -65,7 +65,8 @@ Sharing Notebooks
 To share a notebook with collaborators:
 
 1. Click the **Share** button in the top-right corner
-2. Copy the generated URL and send it to your collaborators
+2. Check "Include token in URL" if sharing with non-authenticated users
+3. Copy the generated URL and send it to your collaborators
 
 Collaborators will have full access to your JupyterLab environment, including the ability to edit and execute cells.
 
