@@ -134,7 +134,7 @@ class FileLoader:
             )
             if (
                 file_type == "file"
-                and "content" in model 
+                and "content" in model
                 and model["content"]
                 and "\r\n" in model["content"]
             ):
