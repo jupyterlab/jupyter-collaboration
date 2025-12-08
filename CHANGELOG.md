@@ -4,6 +4,39 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 4.2.0alpha0
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@4.1.2...71ab261f4e6cb52e431496ec2bc53fc3883dc5d6))
+
+### Enhancements made
+
+- Stop file watcher on persistent errors [#520](https://github.com/jupyterlab/jupyter-collaboration/pull/520) ([@krassowski](https://github.com/krassowski))
+
+### Bugs fixed
+
+- `RtcContentProvider`: depend on `DefaultDrive` rather than on the `RestContentProvider` for routing `get()` and `save()` [#525](https://github.com/jupyterlab/jupyter-collaboration/pull/525) ([@martinRenou](https://github.com/martinRenou))
+- Enable `TempFileYStore` to work with Jupyter Lab [#519](https://github.com/jupyterlab/jupyter-collaboration/pull/519) ([@Darshan808](https://github.com/Darshan808))
+- Fix bug with saving of files with DOS line endings by normalizing them before loading to ydoc [#449](https://github.com/jupyterlab/jupyter-collaboration/pull/449) ([@BaukJ](https://github.com/BaukJ))
+
+### Maintenance and upkeep improvements
+
+- Bump JupyterLab packages to 4.5.0 [#524](https://github.com/jupyterlab/jupyter-collaboration/pull/524) ([@martinRenou](https://github.com/martinRenou))
+- Update snapshots [#521](https://github.com/jupyterlab/jupyter-collaboration/pull/521) ([@krassowski](https://github.com/krassowski))
+
+### Documentation improvements
+
+- Update contributing docs (black → ruff; conda → pip) [#528](https://github.com/jupyterlab/jupyter-collaboration/pull/528) ([@krassowski](https://github.com/krassowski))
+- Convert documentation to Markdown [#523](https://github.com/jupyterlab/jupyter-collaboration/pull/523) ([@Darshan808](https://github.com/Darshan808))
+- Add documentation on Sharing Notebook and User Settings [#522](https://github.com/jupyterlab/jupyter-collaboration/pull/522) ([@Darshan808](https://github.com/Darshan808))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2025-11-14&to=2025-12-08&type=c))
+
+[@BaukJ](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ABaukJ+updated%3A2025-11-14..2025-12-08&type=Issues) | [@Darshan808](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ADarshan808+updated%3A2025-11-14..2025-12-08&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2025-11-14..2025-12-08&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2025-11-14..2025-12-08&type=Issues) | [@martinRenou](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AmartinRenou+updated%3A2025-11-14..2025-12-08&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 4.1.2
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@4.1.1...619aa5b6f810830d0bf95e1d587f53ec5db7a414))
@@ -28,8 +61,6 @@ All notable changes to this project will be documented in this file.
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2025-08-27&to=2025-11-14&type=c))
 
 [@github-actions](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Agithub-actions+updated%3A2025-08-27..2025-11-14&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2025-08-27..2025-11-14&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aminrk+updated%3A2025-08-27..2025-11-14&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 4.1.1
 
