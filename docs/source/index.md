@@ -59,6 +59,19 @@ message indicating that the file was modified by someone else, and asking if you
 your changes or revert to the saved content. There cannot be any conflict, everyone works in sync
 on the same document.
 
+Sharing Notebooks
+-----------------
+
+To share a notebook with collaborators:
+
+1. Click the **Share** button in the top-right corner
+2. Check "Include token in URL" if sharing with non-authenticated users
+3. Copy the generated URL and send it to your collaborators
+
+Collaborators will have full access to your JupyterLab environment, including the ability to edit and execute cells.
+
+> **Note**: For running a public server, refer to the [Jupyter Server documentation](https://jupyter-server.readthedocs.io/en/latest/operators/public-server.html#running-a-public-notebook-server).
+
 
 ```{toctree}
 :maxdepth: 1
