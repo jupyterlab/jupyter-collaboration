@@ -132,6 +132,14 @@ class FileLoader:
             model = await ensure_async(
                 self._contents_manager.get(self.path, format=format, type=file_type, content=True)
             )
+            if (
+                file_type == "file"
+                and "content" in model
+                and model["content"]
+                and "\r\n" in model["content"]
+            ):
+                model["content"] = model["content"].replace("\r\n", "\n")
+                self._log.debug("Normalizing line endings for %s file on content load", self.path)
             self.last_modified = model["last_modified"]
             return model
 
