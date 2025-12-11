@@ -139,7 +139,7 @@ def rtc_document_cleanup_delay():
     return 2
 
 
-async def test_room_handler_doc_client_shoud_stop_file_watcher(
+async def test_room_handler_doc_client_should_stop_file_watcher(
     rtc_create_file, rtc_connect_doc_client, jp_serverapp
 ):
     path, _ = await rtc_create_file("test.txt", "test")
