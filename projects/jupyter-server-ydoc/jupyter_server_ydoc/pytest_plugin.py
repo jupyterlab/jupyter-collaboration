@@ -30,7 +30,14 @@ def rtc_document_save_delay():
 
 
 @pytest.fixture
-def jp_server_config(jp_root_dir, jp_server_config, rtc_document_save_delay):
+def rtc_document_cleanup_delay():
+    return 60
+
+
+@pytest.fixture
+def jp_server_config(
+    jp_root_dir, jp_server_config, rtc_document_save_delay, rtc_document_cleanup_delay
+):
     return {
         "ServerApp": {
             "jpserver_extensions": {
@@ -47,7 +54,10 @@ def jp_server_config(jp_root_dir, jp_server_config, rtc_document_save_delay):
             "db_path": str(jp_root_dir.joinpath(".fid_test.db")),
             "db_journal_mode": "OFF",
         },
-        "YDocExtension": {"document_save_delay": rtc_document_save_delay},
+        "YDocExtension": {
+            "document_save_delay": rtc_document_save_delay,
+            "document_cleanup_delay": rtc_document_cleanup_delay,
+        },
     }
 
 
