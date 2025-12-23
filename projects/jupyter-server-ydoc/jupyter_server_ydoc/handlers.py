@@ -402,6 +402,12 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 self._emit(LogLevel.INFO, "clean", "Loader deleted.")
             del self._room_locks[self._room_id]
 
+        # Clean up any background tasks once we're done'
+        for task in self._background_tasks:
+            task.cancel()
+
+        await asyncio.wait(self._background_tasks)
+
     def _on_global_awareness_event(self, topic: str, changes: tuple[dict[str, Any], Any]) -> None:
         """
         Update the users when the global awareness changes.
