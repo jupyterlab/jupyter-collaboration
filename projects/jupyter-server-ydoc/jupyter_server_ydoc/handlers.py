@@ -345,10 +345,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         if self._room_id != "JupyterLab:globalAwareness":
             self._emit_awareness_event(self.current_user.username, "leave")
 
-        # Clean up any background tasks once we're done'
-        for task in self._background_tasks:
-            task.cancel()
-
     def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:
         _, _, file_id = decode_file_path(self._room_id)
         path = self._file_id_manager.get_path(file_id)
@@ -405,6 +401,12 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 await self._file_loaders.remove(file_id)
                 self._emit(LogLevel.INFO, "clean", "Loader deleted.")
             del self._room_locks[self._room_id]
+
+        # Clean up any background tasks once we're done'
+        for task in self._background_tasks:
+            task.cancel()
+
+        await asyncio.wait(self._background_tasks)
 
     def _on_global_awareness_event(self, topic: str, changes: tuple[dict[str, Any], Any]) -> None:
         """
