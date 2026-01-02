@@ -63,17 +63,17 @@ class JupyterWebsocketServer(WebsocketServer):
         # prevent hanging stop process - it also requires some thinking about
         # should the ystore write action be cancelled; I guess not as it could
         # results in corrupted data.
-        # room_tasks = list()
-        # for name, room in list(self.rooms.items()):
-        #     for task in room.background_tasks:
-        #         task.cancel()  # FIXME should be upstreamed
-        #         room_tasks.append(task)
-        # if room_tasks:
-        #     _, pending = await asyncio.wait(room_tasks, timeout=3)
-        #     if pending:
-        #         msg = f"{len(pending)} room task(s) are pending."
-        #         self.log.warning(msg)
-        #         self.log.debug("Pending tasks: %r", pending)
+        room_tasks = list()
+        for name, room in list(self.rooms.items()):
+            for task in room.background_tasks:
+                task.cancel()  # FIXME should be upstreamed
+                room_tasks.append(task)
+        if room_tasks:
+            _, pending = await asyncio.wait(room_tasks, timeout=3)
+            if pending:
+                msg = f"{len(pending)} room task(s) are pending."
+                self.log.warning(msg)
+                self.log.debug("Pending tasks: %r", pending)
 
         await self.stop()
         tasks = []
