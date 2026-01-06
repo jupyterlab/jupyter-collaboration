@@ -41,7 +41,6 @@ class SQLiteYStore(LoggingConfigurable, _SQLiteYStore, metaclass=SQLiteYStoreMet
         config=True,
         help="""The document time-to-live in seconds. Deprecated in favor of 'squash_after_inactivity_of'.
         Defaults to None (document history is never cleared).""",
-
     )
 
     squash_history_older_than = Int(
