@@ -74,7 +74,23 @@ async def test_document_ttl_from_settings(rtc_create_mock_document_room, jp_conf
     rtc_create_SQLite_store = rtc_create_SQLite_store_factory(app)
     store = await rtc_create_SQLite_store("file", id, content)
 
-    assert store.document_ttl == 3600
+    # document_ttl is deprecated and mapped to squash_after_inactivity_of
+    assert store.squash_after_inactivity_of == 3600
+
+
+async def test_squash_after_inactivity_of_from_settings(
+    rtc_create_mock_document_room, jp_configurable_serverapp
+):
+    argv = ["--SQLiteYStore.squash_after_inactivity_of=3600"]
+
+    app = jp_configurable_serverapp(argv=argv)
+
+    id = "test-id"
+    content = "test_ttl"
+    rtc_create_SQLite_store = rtc_create_SQLite_store_factory(app)
+    store = await rtc_create_SQLite_store("file", id, content)
+
+    assert store.squash_after_inactivity_of == 3600
 
 
 @pytest.mark.parametrize("copy", [True, False])

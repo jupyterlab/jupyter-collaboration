@@ -33,7 +33,8 @@ docs = [
     "jupyterlab>=4.4.0",
     "sphinx",
     "myst-parser",
-    "pydata-sphinx-theme"
+    "pydata-sphinx-theme",
+    "sphinxcontrib-mermaid"
 ]
 
 [tool.ruff]
@@ -96,6 +97,8 @@ filterwarnings = [
     "module:make_current is deprecated:DeprecationWarning",
     "module:clear_current is deprecated:DeprecationWarning",
     "module:There is no current event loop:DeprecationWarning",
+    # From pycrdt-store - document_ttl is deprecated in favor of squash_after_inactivity_of
+    "ignore:`document_ttl` is deprecated:DeprecationWarning",
     #
     "module:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
     # In PyPy/Cython: see https://github.com/yaml/pyyaml/issues/688

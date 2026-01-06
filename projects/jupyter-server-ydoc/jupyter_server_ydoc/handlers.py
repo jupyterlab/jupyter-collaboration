@@ -9,14 +9,15 @@ import uuid
 from logging import Logger
 from typing import Any
 from uuid import uuid4
+from typing import cast
 
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS
-from pycrdt import Doc, UndoManager
-from pycrdt_websocket.yroom import YRoom
-from pycrdt_websocket.ystore import BaseYStore
+from pycrdt import Doc, Encoder, UndoManager
+from pycrdt.store import BaseYStore
+from pycrdt.websocket import YRoom
 from tornado import web
 from tornado.websocket import WebSocketHandler
 
@@ -32,6 +33,8 @@ from .utils import (
     room_id_from_encoded_path,
 )
 from .websocketserver import JupyterWebsocketServer, RoomNotFound
+from .utils import MessageType
+from pycrdt import Decoder
 
 YFILE = YDOCS["file"]
 
@@ -117,7 +120,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     updates_file_path = f".{file_type}:{file_id}.y"
                     ystore = self._ystore_class(
                         path=updates_file_path,
-                        log=self.log,  # type:ignore[call-arg]
+                        log=self.log,
                     )
                     self.room = DocumentRoom(
                         self._room_id,
@@ -270,7 +273,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             if self._room_id != "JupyterLab:globalAwareness":
                 self._emit_awareness_event(self.current_user.username, "join")
 
-    async def send(self, message):
+    async def send(self, message: bytes) -> None:
         """
         Send a message to the client.
         """
@@ -291,8 +294,42 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         On message receive.
         """
+        decoder = Decoder(message)
+        header = decoder.read_var_uint()
+        if header == MessageType.RAW:
+            msg = decoder.read_var_string()
+            if msg == "save":
+                save_id = decoder.read_var_uint()
+                save_reply = {
+                    "type": "save",
+                    "responseTo": save_id,
+                }
+                try:
+                    room = cast(DocumentRoom, self.room)
+                    save_task = room._save_to_disc()
+                    # task may be missing if save was already in progress
+                    if save_task:
+                        await save_task
+                        await self.send(
+                            self._encode_json_message({**save_reply, "status": "success"})
+                        )
+                    else:
+                        await self.send(
+                            self._encode_json_message({**save_reply, "status": "skipped"})
+                        )
+                except Exception:
+                    self.log.error("Couldn't save content from room: %s", self._room_id)
+                    await self.send(self._encode_json_message({**save_reply, "status": "failed"}))
+            return
+
         self._message_queue.put_nowait(message)
         self._websocket_server.ypatch_nb += 1
+
+    def _encode_json_message(self, message: dict) -> bytes:
+        encoder = Encoder()
+        encoder.write_var_uint(MessageType.RAW)
+        encoder.write_var_string(json.dumps(message))
+        return encoder.to_bytes()
 
     def on_close(self) -> None:
         """

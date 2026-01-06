@@ -1,13 +1,17 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from pycrdt_websocket.ystore import SQLiteYStore as _SQLiteYStore
-from pycrdt_websocket.ystore import TempFileYStore as _TempFileYStore
+from pycrdt.store import SQLiteYStore as _SQLiteYStore
+from pycrdt.store import TempFileYStore as _TempFileYStore
 from traitlets import Int, Unicode
 from traitlets.config import LoggingConfigurable
 
 
-class TempFileYStore(_TempFileYStore):
+class TempFileYStoreMetaclass(type(LoggingConfigurable), type(_TempFileYStore)):  # type: ignore
+    pass
+
+
+class TempFileYStore(LoggingConfigurable, _TempFileYStore, metaclass=TempFileYStoreMetaclass):
     prefix_dir = "jupyter_ystore_"
 
 
@@ -23,7 +27,7 @@ class SQLiteYStore(LoggingConfigurable, _SQLiteYStore, metaclass=SQLiteYStoreMet
         directory.""",
     )
 
-    document_ttl = Int(
+    squash_after_inactivity_of = Int(
         None,
         allow_none=True,
         config=True,
@@ -31,7 +35,16 @@ class SQLiteYStore(LoggingConfigurable, _SQLiteYStore, metaclass=SQLiteYStoreMet
         cleared).""",
     )
 
-    history_length = Int(
+    document_ttl = Int(
+        None,
+        allow_none=True,
+        config=True,
+        help="""The document time-to-live in seconds. Deprecated in favor of 'squash_after_inactivity_of'.
+        Defaults to None (document history is never cleared).""",
+
+    )
+
+    squash_history_older_than = Int(
         None,
         allow_none=True,
         config=True,
@@ -40,7 +53,7 @@ class SQLiteYStore(LoggingConfigurable, _SQLiteYStore, metaclass=SQLiteYStoreMet
                     Defaults to None (history is never cleared).""",
     )
 
-    min_cleanup_interval = Int(
+    squash_no_more_often_than = Int(
         60,
         config=True,
         help="""Minimum interval in seconds between automatic cleanup operations. Defaults to 60 seconds.""",

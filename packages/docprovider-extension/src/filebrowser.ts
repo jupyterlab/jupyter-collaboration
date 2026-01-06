@@ -55,12 +55,13 @@ export const rtcContentProvider: JupyterFrontEndPlugin<ICollaborativeContentProv
     description: 'The RTC content provider',
     provides: ICollaborativeContentProvider,
     requires: [ITranslator],
-    optional: [IGlobalAwareness],
-    activate: (
+    optional: [IGlobalAwareness, ISettingRegistry],
+    activate: async (
       app: JupyterFrontEnd,
       translator: ITranslator,
-      globalAwareness: Awareness | null
-    ): ICollaborativeContentProvider => {
+      globalAwareness: Awareness | null,
+      settingRegistry: ISettingRegistry | null
+    ): Promise<ICollaborativeContentProvider> => {
       const trans = translator.load('jupyter_collaboration');
       const defaultDrive = (app.serviceManager.contents as ContentsManager)
         .defaultDrive;
@@ -75,12 +76,18 @@ export const rtcContentProvider: JupyterFrontEndPlugin<ICollaborativeContentProv
           'Cannot initialize content provider: no content provider registry.'
         );
       }
+      const docmanagerSettings = settingRegistry
+        ? await settingRegistry.load('@jupyterlab/docmanager-extension:plugin')
+        : null;
+
       const rtcContentProvider = new RtcContentProvider({
-        apiEndpoint: '/api/contents',
+        currentDrive: defaultDrive,
         serverSettings: defaultDrive.serverSettings,
         user: app.serviceManager.user,
         trans,
-        globalAwareness
+        globalAwareness,
+        docmanagerSettings,
+        fileChanged: defaultDrive.fileChanged
       });
       registry.register('rtc', rtcContentProvider);
       return rtcContentProvider;

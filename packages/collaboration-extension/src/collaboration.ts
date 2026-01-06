@@ -151,7 +151,10 @@ export const rtcPanelPlugin: JupyterFrontEndPlugin<void> = {
     userPanel.addClass('jp-RTCPanel');
     app.shell.add(userPanel, 'left', { rank: 300 });
 
-    const currentUserPanel = new UserInfoPanel(user);
+    const currentUserPanel = new UserInfoPanel({
+      userManager: user,
+      trans
+    });
     currentUserPanel.title.label = trans.__('User info');
     currentUserPanel.title.caption = trans.__('User information');
     userPanel.addWidget(currentUserPanel);

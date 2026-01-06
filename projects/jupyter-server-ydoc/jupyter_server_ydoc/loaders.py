@@ -5,7 +5,10 @@ from __future__ import annotations
 
 import asyncio
 from logging import Logger, getLogger
+from time import time
 from typing import Any, Callable, Coroutine
+from tornado.web import HTTPError
+from http import HTTPStatus
 
 from jupyter_server.services.contents.manager import (
     AsyncContentsManager,
@@ -29,12 +32,16 @@ class FileLoader:
         contents_manager: AsyncContentsManager | ContentsManager,
         log: Logger | None = None,
         poll_interval: float | None = None,
+        max_consecutive_logs: int = 3,
+        stop_poll_on_errors_after: float | None = None,
     ) -> None:
         self._file_id: str = file_id
 
         self._lock = asyncio.Lock()
         self._poll_interval = poll_interval
+        self._stop_poll_on_errors_after = stop_poll_on_errors_after
         self._file_id_manager = file_id_manager
+        self._max_consecutive_logs = max_consecutive_logs
         self._contents_manager = contents_manager
 
         self._log = log or getLogger(__name__)
@@ -125,6 +132,14 @@ class FileLoader:
             model = await ensure_async(
                 self._contents_manager.get(self.path, format=format, type=file_type, content=True)
             )
+            if (
+                file_type == "file"
+                and "content" in model
+                and model["content"]
+                and "\r\n" in model["content"]
+            ):
+                model["content"] = model["content"].replace("\r\n", "\n")
+                self._log.debug("Normalizing line endings for %s file on content load", self.path)
             self.last_modified = model["last_modified"]
             return model
 
@@ -204,8 +219,8 @@ class FileLoader:
             return
 
         consecutive_error_logs = 0
-        max_consecutive_logs = 3
         suppression_logged = False
+        consecutive_errors_started = None
 
         while True:
             try:
@@ -214,13 +229,37 @@ class FileLoader:
                     await self.maybe_notify()
                     consecutive_error_logs = 0
                     suppression_logged = False
+                    consecutive_errors_started = None
                 except Exception as e:
-                    if consecutive_error_logs < max_consecutive_logs:
-                        self._log.error(f"Error watching file: {self.path}\n{e!r}", exc_info=e)
+                    # We do not want to terminate the watcher if the content manager request
+                    # fails due to timeout, server error or similar temporary issue; we only
+                    # terminate if the file is not found or we get unauthorized error for
+                    # an extended period of time.
+                    if isinstance(e, HTTPError) and e.status_code in {
+                        HTTPStatus.NOT_FOUND,
+                        HTTPStatus.UNAUTHORIZED,
+                    }:
+                        if (
+                            consecutive_errors_started
+                            and self._stop_poll_on_errors_after is not None
+                        ):
+                            errors_duration = time() - consecutive_errors_started
+                            if errors_duration > self._stop_poll_on_errors_after:
+                                self._log.warning(
+                                    "Stopping watching file due to consecutive errors over %s seconds: %s",
+                                    self._stop_poll_on_errors_after,
+                                    self.path,
+                                )
+                                break
+                        else:
+                            consecutive_errors_started = time()
+                    # Otherwise we just log the error
+                    if consecutive_error_logs < self._max_consecutive_logs:
+                        self._log.error("Error watching file %s: %s", self.path, e, exc_info=e)
                         consecutive_error_logs += 1
                     elif not suppression_logged:
                         self._log.warning(
-                            "Too many errors while watching %s — suppressing further logs.",
+                            "Too many errors while watching %s - suppressing further logs.",
                             self.path,
                         )
                         suppression_logged = True
@@ -268,6 +307,7 @@ class FileLoaderMapping:
         settings: dict,
         log: Logger | None = None,
         file_poll_interval: float | None = None,
+        file_stop_poll_on_errors_after: float | None = None,
     ) -> None:
         """
         Args:
@@ -279,6 +319,7 @@ class FileLoaderMapping:
         self.__dict: dict[str, FileLoader] = {}
         self.log = log or getLogger(__name__)
         self.file_poll_interval = file_poll_interval
+        self._stop_poll_on_errors_after = file_stop_poll_on_errors_after
 
     @property
     def contents_manager(self) -> AsyncContentsManager | ContentsManager:
@@ -309,6 +350,7 @@ class FileLoaderMapping:
                 self.contents_manager,
                 self.log,
                 self.file_poll_interval,
+                stop_poll_on_errors_after=self._stop_poll_on_errors_after,
             )
             self.__dict[file_id] = file
 

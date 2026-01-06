@@ -1,5 +1,23 @@
 # Configuration
 
+User Settings
+-----------------
+
+The user identity is managed by `jupyter-server` and is configurable starting from `jupyter-server` v2.17.0 and `jupyter-collaboration` v4.1.0.
+
+To change your username, display name, or color:
+
+1. Click the **Collaboration** icon in the left sidebar.
+2. In the **User Info** section, click your user icon.
+3. Edit your details in the form that appears.
+
+![User settings](images/rtc_user_settings.png)
+
+> **Note**: This functionality works only for standalone servers and is not supported in JupyterHub.
+
+Storage Configuration
+---------------------
+
 By default, any change made to a document is saved to disk in an SQLite database file called
 `.jupyter_ystore.db` in the directory where JupyterLab was launched. This file helps in
 preserving the timeline of documents, for instance between JupyterLab sessions, or when a user
@@ -27,7 +45,7 @@ jupyter lab --YDocExtension.file_poll_interval=2
 jupyter lab --YDocExtension.document_cleanup_delay=100
 
 # The YStore class to use for storing Y updates (default: JupyterSQLiteYStore).
-jupyter lab --YDocExtension.ystore_class=pycrdt_websocket.ystore.TempFileYStore
+jupyter lab --YDocExtension.ystore_class=pycrdt.store.TempFileYStore
 ```
 
 There is an experimental feature that is currently only supported by the
