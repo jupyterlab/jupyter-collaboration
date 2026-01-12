@@ -86,7 +86,7 @@ class FileLoader:
             try:
                 await self._watcher
             except asyncio.CancelledError:
-                self._log.info(f"file watcher for '{self.file_id}' is cancelled now")
+                self._log.info(f"File watcher for '{self.file_id}' was cancelled")
 
     def observe(
         self,

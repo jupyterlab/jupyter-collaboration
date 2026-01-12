@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from datetime import datetime, timedelta, timezone
 
 from jupyter_server_ydoc.loaders import FileLoader, FileLoaderMapping
@@ -80,6 +81,27 @@ async def test_FileLoader_with_watcher_errors(caplog):
         )
     finally:
         await loader.clean()
+
+
+async def test_FileLoader_clean_logs_cancellation(caplog):
+    id = "file-4567"
+    path = "myfile.txt"
+    paths = {id: path}
+
+    cm = FakeContentsManager({"last_modified": datetime.now(timezone.utc)})
+    loader = FileLoader(
+        id,
+        FakeFileIDManager(paths),
+        cm,
+        poll_interval=0.05,
+    )
+    await loader.load_content("text", "file")
+
+    caplog.set_level(logging.INFO)
+    await loader.clean()
+
+    messages = [r.getMessage() for r in caplog.records]
+    assert f"File watcher for '{id}' was cancelled" in messages
 
 
 async def test_FileLoader_without_watcher():
