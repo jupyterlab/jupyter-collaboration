@@ -13,6 +13,7 @@ import {
 import { historyIcon } from '@jupyterlab/ui-components';
 import { Notification } from '@jupyterlab/apputils';
 import { IForkProvider } from './ydrive';
+import { ServerConnection } from '@jupyterlab/services';
 
 type Props = {
   apiURL: string;
@@ -20,6 +21,7 @@ type Props = {
   contentType: string;
   format: string;
   documentTimelineUrl: string;
+  serverSettings?: ServerConnection.ISettings;
 };
 
 export const TimelineSliderComponent: React.FC<Props> = ({
@@ -27,7 +29,8 @@ export const TimelineSliderComponent: React.FC<Props> = ({
   provider,
   contentType,
   format,
-  documentTimelineUrl
+  documentTimelineUrl,
+  serverSettings
 }) => {
   const [data, setData] = useState({
     roomId: '',
@@ -51,7 +54,8 @@ export const TimelineSliderComponent: React.FC<Props> = ({
         const response = await requestDocumentTimeline(
           format,
           contentType,
-          notebookPath
+          notebookPath,
+          serverSettings
         );
 
         if (!response.ok) {
@@ -79,7 +83,8 @@ export const TimelineSliderComponent: React.FC<Props> = ({
           sessionRef.current = await requestDocSession(
             format,
             contentType,
-            extractFilenameFromURL(apiURL)
+            extractFilenameFromURL(apiURL),
+            serverSettings
           );
         }
         setToggle(true);
@@ -102,7 +107,8 @@ export const TimelineSliderComponent: React.FC<Props> = ({
       `${sessionRef.current.format}:${sessionRef.current.type}:${sessionRef.current.fileId}`,
       'restore',
       0,
-      data.forkRoom
+      data.forkRoom,
+      serverSettings
     );
 
     if (response.code === 200) {
@@ -138,7 +144,8 @@ export const TimelineSliderComponent: React.FC<Props> = ({
         `${sessionRef.current.format}:${sessionRef.current.type}:${sessionRef.current.fileId}`,
         action,
         steps,
-        data.forkRoom
+        data.forkRoom,
+        serverSettings
       );
     } catch (error: any) {
       console.error('Error fetching or applying updates:', error);

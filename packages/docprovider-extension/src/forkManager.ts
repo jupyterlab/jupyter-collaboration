@@ -25,7 +25,11 @@ export const forkManagerPlugin: JupyterFrontEndPlugin<IForkManager> = {
     contentProvider: ICollaborativeContentProvider
   ) => {
     const eventManager = app.serviceManager.events;
-    const manager = new ForkManager({ contentProvider, eventManager });
+    const manager = new ForkManager({
+      contentProvider,
+      eventManager,
+      serverSettings: app.serviceManager.serverSettings
+    });
     return manager;
   }
 };

@@ -221,7 +221,8 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
           forkProvider,
           forkProvider.contentType,
           forkProvider.format,
-          DOCUMENT_TIMELINE_URL
+          DOCUMENT_TIMELINE_URL,
+          app.serviceManager.serverSettings
         );
 
         const elt = document.getElementById('jp-slider-status-bar');

@@ -7,6 +7,7 @@ import { ReactWidget } from '@jupyterlab/apputils';
 import { TimelineSliderComponent } from './component';
 import * as React from 'react';
 import { IForkProvider } from './ydrive';
+import { ServerConnection } from '@jupyterlab/services';
 
 export class TimelineWidget extends ReactWidget {
   private apiURL: string;
@@ -14,13 +15,15 @@ export class TimelineWidget extends ReactWidget {
   private contentType: string;
   private format: string;
   private documentTimelineUrl: string;
+  private _serverSettings?: ServerConnection.ISettings;
 
   constructor(
     apiURL: string,
     provider: IForkProvider,
     contentType: string,
     format: string,
-    documentTimelineUrl: string
+    documentTimelineUrl: string,
+    serverSettings?: ServerConnection.ISettings
   ) {
     super();
     this.apiURL = apiURL;
@@ -28,6 +31,7 @@ export class TimelineWidget extends ReactWidget {
     this.contentType = contentType;
     this.format = format;
     this.documentTimelineUrl = documentTimelineUrl;
+    this._serverSettings = serverSettings;
     this.addClass('jp-timelineSliderWrapper');
   }
 
@@ -40,6 +44,7 @@ export class TimelineWidget extends ReactWidget {
         contentType={this.contentType}
         format={this.format}
         documentTimelineUrl={this.documentTimelineUrl}
+        serverSettings={this._serverSettings}
       />
     );
   }

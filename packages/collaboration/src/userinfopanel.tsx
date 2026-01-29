@@ -20,22 +20,26 @@ import { UserDetailsBody, UserIconComponent } from './components';
  */
 type UserInfoProps = {
   userManager: User.IManager;
+  serverSettings?: ServerConnection.ISettings;
   trans: IRenderMime.TranslationBundle;
 };
 
 export class UserInfoPanel extends Panel {
   private _profile: User.IManager;
+  private _serverSettings?: ServerConnection.ISettings;
   private _body: UserInfoBody | null;
 
   constructor(options: UserInfoProps) {
     super({});
     this.addClass('jp-UserInfoPanel');
     this._profile = options.userManager;
+    this._serverSettings = options.serverSettings;
     this._body = null;
 
     if (this._profile.isReady) {
       this._body = new UserInfoBody({
         userManager: this._profile,
+        serverSettings: this._serverSettings,
         trans: options.trans
       });
       this.addWidget(this._body);
@@ -45,6 +49,7 @@ export class UserInfoPanel extends Panel {
         .then(() => {
           this._body = new UserInfoBody({
             userManager: this._profile,
+            serverSettings: this._serverSettings,
             trans: options.trans
           });
           this.addWidget(this._body);
@@ -63,6 +68,7 @@ export class UserInfoBody
   implements Dialog.IBodyWidget<User.IManager>
 {
   private _userManager: User.IManager;
+  private _serverSettings: ServerConnection.ISettings;
   private _trans: IRenderMime.TranslationBundle;
   /**
    * Constructs a new settings widget.
@@ -70,6 +76,8 @@ export class UserInfoBody
   constructor(props: UserInfoProps) {
     super();
     this._userManager = props.userManager;
+    this._serverSettings =
+      props.serverSettings ?? ServerConnection.makeSettings();
     this._trans = props.trans;
   }
 
@@ -95,8 +103,7 @@ export class UserInfoBody
       if (result.button.accept) {
         // Call the Jupyter Server API to update the user field
         try {
-          const settings = ServerConnection.makeSettings();
-          const url = URLExt.join(settings.baseUrl, '/api/me');
+          const url = URLExt.join(this._serverSettings.baseUrl, '/api/me');
           const body = {
             method: 'PATCH',
             body: JSON.stringify(result.value)
@@ -104,7 +111,11 @@ export class UserInfoBody
 
           let response: Response;
           try {
-            response = await ServerConnection.makeRequest(url, body, settings);
+            response = await ServerConnection.makeRequest(
+              url,
+              body,
+              this._serverSettings
+            );
           } catch (error) {
             throw new ServerConnection.NetworkError(error as Error);
           }
