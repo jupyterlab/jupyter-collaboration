@@ -97,7 +97,8 @@ export const rtcGlobalAwarenessPlugin: JupyterFrontEndPlugin<IAwareness> = {
     const ydoc = new Y.Doc();
     const awareness = new Awareness(ydoc);
 
-    const server = ServerConnection.makeSettings();
+    const server =
+      app.serviceManager.serverSettings ?? ServerConnection.makeSettings();
     const url = URLExt.join(server.wsUrl, 'api/collaboration/room');
 
     new WebSocketAwarenessProvider({
@@ -153,6 +154,7 @@ export const rtcPanelPlugin: JupyterFrontEndPlugin<void> = {
 
     const currentUserPanel = new UserInfoPanel({
       userManager: user,
+      serverSettings: app.serviceManager.serverSettings,
       trans
     });
     currentUserPanel.title.label = trans.__('User info');

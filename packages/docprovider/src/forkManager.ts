@@ -5,7 +5,7 @@
 
 import { ICollaborativeContentProvider } from '@jupyter/collaborative-drive';
 import { URLExt } from '@jupyterlab/coreutils';
-import { Event } from '@jupyterlab/services';
+import { Event, ServerConnection } from '@jupyterlab/services';
 import { ISignal, Signal } from '@lumino/signaling';
 
 import { requestAPI, ROOM_FORK_URL } from './requests';
@@ -26,6 +26,7 @@ export class ForkManager implements IForkManager {
     this._contentProvider = contentProvider;
     this._eventManager = eventManager;
     this._eventManager.stream.connect(this._handleEvent, this);
+    this._serverSettings = options.serverSettings;
   }
 
   get isDisposed(): boolean {
@@ -57,14 +58,22 @@ export class ForkManager implements IForkManager {
       body: JSON.stringify({ title, description, synchronize })
     };
     const url = URLExt.join(ROOM_FORK_URL, rootId);
-    const response = await requestAPI<IForkCreationResponse>(url, init);
+    const response = await requestAPI<IForkCreationResponse>(
+      url,
+      init,
+      this._serverSettings
+    );
     return response;
   }
 
   async getAllForks(rootId: string) {
     const url = URLExt.join(ROOM_FORK_URL, rootId);
     const init = { method: 'GET' };
-    const response = await requestAPI<IAllForksResponse>(url, init);
+    const response = await requestAPI<IAllForksResponse>(
+      url,
+      init,
+      this._serverSettings
+    );
     return response;
   }
 
@@ -73,7 +82,7 @@ export class ForkManager implements IForkManager {
     const url = URLExt.join(ROOM_FORK_URL, forkId);
     const query = URLExt.objectToQueryString({ merge });
     const init = { method: 'DELETE' };
-    await requestAPI(`${url}${query}`, init);
+    await requestAPI(`${url}${query}`, init, this._serverSettings);
   }
   getProvider(options: {
     documentPath: string;
@@ -114,11 +123,13 @@ export class ForkManager implements IForkManager {
   private _eventManager: Event.IManager | undefined;
   private _forkAddedSignal = new Signal<ForkManager, IForkChangedEvent>(this);
   private _forkDeletedSignal = new Signal<ForkManager, IForkChangedEvent>(this);
+  private _serverSettings?: ServerConnection.ISettings;
 }
 
 export namespace ForkManager {
   export interface IOptions {
     contentProvider: ICollaborativeContentProvider;
     eventManager: Event.IManager;
+    serverSettings?: ServerConnection.ISettings;
   }
 }
