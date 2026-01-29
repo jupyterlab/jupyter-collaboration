@@ -130,7 +130,8 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       {
         disableBc: true,
         params,
-        awareness: this._awareness
+        awareness: this._awareness,
+        WebSocketPolyfill: this._serverSettings.WebSocket
       }
     );
 
@@ -152,7 +153,8 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       {
         disableBc: true,
         params,
-        awareness: this._awareness
+        awareness: this._awareness,
+        WebSocketPolyfill: this._serverSettings.WebSocket
       }
     );
   }
