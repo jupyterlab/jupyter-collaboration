@@ -278,20 +278,28 @@ class DocumentRoom(YRoom):
             return
 
         self._saving_document = asyncio.create_task(
-            self._maybe_save_document(self._saving_document)
+            self._maybe_save_document(self._saving_document, save_now=True)
         )
         return self._saving_document
 
-    async def _maybe_save_document(self, saving_document: asyncio.Task | None) -> None:
+    async def _maybe_save_document(
+        self, saving_document: asyncio.Task | None, save_now: bool = False
+    ) -> None:
         """
         Saves the content of the document to disk.
 
         ### Note:
             There is a save delay to debounce the save since we could receive a high
             amount of changes in a short period of time. This way we can cancel the
-            previous save.
+            previous save. When save_now is True, the delay is skipped and the save
+            executes immediately.
+
+            Parameters:
+                saving_document: The previous saving task to cancel if needed.
+                save_now: If True, skip the debounce delay, and save immediately.
+                          This is used when manually saving.
         """
-        if self._save_delay is None:
+        if self._save_delay is None and not save_now:
             return
         if saving_document is not None and not saving_document.done():
             # the document is being saved, cancel that
@@ -301,8 +309,10 @@ class DocumentRoom(YRoom):
         # because this coroutine is run in a cancellable task and cancellation is handled here
 
         try:
-            # save after X seconds of inactivity
-            await asyncio.sleep(self._save_delay)
+            # When save_now is False, wait X seconds of inactivity before saving (auto-save).
+            # When save_now is True, save immediately without debounce delay (manual save).
+            if not save_now:
+                await asyncio.sleep(self._save_delay)
 
             self.log.info("Saving the content from room %s", self._room_id)
             saved_model = await self._file.maybe_save_content(
