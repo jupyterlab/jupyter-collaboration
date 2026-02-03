@@ -45,7 +45,7 @@ class FakeContentsManager:
         content: bool = True,
         format: str | None = None,
         type: str | None = None,
-        require_hash: bool = None,
+        require_hash: bool | None = None,
     ) -> dict:
         if not self.model:
             raise HTTPError(404, f"File not found: {path}")
