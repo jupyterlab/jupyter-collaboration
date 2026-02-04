@@ -109,8 +109,9 @@ filterwarnings = [
     'ignore:Unclosed <MemoryObjectSendStream:ResourceWarning',
     # see https://github.com/python/cpython/issues/126259
     'ignore:unclosed database in <sqlite3.Connection object',
-    # Ignore asyncio.WindowsProactorEventLoopPolicy deprecation warning emitted by jupyter-server
+    # Ignore asyncio.Windows[Proactor|Selector]EventLoopPolicy deprecation warning emitted by jupyter-server
     "ignore:'asyncio.WindowsProactorEventLoopPolicy' is deprecated:DeprecationWarning",
+    "ignore:'asyncio.WindowsSelectorEventLoopPolicy' is deprecated:DeprecationWarning",
 ]
 
 [tool.mypy]
