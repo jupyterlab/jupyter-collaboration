@@ -311,7 +311,7 @@ class DocumentRoom(YRoom):
         try:
             # When save_now is False, wait X seconds of inactivity before saving (auto-save).
             # When save_now is True, save immediately without debounce delay (manual save).
-            if not save_now:
+            if not save_now and self._save_delay is not None:
                 await asyncio.sleep(self._save_delay)
 
             self.log.info("Saving the content from room %s", self._room_id)
