@@ -189,7 +189,9 @@ async def test_autosave_should_still_have_delay(
 ):
     content = "test"
     save_delay = 0.3
-    cm, _, room = rtc_create_mock_document_room("test-id", "test.txt", content, save_delay=save_delay)
+    cm, _, room = rtc_create_mock_document_room(
+        "test-id", "test.txt", content, save_delay=save_delay
+    )
 
     await room.initialize()
 
