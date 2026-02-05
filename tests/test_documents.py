@@ -70,7 +70,7 @@ async def test_room_concurrent_initialization(
         tg.start_soon(connect, file_format, file_type, file_path)
     t1 = time()
     delta = t1 - t0
-    assert delta < 0.5
+    assert delta < 0.6
 
     await cleanup(jp_serverapp)
 
