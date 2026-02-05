@@ -4,11 +4,38 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 4.2.1
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@4.2.0...22cc16de10597e59a032675144d8d37a12c6d485))
+
+### Bugs fixed
+
+- Save immediately when triggering manual save [#540](https://github.com/jupyterlab/jupyter-collaboration/pull/540) ([@Carreau](https://github.com/Carreau), [@krassowski](https://github.com/krassowski))
+- Use `serverSettings` for API requests [#539](https://github.com/jupyterlab/jupyter-collaboration/pull/539) ([@krassowski](https://github.com/krassowski), [@jtpio](https://github.com/jtpio))
+
+### Maintenance and upkeep improvements
+
+- Add testing on Python 3.14 [#541](https://github.com/jupyterlab/jupyter-collaboration/pull/541) ([@Carreau](https://github.com/Carreau), [@krassowski](https://github.com/krassowski))
+- Update snapshots bot checkout and permission check [#536](https://github.com/jupyterlab/jupyter-collaboration/pull/536) ([@martinRenou](https://github.com/martinRenou), [@davidbrochart](https://github.com/davidbrochart), [@krassowski](https://github.com/krassowski))
+- Update shared link icon snapshot to fix UI tests [#534](https://github.com/jupyterlab/jupyter-collaboration/pull/534) ([@krassowski](https://github.com/krassowski), [@davidbrochart](https://github.com/davidbrochart))
+- Improve file watcher cancellation message and increase test coverage [#533](https://github.com/jupyterlab/jupyter-collaboration/pull/533) ([@krassowski](https://github.com/krassowski), [@davidbrochart](https://github.com/davidbrochart))
+- Fix tests hanging on CI due to pytest configured to turn warnings into errors [#531](https://github.com/jupyterlab/jupyter-collaboration/pull/531) ([@krassowski](https://github.com/krassowski), [@davidbrochart](https://github.com/davidbrochart))
+- Add a test for file watcher cleanup after delay [#529](https://github.com/jupyterlab/jupyter-collaboration/pull/529) ([@krassowski](https://github.com/krassowski), [@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/use/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2025-12-10&to=2026-02-05&type=c))
+
+@Carreau ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ACarreau+updated%3A2025-12-10..2026-02-05&type=Issues)) | @davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2025-12-10..2026-02-05&type=Issues)) | @jtpio ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajtpio+updated%3A2025-12-10..2026-02-05&type=Issues)) | @krassowski ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2025-12-10..2026-02-05&type=Issues)) | @martinRenou ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AmartinRenou+updated%3A2025-12-10..2026-02-05&type=Issues))
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 4.2.0
 
 No merged PRs
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 4.2.0rc0
 
