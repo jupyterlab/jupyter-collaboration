@@ -1,7 +1,7 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { PageConfig, URLExt } from '@jupyterlab/coreutils';
+import { PageConfig } from '@jupyterlab/coreutils';
 import { TranslationBundle } from '@jupyterlab/translation';
 import {
   Contents,
@@ -34,11 +34,6 @@ const DISABLE_RTC =
   PageConfig.getOption('disableRTC') === 'true' ? true : false;
 
 const RAW_MESSAGE_TYPE = 2;
-
-/**
- * The url for the default drive service.
- */
-const DOCUMENT_PROVIDER_URL = 'api/collaboration/room';
 
 export interface IForkProvider {
   connectToForkDoc: (forkRoomId: string, sessionId: string) => Promise<void>;
@@ -245,13 +240,13 @@ export class RtcContentProvider implements IContentProvider {
 
     try {
       const provider = new WebSocketProvider({
-        url: URLExt.join(this._serverSettings.wsUrl, DOCUMENT_PROVIDER_URL),
         path: options.path,
         format: options.format,
         contentType: options.contentType,
         model: sharedModel,
         user: this._user,
-        translator: this._trans
+        translator: this._trans,
+        serverSettings: this._serverSettings
       });
 
       // Add the document path in the list of opened ones for this user.
