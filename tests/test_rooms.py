@@ -121,6 +121,109 @@ async def test_should_save_content_when_at_least_one_client_has_autosave_enabled
     assert "save" in cm.actions
 
 
+async def test_manual_save_should_not_have_delay(
+    rtc_create_mock_document_room,
+):
+    content = "test"
+    cm, _, room = rtc_create_mock_document_room("test-id", "test.txt", content, save_delay=0.5)
+
+    await room.initialize()
+
+    # Trigger a manual save
+    room._save_to_disc()
+
+    # Manual save should execute immediately, without waiting for the 0.5s delay
+    # Check that save happens within a very short time (100ms should be enough)
+    await asyncio.sleep(0.1)
+
+    assert cm.actions.count("save") == 1
+
+
+async def test_manual_save_with_pending_autosave_should_cancel_autosave(
+    rtc_create_mock_document_room,
+):
+    content = "test"
+    cm, _, room = rtc_create_mock_document_room("test-id", "test.txt", content, save_delay=1.0)
+
+    await room.initialize()
+
+    room._document.source = "Test 2"
+
+    await asyncio.sleep(0.1)
+
+    assert cm.actions.count("save") == 0
+
+    save_task = room._save_to_disc()
+
+    # Manual save should execute immediately
+    await asyncio.sleep(0.1)
+    assert save_task.done()
+
+    # Check that the manual save was recorded
+    assert cm.actions.count("save") == 1
+
+    await asyncio.sleep(1.0)
+
+    # There should be only one save (the manual one), not two
+    assert cm.actions.count("save") == 1
+
+
+async def test_manual_save_should_execute_immediately_even_with_long_delay(
+    rtc_create_mock_document_room,
+):
+    content = "test"
+    cm, _, room = rtc_create_mock_document_room("test-id", "test.txt", content, save_delay=5.0)
+
+    await room.initialize()
+
+    save_task = room._save_to_disc()
+
+    await asyncio.sleep(0.5)
+
+    assert "save" in cm.actions
+    assert save_task.done()
+
+
+async def test_autosave_should_still_have_delay(
+    rtc_create_mock_document_room,
+):
+    content = "test"
+    save_delay = 0.3
+    cm, _, room = rtc_create_mock_document_room(
+        "test-id", "test.txt", content, save_delay=save_delay
+    )
+
+    await room.initialize()
+
+    room._document.source = "Test 3"
+
+    await asyncio.sleep(0.1)
+    assert "save" not in cm.actions
+
+    # Wait for the delay to complete
+    await asyncio.sleep(save_delay)
+
+    assert "save" in cm.actions
+
+
+async def test_manual_save_should_work_when_save_delay_is_none_and_save_now_is_true(
+    rtc_create_mock_document_room,
+):
+    """Test that manual saves execute even when save_delay is None."""
+    content = "test"
+    # When save_delay is None, autosave is disabled
+    cm, _, room = rtc_create_mock_document_room("test-id", "test.txt", content, save_delay=None)
+
+    await room.initialize()
+
+    # Trigger a manual save with save_now=True
+    # Even though save_delay is None, manual saves should still work
+    await room._maybe_save_document(None, save_now=True)
+
+    # Manual save should have executed
+    assert cm.actions.count("save") == 1
+
+
 # The following test should be restored when package versions are fixed.
 
 # async def test_document_path(rtc_create_mock_document_room):

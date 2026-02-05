@@ -47,10 +47,11 @@ export interface ISessionModel {
  */
 export async function requestAPI<T = any>(
   endPoint = '',
-  init: RequestInit = {}
+  init: RequestInit = {},
+  serverSettings?: ServerConnection.ISettings
 ): Promise<T> {
   // Make request to Jupyter API
-  const settings = ServerConnection.makeSettings();
+  const settings = serverSettings ?? ServerConnection.makeSettings();
   const requestUrl = URLExt.join(settings.baseUrl, endPoint);
 
   let response: Response;
@@ -80,9 +81,10 @@ export async function requestAPI<T = any>(
 export async function requestDocSession(
   format: string,
   type: string,
-  path: string
+  path: string,
+  serverSettings?: ServerConnection.ISettings
 ): Promise<ISessionModel> {
-  const settings = ServerConnection.makeSettings();
+  const settings = serverSettings ?? ServerConnection.makeSettings();
   const url = URLExt.join(
     settings.baseUrl,
     DOC_SESSION_URL,
@@ -120,9 +122,10 @@ export async function requestDocSession(
 export async function requestDocumentTimeline(
   format: string,
   type: string,
-  path: string
+  path: string,
+  serverSettings?: ServerConnection.ISettings
 ): Promise<any> {
-  const settings = ServerConnection.makeSettings();
+  const settings = serverSettings ?? ServerConnection.makeSettings();
 
   let url = URLExt.join(settings.baseUrl, TIMELINE_URL, path);
   url = url.concat(`?format=${format}&&type=${type}`);
@@ -144,9 +147,10 @@ export async function requestUndoRedo(
   roomid: string,
   action: 'undo' | 'redo' | 'restore',
   steps: number,
-  forkRoom: string
+  forkRoom: string,
+  serverSettings?: ServerConnection.ISettings
 ): Promise<any> {
-  const settings = ServerConnection.makeSettings();
+  const settings = serverSettings ?? ServerConnection.makeSettings();
   let url = URLExt.join(
     settings.baseUrl,
     DOC_FORK_URL,

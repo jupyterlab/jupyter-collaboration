@@ -5,7 +5,7 @@
 
 import { IDocumentProvider } from '@jupyter/collaborative-drive';
 import { showErrorMessage, Dialog } from '@jupyterlab/apputils';
-import { User } from '@jupyterlab/services';
+import { ServerConnection, User } from '@jupyterlab/services';
 import { TranslationBundle } from '@jupyterlab/translation';
 
 import { PromiseDelegate } from '@lumino/coreutils';
@@ -18,6 +18,12 @@ import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
 
 import { requestDocSession } from './requests';
 import { IForkProvider } from './ydrive';
+import { URLExt } from '@jupyterlab/coreutils';
+
+/**
+ * The url for the default drive service.
+ */
+const DOCUMENT_PROVIDER_URL = 'api/collaboration/room';
 
 /**
  * A class to provide Yjs synchronization over WebSocket.
@@ -37,10 +43,12 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     this._path = options.path;
     this._contentType = options.contentType;
     this._format = options.format;
-    this._serverUrl = options.url;
+    this._customServerUrl = options.url;
     this._sharedModel = options.model;
     this._awareness = options.model.awareness;
     this._yWebsocketProvider = null;
+    this._serverSettings =
+      options.serverSettings ?? ServerConnection.makeSettings();
     this._trans = options.translator;
 
     const user = options.user;
@@ -95,12 +103,25 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     this._connect();
   }
 
+  private get _serverUrl() {
+    return (
+      this._customServerUrl ??
+      URLExt.join(this._serverSettings.wsUrl, DOCUMENT_PROVIDER_URL)
+    );
+  }
+
   private async _connect(): Promise<void> {
     const session = await requestDocSession(
       this._format,
       this._contentType,
-      this._path
+      this._path,
+      this._serverSettings
     );
+    const token = this._serverSettings.token;
+    const params: Record<string, string> = { sessionId: session.sessionId };
+    if (this._serverSettings.appendToken && token !== '') {
+      params['token'] = token;
+    }
 
     this._yWebsocketProvider = new YWebsocketProvider(
       this._serverUrl,
@@ -108,8 +129,9 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       this._sharedModel.ydoc,
       {
         disableBc: true,
-        params: { sessionId: session.sessionId },
-        awareness: this._awareness
+        params,
+        awareness: this._awareness,
+        WebSocketPolyfill: this._serverSettings.WebSocket
       }
     );
 
@@ -118,6 +140,11 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   }
 
   async connectToForkDoc(forkRoomId: string, sessionId: string): Promise<void> {
+    const token = this._serverSettings.token;
+    const params: Record<string, string> = { sessionId };
+    if (this._serverSettings.appendToken && token !== '') {
+      params['token'] = token;
+    }
     this._disconnect();
     this._yWebsocketProvider = new YWebsocketProvider(
       this._serverUrl,
@@ -125,8 +152,9 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       this._sharedModel.ydoc,
       {
         disableBc: true,
-        params: { sessionId },
-        awareness: this._awareness
+        params,
+        awareness: this._awareness,
+        WebSocketPolyfill: this._serverSettings.WebSocket
       }
     );
   }
@@ -177,9 +205,10 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _isDisposed: boolean;
   private _path: string;
   private _ready = new PromiseDelegate<void>();
-  private _serverUrl: string;
+  private _customServerUrl?: string;
   private _sharedModel: YDocument<DocumentChange>;
   private _yWebsocketProvider: YWebsocketProvider | null;
+  private _serverSettings: ServerConnection.ISettings;
   private _trans: TranslationBundle;
 }
 
@@ -194,7 +223,7 @@ export namespace WebSocketProvider {
     /**
      * The server URL
      */
-    url: string;
+    url?: string;
 
     /**
      * The document file path
@@ -225,5 +254,10 @@ export namespace WebSocketProvider {
      * The jupyterlab translator
      */
     translator: TranslationBundle;
+
+    /**
+     * The server settings.
+     */
+    serverSettings?: ServerConnection.ISettings;
   }
 }
