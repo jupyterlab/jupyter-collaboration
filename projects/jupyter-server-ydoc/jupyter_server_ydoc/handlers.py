@@ -440,8 +440,8 @@ class DocSessionHandler(APIHandler):
     auth_resource = "contents"
 
     @web.authenticated
-    @authorized
-    async def put(self, path):
+    @authorized  # type: ignore[misc]
+    async def put(self, path: str) -> asyncio.Future[Any]:
         """
         Creates a new session for a given document or returns an existing one.
         """
@@ -453,7 +453,11 @@ class DocSessionHandler(APIHandler):
         idx = file_id_manager.get_id(path)
         if idx is not None:
             # index already exists
-            self.log.info("Request for Y document '%s' with room ID: %s", path, idx)
+            self.log.info(
+                "Request for Y document (previously indexed) '%s' with room ID: %s",
+                path,
+                idx,
+            )
             data = json.dumps(
                 {
                     "format": format,
@@ -472,7 +476,7 @@ class DocSessionHandler(APIHandler):
             raise web.HTTPError(404, f"File {path!r} does not exist")
 
         # index successfully created
-        self.log.info("Request for Y document '%s' with room ID: %s", path, idx)
+        self.log.info("Request for Y document (now indexed) '%s' with room ID: %s", path, idx)
         data = json.dumps(
             {
                 "format": format,
