@@ -139,7 +139,7 @@ class DocumentRoom(YRoom):
 
             if not read_from_source:
                 # if YStore updates and source file are out-of-sync, resync updates with source
-                if self._document.source != model["content"]:
+                if await self._document.aget() != model["content"]:
                     # TODO: Delete document from the store.
                     self._emit(
                         LogLevel.INFO,
@@ -160,7 +160,7 @@ class DocumentRoom(YRoom):
                     self._room_id,
                     self._file.path,
                 )
-                self._document.source = model["content"]
+                await self._document.aset(model["content"])
 
                 if self.ystore:
                     await self.ystore.encode_state_as_update(self.ydoc)
@@ -223,7 +223,7 @@ class DocumentRoom(YRoom):
             return
 
         async with self._update_lock:
-            self._document.source = model["content"]
+            await self._document.aset(model["content"])
             self._document.dirty = False
 
     def _on_filepath_change(self) -> None:
@@ -319,7 +319,7 @@ class DocumentRoom(YRoom):
                 {
                     "format": self._file_format,
                     "type": self._file_type,
-                    "content": self._document.source,
+                    "content": await self._document.aget(),
                 }
             )
             if saved_model:
@@ -343,7 +343,7 @@ class DocumentRoom(YRoom):
                 return None
 
             async with self._update_lock:
-                self._document.source = model["content"]
+                await self._document.aset(model["content"])
                 self._document.dirty = False
 
             self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes while saving.")
