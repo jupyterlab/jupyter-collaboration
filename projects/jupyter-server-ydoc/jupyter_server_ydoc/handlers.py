@@ -440,8 +440,8 @@ class DocSessionHandler(APIHandler):
     auth_resource = "contents"
 
     @web.authenticated
-    @authorized
-    async def put(self, path: str):
+    @authorized  # type: ignore[misc]
+    async def put(self, path: str) -> asyncio.Future[Any]:
         """
         Creates a new session for a given document or returns an existing one.
         """
