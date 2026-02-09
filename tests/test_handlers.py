@@ -381,8 +381,9 @@ async def test_fork_handler(
         fork_ydoc.observe(_on_fork_change)
         fork_text = fork_ydoc.ydoc.get("source", type=Text)
 
-        async with await rtc_connect_fork_client(fork_roomid1) as ws, Provider(
-            fork_ydoc.ydoc, HttpxWebsocket(ws, fork_roomid1)
+        async with (
+            await rtc_connect_fork_client(fork_roomid1) as ws,
+            Provider(fork_ydoc.ydoc, HttpxWebsocket(ws, fork_roomid1)),
         ):
             await fork_connect_event.wait()
             root_text = root_ydoc.ydoc.get("source", type=Text)
