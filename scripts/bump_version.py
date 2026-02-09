@@ -116,7 +116,7 @@ def bump(force, skip_if_dirty, spec):
             dependencies.add_line(key + ">=" + project_pins[key] + ",<" + next_major)
     # re-add other dependencies
     for dependency in old_dependencies:
-        requirement = Requirement.parse(dependency)
+        requirement = Requirement(dependency)
         if requirement.name.replace("-", "_") not in project_pins:
             dependencies.add_line(dependency)
     metapackage_toml.get("project").add("dependencies", dependencies.multiline(True))
