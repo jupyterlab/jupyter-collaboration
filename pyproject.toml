@@ -7,7 +7,7 @@ requires = ["hatchling>=1.4.0", "hatch-nodejs-version", "jupyterlab>=4.0.0"]
 
 [project]
 name = "jupyter-collaboration-monorepo"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
     # jupyter-server extensions
     "jupyter-server-ydoc @ {root:uri}/projects/jupyter-server-ydoc",
