@@ -226,11 +226,27 @@ class YDocExtension(ExtensionApp):
         return None
 
     async def stop_extension(self):
-        # Cancel tasks and clean up
-        await asyncio.wait(
+        self.log.info("Stopping collaboration extension...")
+        _, pending = await asyncio.wait(
             [
                 asyncio.create_task(self.ywebsocket_server.clean()),
                 asyncio.create_task(self.file_loaders.clear()),
             ],
             timeout=3,
         )
+        if pending:
+            self.log.warning(
+                "Collaboration shutdown: %d task(s) still pending after 3s timeout, cancelling.",
+                len(pending),
+            )
+            for task in pending:
+                task.cancel()
+            # Wait briefly for cancellation to propagate
+            _, still_pending = await asyncio.wait(pending, timeout=1)
+            if still_pending:
+                self.log.error(
+                    "Collaboration shutdown: %d task(s) could not be cancelled.",
+                    len(still_pending),
+                )
+        else:
+            self.log.info("Collaboration extension stopped cleanly.")

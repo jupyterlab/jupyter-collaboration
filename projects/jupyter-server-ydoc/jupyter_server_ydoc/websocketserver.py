@@ -55,28 +55,35 @@ class JupyterWebsocketServer(WebsocketServer):
         self.connected_users: dict[Any, Any] = {}
         # Async loop is not yet ready at the object instantiation
         self.monitor_task: asyncio.Task | None = None
+        self._stopping = False
+        self._start_task: asyncio.Task | None = None
+
+    @property
+    def stopping(self) -> bool:
+        return self._stopping
 
     async def clean(self):
         # TODO: should we wait for any save task?
-        self.log.info("Deleting all rooms.")
         # FIXME some clean up should be upstreamed and the following does not
         # prevent hanging stop process - it also requires some thinking about
         # should the ystore write action be cancelled; I guess not as it could
         # results in corrupted data.
-        # room_tasks = list()
-        # for name, room in list(self.rooms.items()):
-        #     for task in room.background_tasks:
-        #         task.cancel()  # FIXME should be upstreamed
-        #         room_tasks.append(task)
-        # if room_tasks:
-        #     _, pending = await asyncio.wait(room_tasks, timeout=3)
-        #     if pending:
-        #         msg = f"{len(pending)} room task(s) are pending."
-        #         self.log.warning(msg)
-        #         self.log.debug("Pending tasks: %r", pending)
+        self.log.info("Cleaning up %d room(s).", len(self.rooms))
+        # Reject new WebSocket connections in YDocWebSocketHandler.prepare().
+        self._stopping = True
 
-        await self.stop()
-        tasks = []
+        # Stop the server first to reject any new connections during shutdown.
+        # Guard: stop() raises RuntimeError if the server was never started.
+        if self.started.is_set():
+            await self.stop()
+
+        # Now disconnect existing clients so their serve() tasks complete.
+        tasks: list[asyncio.Task] = []
+        for _, room in list(self.rooms.items()):
+            for client in list(room.clients):
+                tasks.extend(client._background_tasks)  # type: ignore[attr-defined]
+                client._message_queue.put_nowait(b"")  # type: ignore[attr-defined]
+
         if self.monitor_task is not None:
             self.monitor_task.cancel()
             tasks.append(self.monitor_task)
@@ -84,9 +91,29 @@ class JupyterWebsocketServer(WebsocketServer):
         if tasks:
             _, pending = await asyncio.wait(tasks, timeout=3)
             if pending:
-                msg = f"{len(pending)} task(s) are pending."
-                self.log.warning(msg)
-                self.log.debug("Pending tasks: %r", pending)
+                self.log.warning("%d task(s) still pending after shutdown.", len(pending))
+
+        # Rooms persist after client disconnect so users can reconnect without
+        # a full re-sync (see auto_clean_rooms=False in app.py). On shutdown
+        # we must stop them explicitly.
+        for _, room in list(self.rooms.items()):
+            try:
+                await room.stop()
+            except RuntimeError as e:
+                if "not running" not in str(e):
+                    raise
+        self.rooms.clear()
+
+        # Await the root asyncio task so anyio's task group __aexit__ runs
+        # and fires done-callbacks that clean up worker threads. Without this,
+        # non-daemon WorkerThread instances block Python's threading._shutdown().
+        if self._start_task is not None and not self._start_task.done():
+            try:
+                await asyncio.wait_for(self._start_task, timeout=2)
+            except asyncio.TimeoutError:
+                # Letting this propagate would be silently swallowed by
+                # asyncio.wait() in stop_extension(), so we log it here.
+                self.log.warning("Server start task did not complete within 2s.")
 
     def room_exists(self, path: str) -> bool:
         """
