@@ -34,10 +34,26 @@ class SQLiteYStore(LoggingConfigurable, _SQLiteYStore, metaclass=SQLiteYStoreMet
         help="""The document time-to-live in seconds. Defaults to None (document history is never
         cleared).""",
     )
+
     document_ttl = Int(
         None,
         allow_none=True,
         config=True,
         help="""The document time-to-live in seconds. Deprecated in favor of 'squash_after_inactivity_of'.
         Defaults to None (document history is never cleared).""",
+    )
+
+    squash_history_older_than = Int(
+        None,
+        allow_none=True,
+        config=True,
+        help="""The maximum age (in seconds) of document history to retain.
+                    Entries older than this window are automatically pruned.
+                    Defaults to None (history is never cleared).""",
+    )
+
+    squash_no_more_often_than = Int(
+        60,
+        config=True,
+        help="""Minimum interval in seconds between automatic cleanup operations. Defaults to 60 seconds.""",
     )
