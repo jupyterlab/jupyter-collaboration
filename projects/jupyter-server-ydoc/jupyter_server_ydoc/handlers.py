@@ -77,11 +77,14 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         task = asyncio.create_task(aw)
         self._background_tasks.add(task)
         task.add_done_callback(self._background_tasks.discard)
+        return task
 
     async def prepare(self):
         await ensure_async(super().prepare())
+        if self._websocket_server.stopping:
+            raise web.HTTPError(503, "Server is shutting down")
         if not self._websocket_server.started.is_set():
-            self.create_task(self._websocket_server.start())
+            self._websocket_server._start_task = self.create_task(self._websocket_server.start())
             await self._websocket_server.started.wait()
 
         # Get room
