@@ -79,7 +79,7 @@ class JupyterWebsocketServer(WebsocketServer):
 
         # Now disconnect existing clients so their serve() tasks complete.
         tasks: list[asyncio.Task] = []
-        for _, room in list(self.rooms.items()):
+        for room in self.rooms.values():
             for client in list(room.clients):
                 tasks.extend(client._background_tasks)  # type: ignore[attr-defined]
                 client._message_queue.put_nowait(b"")  # type: ignore[attr-defined]
@@ -96,7 +96,7 @@ class JupyterWebsocketServer(WebsocketServer):
         # Rooms persist after client disconnect so users can reconnect without
         # a full re-sync (see auto_clean_rooms=False in app.py). On shutdown
         # we must stop them explicitly.
-        for _, room in list(self.rooms.items()):
+        for room in self.rooms.values():
             try:
                 await room.stop()
             except RuntimeError as e:
