@@ -238,35 +238,24 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             session_id = self.get_query_argument("sessionId", "")
             session_id = self.get_query_argument("sessionId", "")
             root_dir = self.settings.get("server_root_dir", os.getcwd())
-            print("from settings -> ", self.settings.get("server_root_dir"))
-            print("from os -> ", os.getcwd())
 
-            # Persist the current (new) session so future reconnects can validate it
-            print("Saving current session")
+            # Persist the current session so future reconnects can validate it
             save_current_session(root_dir, SERVER_SESSION, COLLABORATION_VERSION)
             if SERVER_SESSION != session_id:
-                print("Session ID mismatch")
                 can_reconnect, reason = check_session_compatibility(
                     root_dir, session_id, COLLABORATION_VERSION
                 )
-                print(f"Can reconnect: {can_reconnect}, reason: {reason}")
                 if can_reconnect:
-                    # Transparently accept the old session — no dialog needed.
-                    # The server will drive sync normally from this point.
+                    # Accept the old session, no reload needed.
                     pass
                 else:
-                    # Must ask the user to reload; encode the reason so the
-                    # frontend can compose a translated, human-friendly message.
-                    # close_payload = json.dumps({
-                    #     "reason": reason,          # "unknown_session" | "different_directory" | "version_mismatch"
-                    #     "sessionId": session_id,
-                    # })
-                    # self.close(1003, close_payload)
-                    print("Closing connection due to session incompatibility")
-                    self.close(
-                        1003,
-                        f"Document session {session_id} expired. You need to reload this browser tab.",
-                    )
+                    # Must ask the user to reload
+                    close_payload = json.dumps({
+                        "reason": reason,
+                        "sessionId": session_id,
+                        "reloadable": True,
+                    })
+                    self.close(1003, close_payload)
 
             # cancel the deletion of the room if it was scheduled
             if self.room.cleaner is not None:
@@ -289,7 +278,11 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     self.log.error(f"Error initializing: {file.path}\n{e!r}", exc_info=e)
                     self.close(
                         1003,
-                        f"Error initializing: {file.path}. You need to close the document.",
+                        json.dumps({
+                            "reason": "initialization_error",
+                            "path": file.path,
+                            "reloadable": False,
+                        }),
                     )
 
                 # Clean up the room and delete the file loader
