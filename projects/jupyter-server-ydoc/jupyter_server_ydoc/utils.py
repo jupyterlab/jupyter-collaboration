@@ -4,6 +4,10 @@
 from enum import Enum, IntEnum
 from pathlib import Path
 from typing import Tuple
+import json
+import uuid
+from datetime import datetime
+from ._version import __version__  # noqa
 
 EVENTS_FOLDER_PATH = Path(__file__).parent / "events"
 JUPYTER_COLLABORATION_EVENTS_URI = "https://schema.jupyter.org/jupyter_collaboration/session/v1"
@@ -14,7 +18,8 @@ JUPYTER_COLLABORATION_AWARENESS_EVENTS_URI = (
 JUPYTER_COLLABORATION_FORK_EVENTS_URI = "https://schema.jupyter.org/jupyter_collaboration/fork/v1"
 AWARENESS_EVENTS_SCHEMA_PATH = EVENTS_FOLDER_PATH / "awareness.yaml"
 FORK_EVENTS_SCHEMA_PATH = EVENTS_FOLDER_PATH / "fork.yaml"
-
+SERVER_SESSION = str(uuid.uuid4())
+COLLABORATION_VERSION = __version__
 
 class MessageType(IntEnum):
     SYNC = 0
@@ -78,3 +83,92 @@ def encode_file_path(format: str, file_type: str, file_id: str) -> str:
 def room_id_from_encoded_path(encoded_path: str) -> str:
     """Transforms the encoded path into a stable room identifier."""
     return encoded_path.split("/")[-1]
+
+def get_jupyter_session_store(root_dir: str) -> Path:
+    """Return path to the session store file in .jupyter folder."""
+    jupyter_dir = Path(root_dir) / ".jupyter"
+    jupyter_dir.mkdir(parents=True, exist_ok=True)
+    return jupyter_dir / "collaboration_sessions.json"
+
+
+def load_previous_sessions(root_dir: str) -> dict:
+    """Load previous session records from .jupyter folder."""
+    store_path = get_jupyter_session_store(root_dir)
+    if store_path.exists():
+        try:
+            with open(store_path, "r") as f:
+                sessions = json.load(f)
+                print(f"[jupyter-collaboration] Loaded {len(sessions)} previous session(s)")
+                return sessions
+        except (json.JSONDecodeError, IOError):
+            return {}
+    return {}
+
+
+def save_current_session(root_dir: str, session_id: str, version: str) -> None:
+    """Persist the current session ID and version to .jupyter folder."""
+    store_path = get_jupyter_session_store(root_dir)
+    sessions = load_previous_sessions(root_dir)
+
+    sessions[session_id] = {
+        "version": version,
+        "root_dir": str(root_dir),
+        "created_at": datetime.utcnow().isoformat(),
+    }
+
+    # Keep only the last 10 sessions to avoid unbounded growth
+    if len(sessions) > 10:
+        oldest_key = sorted(sessions, key=lambda k: sessions[k].get("created_at", ""))[0]
+        del sessions[oldest_key]
+        print("[jupyter-collaboration] Pruned oldest session")
+
+    try:
+        with open(store_path, "w") as f:
+            json.dump(sessions, f, indent=2)
+        print("[jupyter-collaboration] Session saved")
+    except IOError as e:
+        # Non-fatal: log but don't crash
+        print(f"[jupyter-collaboration] Warning: could not write session store: {e}")
+
+
+def check_session_compatibility(
+    root_dir: str,
+    client_session_id: str,
+    current_version: str,
+) -> tuple[bool, str]:
+    """
+    Determine whether a client carrying an old session ID can reconnect.
+
+    Returns:
+        (can_reconnect: bool, reason: str)
+            - can_reconnect=True  → allow silently
+            - can_reconnect=False → must show reload dialog; reason explains why
+    """
+    # Brand-new or same session: always fine
+    if client_session_id == SERVER_SESSION:
+        return True, ""
+
+    previous_sessions = load_previous_sessions(root_dir)
+
+    # Session ID not in our records at all → unknown origin, reject
+    if client_session_id not in previous_sessions:
+        print("[jupyter-collaboration] Unknown session ID")
+        return False, "unknown_session"
+
+    previous = previous_sessions[client_session_id]
+    previous_root = previous.get("root_dir", "")
+    previous_version = previous.get("version", "")
+
+    # Different root directory → documents could be completely unrelated
+    if Path(previous_root).resolve() != Path(root_dir).resolve():
+        print("[jupyter-collaboration] Session from different directory")
+        return False, "different_directory"
+
+    # Collaboration package version changed → UI or protocol may have changed
+    if previous_version != current_version:
+        print(f"[jupyter-collaboration] Version mismatch: {previous_version} → {current_version}")
+        return False, "version_mismatch"
+
+    # Same directory + same version → safe to reconnect transparently
+    print("[jupyter-collaboration] Session compatible, reconnecting")
+    return True, ""
