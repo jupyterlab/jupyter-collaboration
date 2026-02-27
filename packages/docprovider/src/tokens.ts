@@ -117,11 +117,7 @@ export const IForkManagerToken = new Token<IForkManager>(
 );
 
 export interface ISessionClosePayload {
-  reason:
-    | 'unknown_session'
-    | 'different_directory'
-    | 'version_mismatch'
-    | 'initialization_error';
+  reason: 'unknown_session' | 'version_mismatch' | 'initialization_error';
   sessionId?: string;
   path?: string;
   reloadable?: boolean;

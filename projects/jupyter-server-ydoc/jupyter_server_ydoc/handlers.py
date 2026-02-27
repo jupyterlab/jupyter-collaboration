@@ -35,7 +35,7 @@ from .utils import (
     room_id_from_encoded_path,
     save_current_session,
     SERVER_SESSION,
-    COLLABORATION_VERSION
+    YDOC_SERVER_VERSION
 )
 from .websocketserver import JupyterWebsocketServer, RoomNotFound
 from .utils import MessageType
@@ -240,10 +240,10 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             root_dir = self.settings.get("server_root_dir", os.getcwd())
 
             # Persist the current session so future reconnects can validate it
-            save_current_session(root_dir, SERVER_SESSION, COLLABORATION_VERSION)
+            save_current_session(root_dir, SERVER_SESSION, YDOC_SERVER_VERSION)
             if SERVER_SESSION != session_id:
                 can_reconnect, reason = check_session_compatibility(
-                    root_dir, session_id, COLLABORATION_VERSION
+                    root_dir, session_id, YDOC_SERVER_VERSION
                 )
                 if can_reconnect:
                     # Accept the old session, no reload needed.

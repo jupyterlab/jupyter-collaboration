@@ -179,11 +179,6 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     trans: TranslationBundle
   ): { title: string; body: string } {
     switch (payload.reason) {
-      case 'different_directory':
-        return {
-          title: trans.__('Server restarted in a different directory'),
-          body: trans.__('Reload the browser tab to continue.')
-        };
       case 'version_mismatch':
         return {
           title: trans.__('Collaboration extension updated'),
