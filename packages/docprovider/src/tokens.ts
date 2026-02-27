@@ -115,3 +115,10 @@ export interface IForkManager extends IDisposable {
 export const IForkManagerToken = new Token<IForkManager>(
   '@jupyter/docprovider:IForkManagerToken'
 );
+
+export interface ISessionClosePayload {
+  reason: 'unknown_session' | 'version_mismatch' | 'initialization_error';
+  sessionId?: string;
+  path?: string;
+  reloadable?: boolean;
+}
