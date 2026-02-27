@@ -6,7 +6,6 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-import uuid
 from logging import Logger
 from typing import Any
 from uuid import uuid4
@@ -35,7 +34,7 @@ from .utils import (
     room_id_from_encoded_path,
     save_current_session,
     SERVER_SESSION,
-    YDOC_SERVER_VERSION
+    YDOC_SERVER_VERSION,
 )
 from .websocketserver import JupyterWebsocketServer, RoomNotFound
 from .utils import MessageType
@@ -250,11 +249,13 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     pass
                 else:
                     # Must ask the user to reload
-                    close_payload = json.dumps({
-                        "reason": reason,
-                        "sessionId": session_id,
-                        "reloadable": True,
-                    })
+                    close_payload = json.dumps(
+                        {
+                            "reason": reason,
+                            "sessionId": session_id,
+                            "reloadable": True,
+                        }
+                    )
                     self.close(1003, close_payload)
 
             # cancel the deletion of the room if it was scheduled
@@ -278,11 +279,13 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                     self.log.error(f"Error initializing: {file.path}\n{e!r}", exc_info=e)
                     self.close(
                         1003,
-                        json.dumps({
-                            "reason": "initialization_error",
-                            "path": file.path,
-                            "reloadable": False,
-                        }),
+                        json.dumps(
+                            {
+                                "reason": "initialization_error",
+                                "path": file.path,
+                                "reloadable": False,
+                            }
+                        ),
                     )
 
                 # Clean up the room and delete the file loader

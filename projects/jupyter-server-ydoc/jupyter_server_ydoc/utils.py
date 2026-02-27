@@ -21,6 +21,7 @@ FORK_EVENTS_SCHEMA_PATH = EVENTS_FOLDER_PATH / "fork.yaml"
 SERVER_SESSION = str(uuid.uuid4())
 YDOC_SERVER_VERSION = __version__
 
+
 class MessageType(IntEnum):
     SYNC = 0
     AWARENESS = 1
@@ -84,6 +85,7 @@ def room_id_from_encoded_path(encoded_path: str) -> str:
     """Transforms the encoded path into a stable room identifier."""
     return encoded_path.split("/")[-1]
 
+
 def _get_jupyter_session_store(root_dir: str) -> Path:
     """Return path to the session store file in .jupyter folder."""
     jupyter_dir = Path(root_dir).expanduser().resolve() / ".jupyter"
@@ -122,7 +124,7 @@ def save_current_session(root_dir: str, session_id: str, version: str) -> None:
     try:
         with open(store_path, "w") as f:
             json.dump(sessions, f, indent=2)
-    except IOError as e:
+    except IOError:
         pass
 
 
@@ -150,7 +152,7 @@ def check_session_compatibility(
     previous_version = previous.get("version", "")
 
     # Collaboration package version changed → reject
-    if previous_version != current_version: # TODO check more versions
+    if previous_version != current_version:  # TODO check more versions
         return False, "version_mismatch"
 
     # Same directory + same version → safe to reconnect
