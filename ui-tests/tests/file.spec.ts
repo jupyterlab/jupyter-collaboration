@@ -121,7 +121,7 @@ test.describe('File Editing', () => {
     );
     await expect(dialog).toContainText(
       // This error message comes yprovider handler
-      `Cannot decode ${tmpPath}/${exampleFile}`
+      `Cannot decode contents of ${tmpPath}/${exampleFile}`
     );
   });
 });
