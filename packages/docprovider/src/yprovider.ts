@@ -174,6 +174,23 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   }
 
   private _onConnectionClosed = (event: any): void => {
+    if ([4400, 4404, 4500].includes(event.code)) {
+      let isReady = false;
+      this.ready.then(() => {
+        isReady = true;
+      });
+
+      if (!isReady) {
+        // Rejecting the ready promise will close the file placeholder widget.
+        const reason = this._getCloseReasonMessage(event.code);
+        this._ready.reject(reason);
+        // Disposing model prevents repeated websocket reconnection attempts.
+        // Rejecting the ready promise will ultimately close the file,
+        // but the document manager takes some time to do so.
+        this._sharedModel.dispose();
+      }
+    }
+
     if (event.code === 1003) {
       console.error('Document provider closed:', event.reason);
 
@@ -198,6 +215,23 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       this._ready.resolve();
     }
   };
+
+  private _getCloseReasonMessage(code: 4400 | 4404 | 4500): string {
+    switch (code) {
+      case 4400: {
+        return this._trans.__('Cannot decode contents of %1', this._path);
+      }
+      case 4404: {
+        return this._trans.__('Could not find %1', this._path);
+      }
+      case 4500: {
+        return this._trans.__(
+          'Internal server error when loading %1',
+          this._path
+        );
+      }
+    }
+  }
 
   private _awareness: Awareness;
   private _contentType: string;

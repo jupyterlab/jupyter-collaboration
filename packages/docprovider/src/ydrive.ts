@@ -94,6 +94,14 @@ export class RtcContentProvider implements IContentProvider {
       const provider = this._providers.get(key);
 
       if (provider) {
+        // The default jupyter-server REST content provider would ask
+        // for content here; this would trigger any encoding errors
+        // leading to fast-rejection. However we do not ask for
+        // content as it is synced over a websocket instead,
+        // this means that the errors do not propagate.
+        // Instead we handle it by ensuring that the `ready` promise
+        // rejection (due to websocket closure ahead of sync) propagates.
+
         // If the document doesn't exist, `super.get` will reject with an
         // error and the provider will never be resolved.
         // Use `Promise.all` to reject as soon as possible. The Context will
