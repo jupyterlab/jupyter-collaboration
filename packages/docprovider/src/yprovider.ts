@@ -175,12 +175,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
 
   private _onConnectionClosed = (event: any): void => {
     if ([4400, 4404, 4500].includes(event.code)) {
-      let isReady = false;
-      this.ready.then(() => {
-        isReady = true;
-      });
-
-      if (!isReady) {
+      if (!this._hasSynced) {
         // Rejecting the ready promise will close the file placeholder widget.
         const reason = this._getCloseReasonMessage(event.code);
         this._ready.reject(reason);
@@ -206,6 +201,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
 
   private _onSync = (isSynced: boolean) => {
     if (isSynced) {
+      this._hasSynced = true;
       if (this._yWebsocketProvider) {
         this._yWebsocketProvider.off('sync', this._onSync);
 
@@ -244,6 +240,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _yWebsocketProvider: YWebsocketProvider | null;
   private _serverSettings: ServerConnection.ISettings;
   private _trans: TranslationBundle;
+  private _hasSynced = false;
 }
 
 /**
