@@ -64,8 +64,10 @@ async function waitForProviderConnect(
   throw new Error('WebSocket provider was not initialized');
 }
 
-function createProvider(path = 'test.ipynb'): WebSocketProvider {
-  const model = new YFile();
+function createProvider(
+  options: { path?: string; model?: YFile } = {}
+): WebSocketProvider {
+  const { path = 'test.ipynb', model = new YFile() } = options;
   const translator = nullTranslator.load('test');
   const identity = {
     username: 'Joe Doe',
@@ -104,7 +106,9 @@ describe('@jupyter/docprovider', () => {
 
     describe('#ready', () => {
       it('should reject ready if websocket closes with 4400 before sync', async () => {
-        const provider = createProvider('decode-error.py');
+        const model = new YFile();
+        const disposeSpy = jest.spyOn(model, 'dispose');
+        const provider = createProvider({ path: 'decode-error.py', model });
         const wsProvider = await waitForProviderConnect(provider);
 
         wsProvider.emit('connection-close', { code: 4400 });
@@ -112,10 +116,26 @@ describe('@jupyter/docprovider', () => {
         await expect(provider.ready).rejects.toBe(
           'Cannot decode contents of decode-error.py'
         );
+        expect(disposeSpy).toHaveBeenCalled();
+      });
+
+      it('should not dispose shared model if websocket closes after sync', async () => {
+        const model = new YFile();
+        const disposeSpy = jest.spyOn(model, 'dispose');
+        const provider = createProvider({ path: 'synced.py', model });
+
+        const wsProvider = await waitForProviderConnect(provider);
+
+        wsProvider.emit('sync', true);
+        await expect(provider.ready).resolves.toBeUndefined();
+
+        wsProvider.emit('connection-close', { code: 4400 });
+
+        expect(disposeSpy).not.toHaveBeenCalled();
       });
 
       it('should reject ready if websocket closes with 4500 before sync', async () => {
-        const provider = createProvider('test.py');
+        const provider = createProvider({ path: 'test.py' });
         const wsProvider = await waitForProviderConnect(provider);
 
         wsProvider.emit('connection-close', { code: 4500 });
