@@ -215,7 +215,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _getCloseReasonMessage(code: 4400 | 4404 | 4500): string {
     switch (code) {
       case 4400: {
-        return this._trans.__('Cannot decode contents of %1', this._path);
+        return this._trans.__('Bad request for %1', this._path);
       }
       case 4404: {
         return this._trans.__('Could not find %1', this._path);

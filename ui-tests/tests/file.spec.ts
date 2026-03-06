@@ -121,7 +121,7 @@ test.describe('File Editing', () => {
     );
     await expect(dialog).toContainText(
       // This error message comes from yprovider handler
-      `Cannot decode contents of ${tmpPath}/${exampleFile}`
+      `Bad request for ${tmpPath}/${exampleFile}`
     );
   });
 });

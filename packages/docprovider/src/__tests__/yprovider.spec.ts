@@ -114,7 +114,7 @@ describe('@jupyter/docprovider', () => {
         wsProvider.emit('connection-close', { code: 4400 });
 
         await expect(provider.ready).rejects.toBe(
-          'Cannot decode contents of decode-error.py'
+          'Bad request for decode-error.py'
         );
         expect(disposeSpy).toHaveBeenCalled();
       });
