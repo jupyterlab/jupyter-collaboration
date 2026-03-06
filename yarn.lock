@@ -2197,6 +2197,7 @@ __metadata:
     "@jupyterlab/notebook": ^4.5.0
     "@jupyterlab/services": ^7.5.0
     "@jupyterlab/testing": ^4.5.0
+    "@jupyterlab/testutils": ^4.5.0
     "@jupyterlab/translation": ^4.5.0
     "@lumino/coreutils": ^2.2.1
     "@lumino/disposable": ^2.1.4
@@ -2900,6 +2901,19 @@ __metadata:
   peerDependencies:
     typescript: ">=4.3"
   checksum: 288d1fc9546ebb956d3da575abbbede1443b8ca766bb24448f7021b52f63ac4f679f4ad391edbbc2f160ecad94bcd112f99511e37c13e38143f7f6cef434b4bd
+  languageName: node
+  linkType: hard
+
+"@jupyterlab/testutils@npm:^4.5.0":
+  version: 4.5.0
+  resolution: "@jupyterlab/testutils@npm:4.5.0"
+  dependencies:
+    "@jupyterlab/application": ^4.5.0
+    "@jupyterlab/apputils": ^4.6.0
+    "@jupyterlab/notebook": ^4.5.0
+    "@jupyterlab/rendermime": ^4.5.0
+    "@jupyterlab/testing": ^4.5.0
+  checksum: c8a9c797d7b5e226905d67c0f1f57f61da25fe8ead4ca602e423ac06ccdb59f784a0d0046bfea08dbc9a897ee1b0947d622d62fdcf06dff0330dea26c78e7b7e
   languageName: node
   linkType: hard
 

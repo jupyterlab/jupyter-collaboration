@@ -253,8 +253,26 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
                 # Close websocket and propagate error.
                 if isinstance(e, web.HTTPError):
-                    self.log.error(f"File {file.path} not found.\n{e!r}", exc_info=e)
-                    self.close(1004, f"File {file.path} not found.")
+                    if e.status_code == 404:
+                        error_code = 4404  # custom code for "file not found"
+                        self.log.error(f"File {file.path} not found.\n{e!r}", exc_info=e)
+                    elif e.status_code == 400:
+                        error_code = 4400  # custom code for "bad request"
+                        self.log.error(f"Bad request for file {file.path}.\n{e!r}", exc_info=e)
+                    elif e.status_code == 500:
+                        error_code = 4500  # custom code for "internal server error"
+                        self.log.error(
+                            f"Internal server error for file {file.path}.\n{e!r}", exc_info=e
+                        )
+                    else:
+                        error_code = 4500  # generic error code for other HTTP errors
+                        self.log.error(
+                            f"Error initializing room for file {file.path}.\n{e!r}", exc_info=e
+                        )
+                    self.close(
+                        error_code,
+                        f"Error initializing: {file.path}.",
+                    )
                 else:
                     self.log.error(f"Error initializing: {file.path}\n{e!r}", exc_info=e)
                     self.close(
