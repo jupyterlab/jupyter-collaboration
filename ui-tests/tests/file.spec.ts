@@ -99,4 +99,29 @@ test.describe('File Editing', () => {
       await expect(page.locator('.cm-editor > .cm-scroller', { hasText: "Example" })).toContainText('name = "Kuba"');
     });
   });
+
+  test('Opening corrupted file', async ({ page, request, tmpPath }) => {
+    // Upload a file which does not contain valid UTF-8 encoding
+    const contents = galata.newContentsHelper(request);
+    await expect(contents.uploadContent(
+      '/w==',
+      'base64',
+      `${tmpPath}/${exampleFile}`
+    )).toBeTruthy();
+
+    // Try to open the file
+    await page.filebrowser.open(exampleFile);
+
+    // It should correctly error out
+    const dialog = page.locator('.jp-Dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText(
+      // This error message comes from JupyterLab core
+      `File Load Error for ${exampleFile}`
+    );
+    await expect(dialog).toContainText(
+      // This error message comes from yprovider handler
+      `Bad request for ${tmpPath}/${exampleFile}`
+    );
+  });
 });
