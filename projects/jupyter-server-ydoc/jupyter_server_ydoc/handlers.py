@@ -70,6 +70,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
     _message_queue: asyncio.Queue[Any]
     _background_tasks: set[asyncio.Task]
     _room_locks: dict[str, asyncio.Lock] = {}
+    _session_file_lock: asyncio.Lock = asyncio.Lock()
 
     def _room_lock(self, room_id: str) -> asyncio.Lock:
         if room_id not in self._room_locks:
@@ -238,7 +239,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             root_dir = self.settings.get("server_root_dir", os.getcwd())
 
             # Persist the current session so future reconnects can validate it
-            save_current_session(root_dir, SERVER_SESSION, YDOC_SERVER_VERSION)
+            await save_current_session(
+                root_dir, SERVER_SESSION, YDOC_SERVER_VERSION, self._session_file_lock
+            )
             if SERVER_SESSION != session_id:
                 can_reconnect, reason = check_session_compatibility(
                     root_dir, session_id, YDOC_SERVER_VERSION

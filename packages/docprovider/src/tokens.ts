@@ -120,4 +120,5 @@ export interface ISessionClosePayload {
   reason: 'unknown_session' | 'version_mismatch' | 'initialization_error';
   sessionId?: string;
   reloadable?: boolean;
+  errorReason?: string;
 }

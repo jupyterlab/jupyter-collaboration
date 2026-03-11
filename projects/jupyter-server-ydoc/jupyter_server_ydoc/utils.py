@@ -8,6 +8,7 @@ import json
 import uuid
 from datetime import datetime, timezone
 from ._version import __version__  # noqa
+import asyncio
 
 EVENTS_FOLDER_PATH = Path(__file__).parent / "events"
 JUPYTER_COLLABORATION_EVENTS_URI = "https://schema.jupyter.org/jupyter_collaboration/session/v1"
@@ -88,9 +89,13 @@ def room_id_from_encoded_path(encoded_path: str) -> str:
 
 def _get_jupyter_session_store(root_dir: str) -> Path:
     """Return path to the session store file in .jupyter folder."""
-    jupyter_dir = Path(root_dir).expanduser().resolve() / ".jupyter"
-    jupyter_dir.mkdir(parents=True, exist_ok=True)
-    return jupyter_dir / "collaboration_sessions.json"
+    try:
+        jupyter_dir = Path(root_dir).expanduser().resolve() / ".jupyter"
+        jupyter_dir.mkdir(parents=True, exist_ok=True)
+        return jupyter_dir / "collaboration_sessions.json"
+    except OSError:
+        # In case if the server root dir is read-only
+        return Path("/dev/null")
 
 
 def _load_previous_sessions(root_dir: str) -> dict:
@@ -100,13 +105,22 @@ def _load_previous_sessions(root_dir: str) -> dict:
         try:
             with open(store_path, "r") as f:
                 sessions = json.load(f)
-                return sessions
+                # Ensure the loaded JSON is a dict mapping session IDs to dicts.
+                if not isinstance(sessions, dict):
+                    return {}
+                clean_sessions = {}
+                for key, value in sessions.items():
+                    if isinstance(value, dict):
+                        clean_sessions[str(key)] = value
+                return clean_sessions
         except (json.JSONDecodeError, IOError):
             return {}
     return {}
 
 
-def save_current_session(root_dir: str, session_id: str, version: str) -> None:
+async def save_current_session(
+    root_dir: str, session_id: str, version: str, lock: asyncio.Lock
+) -> None:
     """Persist the current session ID and version to .jupyter folder."""
     store_path = _get_jupyter_session_store(root_dir)
     sessions = _load_previous_sessions(root_dir)
@@ -122,8 +136,9 @@ def save_current_session(root_dir: str, session_id: str, version: str) -> None:
         del sessions[oldest_key]
 
     try:
-        with open(store_path, "w") as f:
-            json.dump(sessions, f, indent=2)
+        async with lock:
+            with open(store_path, "w") as f:
+                json.dump(sessions, f, indent=2)
     except IOError:
         pass
 

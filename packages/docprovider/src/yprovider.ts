@@ -195,7 +195,9 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       default:
         return {
           title: trans.__('Session expired'),
-          body: trans.__('Reload the browser tab to continue.')
+          body: payload.errorReason
+            ? trans.__(payload.errorReason)
+            : trans.__('Reload the browser tab to continue.')
         };
     }
   }
@@ -221,7 +223,12 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       try {
         payload = JSON.parse(event.reason) as ISessionClosePayload;
       } catch {
-        payload = { reason: 'unknown_session', sessionId: '' };
+        payload = {
+          reason: 'unknown_session',
+          sessionId: '',
+          reloadable: false,
+          errorReason: event.reason
+        };
       }
 
       const { title, body } = this._buildSessionExpiredMessage(
