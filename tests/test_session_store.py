@@ -1,6 +1,8 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+import asyncio
+
 from jupyter_server_ydoc.utils import (
     check_session_compatibility,
     save_current_session,
@@ -8,8 +10,8 @@ from jupyter_server_ydoc.utils import (
 )
 
 
-def test_allows_reconnect_same_dir_same_version(tmp_path):
-    save_current_session(str(tmp_path), "old-session", YDOC_SERVER_VERSION)
+async def test_allows_reconnect_same_dir_same_version(tmp_path):
+    await save_current_session(str(tmp_path), "old-session", YDOC_SERVER_VERSION, asyncio.Lock())
     can_reconnect, reason = check_session_compatibility(
         str(tmp_path), "old-session", YDOC_SERVER_VERSION
     )
@@ -17,8 +19,8 @@ def test_allows_reconnect_same_dir_same_version(tmp_path):
     assert reason == ""
 
 
-def test_rejects_reconnect_version_mismatch(tmp_path):
-    save_current_session(str(tmp_path), "old-session", "0.0.1")
+async def test_rejects_reconnect_version_mismatch(tmp_path):
+    await save_current_session(str(tmp_path), "old-session", "0.0.1", asyncio.Lock())
     can_reconnect, reason = check_session_compatibility(
         str(tmp_path), "old-session", YDOC_SERVER_VERSION
     )
@@ -26,10 +28,10 @@ def test_rejects_reconnect_version_mismatch(tmp_path):
     assert reason == "version_mismatch"
 
 
-def test_rejects_reconnect_different_directory(tmp_path):
+async def test_rejects_reconnect_different_directory(tmp_path):
     other_dir = tmp_path / "other"
     other_dir.mkdir()
-    save_current_session(str(other_dir), "old-session", YDOC_SERVER_VERSION)
+    await save_current_session(str(other_dir), "old-session", YDOC_SERVER_VERSION, asyncio.Lock())
     can_reconnect, reason = check_session_compatibility(
         str(tmp_path), "old-session", YDOC_SERVER_VERSION
     )
