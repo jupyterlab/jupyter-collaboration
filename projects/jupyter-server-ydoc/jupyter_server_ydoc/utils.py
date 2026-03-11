@@ -167,7 +167,7 @@ def check_session_compatibility(
     previous_version = previous.get("version", "")
 
     # Collaboration package version changed → reject
-    if previous_version != current_version:  # TODO check more versions
+    if previous_version != current_version:
         return False, "version_mismatch"
 
     # Same directory + same version → safe to reconnect
