@@ -94,21 +94,6 @@ function createProvider(
   });
 }
 
-async function waitForMockCallCount(
-  mockFn: jest.Mock,
-  expectedCalls: number,
-  timeout = 1000
-): Promise<void> {
-  const interval = 25;
-  const limit = Math.floor(timeout / interval);
-  for (let i = 0; i < limit; i++) {
-    if (mockFn.mock.calls.length >= expectedCalls) {
-      return;
-    }
-    await sleep(interval);
-  }
-}
-
 describe('@jupyter/docprovider', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -236,7 +221,7 @@ describe('session close handling', () => {
     } as CloseEvent);
     await waitForDialog(undefined, 1000);
     await acceptDialog(undefined, 1000);
-    await waitForMockCallCount(window.location.reload as jest.Mock, 1);
+    await sleep(50);
     expect(window.location.reload).toHaveBeenCalledTimes(1);
   });
 
@@ -248,6 +233,7 @@ describe('session close handling', () => {
     } as CloseEvent);
     await waitForDialog(undefined, 1000);
     await acceptDialog(undefined, 1000);
+    await sleep(50);
     expect(window.location.reload).not.toHaveBeenCalled();
   });
 });
