@@ -300,7 +300,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                         json.dumps(
                             {
                                 "reason": "initialization_error",
-                                "path": file.path,
                                 "reloadable": False,
                             }
                         ),

@@ -204,7 +204,9 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     if ([4400, 4404, 4500].includes(event.code)) {
       if (!this._hasSynced) {
         // Rejecting the ready promise will close the file placeholder widget.
-        const reason = this._getCloseReasonMessage(event.code);
+        const reason = this._getCloseReasonMessage(
+          event.code as 4400 | 4404 | 4500
+        );
         this._ready.reject(reason);
         // Disposing model prevents repeated websocket reconnection attempts.
         // Rejecting the ready promise will ultimately close the file,
