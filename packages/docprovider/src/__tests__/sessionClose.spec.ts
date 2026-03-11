@@ -15,8 +15,14 @@ jest.mock('../requests', () => ({
 jest.mock('@jupyterlab/apputils', () => ({
   showDialog: jest.fn(),
   Dialog: {
-    cancelButton: jest.fn((opts?: any) => ({ label: opts?.label ?? 'Cancel', accept: false })),
-    okButton: jest.fn((opts?: any) => ({ label: opts?.label ?? 'Ok', accept: true }))
+    cancelButton: jest.fn((opts?: any) => ({
+      label: opts?.label ?? 'Cancel',
+      accept: false
+    })),
+    okButton: jest.fn((opts?: any) => ({
+      label: opts?.label ?? 'Ok',
+      accept: true
+    }))
   }
 }));
 
@@ -49,7 +55,13 @@ const { showDialog } = jest.requireMock('@jupyterlab/apputils');
 const mockShowDialog = showDialog as jest.MockedFunction<typeof showDialog>;
 
 const mockUser = {
-  identity: { username: 'Joe', display_name: 'Joe', name: 'Joe', initials: 'J', color: 'red' },
+  identity: {
+    username: 'Joe',
+    display_name: 'Joe',
+    name: 'Joe',
+    initials: 'J',
+    color: 'red'
+  },
   isReady: true,
   ready: Promise.resolve(),
   changed: { connect: jest.fn(), disconnect: jest.fn() },
@@ -70,7 +82,9 @@ function createProvider(): WebSocketProvider {
 async function waitForProvider(provider: WebSocketProvider) {
   for (let i = 0; i < 10; i++) {
     const ws = (provider as any).wsProvider;
-    if (ws) return ws;
+    if (ws) {
+      return ws;
+    }
     await Promise.resolve();
   }
   throw new Error('wsProvider not initialized');
@@ -108,7 +122,11 @@ describe('session close handling', () => {
     const ws = await waitForProvider(provider);
     ws.emit('connection-close', {
       code: 1003,
-      reason: JSON.stringify({ reason: 'unknown_session', sessionId: 'old-id', reloadable: true })
+      reason: JSON.stringify({
+        reason: 'unknown_session',
+        sessionId: 'old-id',
+        reloadable: true
+      })
     });
     await Promise.resolve();
     expect(mockShowDialog).toHaveBeenCalledTimes(1);
@@ -119,7 +137,11 @@ describe('session close handling', () => {
     const ws = await waitForProvider(provider);
     ws.emit('connection-close', {
       code: 1003,
-      reason: JSON.stringify({ reason: 'unknown_session', sessionId: 'old-id', reloadable: true })
+      reason: JSON.stringify({
+        reason: 'unknown_session',
+        sessionId: 'old-id',
+        reloadable: true
+      })
     });
     await Promise.resolve();
     expect(window.location.reload).toHaveBeenCalledTimes(1);
@@ -130,7 +152,11 @@ describe('session close handling', () => {
     const ws = await waitForProvider(provider);
     ws.emit('connection-close', {
       code: 1003,
-      reason: JSON.stringify({ reason: 'initialization_error', path: 'test.txt', reloadable: false })
+      reason: JSON.stringify({
+        reason: 'initialization_error',
+        path: 'test.txt',
+        reloadable: false
+      })
     });
     await Promise.resolve();
     expect(window.location.reload).not.toHaveBeenCalled();
