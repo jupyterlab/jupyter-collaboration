@@ -5,7 +5,13 @@
 
 import { YFile } from '@jupyter/ydoc';
 import { nullTranslator } from '@jupyterlab/translation';
-import { FakeUserManager } from '@jupyterlab/testutils';
+import {
+  acceptDialog,
+  dismissDialog,
+  FakeUserManager,
+  sleep,
+  waitForDialog
+} from '@jupyterlab/testutils';
 import { requestDocSession } from '../requests';
 import { WebSocketProvider } from '../yprovider';
 
@@ -88,6 +94,21 @@ function createProvider(
   });
 }
 
+async function waitForMockCallCount(
+  mockFn: jest.Mock,
+  expectedCalls: number,
+  timeout = 1000
+): Promise<void> {
+  const interval = 25;
+  const limit = Math.floor(timeout / interval);
+  for (let i = 0; i < limit; i++) {
+    if (mockFn.mock.calls.length >= expectedCalls) {
+      return;
+    }
+    await sleep(interval);
+  }
+}
+
 describe('@jupyter/docprovider', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -154,5 +175,79 @@ describe('@jupyter/docprovider', () => {
         await expect(provider.ready).resolves.toBeUndefined();
       });
     });
+  });
+});
+
+describe('session close handling', () => {
+  let provider: WebSocketProvider;
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    (requestDocSession as jest.Mock).mockResolvedValue({
+      sessionId: 'session-id',
+      format: 'text',
+      type: 'file',
+      fileId: 'file-id'
+    });
+    delete (window as any).location;
+    (window as any).location = { reload: jest.fn() };
+    provider = createProvider();
+  });
+
+  afterEach(async () => {
+    provider.dispose();
+    await dismissDialog(undefined, 50);
+  });
+
+  it('should not show dialog for non-1003 close codes', async () => {
+    const wsProvider = await waitForProviderConnect(provider);
+    wsProvider.emit('connection-close', {
+      code: 1000,
+      reason: 'normal'
+    } as CloseEvent);
+    await expect(waitForDialog(undefined, 1000)).rejects.toThrow(
+      'Dialog not found'
+    );
+  });
+
+  it('should show dialog on 1003 close', async () => {
+    const wsProvider = await waitForProviderConnect(provider);
+    wsProvider.emit('connection-close', {
+      code: 1003,
+      reason: JSON.stringify({
+        reason: 'unknown_session',
+        sessionId: 'old-id',
+        reloadable: false
+      })
+    } as CloseEvent);
+    await expect(waitForDialog(undefined, 1000)).resolves.toBeUndefined();
+    await acceptDialog(undefined, 1000);
+  });
+
+  it('should reload when user accepts the dialog', async () => {
+    const wsProvider = await waitForProviderConnect(provider);
+    wsProvider.emit('connection-close', {
+      code: 1003,
+      reason: JSON.stringify({
+        reason: 'unknown_session',
+        sessionId: 'dp-id',
+        reloadable: true
+      })
+    } as CloseEvent);
+    await waitForDialog(undefined, 1000);
+    await acceptDialog(undefined, 1000);
+    await waitForMockCallCount(window.location.reload as jest.Mock, 1);
+    expect(window.location.reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not reload when reloadable is false', async () => {
+    const wsProvider = await waitForProviderConnect(provider);
+    wsProvider.emit('connection-close', {
+      code: 1003,
+      reason: JSON.stringify({ reason: 'version_mismatch', reloadable: false })
+    } as CloseEvent);
+    await waitForDialog(undefined, 1000);
+    await acceptDialog(undefined, 1000);
+    expect(window.location.reload).not.toHaveBeenCalled();
   });
 });
