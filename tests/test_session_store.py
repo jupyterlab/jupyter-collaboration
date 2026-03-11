@@ -1,3 +1,6 @@
+# Copyright (c) Jupyter Development Team.
+# Distributed under the terms of the Modified BSD License.
+
 from pathlib import Path
 from jupyter_server_ydoc.utils import (
     check_session_compatibility,
