@@ -9,6 +9,7 @@ import uuid
 from datetime import datetime, timezone
 from ._version import __version__  # noqa
 import asyncio
+import os
 
 EVENTS_FOLDER_PATH = Path(__file__).parent / "events"
 JUPYTER_COLLABORATION_EVENTS_URI = "https://schema.jupyter.org/jupyter_collaboration/session/v1"
@@ -95,7 +96,7 @@ def _get_jupyter_session_store(root_dir: str) -> Path:
         return jupyter_dir / "collaboration_sessions.json"
     except OSError:
         # In case if the server root dir is read-only
-        return Path("/dev/null")
+        return Path(os.devnull)
 
 
 def _load_previous_sessions(root_dir: str) -> dict:
