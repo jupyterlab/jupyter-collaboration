@@ -257,7 +257,19 @@ async def test_room_handler_doc_client_should_cleanup_room_file(
 
     assert listener_was_called is True
     assert len(collected_data) == 4
-    # No duplicate collaboration warning events are emitted.
+    # no two collaboration events are emitted.
+    # [
+    #     {
+    #         "level": "WARNING",
+    #         "msg": (
+    #             "There is another collaborative session accessing the same file.\n"
+    #             "The synchronization between sessions may fail and you might lose "
+    #             "some of your changes."
+    #         ),
+    #         "path": "test2.txt",
+    #         "room": "text2:file2:51b7e24f-f534-47fb-882f-5cc45ba867fe",
+    #     }
+    # ]
     assert collected_data[0]["path"] == "test2.txt"
     assert collected_data[0]["room"] == "text2:file2:" + fim.get_id("test2.txt")
     assert collected_data[0]["action"] == "clean"
