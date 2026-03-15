@@ -70,7 +70,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
     _message_queue: asyncio.Queue[Any]
     _background_tasks: set[asyncio.Task]
     _room_locks: dict[str, asyncio.Lock] = {}
-    _session_file_lock: asyncio.Lock = asyncio.Lock()
+    _session_file_lock = asyncio.Lock()
 
     def _room_lock(self, room_id: str) -> asyncio.Lock:
         if room_id not in self._room_locks:
@@ -243,13 +243,10 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 root_dir, SERVER_SESSION, YDOC_SERVER_VERSION, self._session_file_lock
             )
             if SERVER_SESSION != session_id:
-                can_reconnect, reason = check_session_compatibility(
+                cannot_reconnect, reason = await check_session_compatibility(
                     root_dir, session_id, YDOC_SERVER_VERSION
                 )
-                if can_reconnect:
-                    # Accept the old session, no reload needed.
-                    pass
-                else:
+                if cannot_reconnect:
                     # Must ask the user to reload
                     close_payload = json.dumps(
                         {
@@ -259,6 +256,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                         }
                     )
                     self.close(1003, close_payload)
+                # Else accept the old session, no reload needed.
 
             # cancel the deletion of the room if it was scheduled
             if self.room.cleaner is not None:
