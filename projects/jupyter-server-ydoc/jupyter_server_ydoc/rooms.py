@@ -9,8 +9,8 @@ from typing import Any, Callable
 
 from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
-from pycrdt.websocket import YRoom
 from pycrdt.store import BaseYStore, YDocNotFound
+from pycrdt.websocket import YRoom
 
 from .loaders import FileLoader
 from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, OutOfBandChanges
@@ -134,7 +134,8 @@ class DocumentRoom(YRoom):
                     )
                     read_from_source = False
                 except YDocNotFound:
-                    # YDoc not found in the YStore, create the document from the source file (no change history)
+                    # YDoc not found in the YStore, create the document from
+                    # the source file (no change history)
                     pass
 
             if not read_from_source:

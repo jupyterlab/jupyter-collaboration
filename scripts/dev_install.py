@@ -32,7 +32,8 @@ def install_dev() -> None:
         # List of jupyterlab extensions
         if py_package in ["jupyter-collaboration-ui", "jupyter-docprovider"]:
             execute(
-                f"jupyter labextension develop --overwrite {python_package_prefix}/{py_package} --overwrite"
+                "jupyter labextension develop --overwrite "
+                f"{python_package_prefix}/{py_package} --overwrite"
             )
 
 

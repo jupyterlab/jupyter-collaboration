@@ -39,7 +39,10 @@ docs = [
 
 [tool.ruff]
 line-length = 100
-exclude = ["binder"]
+exclude = [".github", "binder", "*.ipynb"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
 
 [tool.hatch.version]
 source = "nodejs"

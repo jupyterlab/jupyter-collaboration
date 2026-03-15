@@ -2,17 +2,16 @@
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
 
+import asyncio
 from functools import partial
 from typing import Literal
-import asyncio
 
-from traitlets import Bool, Float, Type
 from jupyter_server.extension.application import ExtensionApp
 from jupyter_ydoc import ydocs as YDOCS
-from pycrdt import Doc
 from jupyter_ydoc.ybasedoc import YBaseDoc
-from .loaders import FileLoaderMapping
+from pycrdt import Doc
 from pycrdt.store import BaseYStore
+from traitlets import Bool, Float, Type
 
 from .handlers import (
     DocForkHandler,
@@ -21,7 +20,7 @@ from .handlers import (
     UndoRedoHandler,
     YDocWebSocketHandler,
 )
-from .websocketserver import JupyterWebsocketServer, RoomNotFound, exception_logger
+from .loaders import FileLoaderMapping
 from .rooms import DocumentRoom
 from .stores import SQLiteYStore
 from .utils import (
@@ -31,6 +30,7 @@ from .utils import (
     encode_file_path,
     room_id_from_encoded_path,
 )
+from .websocketserver import JupyterWebsocketServer, RoomNotFound, exception_logger
 
 
 class YDocExtension(ExtensionApp):
@@ -191,7 +191,10 @@ class YDocExtension(ExtensionApp):
         If `copy=True`, the returned shared model is a fork, meaning that any changes
          made to it will not be propagated to the shared model used by the application.
         """
-        error_msg = "You need to provide either a ``room_id`` or the ``path``, the ``content_type`` and the ``file_format``."
+        error_msg = (
+            "You need to provide either a ``room_id`` or the ``path``, "
+            "the ``content_type`` and the ``file_format``."
+        )
         if room_id is None:
             if path is None or content_type is None or file_format is None:
                 raise ValueError(error_msg)
