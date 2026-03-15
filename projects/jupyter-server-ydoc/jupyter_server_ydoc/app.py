@@ -2,16 +2,17 @@
 # Distributed under the terms of the Modified BSD License.
 from __future__ import annotations
 
-import asyncio
 from functools import partial
 from typing import Literal
+import asyncio
 
+from traitlets import Bool, Float, Type
 from jupyter_server.extension.application import ExtensionApp
 from jupyter_ydoc import ydocs as YDOCS
-from jupyter_ydoc.ybasedoc import YBaseDoc
 from pycrdt import Doc
+from jupyter_ydoc.ybasedoc import YBaseDoc
+from .loaders import FileLoaderMapping
 from pycrdt.store import BaseYStore
-from traitlets import Bool, Float, Type
 
 from .handlers import (
     DocForkHandler,
@@ -20,7 +21,7 @@ from .handlers import (
     UndoRedoHandler,
     YDocWebSocketHandler,
 )
-from .loaders import FileLoaderMapping
+from .websocketserver import JupyterWebsocketServer, RoomNotFound, exception_logger
 from .rooms import DocumentRoom
 from .stores import SQLiteYStore
 from .utils import (
@@ -30,7 +31,6 @@ from .utils import (
     encode_file_path,
     room_id_from_encoded_path,
 )
-from .websocketserver import JupyterWebsocketServer, RoomNotFound, exception_logger
 
 
 class YDocExtension(ExtensionApp):
