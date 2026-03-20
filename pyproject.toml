@@ -42,7 +42,7 @@ line-length = 100
 exclude = [".github", "binder", "*.ipynb"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I"]
+extend-select = ["I"]
 
 [tool.hatch.version]
 source = "nodejs"
