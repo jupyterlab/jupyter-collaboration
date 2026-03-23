@@ -18,6 +18,7 @@ import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
 
 import { requestDocSession } from './requests';
 import { IForkProvider } from './ydrive';
+import { getRtcIdentity } from './identity';
 import { URLExt } from '@jupyterlab/coreutils';
 
 /**
@@ -170,7 +171,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   }
 
   private _onUserChanged(user: User.IManager): void {
-    this._awareness.setLocalStateField('user', user.identity);
+    this._awareness.setLocalStateField('user', getRtcIdentity(user.identity));
   }
 
   private _onConnectionClosed = (event: any): void => {

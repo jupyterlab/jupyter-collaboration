@@ -1,0 +1,129 @@
+# Jupyter RTC Identity / Nickname Integration Context
+
+## Project background
+
+We run a cloud platform where users launch Jupyter notebooks inside Docker containers. Users authenticate in our platform with our own JWT-based auth. When a user opens a notebook, we already know who they are on the backend.
+
+We want to add real-time collaboration to notebooks using `jupyterlab/jupyter-collaboration` / JupyterLab RTC.
+
+The main product goal is:
+
+* show meaningful collaborator names instead of anonymous names
+* use a nickname / username / email that comes from our platform identity
+* keep changes minimal so the community extension remains easy to update later
+* avoid breaking other JupyterLab extensions
+
+---
+
+## Important observation from testing
+
+When opening the same notebook in two different browsers, collaboration works, but user labels still show as anonymous-like names such as Anonymous Dia.
+
+I tried opening the notebook with a URL like:
+
+
+http://localhost:8888/lab/tree/Untitled.ipynb?username=Nikitos
+
+
+This did not change the displayed collaborator name.
+
+Conclusion so far:
+
+* URL query parameter alone is not enough in our current setup
+* RTC identity is not automatically derived from ?username=
+* we need to explicitly inject identity into the collaboration flow
+
+---
+
+## Constraints
+
+We want to keep the solution as clean as possible.
+
+### Requirements
+
+* minimal changes to upstream jupyter-collaboration
+* prefer additive integration over deep patching
+* compatible with future extension updates
+* should work per user, not per container
+* should not assign the notebook creator identity to every user who joins later
+
+### Current situation
+
+* only the creator’s JWT may be available at container startup
+* that is not enough for multi-user collaboration
+* identity must be resolved per browser session / per request, not once at container startup
+
+---
+
+## Architecture idea we want to implement in phases
+
+### Phase 1 — quick proof of concept
+
+Start with a lightweight frontend plugin that reads a username from the URL, for example:
+
+
+?username=nikitos
+
+
+Then set the Yjs awareness field manually.
+
+This is only for proving that we can control the displayed name.
+
+### Phase 2 — production-friendly approach
+
+Move identity resolution to the platform / reverse proxy / server side so the Jupyter frontend receives the identity of the current user.
+
+Recommended path:
+
+* reverse proxy injects a header such as X-User-Name: nikita@example.com
+* a small Jupyter Server extension exposes the current user identity to the frontend
+* frontend fetches identity and sets RTC awareness state
+
+### Phase 3 — ideal integration
+
+If needed, implement a proper Jupyter Server identity integration by overriding / extending the server identity provider so Jupyter itself understands the authenticated user.
+
+This is the cleanest long-term option but also the most invasive.
+
+---
+
+## RTC naming model we need to control
+
+The displayed name in collaboration comes from the RTC awareness state, not from the URL by default.
+
+The important part is setting the local awareness state like this:
+
+
+awareness.setLocalStateField('user', {
+  name: 'Nikitos',
+  color: '#00AAFF'
+});
+
+
+If we do not set this explicitly, the collaboration system falls back to anonymous names.
+
+---
+
+## Implementation plan for Cursor
+
+### Step 1 — implement a small frontend plugin
+
+Goal: prove that we can override the displayed collaborator name.
+
+The plugin should:
+
+* read username from the URL query string
+* or read a fallback value from config
+* find the collaborative document awareness object
+* set awareness.setLocalStateField('user', { name, color })
+
+Pseudo-behavior:
+
+
+const params = new URLSearchParams(window.location.search);
+const username = params.get('username') || 'Anonymous';
+
+
+Then apply that username to the local RTC awareness state.
+
+Notes:

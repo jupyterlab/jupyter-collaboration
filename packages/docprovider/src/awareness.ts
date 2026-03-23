@@ -10,6 +10,7 @@ import { IDisposable } from '@lumino/disposable';
 import { IAwareness } from '@jupyter/ydoc';
 
 import { WebsocketProvider } from 'y-websocket';
+import { getRtcIdentity } from './identity';
 
 export interface IContent {
   type: string;
@@ -60,7 +61,7 @@ export class WebSocketAwarenessProvider
   }
 
   private _onUserChanged(user: User.IManager): void {
-    this._awareness.setLocalStateField('user', user.identity);
+    this._awareness.setLocalStateField('user', getRtcIdentity(user.identity));
   }
 
   private _isDisposed = false;

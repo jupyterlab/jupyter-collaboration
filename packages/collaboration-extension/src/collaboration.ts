@@ -22,7 +22,7 @@ import { ServerConnection } from '@jupyterlab/services';
 import { IStateDB, StateDB } from '@jupyterlab/statedb';
 import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 
-import { Menu, MenuBar } from '@lumino/widgets';
+import { Menu, MenuBar, Widget } from '@lumino/widgets';
 
 import { IAwareness } from '@jupyter/ydoc';
 
@@ -197,3 +197,103 @@ export const userEditorCursors: JupyterFrontEndPlugin<void> = {
     });
   }
 };
+
+/**
+ * PoC plugin to override RTC displayed name from URL query param.
+ */
+export const rtcIdentityFromUrlPlugin: JupyterFrontEndPlugin<void> = {
+  id: '@jupyter/collaboration-extension:rtcIdentityFromUrl',
+  description:
+    'Read username from URL and apply it to RTC awareness user state.',
+  autoStart: true,
+  requires: [IGlobalAwareness],
+  activate: (app: JupyterFrontEnd, globalAwareness: Awareness): void => {
+    const username = getUsernameFromUrl();
+    if (!username) {
+      return;
+    }
+
+    const applyIdentity = (awareness: Awareness | null): void => {
+      if (!awareness) {
+        return;
+      }
+      const localState = awareness.getLocalState() as
+        | { user?: Record<string, unknown> }
+        | null;
+      const userState = localState?.user ?? {};
+      awareness.setLocalStateField('user', {
+        ...userState,
+        name: username,
+        color:
+          typeof userState.color === 'string'
+            ? userState.color
+            : colorFromUsername(username)
+      });
+    };
+
+    const applyForCurrentWidget = (): void => {
+      applyIdentity(getWidgetAwareness(app.shell.currentWidget));
+    };
+
+    applyIdentity(globalAwareness);
+    applyForCurrentWidget();
+
+    app.shell.currentChanged?.connect(() => {
+      applyForCurrentWidget();
+    });
+
+    // Providers set awareness on user changes, so apply the URL override again.
+    app.serviceManager.user.userChanged.connect(() => {
+      applyIdentity(globalAwareness);
+      applyForCurrentWidget();
+    });
+  }
+};
+
+function getUsernameFromUrl(): string | null {
+  const username = new URLSearchParams(window.location.search).get('username');
+  if (!username) {
+    return null;
+  }
+  const trimmed = username.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function getWidgetAwareness(widget: Widget | null): Awareness | null {
+  if (!widget) {
+    return null;
+  }
+
+  const contextAwareWidget = widget as unknown as {
+    context?: {
+      model?: {
+        sharedModel?: {
+          awareness?: unknown;
+        };
+      };
+    };
+  };
+  const awareness = contextAwareWidget.context?.model?.sharedModel?.awareness;
+  return isAwareness(awareness) ? awareness : null;
+}
+
+function isAwareness(value: unknown): value is Awareness {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.getLocalState === 'function' &&
+    typeof candidate.setLocalStateField === 'function'
+  );
+}
+
+function colorFromUsername(username: string): string {
+  let hash = 0;
+  for (let i = 0; i < username.length; i++) {
+    hash = (hash << 5) - hash + username.charCodeAt(i);
+    hash |= 0;
+  }
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 70%, 50%)`;
+}

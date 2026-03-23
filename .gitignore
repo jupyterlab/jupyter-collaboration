@@ -1,3 +1,5 @@
+.venv/
+
 *.bundle.*
 lib/
 node_modules/
