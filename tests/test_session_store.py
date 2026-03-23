@@ -86,7 +86,7 @@ async def test_rejects_reconnect_document_version_mismatch(tmp_path):
         current_document_version=new_doc_version,
     )
     assert cannot_reconnect is True
-    assert reason == "document_version_mismatch"
+    assert reason == "version_mismatch"
 
 
 async def test_allows_reconnect_without_document_version_in_old_session(tmp_path):

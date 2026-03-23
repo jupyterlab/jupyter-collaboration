@@ -185,7 +185,7 @@ async def check_session_compatibility(
             previous_document_version is not None
             and previous_document_version != current_document_version
         ):
-            return True, "document_version_mismatch"
+            return True, "version_mismatch"
 
     # Same directory + same versions → safe to reconnect
     return False, ""
