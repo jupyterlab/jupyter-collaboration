@@ -38,6 +38,7 @@ class SQLiteYStore(LoggingConfigurable, _SQLiteYStore, metaclass=SQLiteYStoreMet
         None,
         allow_none=True,
         config=True,
-        help="""The document time-to-live in seconds. Deprecated in favor of 'squash_after_inactivity_of'.
+        help="""The document time-to-live in seconds.
+        Deprecated in favor of 'squash_after_inactivity_of'.
         Defaults to None (document history is never cleared).""",
     )

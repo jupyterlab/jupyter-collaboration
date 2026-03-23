@@ -10,7 +10,6 @@ from jupyter_releaser.util import get_version, run
 from packaging.requirements import Requirement
 from packaging.version import parse
 
-
 LERNA_CMD = "jlpm run lerna version --no-push --force-publish --no-git-tag-version"
 
 

@@ -7,15 +7,14 @@ import asyncio
 import json
 import os
 from logging import Logger
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
-from typing import cast
 
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS
-from pycrdt import Doc, Encoder, UndoManager
+from pycrdt import Decoder, Doc, Encoder, UndoManager
 from pycrdt.store import BaseYStore
 from pycrdt.websocket import YRoom
 from tornado import web
@@ -29,6 +28,7 @@ from .utils import (
     JUPYTER_COLLABORATION_FORK_EVENTS_URI,
     LogLevel,
     check_session_compatibility,
+    MessageType,
     decode_file_path,
     encode_file_path,
     room_id_from_encoded_path,
@@ -37,8 +37,6 @@ from .utils import (
     YDOC_SERVER_VERSION,
 )
 from .websocketserver import JupyterWebsocketServer, RoomNotFound
-from .utils import MessageType
-from pycrdt import Decoder
 
 YFILE = YDOCS["file"]
 
@@ -117,7 +115,11 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                         self._emit(
                             LogLevel.WARNING,
                             None,
-                            "There is another collaborative session accessing the same file.\nThe synchronization between rooms is not supported and you might lose some of your changes.",
+                            (
+                                "There is another collaborative session accessing the same "
+                                "file.\nThe synchronization between rooms is not supported "
+                                "and you might lose some of your changes."
+                            ),
                         )
 
                     file = self._file_loaders[file_id]
@@ -458,7 +460,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         Update the users when the global awareness changes.
 
             Parameters:
-                topic (str): `"update"` or `"change"` (`"change"` is triggered only if the states are modified).
+                topic (str): `"update"` or `"change"` (`"change"` is triggered
+                    only if the states are modified).
                 changes (tuple[dict[str, Any], Any]): The changes and the origin of the changes.
         """
         if topic != "change":

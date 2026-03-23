@@ -4,14 +4,14 @@
 from __future__ import annotations
 
 import json
-import pytest
 from asyncio import Event, sleep
 from typing import Any
 
+import pytest
 from dirty_equals import IsStr
 from jupyter_events.logger import EventLogger
 from jupyter_ydoc import YUnicode
-from pycrdt import Text, Provider
+from pycrdt import Provider, Text
 from pycrdt.websocket.websocket import HttpxWebsocket
 
 
@@ -258,7 +258,18 @@ async def test_room_handler_doc_client_should_cleanup_room_file(
     assert listener_was_called is True
     assert len(collected_data) == 4
     # no two collaboration events are emitted.
-    # [{'level': 'WARNING', 'msg': 'There is another collaborative session accessing the same file.\nThe synchronization bet...ou might lose some of your changes.', 'path': 'test2.txt', 'room': 'text2:file2:51b7e24f-f534-47fb-882f-5cc45ba867fe'}]
+    # [
+    #     {
+    #         "level": "WARNING",
+    #         "msg": (
+    #             "There is another collaborative session accessing the same file.\n"
+    #             "The synchronization between sessions may fail and you might lose "
+    #             "some of your changes."
+    #         ),
+    #         "path": "test2.txt",
+    #         "room": "text2:file2:51b7e24f-f534-47fb-882f-5cc45ba867fe",
+    #     }
+    # ]
     assert collected_data[0]["path"] == "test2.txt"
     assert collected_data[0]["room"] == "text2:file2:" + fim.get_id("test2.txt")
     assert collected_data[0]["action"] == "clean"
