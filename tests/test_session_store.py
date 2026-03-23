@@ -4,9 +4,9 @@
 import asyncio
 
 from jupyter_server_ydoc.utils import (
+    YDOC_SERVER_VERSION,
     check_session_compatibility,
     save_current_session,
-    YDOC_SERVER_VERSION,
 )
 
 

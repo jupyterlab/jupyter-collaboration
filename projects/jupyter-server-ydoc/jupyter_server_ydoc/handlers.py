@@ -26,15 +26,15 @@ from .utils import (
     JUPYTER_COLLABORATION_AWARENESS_EVENTS_URI,
     JUPYTER_COLLABORATION_EVENTS_URI,
     JUPYTER_COLLABORATION_FORK_EVENTS_URI,
+    SERVER_SESSION,
+    YDOC_SERVER_VERSION,
     LogLevel,
-    check_session_compatibility,
     MessageType,
+    check_session_compatibility,
     decode_file_path,
     encode_file_path,
     room_id_from_encoded_path,
     save_current_session,
-    SERVER_SESSION,
-    YDOC_SERVER_VERSION,
 )
 from .websocketserver import JupyterWebsocketServer, RoomNotFound
 

@@ -1,15 +1,17 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-from anyio import Path as AnyioPath
-from pathlib import Path
-from enum import Enum, IntEnum
-from typing import Tuple
+import asyncio
 import json
+import os
 import uuid
 from datetime import datetime, timezone
+from enum import Enum, IntEnum
+from pathlib import Path
+from typing import Tuple
+
+from anyio import Path as AnyioPath
+
 from ._version import __version__  # noqa
-import asyncio
-import os
 
 EVENTS_FOLDER_PATH = Path(__file__).parent / "events"
 JUPYTER_COLLABORATION_EVENTS_URI = "https://schema.jupyter.org/jupyter_collaboration/session/v1"
@@ -127,7 +129,8 @@ async def save_current_session(
     lock: asyncio.Lock,
     document_version: str | None = None,
 ) -> None:
-    """Persist the current session ID, server version, and optionally document version to .jupyter folder."""
+    """Persist the current session ID, server version, and optionally 
+    document version to .jupyter folder."""
     store_path = await _get_jupyter_session_store(root_dir)
     sessions = await _load_previous_sessions(root_dir)
 
