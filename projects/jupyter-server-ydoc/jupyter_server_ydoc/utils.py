@@ -129,7 +129,7 @@ async def save_current_session(
     lock: asyncio.Lock,
     document_version: str | None = None,
 ) -> None:
-    """Persist the current session ID, server version, and optionally 
+    """Persist the current session ID, server version, and optionally
     document version to .jupyter folder."""
     store_path = await _get_jupyter_session_store(root_dir)
     sessions = await _load_previous_sessions(root_dir)
