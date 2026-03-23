@@ -237,14 +237,22 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             # Close the connection if the document session expired
             session_id = self.get_query_argument("sessionId", "")
             root_dir = self.settings.get("server_root_dir", os.getcwd())
+            document_version = getattr(self.room._document, "version", None)
 
             # Persist the current session so future reconnects can validate it
             await save_current_session(
-                root_dir, SERVER_SESSION, YDOC_SERVER_VERSION, self._session_file_lock
+                root_dir,
+                SERVER_SESSION,
+                YDOC_SERVER_VERSION,
+                self._session_file_lock,
+                document_version=document_version,
             )
             if SERVER_SESSION != session_id:
                 cannot_reconnect, reason = await check_session_compatibility(
-                    root_dir, session_id, YDOC_SERVER_VERSION
+                    root_dir,
+                    session_id,
+                    YDOC_SERVER_VERSION,
+                    current_document_version=document_version,
                 )
                 if cannot_reconnect:
                     # Must ask the user to reload

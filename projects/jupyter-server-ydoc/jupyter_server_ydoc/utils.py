@@ -121,9 +121,13 @@ async def _load_previous_sessions(root_dir: str) -> dict:
 
 
 async def save_current_session(
-    root_dir: str, session_id: str, version: str, lock: asyncio.Lock
+    root_dir: str,
+    session_id: str,
+    version: str,
+    lock: asyncio.Lock,
+    document_version: str | None = None,
 ) -> None:
-    """Persist the current session ID and version to .jupyter folder."""
+    """Persist the current session ID, server version, and optionally document version to .jupyter folder."""
     store_path = await _get_jupyter_session_store(root_dir)
     sessions = await _load_previous_sessions(root_dir)
 
@@ -131,6 +135,8 @@ async def save_current_session(
         "version": version,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
+    if document_version is not None:
+        sessions[session_id]["document_version"] = document_version
 
     # Keep only the last 10 sessions to avoid unbounded growth
     if len(sessions) > 10:
@@ -148,6 +154,7 @@ async def check_session_compatibility(
     root_dir: str,
     client_session_id: str,
     current_version: str,
+    current_document_version: str | None = None,
 ) -> tuple[bool, str]:
     """
     Determine whether a client carrying an old session ID can reconnect or not.
@@ -171,5 +178,14 @@ async def check_session_compatibility(
     if previous_version != current_version:
         return True, "version_mismatch"
 
-    # Same directory + same version → safe to reconnect
+    # Check document version if both old and new sessions have it
+    if current_document_version is not None:
+        previous_document_version = previous.get("document_version")
+        if (
+            previous_document_version is not None
+            and previous_document_version != current_document_version
+        ):
+            return True, "document_version_mismatch"
+
+    # Same directory + same versions → safe to reconnect
     return False, ""
