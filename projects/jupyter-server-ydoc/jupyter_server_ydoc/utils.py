@@ -117,7 +117,7 @@ async def _load_previous_sessions(root_dir: str) -> dict:
                 if isinstance(value, dict):
                     clean_sessions[str(key)] = value
             return clean_sessions
-        except (json.JSONDecodeError, IOError):
+        except (json.JSONDecodeError, IOError, UnicodeDecodeError):
             return {}
     return {}
 
@@ -131,26 +131,25 @@ async def save_current_session(
 ) -> None:
     """Persist the current session ID, server version, and optionally
     document version to .jupyter folder."""
-    store_path = await _get_jupyter_session_store(root_dir)
-    sessions = await _load_previous_sessions(root_dir)
+    async with lock:
+        store_path = await _get_jupyter_session_store(root_dir)
+        sessions = await _load_previous_sessions(root_dir)
 
-    sessions[session_id] = {
-        "version": version,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    }
-    if document_version is not None:
-        sessions[session_id]["document_version"] = document_version
+        sessions[session_id] = {
+            "version": version,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        if document_version is not None:
+            sessions[session_id]["document_version"] = document_version
 
-    # Keep only the last 10 sessions to avoid unbounded growth
-    if len(sessions) > 10:
-        oldest_key = sorted(sessions, key=lambda k: sessions[k].get("created_at", ""))[0]
-        del sessions[oldest_key]
-
-    try:
-        async with lock:
+        # Keep only the last 10 sessions to avoid unbounded growth
+        if len(sessions) > 10:
+            oldest_key = sorted(sessions, key=lambda k: sessions[k].get("created_at", ""))[0]
+            del sessions[oldest_key]
+        try:
             await store_path.write_text(json.dumps(sessions, indent=2))
-    except IOError:
-        pass
+        except IOError:
+            pass
 
 
 async def check_session_compatibility(
