@@ -104,6 +104,24 @@ async def test_get_document_file(rtc_create_file, jp_serverapp, copy):
     await collaboration.stop_extension()
 
 
+async def test_get_document_create_room(rtc_create_file, jp_serverapp):
+    path, content = await rtc_create_file("test.txt", "test", index=True)
+    collaboration = jp_serverapp.web_app.settings["jupyter_server_ydoc"]
+    # Document doesn't exist initially
+    document_before = await collaboration.get_document(
+        path=path, content_type="file", file_format="text", create=False
+    )
+    assert document_before is None
+
+    document_after = await collaboration.get_document(
+        path=path, content_type="file", file_format="text", create=True
+    )
+    # Verify document was created and has correct content
+    assert document_after is not None
+    assert document_after.get() == content == "test"
+    await collaboration.stop_extension()
+
+
 @pytest.mark.parametrize("copy", [True, False])
 async def test_get_document_notebook(rtc_create_notebook, jp_serverapp, copy):
     nb = nbformat.v4.new_notebook(
