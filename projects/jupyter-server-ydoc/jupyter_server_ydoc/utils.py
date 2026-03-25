@@ -9,8 +9,6 @@ from enum import Enum, IntEnum
 from pathlib import Path
 from typing import Tuple
 
-from anyio import Path as AnyioPath
-
 from ._version import __version__  # noqa
 
 EVENTS_FOLDER_PATH = Path(__file__).parent / "events"
@@ -90,25 +88,25 @@ def room_id_from_encoded_path(encoded_path: str) -> str:
     return encoded_path.split("/")[-1]
 
 
-async def _get_jupyter_session_store(root_dir: str) -> AnyioPath:
+async def _get_jupyter_session_store(root_dir: str) -> Path:
     """Return path to the session store file in .jupyter folder."""
     try:
-        expanded = await AnyioPath(root_dir).expanduser()
-        resolved = await expanded.resolve()
+        expanded = Path(root_dir).expanduser()
+        resolved = expanded.resolve()
         jupyter_dir = resolved / ".jupyter"
-        await jupyter_dir.mkdir(parents=True, exist_ok=True)
+        jupyter_dir.mkdir(parents=True, exist_ok=True)
         return jupyter_dir / "collaboration_sessions.json"
     except OSError:
         # In case if the server root dir is read-only
-        return AnyioPath(os.devnull)
+        return Path(os.devnull)
 
 
 async def _load_previous_sessions(root_dir: str) -> dict:
     """Load previous session records from .jupyter folder."""
     store_path = await _get_jupyter_session_store(root_dir)
-    if await store_path.exists():
+    if store_path.exists():
         try:
-            sessions = json.loads(await store_path.read_text())
+            sessions = json.loads(store_path.read_text())
             # Ensure the loaded JSON is a dict mapping session IDs to dicts.
             if not isinstance(sessions, dict):
                 return {}
@@ -147,7 +145,7 @@ async def save_current_session(
             oldest_key = sorted(sessions, key=lambda k: sessions[k].get("created_at", ""))[0]
             del sessions[oldest_key]
         try:
-            await store_path.write_text(json.dumps(sessions, indent=2))
+            store_path.write_text(json.dumps(sessions, indent=2))
         except IOError:
             pass
 
