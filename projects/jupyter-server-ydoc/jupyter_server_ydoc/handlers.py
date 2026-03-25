@@ -183,7 +183,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         document_save_delay: float | None = 1.0,
     ) -> None:
         self._background_tasks = set()
-        # self._session_file_lock = asyncio.Lock()
         # File ID manager cannot be passed as argument as the extension may load after this one
         self._file_id_manager = self.settings["file_id_manager"]
         self._file_loaders = file_loaders
