@@ -247,6 +247,10 @@ class DocumentRoom(YRoom):
             document. This tasks are debounced (60 seconds by default) so we
             need to cancel previous tasks before creating a new one.
         """
+        remove_duplicate_cells = getattr(self._document, "remove_duplicate_cells", None)
+        if target == "cells" and remove_duplicate_cells is not None:
+            asyncio.get_running_loop().call_soon(remove_duplicate_cells)
+
         # Collect autosave values from all clients
         autosave_states = [
             state.get("autosave", True)
