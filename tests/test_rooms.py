@@ -4,8 +4,11 @@
 from __future__ import annotations
 
 import asyncio
+from unittest.mock import AsyncMock, patch
 
 from jupyter_ydoc import YUnicode
+
+from jupyter_server_ydoc.utils import OutOfBandChanges
 
 
 async def test_should_initialize_document_room_without_store(rtc_create_mock_document_room):
@@ -243,3 +246,83 @@ async def test_manual_save_should_work_when_save_delay_is_none_and_save_now_is_t
 #     await asyncio.sleep(0.15)
 
 #     assert room._document.path == new_path
+
+
+async def test_on_outofband_change_skips_aset_when_content_unchanged(
+    rtc_create_mock_document_room,
+):
+    """aset should not be called when out-of-band content matches the document."""
+    content = "test"
+    _, _, room = rtc_create_mock_document_room("test-id", "test.txt", content)
+    await room.initialize()
+
+    with patch.object(room._document, "aset", new_callable=AsyncMock) as mock_aset:
+        await room._on_outofband_change()
+        mock_aset.assert_not_called()
+
+    assert not room._document.dirty
+
+
+async def test_on_outofband_change_calls_aset_when_content_changed(
+    rtc_create_mock_document_room,
+):
+    """aset should be called when out-of-band content differs from the document."""
+    content = "test"
+    cm, _, room = rtc_create_mock_document_room("test-id", "test.txt", content)
+    await room.initialize()
+
+    # Simulate the file changing on disk
+    cm.model["content"] = "new content from disk"
+
+    with patch.object(room._document, "aset", new_callable=AsyncMock) as mock_aset:
+        await room._on_outofband_change()
+        mock_aset.assert_called_once_with("new content from disk")
+
+    assert not room._document.dirty
+
+
+async def test_save_oob_skips_aset_when_content_unchanged(
+    rtc_create_mock_document_room,
+):
+    """During save with OutOfBandChanges, aset should be skipped if content matches."""
+    content = "test"
+    cm, loader, room = rtc_create_mock_document_room(
+        "test-id", "test.txt", content, save_delay=0.01
+    )
+    await room.initialize()
+
+    with (
+        patch.object(
+            loader, "maybe_save_content", new_callable=AsyncMock, side_effect=OutOfBandChanges
+        ),
+        patch.object(room._document, "aset", new_callable=AsyncMock) as mock_aset,
+    ):
+        await room._maybe_save_document(None, save_now=True)
+        mock_aset.assert_not_called()
+
+    assert not room._document.dirty
+
+
+async def test_save_oob_calls_aset_when_content_changed(
+    rtc_create_mock_document_room,
+):
+    """During save with OutOfBandChanges, aset should be called if content differs."""
+    content = "test"
+    cm, loader, room = rtc_create_mock_document_room(
+        "test-id", "test.txt", content, save_delay=0.01
+    )
+    await room.initialize()
+
+    # Simulate file changing on disk after save attempt
+    cm.model["content"] = "changed on disk"
+
+    with (
+        patch.object(
+            loader, "maybe_save_content", new_callable=AsyncMock, side_effect=OutOfBandChanges
+        ),
+        patch.object(room._document, "aset", new_callable=AsyncMock) as mock_aset,
+    ):
+        await room._maybe_save_document(None, save_now=True)
+        mock_aset.assert_called_once_with("changed on disk")
+
+    assert not room._document.dirty
