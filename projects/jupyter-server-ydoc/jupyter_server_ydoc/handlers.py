@@ -250,7 +250,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 document_version=document_version,
             )
             if SERVER_SESSION != session_id:
-                cannot_reconnect, reason = await check_session_compatibility(
+                cannot_reconnect, reason = check_session_compatibility(
                     root_dir,
                     session_id,
                     YDOC_SERVER_VERSION,

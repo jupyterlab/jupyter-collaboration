@@ -88,7 +88,7 @@ def room_id_from_encoded_path(encoded_path: str) -> str:
     return encoded_path.split("/")[-1]
 
 
-async def _get_jupyter_session_store(root_dir: str) -> Path:
+def _get_jupyter_session_store(root_dir: str) -> Path:
     """Return path to the session store file in .jupyter folder."""
     try:
         expanded = Path(root_dir).expanduser()
@@ -101,9 +101,9 @@ async def _get_jupyter_session_store(root_dir: str) -> Path:
         return Path(os.devnull)
 
 
-async def _load_previous_sessions(root_dir: str) -> dict:
+def _load_previous_sessions(root_dir: str) -> dict:
     """Load previous session records from .jupyter folder."""
-    store_path = await _get_jupyter_session_store(root_dir)
+    store_path = _get_jupyter_session_store(root_dir)
     if store_path.exists():
         try:
             sessions = json.loads(store_path.read_text())
@@ -130,8 +130,8 @@ async def save_current_session(
     """Persist the current session ID, server version, and optionally
     document version to .jupyter folder."""
     async with lock:
-        store_path = await _get_jupyter_session_store(root_dir)
-        sessions = await _load_previous_sessions(root_dir)
+        store_path = _get_jupyter_session_store(root_dir)
+        sessions = _load_previous_sessions(root_dir)
 
         sessions[session_id] = {
             "version": version,
@@ -150,7 +150,7 @@ async def save_current_session(
             pass
 
 
-async def check_session_compatibility(
+def check_session_compatibility(
     root_dir: str,
     client_session_id: str,
     current_version: str,
@@ -165,7 +165,7 @@ async def check_session_compatibility(
     if client_session_id == SERVER_SESSION:
         return False, ""
 
-    previous_sessions = await _load_previous_sessions(root_dir)
+    previous_sessions = _load_previous_sessions(root_dir)
 
     # Session ID not in our records at all → unknown origin, reject
     if client_session_id not in previous_sessions:
