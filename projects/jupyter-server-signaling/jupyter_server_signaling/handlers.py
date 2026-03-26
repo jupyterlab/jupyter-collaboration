@@ -22,12 +22,13 @@ class SignalingWebSocketHandler(WebSocketHandler, JupyterHandler):
             raise web.HTTPError(403)
         return await super().get(*args, **kwargs)
 
-    def open(self, *args: str, **kwargs: str) -> Awaitable[None] | None
+    def open(self, *args: str, **kwargs: str) -> Awaitable[None] | None:
         self._closed = False
         self._pong_received = True
-        self._subscribed_topics = set()
+        self._subscribed_topics: set[str] = set()
         self._ping_timeout = 30
         self._ping_interval_task = asyncio.create_task(self._ping_interval())
+        return None
 
     async def _ping_interval(self):
         # Check if connection is still alive

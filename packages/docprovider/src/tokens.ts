@@ -249,3 +249,10 @@ export const IAwarenessProviderFactoryToken =
   new Token<IAwarenessProviderFactory>(
     '@jupyter/docprovider:IAwarenessProviderFactoryToken'
   );
+
+export interface ISessionClosePayload {
+  reason: 'unknown_session' | 'version_mismatch' | 'initialization_error';
+  sessionId?: string;
+  reloadable?: boolean;
+  errorReason?: string;
+}

@@ -4,7 +4,7 @@
 |----------------------------------------------------------------------------*/
 
 import { IDocumentProvider } from '@jupyter/collaborative-drive';
-import { showErrorMessage, Dialog } from '@jupyterlab/apputils';
+import { Dialog, showDialog } from '@jupyterlab/apputils';
 import { ServerConnection, User } from '@jupyterlab/services';
 import { TranslationBundle } from '@jupyterlab/translation';
 
@@ -22,6 +22,7 @@ import * as encoding from 'lib0/encoding';
 import { requestDocSession } from './requests';
 import { IForkProvider } from './ydrive';
 import { URLExt } from '@jupyterlab/coreutils';
+import { ISessionClosePayload } from './tokens';
 
 /**
  * The url for the default drive service.
@@ -239,11 +240,41 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     this._awareness.setLocalStateField('user', user.identity);
   }
 
-  private _onConnectionClosed = (event: any): void => {
+  private _buildSessionExpiredMessage(
+    payload: ISessionClosePayload,
+    trans: TranslationBundle
+  ): { title: string; body: string } {
+    switch (payload.reason) {
+      case 'version_mismatch':
+        return {
+          title: trans.__('Collaboration extension updated'),
+          body: trans.__('Reload the browser tab to load the new version.')
+        };
+      case 'initialization_error':
+        return {
+          title: trans.__('Document error'),
+          body: trans.__(
+            'Failed to initialize the document. Close this tab and reopen the file.'
+          )
+        };
+      case 'unknown_session':
+      default:
+        return {
+          title: trans.__('Session expired'),
+          body: payload.errorReason
+            ? trans.__(payload.errorReason)
+            : trans.__('Reload the browser tab to continue.')
+        };
+    }
+  }
+
+  private _onConnectionClosed = async (event: CloseEvent): Promise<void> => {
     if ([4400, 4404, 4500].includes(event.code)) {
       if (!this._hasSynced) {
         // Rejecting the ready promise will close the file placeholder widget.
-        const reason = this._getCloseReasonMessage(event.code);
+        const reason = this._getCloseReasonMessage(
+          event.code as 4400 | 4404 | 4500
+        );
         this._ready.reject(reason);
         // Disposing model prevents repeated websocket reconnection attempts.
         // Rejecting the ready promise will ultimately close the file,
@@ -251,14 +282,40 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         this._sharedModel.dispose();
       }
     }
-
     if (event.code === 1003) {
       console.error('Document provider closed:', event.reason);
 
-      showErrorMessage(this._trans.__('Document session error'), event.reason, [
-        Dialog.okButton()
-      ]);
+      let payload: ISessionClosePayload;
+      try {
+        payload = JSON.parse(event.reason) as ISessionClosePayload;
+      } catch {
+        payload = {
+          reason: 'unknown_session',
+          sessionId: '',
+          reloadable: false,
+          errorReason: event.reason
+        };
+      }
 
+      const { title, body } = this._buildSessionExpiredMessage(
+        payload,
+        this._trans
+      );
+
+      const result = await showDialog({
+        title,
+        body,
+        buttons: payload.reloadable
+          ? [
+              Dialog.cancelButton({ label: this._trans.__('Continue') }),
+              Dialog.okButton({ label: this._trans.__('Reload') })
+            ]
+          : [Dialog.okButton({ label: this._trans.__('Ok') })]
+      });
+
+      if (result.button.accept && payload.reloadable) {
+        window.location.reload();
+      }
       // Dispose shared model immediately. Better break the document model,
       // than overriding data on disk.
       this._sharedModel.dispose();
