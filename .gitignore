@@ -132,3 +132,6 @@ docs/source/changelog.md
 !.yarn/versions
 packages/docprovider/junit.xml
 .jupyter_ystore.db
+# pixi environments
+.pixi/*
+!.pixi/config.toml

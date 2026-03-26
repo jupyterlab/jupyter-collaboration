@@ -37,7 +37,9 @@ import {
 import {
   IForkProvider,
   TimelineWidget,
-  RtcContentProvider
+  RtcContentProvider,
+  IDocumentProviderFactory,
+  IDocumentProviderFactoryToken
 } from '@jupyter/docprovider';
 import { Awareness } from 'y-protocols/awareness';
 import { URLExt } from '@jupyterlab/coreutils';
@@ -55,12 +57,17 @@ export const rtcContentProvider: JupyterFrontEndPlugin<ICollaborativeContentProv
     description: 'The RTC content provider',
     provides: ICollaborativeContentProvider,
     requires: [ITranslator],
-    optional: [IGlobalAwareness, ISettingRegistry],
+    optional: [
+      IGlobalAwareness,
+      ISettingRegistry,
+      IDocumentProviderFactoryToken
+    ],
     activate: async (
       app: JupyterFrontEnd,
       translator: ITranslator,
       globalAwareness: Awareness | null,
-      settingRegistry: ISettingRegistry | null
+      settingRegistry: ISettingRegistry | null,
+      providerFactory: IDocumentProviderFactory | null
     ): Promise<ICollaborativeContentProvider> => {
       const trans = translator.load('jupyter_collaboration');
       const defaultDrive = (app.serviceManager.contents as ContentsManager)
@@ -87,7 +94,8 @@ export const rtcContentProvider: JupyterFrontEndPlugin<ICollaborativeContentProv
         trans,
         globalAwareness,
         docmanagerSettings,
-        fileChanged: defaultDrive.fileChanged
+        fileChanged: defaultDrive.fileChanged,
+        providerFactory: providerFactory ?? undefined
       });
       registry.register('rtc', rtcContentProvider);
       return rtcContentProvider;

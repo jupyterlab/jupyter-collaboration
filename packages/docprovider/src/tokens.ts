@@ -3,10 +3,15 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import { TranslationBundle } from '@jupyterlab/translation';
+import { ServerConnection, User } from '@jupyterlab/services';
+import { DocumentChange, YDocument } from '@jupyter/ydoc';
+import { IDocumentProvider } from '@jupyter/collaborative-drive';
 import { Token } from '@lumino/coreutils';
 import { IDisposable } from '@lumino/disposable';
 import { ISignal } from '@lumino/signaling';
 import { IForkProvider } from './ydrive';
+
 export interface IForkInfo {
   description?: string;
   root_roomid: string;
@@ -114,4 +119,76 @@ export interface IForkManager extends IDisposable {
  */
 export const IForkManagerToken = new Token<IForkManager>(
   '@jupyter/docprovider:IForkManagerToken'
+);
+
+/**
+ * A factory for creating document providers.
+ */
+export interface IDocumentProviderFactory {
+  /**
+   * Create a new document provider.
+   *
+   * @param options - The instantiation options for a document provider.
+   * @returns The document provider.
+   */
+  create(
+    options: IDocumentProviderFactory.IOptions
+  ): IDocumentProvider & IForkProvider;
+}
+
+/**
+ * A namespace for IDocumentProviderFactory.
+ */
+export namespace IDocumentProviderFactory {
+  /**
+   * The instantiation options for a document provider.
+   */
+  export interface IOptions {
+    /**
+     * The server URL
+     */
+    url?: string;
+
+    /**
+     * The document file path
+     */
+    path: string;
+
+    /**
+     * Content type
+     */
+    contentType: string;
+
+    /**
+     * The source format
+     */
+    format: string;
+
+    /**
+     * The shared model
+     */
+    model: YDocument<DocumentChange>;
+
+    /**
+     * The user data
+     */
+    user: User.IManager;
+
+    /**
+     * The jupyterlab translator
+     */
+    translator: TranslationBundle;
+
+    /**
+     * The server settings.
+     */
+    serverSettings?: ServerConnection.ISettings;
+  }
+}
+
+/**
+ * Token providing a document provider factory instance.
+ */
+export const IDocumentProviderFactoryToken = new Token<IDocumentProviderFactory>(
+  '@jupyter/docprovider:IDocumentProviderFactoryToken'
 );
