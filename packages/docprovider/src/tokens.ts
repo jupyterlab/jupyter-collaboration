@@ -5,7 +5,7 @@
 
 import { TranslationBundle } from '@jupyterlab/translation';
 import { ServerConnection, User } from '@jupyterlab/services';
-import { DocumentChange, YDocument } from '@jupyter/ydoc';
+import { DocumentChange, YDocument, IAwareness } from '@jupyter/ydoc';
 import { IDocumentProvider } from '@jupyter/collaborative-drive';
 import { Token } from '@lumino/coreutils';
 import { IDisposable } from '@lumino/disposable';
@@ -191,4 +191,64 @@ export namespace IDocumentProviderFactory {
  */
 export const IDocumentProviderFactoryToken = new Token<IDocumentProviderFactory>(
   '@jupyter/docprovider:IDocumentProviderFactoryToken'
+);
+
+/**
+ * An interface for an awareness provider.
+ */
+export interface IAwarenessProvider extends IDisposable {
+  /**
+   * The awareness object.
+   */
+  readonly awareness: IAwareness;
+}
+
+/**
+ * A factory for creating awareness providers.
+ */
+export interface IAwarenessProviderFactory {
+  /**
+   * Create a new awareness provider.
+   *
+   * @param options - The instantiation options for an awareness provider.
+   * @returns The awareness provider.
+   */
+  create(options: IAwarenessProviderFactory.IOptions): IAwarenessProvider;
+}
+
+/**
+ * A namespace for IAwarenessProviderFactory.
+ */
+export namespace IAwarenessProviderFactory {
+  /**
+   * The instantiation options for an awareness provider.
+   */
+  export interface IOptions {
+    /**
+     * The server URL
+     */
+    url: string;
+
+    /**
+     * The room ID
+     */
+    roomID: string;
+
+    /**
+     * The awareness object
+     */
+    awareness: IAwareness;
+
+    /**
+     * The user data
+     */
+    user: User.IManager;
+  }
+}
+
+/**
+ * Token providing an awareness provider factory instance.
+ */
+export const IAwarenessProviderFactoryToken = new Token<IAwarenessProviderFactory>(
+  '@jupyter/docprovider:IAwarenessProviderFactoryToken'
 );

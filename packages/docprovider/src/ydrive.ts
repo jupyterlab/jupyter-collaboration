@@ -19,7 +19,7 @@ import {
   YDocument
 } from '@jupyter/ydoc';
 
-import { WebSocketProvider } from './yprovider';
+import { WebRTCProvider } from './yprovider';
 import {
   IDocumentProvider,
   ISharedModelFactory
@@ -210,7 +210,10 @@ export class RtcContentProvider implements IContentProvider {
 
       const provider = this._providerFactory
         ? this._providerFactory.create(providerOptions)
-        : new WebSocketProvider(providerOptions);
+        : new WebRTCProvider({
+            ...providerOptions,
+            url: 'https://flyio-signaling-server.fly.dev/'
+          });
 
       // Add the document path in the list of opened ones for this user.
       const state = this._globalAwareness?.getLocalState() || {};

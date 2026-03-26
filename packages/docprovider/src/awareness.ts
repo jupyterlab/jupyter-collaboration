@@ -5,11 +5,13 @@
 
 import { User } from '@jupyterlab/services';
 
-import { IDisposable } from '@lumino/disposable';
-
 import { IAwareness } from '@jupyter/ydoc';
 
 import { WebsocketProvider } from 'y-websocket';
+
+import { WebrtcProvider } from 'y-webrtc';
+
+import { IAwarenessProvider } from './tokens';
 
 export interface IContent {
   type: string;
@@ -24,7 +26,7 @@ export interface IContent {
  */
 export class WebSocketAwarenessProvider
   extends WebsocketProvider
-  implements IDisposable
+  implements IAwarenessProvider
 {
   /**
    * Construct a new WebSocketAwarenessProvider
@@ -36,7 +38,7 @@ export class WebSocketAwarenessProvider
       awareness: options.awareness
     });
 
-    this._awareness = options.awareness;
+    this.awareness = options.awareness;
 
     this._user = options.user;
     this._user.ready
@@ -60,12 +62,93 @@ export class WebSocketAwarenessProvider
   }
 
   private _onUserChanged(user: User.IManager): void {
-    this._awareness.setLocalStateField('user', user.identity);
+    this.awareness.setLocalStateField('user', user.identity);
   }
 
+  readonly awareness: IAwareness;
   private _isDisposed = false;
   private _user: User.IManager;
-  private _awareness: IAwareness;
+}
+
+/**
+ * A class to provide Yjs synchronization over WebRTC.
+ *
+ */
+export class WebRTCAwarenessProvider
+  extends WebrtcProvider
+  implements IAwarenessProvider
+{
+  /**
+   * Construct a new WebRTCAwarenessProvider
+   *
+   * @param options The instantiation options for a WebRTCAwarenessProvider
+   */
+  constructor(options: WebRTCAwarenessProvider.IOptions) {
+    super(options.roomID, options.awareness.doc, {
+      signaling: options.url ? [options.url] : undefined,
+      awareness: options.awareness
+    });
+
+    this.awareness = options.awareness;
+
+    this._user = options.user;
+    this._user.ready
+      .then(() => this._onUserChanged(this._user))
+      .catch(e => console.error(e));
+    this._user.userChanged.connect(this._onUserChanged, this);
+  }
+
+  get isDisposed(): boolean {
+    return this._isDisposed;
+  }
+
+  dispose(): void {
+    if (this._isDisposed) {
+      return;
+    }
+
+    this._user.userChanged.disconnect(this._onUserChanged, this);
+    this._isDisposed = true;
+    this.destroy();
+  }
+
+  private _onUserChanged(user: User.IManager): void {
+    this.awareness.setLocalStateField('user', user.identity);
+  }
+
+  readonly awareness: IAwareness;
+  private _isDisposed = false;
+  private _user: User.IManager;
+}
+
+/**
+ * A namespace for WebRTCAwarenessProvider statics.
+ */
+export namespace WebRTCAwarenessProvider {
+  /**
+   * The instantiation options for a WebRTCAwarenessProvider.
+   */
+  export interface IOptions {
+    /**
+     * The signaling server URL (optional)
+     */
+    url?: string;
+
+    /**
+     * The room ID
+     */
+    roomID: string;
+
+    /**
+     * The awareness object
+     */
+    awareness: IAwareness;
+
+    /**
+     * The user data
+     */
+    user: User.IManager;
+  }
 }
 
 /**
