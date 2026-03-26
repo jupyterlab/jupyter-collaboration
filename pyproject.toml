@@ -11,6 +11,7 @@ requires-python = ">=3.10"
 dependencies = [
     # jupyter-server extensions
     "jupyter-server-ydoc @ {root:uri}/projects/jupyter-server-ydoc",
+    "jupyter-server-signaling @ {root:uri}/projects/jupyter-server-signaling",
     # jupyterlab/notebook frontend extensions
     "jupyter-collaboration-ui @ {root:uri}/projects/jupyter-collaboration-ui",
     "jupyter-docprovider @ {root:uri}/projects/jupyter-docprovider",

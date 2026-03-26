@@ -375,7 +375,6 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
     this._path = options.path;
     this._contentType = options.contentType;
     this._format = options.format;
-    this._signalingUrls = options.url ? [options.url] : undefined;
     this._sharedModel = options.model;
     this._awareness = options.model.awareness;
     this._webrtcProvider = null;
@@ -446,7 +445,7 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
       `${session.format}:${session.type}:${session.fileId}`,
       this._sharedModel.ydoc,
       {
-        signaling: this._signalingUrls,
+        signaling: [URLExt.join(this._serverSettings.wsUrl, 'api/signaling')],
         awareness: this._awareness
       }
     );
@@ -510,11 +509,6 @@ export namespace WebRTCProvider {
    * The instantiation options for a WebRTCProvider.
    */
   export interface IOptions {
-    /**
-     * The signaling server URL (optional)
-     */
-    url?: string;
-
     /**
      * The document file path
      */

@@ -105,7 +105,6 @@ export const rtcGlobalAwarenessPlugin: JupyterFrontEndPlugin<IAwareness> = {
     const awareness = new Awareness(ydoc);
 
     const awarenessOptions = {
-      url: 'https://flyio-signaling-server.fly.dev/',
       roomID: 'JupyterLab:globalAwareness',
       awareness: awareness,
       user: user

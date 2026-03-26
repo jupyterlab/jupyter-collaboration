@@ -210,10 +210,7 @@ export class RtcContentProvider implements IContentProvider {
 
       const provider = this._providerFactory
         ? this._providerFactory.create(providerOptions)
-        : new WebRTCProvider({
-            ...providerOptions,
-            url: 'https://flyio-signaling-server.fly.dev/'
-          });
+        : new WebRTCProvider(providerOptions);
 
       // Add the document path in the list of opened ones for this user.
       const state = this._globalAwareness?.getLocalState() || {};

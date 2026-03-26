@@ -3,7 +3,7 @@
 | Distributed under the terms of the Modified BSD License.
 |----------------------------------------------------------------------------*/
 
-import { User } from '@jupyterlab/services';
+import { ServerConnection, User } from '@jupyterlab/services';
 
 import { IAwareness } from '@jupyter/ydoc';
 
@@ -12,6 +12,8 @@ import { WebsocketProvider } from 'y-websocket';
 import { WebrtcProvider } from 'y-webrtc';
 
 import { IAwarenessProvider } from './tokens';
+
+import { URLExt } from '@jupyterlab/coreutils';
 
 export interface IContent {
   type: string;
@@ -85,7 +87,7 @@ export class WebRTCAwarenessProvider
    */
   constructor(options: WebRTCAwarenessProvider.IOptions) {
     super(options.roomID, options.awareness.doc, {
-      signaling: options.url ? [options.url] : undefined,
+      signaling: [URLExt.join((options.serverSettings ?? ServerConnection.makeSettings()).wsUrl, 'api/signaling')],
       awareness: options.awareness
     });
 
@@ -130,11 +132,6 @@ export namespace WebRTCAwarenessProvider {
    */
   export interface IOptions {
     /**
-     * The signaling server URL (optional)
-     */
-    url?: string;
-
-    /**
      * The room ID
      */
     roomID: string;
@@ -148,6 +145,11 @@ export namespace WebRTCAwarenessProvider {
      * The user data
      */
     user: User.IManager;
+
+    /**
+     * The server settings.
+     */
+    serverSettings?: ServerConnection.ISettings;
   }
 }
 

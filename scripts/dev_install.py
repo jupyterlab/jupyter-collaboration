@@ -15,7 +15,7 @@ def install_dev() -> None:
     install_js_deps = "jlpm install"
 
     python_package_prefix = "projects"
-    python_packages = ["jupyter-collaboration-ui", "jupyter-docprovider", "jupyter-server-ydoc"]
+    python_packages = ["jupyter-collaboration-ui", "jupyter-docprovider", "jupyter-server-ydoc", "jupyter-server-signaling"]
 
     execute(install_build_deps)
     execute(install_js_deps)
@@ -26,7 +26,7 @@ def install_dev() -> None:
         execute(f"pip install -e {python_package_prefix}/{py_package}[test]")
 
         # List of server extensions
-        if py_package in ["jupyter-server-ydoc"]:
+        if py_package in ["jupyter-server-ydoc", "jupyter-server-signaling"]:
             execute(f"jupyter server extension enable {real_package_name}")
 
         # List of jupyterlab extensions

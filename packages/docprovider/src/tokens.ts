@@ -225,11 +225,6 @@ export namespace IAwarenessProviderFactory {
    */
   export interface IOptions {
     /**
-     * The server URL
-     */
-    url: string;
-
-    /**
      * The room ID
      */
     roomID: string;
