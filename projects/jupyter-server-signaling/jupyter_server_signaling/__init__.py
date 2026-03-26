@@ -6,7 +6,6 @@ from typing import Any, Dict, List
 
 from .app import SignalingExtension
 
-
 __version__ = importlib.metadata.version("jupyter-server-signaling")
 
 

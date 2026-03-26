@@ -3,7 +3,7 @@
 
 import asyncio
 import json
-from typing import Dict, Set
+from typing import Awaitable, Dict, Set
 
 from jupyter_server.base.handlers import JupyterHandler
 from tornado import web
@@ -22,7 +22,7 @@ class SignalingWebSocketHandler(WebSocketHandler, JupyterHandler):
             raise web.HTTPError(403)
         return await super().get(*args, **kwargs)
 
-    def open(self):
+    def open(self, *args: str, **kwargs: str) -> Awaitable[None] | None
         self._closed = False
         self._pong_received = True
         self._subscribed_topics = set()

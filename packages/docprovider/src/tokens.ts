@@ -189,9 +189,10 @@ export namespace IDocumentProviderFactory {
 /**
  * Token providing a document provider factory instance.
  */
-export const IDocumentProviderFactoryToken = new Token<IDocumentProviderFactory>(
-  '@jupyter/docprovider:IDocumentProviderFactoryToken'
-);
+export const IDocumentProviderFactoryToken =
+  new Token<IDocumentProviderFactory>(
+    '@jupyter/docprovider:IDocumentProviderFactoryToken'
+  );
 
 /**
  * An interface for an awareness provider.
@@ -244,6 +245,7 @@ export namespace IAwarenessProviderFactory {
 /**
  * Token providing an awareness provider factory instance.
  */
-export const IAwarenessProviderFactoryToken = new Token<IAwarenessProviderFactory>(
-  '@jupyter/docprovider:IAwarenessProviderFactoryToken'
-);
+export const IAwarenessProviderFactoryToken =
+  new Token<IAwarenessProviderFactory>(
+    '@jupyter/docprovider:IAwarenessProviderFactoryToken'
+  );

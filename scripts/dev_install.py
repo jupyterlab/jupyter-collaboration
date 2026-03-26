@@ -15,7 +15,12 @@ def install_dev() -> None:
     install_js_deps = "jlpm install"
 
     python_package_prefix = "projects"
-    python_packages = ["jupyter-collaboration-ui", "jupyter-docprovider", "jupyter-server-ydoc", "jupyter-server-signaling"]
+    python_packages = [
+        "jupyter-collaboration-ui",
+        "jupyter-docprovider",
+        "jupyter-server-ydoc",
+        "jupyter-server-signaling",
+    ]
 
     execute(install_build_deps)
     execute(install_js_deps)

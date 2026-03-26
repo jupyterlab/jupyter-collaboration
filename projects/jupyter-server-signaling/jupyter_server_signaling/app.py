@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from jupyter_server.extension.application import ExtensionApp
-from traitlets import Unicode
 
 from .handlers import SignalingWebSocketHandler
 
