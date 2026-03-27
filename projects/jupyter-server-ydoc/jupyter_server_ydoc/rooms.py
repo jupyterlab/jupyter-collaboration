@@ -224,7 +224,8 @@ class DocumentRoom(YRoom):
             return
 
         async with self._update_lock:
-            await self._document.aset(model["content"])
+            if await self._document.aget() != model["content"]:
+                await self._document.aset(model["content"])
             self._document.dirty = False
 
     def _on_filepath_change(self) -> None:
@@ -344,7 +345,8 @@ class DocumentRoom(YRoom):
                 return None
 
             async with self._update_lock:
-                await self._document.aset(model["content"])
+                if await self._document.aget() != model["content"]:
+                    await self._document.aset(model["content"])
                 self._document.dirty = False
 
             self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes while saving.")
