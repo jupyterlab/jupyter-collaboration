@@ -6,10 +6,8 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import AsyncMock, patch
 
-from jupyter_ydoc import YUnicode
-
 from jupyter_server_ydoc.utils import OutOfBandChanges
-
+from jupyter_ydoc import YUnicode
 
 async def test_should_initialize_document_room_without_store(rtc_create_mock_document_room):
     content = "test"
