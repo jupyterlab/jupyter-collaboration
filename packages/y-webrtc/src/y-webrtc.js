@@ -497,6 +497,14 @@ export class SignalingConn extends ws.WebsocketClient {
       switch (m.type) {
         case 'publish': {
           const roomName = m.topic
+          if (m.clients === 1) {
+            const parts = roomName.split(':', 3);
+            if (parts.length === 3) {
+              // we are the first client and it's a stored document, let's load it
+              const filePath = parts[2];
+              console.log('filePath', filePath);
+            }
+          }
           const room = rooms.get(roomName)
           if (room == null || typeof roomName !== 'string') {
             return

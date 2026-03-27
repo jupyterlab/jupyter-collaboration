@@ -414,6 +414,12 @@ export namespace WebSocketProvider {
      * The server settings.
      */
     serverSettings?: ServerConnection.ISettings;
+
+    /**
+     * Whether to use file path instead of file ID for room identification.
+     * If 'path', uses path-based room IDs; if 'fileId', uses file ID (default).
+     */
+    roomIdType?: 'fileId' | 'path';
   }
 }
 
@@ -437,6 +443,7 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
     this._webrtcProvider = null;
     this._serverSettings =
       options.serverSettings ?? ServerConnection.makeSettings();
+    this._roomIdType = options.roomIdType ?? 'path';
 
     const user = options.user;
 
@@ -498,14 +505,15 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
       this._serverSettings
     );
 
-    this._webrtcProvider = new WebrtcProvider(
-      `${session.format}:${session.type}:${session.fileId}`,
-      this._sharedModel.ydoc,
-      {
-        signaling: [URLExt.join(this._serverSettings.wsUrl, 'api/signaling')],
-        awareness: this._awareness
-      }
-    );
+    const roomId =
+      this._roomIdType === 'path'
+        ? `${session.format}:${session.type}:${this._path}`
+        : `${session.format}:${session.type}:${session.fileId}`;
+
+    this._webrtcProvider = new WebrtcProvider(roomId, this._sharedModel.ydoc, {
+      signaling: [URLExt.join(this._serverSettings.wsUrl, 'api/signaling')],
+      awareness: this._awareness
+    });
 
     this._webrtcProvider.on('synced', this._onSynced);
     // WebRTC sync doesn't necessarily mean it's ready like WebSocket,
@@ -552,6 +560,7 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
   private _isDisposed: boolean;
   private _path: string;
   private _ready = new PromiseDelegate<void>();
+  private _roomIdType: 'fileId' | 'path';
   private _signalingUrls?: string[];
   private _sharedModel: YDocument<DocumentChange>;
   private _webrtcProvider: WebrtcProvider | null;
@@ -600,5 +609,11 @@ export namespace WebRTCProvider {
      * The server settings.
      */
     serverSettings?: ServerConnection.ISettings;
+
+    /**
+     * Whether to use file path instead of file ID for room identification.
+     * If 'path', uses path-based room IDs; if 'fileId', uses file ID (default).
+     */
+    roomIdType?: 'fileId' | 'path';
   }
 }

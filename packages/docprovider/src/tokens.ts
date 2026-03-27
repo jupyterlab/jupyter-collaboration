@@ -183,6 +183,12 @@ export namespace IDocumentProviderFactory {
      * The server settings.
      */
     serverSettings?: ServerConnection.ISettings;
+
+    /**
+     * Whether to use file path instead of file ID for room identification.
+     * If 'path', uses path-based room IDs; if 'fileId', uses file ID (default).
+     */
+    roomIdType?: 'fileId' | 'path';
   }
 }
 
