@@ -15,7 +15,7 @@ import { DocumentChange, YDocument } from '@jupyter/ydoc';
 
 import { Awareness } from 'y-protocols/awareness';
 import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
-import { WebrtcProvider } from 'y-webrtc';
+import { WebrtcProvider } from '@jupyter/y-webrtc';
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
 

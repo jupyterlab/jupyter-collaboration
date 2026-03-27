@@ -22,7 +22,7 @@ export const ICollaborativeContentProvider =
 /**
  * The global awareness token.
  */
-export const IGlobalAwareness = new Token<IAwareness>(
+export const IGlobalAwareness: Token<IAwareness> = new Token<IAwareness>(
   '@jupyter/collaboration:IGlobalAwareness'
 );
 

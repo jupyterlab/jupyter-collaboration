@@ -35,7 +35,7 @@
     "docs": "typedoc",
     "eslint": "jlpm eslint:check --fix",
     "eslint:check": "eslint . --ext .ts,.tsx",
-    "install:extension": "lerna run install:extension",
+    "install:extension": "lerna run install:extension --scope @jupyter/collaboration-extension --scope @jupyter/collaboration --scope @jupyter/collaborative-drive --scope @jupyter/docprovider-extension --scope @jupyter/docprovider --scope @jupyter/y-webrtc",
     "lint": "jlpm prettier && jlpm eslint && jlpm stylelint",
     "lint:check": "jlpm prettier:check && jlpm eslint:check",
     "prettier": "jlpm prettier:base --write --list-different",
@@ -50,6 +50,7 @@
     "watch": "lerna run watch"
   },
   "devDependencies": {
+    "@jupyter/y-webrtc": "workspace:*",
     "@typescript-eslint/eslint-plugin": "~5.55.0",
     "@typescript-eslint/parser": "~5.55.0",
     "eslint": "~8.36.0",
@@ -65,6 +66,8 @@
     "stylelint-config-standard": "^30.0.1",
     "stylelint-prettier": "^3.0.0",
     "typedoc": "~0.23.28",
-    "typescript": "~5.1.6"
+    "typescript": "~5.1.6",
+    "y-protocols": "1.0.6",
+    "yjs": "13.6.20"
   }
 }

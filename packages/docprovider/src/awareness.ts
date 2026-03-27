@@ -9,7 +9,7 @@ import { IAwareness } from '@jupyter/ydoc';
 
 import { WebsocketProvider } from 'y-websocket';
 
-import { WebrtcProvider } from 'y-webrtc';
+import { WebrtcProvider } from '@jupyter/y-webrtc';
 
 import { IAwarenessProvider } from './tokens';
 
