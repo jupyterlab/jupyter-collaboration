@@ -1,3 +1,6 @@
+# Copyright (c) Jupyter Development Team.
+# Distributed under the terms of the Modified BSD License.
+
 FROM debian:bullseye as builder
 
 ARG NODE_VERSION=19.7.0

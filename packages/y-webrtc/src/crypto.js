@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Jupyter Development Team.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
 /* eslint-env browser */
 
 import * as encoding from 'lib0/encoding'

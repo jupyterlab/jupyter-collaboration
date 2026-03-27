@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Jupyter Development Team.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
 import * as ws from 'lib0/websocket'
 import * as map from 'lib0/map'
 import * as error from 'lib0/error'
