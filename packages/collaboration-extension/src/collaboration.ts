@@ -15,8 +15,10 @@ import {
   IEditorExtensionRegistry
 } from '@jupyterlab/codemirror';
 import { IGlobalAwareness } from '@jupyter/collaborative-drive';
+import { ServerConnection } from '@jupyterlab/services';
+import { URLExt } from '@jupyterlab/coreutils';
 import {
-  WebRTCAwarenessProvider,
+  WebSocketAwarenessProvider,
   IAwarenessProviderFactory,
   IAwarenessProviderFactoryToken
 } from '@jupyter/docprovider';
@@ -113,7 +115,12 @@ export const rtcGlobalAwarenessPlugin: JupyterFrontEndPlugin<IAwareness> = {
     if (factory) {
       factory.create(awarenessOptions);
     } else {
-      new WebRTCAwarenessProvider(awarenessOptions);
+      const serverSettings = ServerConnection.makeSettings();
+      const url = URLExt.join(serverSettings.wsUrl, 'api/collaboration/room');
+      new WebSocketAwarenessProvider({
+        ...awarenessOptions,
+        url
+      });
     }
 
     state.changed.connect(async () => {

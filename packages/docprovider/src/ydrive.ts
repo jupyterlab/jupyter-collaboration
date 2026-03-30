@@ -19,7 +19,7 @@ import {
   YDocument
 } from '@jupyter/ydoc';
 
-import { WebRTCProvider } from './yprovider';
+import { WebSocketProvider } from './yprovider';
 import {
   IDocumentProvider,
   ISharedModelFactory
@@ -218,7 +218,16 @@ export class RtcContentProvider implements IContentProvider {
 
       const provider = this._providerFactory
         ? this._providerFactory.create(providerOptions)
-        : new WebRTCProvider(providerOptions);
+        : new WebSocketProvider({
+            path: options.path,
+            format: options.format,
+            contentType: options.contentType,
+            model: sharedModel,
+            user: this._user,
+            translator: this._trans,
+            serverSettings: this._serverSettings,
+            roomIdType
+          });
 
       // Add the document path in the list of opened ones for this user.
       const state = this._globalAwareness?.getLocalState() || {};
