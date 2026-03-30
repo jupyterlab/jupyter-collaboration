@@ -4,7 +4,7 @@
  */
 
 import { TranslationBundle } from '@jupyterlab/translation';
-import { ServerConnection, User } from '@jupyterlab/services';
+import { ServerConnection, User, Contents } from '@jupyterlab/services';
 import { DocumentChange, YDocument, IAwareness } from '@jupyter/ydoc';
 import { IDocumentProvider } from '@jupyter/collaborative-drive';
 import { Token } from '@lumino/coreutils';
@@ -189,6 +189,11 @@ export namespace IDocumentProviderFactory {
      * If 'path', uses path-based room IDs; if 'fileId', uses file ID (default).
      */
     roomIdType?: 'fileId' | 'path';
+
+    /**
+     * The drive to use for loading document content.
+     */
+    drive?: Contents.IDrive;
   }
 }
 

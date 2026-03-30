@@ -212,7 +212,8 @@ export class RtcContentProvider implements IContentProvider {
         user: this._user,
         translator: this._trans,
         serverSettings: this._serverSettings,
-        roomIdType
+        roomIdType,
+        drive: this._currentDrive
       };
 
       const provider = this._providerFactory

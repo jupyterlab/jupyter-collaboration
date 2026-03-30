@@ -5,7 +5,7 @@
 
 import { IDocumentProvider } from '@jupyter/collaborative-drive';
 import { Dialog, showDialog } from '@jupyterlab/apputils';
-import { ServerConnection, User } from '@jupyterlab/services';
+import { ServerConnection, User, Contents } from '@jupyterlab/services';
 import { TranslationBundle } from '@jupyterlab/translation';
 
 import { PromiseDelegate } from '@lumino/coreutils';
@@ -444,6 +444,7 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
     this._serverSettings =
       options.serverSettings ?? ServerConnection.makeSettings();
     this._roomIdType = options.roomIdType ?? 'path';
+    this._drive = options.drive;
 
     const user = options.user;
 
@@ -518,26 +519,12 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
         contentType: string,
         path: string
       ) => {
-        const url = URLExt.join(
-          this._serverSettings.baseUrl,
-          'api/contents',
-          path
-        );
-        const response = await ServerConnection.makeRequest(
-          url,
-          { method: 'GET' },
-          this._serverSettings
-        );
-        if (response.status !== 200) {
-          throw new Error(`Failed to load document: ${response.statusText}`);
-        }
-        const data = await response.json();
-        if (data.content === undefined) {
+        const model = await this._drive.get(path, { content: true });
+        if (model.content === undefined) {
           return;
         }
-
         try {
-          this._sharedModel.source = data.content;
+          this._sharedModel.source = model.content;
         } catch (e) {
           console.error('Failed to load file content:', e);
         }
@@ -568,37 +555,15 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
   }
 
   async save(): Promise<void> {
-    const url = URLExt.join(
-      this._serverSettings.baseUrl,
-      'api/contents',
-      this._path
-    );
-
     const content = this._sharedModel.source;
-
-    const body = {
+    const model = await this._drive.save(this._path, {
       content,
-      format: this._format,
+      format: this._format as Contents.FileFormat,
       type: this._contentType
-    };
-
-    const response = await ServerConnection.makeRequest(
-      url,
-      {
-        method: 'PUT',
-        body: JSON.stringify(body)
-      },
-      this._serverSettings
-    );
-
-    if (response.status !== 200) {
-      throw new Error(`Failed to save document: ${response.statusText}`);
-    }
-
+    });
     // Update the hash from the server response and clear dirty flag
-    const data = await response.json();
     const state = this._sharedModel.ydoc.getMap('state');
-    state.set('hash', data.hash);
+    state.set('hash', model.hash);
     state.set('dirty', false);
   }
 
@@ -633,6 +598,7 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
   private _sharedModel: YDocument<DocumentChange>;
   private _webrtcProvider: WebrtcProvider | null;
   private _serverSettings: ServerConnection.ISettings;
+  private _drive: Contents.IDrive;
 }
 
 /**
@@ -683,5 +649,10 @@ export namespace WebRTCProvider {
      * If 'path', uses path-based room IDs; if 'fileId', uses file ID (default).
      */
     roomIdType?: 'fileId' | 'path';
+
+    /**
+     * The drive to use for loading document content.
+     */
+    drive: Contents.IDrive;
   }
 }
