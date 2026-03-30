@@ -512,13 +512,59 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
 
     this._webrtcProvider = new WebrtcProvider(roomId, this._sharedModel.ydoc, {
       signaling: [URLExt.join(this._serverSettings.wsUrl, 'api/signaling')],
-      awareness: this._awareness
+      awareness: this._awareness,
+      loadDocument: async (
+        _format: string,
+        contentType: string,
+        path: string
+      ) => {
+        const url = URLExt.join(
+          this._serverSettings.baseUrl,
+          'api/contents',
+          path
+        );
+        const response = await ServerConnection.makeRequest(
+          url,
+          { method: 'GET' },
+          this._serverSettings
+        );
+        if (response.status !== 200) {
+          throw new Error(`Failed to load document: ${response.statusText}`);
+        }
+        const data = await response.json();
+        console.log('loaded data', data);
+        if (data.content === undefined) {
+          return;
+        }
+
+        console.log('contentType', contentType);
+        console.log('sharedModel', this._sharedModel);
+        // Apply content to the Yjs document based on content type
+        // The sharedModel (YDocument) handles the actual content sync
+        if (contentType === 'notebook' && this._sharedModel) {
+          // For notebooks, use the YNotebook's fromJSON to properly load content
+          try {
+            const notebookContent = JSON.parse(data.content);
+            // Cast to YNotebook since we know the type at runtime
+            (this._sharedModel as any).fromJSON(notebookContent);
+          } catch (e) {
+            console.error('Failed to load notebook content:', e);
+          }
+        } else if (this._sharedModel && this._sharedModel) {
+          // For files, set the source directly
+          try {
+            this._sharedModel.source = data.content;
+          } catch (e) {
+            console.error('Failed to load file content:', e);
+          }
+        }
+      }
     });
 
     this._webrtcProvider.on('synced', this._onSynced);
-    // WebRTC sync doesn't necessarily mean it's ready like WebSocket,
-    // but we'll use it to resolve the ready promise for now.
-    // If it's pure P2P and nobody is online, synced will trigger immediately.
+    this._webrtcProvider.on('firstClient', () => {
+      this._ready.resolve();
+    });
   }
 
   async connectToForkDoc(forkRoomId: string, sessionId: string): Promise<void> {
