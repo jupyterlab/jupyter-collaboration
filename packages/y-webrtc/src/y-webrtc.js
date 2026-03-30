@@ -587,7 +587,6 @@ export class SignalingConn extends ws.WebsocketClient {
       );
     });
     this.on('message', m => {
-      console.log('message', m);
       switch (m.type) {
         case 'publish': {
           const roomName = m.topic;

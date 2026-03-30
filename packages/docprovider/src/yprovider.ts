@@ -532,32 +532,19 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
           throw new Error(`Failed to load document: ${response.statusText}`);
         }
         const data = await response.json();
-        console.log('loaded data', data);
         if (data.content === undefined) {
           return;
         }
 
-        console.log('contentType', contentType);
-        console.log('sharedModel', this._sharedModel);
-        // Apply content to the Yjs document based on content type
-        // The sharedModel (YDocument) handles the actual content sync
-        if (contentType === 'notebook' && this._sharedModel) {
-          // For notebooks, use the YNotebook's fromJSON to properly load content
-          try {
-            const notebookContent = JSON.parse(data.content);
-            // Cast to YNotebook since we know the type at runtime
-            (this._sharedModel as any).fromJSON(notebookContent);
-          } catch (e) {
-            console.error('Failed to load notebook content:', e);
-          }
-        } else if (this._sharedModel && this._sharedModel) {
-          // For files, set the source directly
-          try {
-            this._sharedModel.source = data.content;
-          } catch (e) {
-            console.error('Failed to load file content:', e);
-          }
+        try {
+          this._sharedModel.source = data.content;
+        } catch (e) {
+          console.error('Failed to load file content:', e);
         }
+
+        // Mark document as not dirty after loading
+        const state = this._sharedModel.ydoc.getMap('state');
+        state.set('dirty', false);
       }
     });
 
@@ -578,6 +565,41 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
       }
     );
     this._webrtcProvider.on('synced', this._onSynced);
+  }
+
+  async save(): Promise<void> {
+    const url = URLExt.join(
+      this._serverSettings.baseUrl,
+      'api/contents',
+      this._path
+    );
+
+    const content = this._sharedModel.source;
+
+    const body = {
+      content,
+      format: this._format,
+      type: this._contentType
+    };
+
+    const response = await ServerConnection.makeRequest(
+      url,
+      {
+        method: 'PUT',
+        body: JSON.stringify(body)
+      },
+      this._serverSettings
+    );
+
+    if (response.status !== 200) {
+      throw new Error(`Failed to save document: ${response.statusText}`);
+    }
+
+    // Update the hash from the server response and clear dirty flag
+    const data = await response.json();
+    const state = this._sharedModel.ydoc.getMap('state');
+    state.set('hash', data.hash);
+    state.set('dirty', false);
   }
 
   private _disconnect(): void {

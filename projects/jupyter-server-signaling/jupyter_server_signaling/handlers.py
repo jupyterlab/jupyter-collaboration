@@ -52,7 +52,7 @@ class SignalingWebSocketHandler(WebSocketHandler, JupyterHandler):
             subs = self._topics.get(topic_name, set())
             if self in subs:
                 subs.remove(self)
-            if len(subs) == 0:
+            if len(subs) == 0 and topic_name in self._topics:
                 del self._topics[topic_name]
         self._subscribed_topics.clear()
         self._closed = True
