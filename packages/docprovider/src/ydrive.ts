@@ -19,7 +19,6 @@ import {
   YDocument
 } from '@jupyter/ydoc';
 
-import { WebSocketProvider } from './yprovider';
 import {
   IDocumentProvider,
   ISharedModelFactory
@@ -48,7 +47,7 @@ namespace RtcContentProvider {
     docmanagerSettings: ISettingRegistry.ISettings | null;
     currentDrive: Contents.IDrive;
     fileChanged?: ISignal<Contents.IDrive, Contents.IChangedArgs>;
-    providerFactory?: IDocumentProviderFactory;
+    providerFactory: IDocumentProviderFactory;
   }
 }
 
@@ -216,18 +215,7 @@ export class RtcContentProvider implements IContentProvider {
         drive: this._currentDrive
       };
 
-      const provider = this._providerFactory
-        ? this._providerFactory.create(providerOptions)
-        : new WebSocketProvider({
-            path: options.path,
-            format: options.format,
-            contentType: options.contentType,
-            model: sharedModel,
-            user: this._user,
-            translator: this._trans,
-            serverSettings: this._serverSettings,
-            roomIdType
-          });
+      const provider = this._providerFactory.create(providerOptions);
 
       // Add the document path in the list of opened ones for this user.
       const state = this._globalAwareness?.getLocalState() || {};
@@ -397,7 +385,7 @@ export class RtcContentProvider implements IContentProvider {
   private _driveFileChanged?: ISignal<Contents.IDrive, Contents.IChangedArgs>;
   private _serverSettings: ServerConnection.ISettings;
   private _docmanagerSettings: ISettingRegistry.ISettings | null;
-  private _providerFactory?: IDocumentProviderFactory;
+  private _providerFactory: IDocumentProviderFactory;
 }
 
 /**

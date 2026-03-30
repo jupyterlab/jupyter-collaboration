@@ -15,6 +15,10 @@ import {
   userEditorCursors
 } from './collaboration';
 import { sharedLink } from './sharedlink';
+import {
+  documentProviderFactoryPlugin,
+  awarenessProviderFactoryPlugin
+} from './provider';
 
 /**
  * Export the plugins as default.
@@ -25,7 +29,9 @@ const plugins: JupyterFrontEndPlugin<any>[] = [
   rtcGlobalAwarenessPlugin,
   rtcPanelPlugin,
   sharedLink,
-  userEditorCursors
+  userEditorCursors,
+  documentProviderFactoryPlugin,
+  awarenessProviderFactoryPlugin
 ];
 
 export default plugins;

@@ -15,7 +15,7 @@ import { DocumentChange, YDocument } from '@jupyter/ydoc';
 
 import { Awareness } from 'y-protocols/awareness';
 import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
-import { WebrtcProvider } from '@jupyter/y-webrtc';
+import { WebrtcProvider as YWebrtcProvider } from '@jupyter/y-webrtc';
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
 
@@ -511,7 +511,7 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
         ? `${session.format}:${session.type}:${this._path}`
         : `${session.format}:${session.type}:${session.fileId}`;
 
-    this._webrtcProvider = new WebrtcProvider(roomId, this._sharedModel.ydoc, {
+    this._webrtcProvider = new YWebrtcProvider(roomId, this._sharedModel.ydoc, {
       signaling: [URLExt.join(this._serverSettings.wsUrl, 'api/signaling')],
       awareness: this._awareness,
       loadDocument: async (
@@ -543,7 +543,7 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
 
   async connectToForkDoc(forkRoomId: string, sessionId: string): Promise<void> {
     this._disconnect();
-    this._webrtcProvider = new WebrtcProvider(
+    this._webrtcProvider = new YWebrtcProvider(
       forkRoomId,
       this._sharedModel.ydoc,
       {
@@ -596,7 +596,7 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
   private _roomIdType: 'fileId' | 'path';
   private _signalingUrls?: string[];
   private _sharedModel: YDocument<DocumentChange>;
-  private _webrtcProvider: WebrtcProvider | null;
+  private _webrtcProvider: YWebrtcProvider | null;
   private _serverSettings: ServerConnection.ISettings;
   private _drive: Contents.IDrive;
 }

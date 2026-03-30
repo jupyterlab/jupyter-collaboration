@@ -191,9 +191,9 @@ export namespace IDocumentProviderFactory {
     roomIdType?: 'fileId' | 'path';
 
     /**
-     * The drive to use for loading document content.
+     * The drive to use for loading and saving document content.
      */
-    drive?: Contents.IDrive;
+    drive: Contents.IDrive;
   }
 }
 

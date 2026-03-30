@@ -67,7 +67,7 @@ export const rtcContentProvider: JupyterFrontEndPlugin<ICollaborativeContentProv
       translator: ITranslator,
       globalAwareness: Awareness | null,
       settingRegistry: ISettingRegistry | null,
-      providerFactory: IDocumentProviderFactory | null
+      providerFactory: IDocumentProviderFactory
     ): Promise<ICollaborativeContentProvider> => {
       const trans = translator.load('jupyter_collaboration');
       const defaultDrive = (app.serviceManager.contents as ContentsManager)
@@ -95,7 +95,7 @@ export const rtcContentProvider: JupyterFrontEndPlugin<ICollaborativeContentProv
         globalAwareness,
         docmanagerSettings,
         fileChanged: defaultDrive.fileChanged,
-        providerFactory: providerFactory ?? undefined
+        providerFactory: providerFactory
       });
       registry.register('rtc', rtcContentProvider);
       return rtcContentProvider;

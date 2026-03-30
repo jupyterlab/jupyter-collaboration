@@ -1,0 +1,17 @@
+{
+  "title": "Real-Time Collaboration Provider",
+  "description": "Provider for real-time collaboration (WebSocket or WebRTC).",
+  "jupyter.lab.setting-registry": {
+    "plugin": "@jupyter/collaboration-extension:provider"
+  },
+  "properties": {
+    "provider": {
+      "type": "string",
+      "enum": ["websocket", "webrtc"],
+      "default": "websocket",
+      "description": "The provider type for real-time collaboration. 'websocket' uses WebSocket, 'webrtc' uses WebRTC."
+    }
+  },
+  "additionalProperties": false,
+  "type": "object"
+}
