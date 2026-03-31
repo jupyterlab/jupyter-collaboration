@@ -414,12 +414,6 @@ export namespace WebSocketProvider {
      * The server settings.
      */
     serverSettings?: ServerConnection.ISettings;
-
-    /**
-     * Whether to use file path instead of file ID for room identification.
-     * If 'path', uses path-based room IDs; if 'fileId', uses file ID (default).
-     */
-    roomIdType?: 'fileId' | 'path';
   }
 }
 
@@ -443,8 +437,10 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
     this._webrtcProvider = null;
     this._serverSettings =
       options.serverSettings ?? ServerConnection.makeSettings();
-    this._roomIdType = options.roomIdType ?? 'path';
     this._drive = options.drive;
+    this._signalingUrls = options.signalingUrls.length > 0 ? options.signalingUrls : [
+      URLExt.join(this._serverSettings.wsUrl, 'api/signaling')
+    ];
 
     const user = options.user;
 
@@ -506,13 +502,8 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
       this._serverSettings
     );
 
-    const roomId =
-      this._roomIdType === 'path'
-        ? `${session.format}:${session.type}:${this._path}`
-        : `${session.format}:${session.type}:${session.fileId}`;
-
-    this._webrtcProvider = new YWebrtcProvider(roomId, this._sharedModel.ydoc, {
-      signaling: [URLExt.join(this._serverSettings.wsUrl, 'api/signaling')],
+    this._webrtcProvider = new YWebrtcProvider(`${session.format}:${session.type}:${this._path}`, this._sharedModel.ydoc, {
+      signaling: this._signalingUrls,
       awareness: this._awareness,
       loadDocument: async (
         _format: string,
@@ -593,7 +584,6 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
   private _isDisposed: boolean;
   private _path: string;
   private _ready = new PromiseDelegate<void>();
-  private _roomIdType: 'fileId' | 'path';
   private _signalingUrls?: string[];
   private _sharedModel: YDocument<DocumentChange>;
   private _webrtcProvider: YWebrtcProvider | null;
@@ -645,10 +635,10 @@ export namespace WebRTCProvider {
     serverSettings?: ServerConnection.ISettings;
 
     /**
-     * Whether to use file path instead of file ID for room identification.
-     * If 'path', uses path-based room IDs; if 'fileId', uses file ID (default).
+     * The signaling server URLs for WebRTC.
+     * If empty, defaults to the server's WebSocket URL with path 'api/signaling'.
      */
-    roomIdType?: 'fileId' | 'path';
+    signalingUrls: string[];
 
     /**
      * The drive to use for loading and saving document content.

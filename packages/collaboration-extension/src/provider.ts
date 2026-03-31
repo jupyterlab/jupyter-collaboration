@@ -26,17 +26,22 @@ import { URLExt } from '@jupyterlab/coreutils';
 const PLUGIN_ID = '@jupyter/collaboration-extension:provider';
 
 /**
- * Load the provider type from settings.
+ * Load settings from the setting registry.
  */
-async function loadProviderType(
+async function loadSettings(
   settingRegistry: ISettingRegistry
-): Promise<'websocket' | 'webrtc'> {
+): Promise<{ providerType: 'websocket' | 'webrtc'; signalingUrls: string[] }> {
   try {
     const settings = await settingRegistry.load(PLUGIN_ID);
-    return settings.get('provider').composite as 'websocket' | 'webrtc';
+    const providerType = settings.get('provider').composite as
+      | 'websocket'
+      | 'webrtc';
+    const signalingUrls =
+      (settings.get('signalingUrls').composite as string[]) || [];
+    return { providerType, signalingUrls };
   } catch (error) {
-    console.warn('Failed to load provider settings, using default.', error);
-    return 'websocket';
+    console.warn('Failed to load provider settings, using defaults.', error);
+    return { providerType: 'websocket', signalingUrls: [] };
   }
 }
 
@@ -47,7 +52,8 @@ class SettingBasedDocumentProviderFactory implements IDocumentProviderFactory {
   constructor(
     private _providerType: 'websocket' | 'webrtc',
     private _user: User.IManager,
-    private _trans: TranslationBundle
+    private _trans: TranslationBundle,
+    private _signalingUrls: string[]
   ) {}
 
   create(options: IDocumentProviderFactory.IOptions) {
@@ -59,8 +65,8 @@ class SettingBasedDocumentProviderFactory implements IDocumentProviderFactory {
       user: this._user,
       translator: this._trans,
       serverSettings: options.serverSettings,
-      roomIdType: options.roomIdType,
-      drive: options.drive
+      drive: options.drive,
+      signalingUrls: this._signalingUrls
     };
 
     if (this._providerType === 'webrtc') {
@@ -80,7 +86,8 @@ class SettingBasedAwarenessProviderFactory
   constructor(
     private _providerType: 'websocket' | 'webrtc',
     private _user: User.IManager,
-    private _serverSettings: ServerConnection.ISettings
+    private _serverSettings: ServerConnection.ISettings,
+    private _signalingUrls: string[]
   ) {}
 
   create(options: IAwarenessProviderFactory.IOptions) {
@@ -89,7 +96,8 @@ class SettingBasedAwarenessProviderFactory
         roomID: options.roomID,
         awareness: options.awareness,
         user: this._user,
-        serverSettings: this._serverSettings
+        serverSettings: this._serverSettings,
+        signalingUrls: this._signalingUrls
       });
     } else {
       const url = URLExt.join(
@@ -123,8 +131,15 @@ export const documentProviderFactoryPlugin: JupyterFrontEndPlugin<IDocumentProvi
     ) => {
       const { user } = app.serviceManager;
       const trans = translator.load('jupyter_collaboration');
-      const providerType = await loadProviderType(settingRegistry);
-      return new SettingBasedDocumentProviderFactory(providerType, user, trans);
+      const { providerType, signalingUrls } = await loadSettings(
+        settingRegistry
+      );
+      return new SettingBasedDocumentProviderFactory(
+        providerType,
+        user,
+        trans,
+        signalingUrls
+      );
     }
   };
 
@@ -143,11 +158,14 @@ export const awarenessProviderFactoryPlugin: JupyterFrontEndPlugin<IAwarenessPro
       settingRegistry: ISettingRegistry
     ) => {
       const { user, serverSettings } = app.serviceManager;
-      const providerType = await loadProviderType(settingRegistry);
+      const { providerType, signalingUrls } = await loadSettings(
+        settingRegistry
+      );
       return new SettingBasedAwarenessProviderFactory(
         providerType,
         user,
-        serverSettings
+        serverSettings,
+        signalingUrls
       );
     }
   };

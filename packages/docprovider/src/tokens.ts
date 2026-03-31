@@ -185,12 +185,6 @@ export namespace IDocumentProviderFactory {
     serverSettings?: ServerConnection.ISettings;
 
     /**
-     * Whether to use file path instead of file ID for room identification.
-     * If 'path', uses path-based room IDs; if 'fileId', uses file ID (default).
-     */
-    roomIdType?: 'fileId' | 'path';
-
-    /**
      * The drive to use for loading and saving document content.
      */
     drive: Contents.IDrive;

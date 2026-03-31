@@ -86,13 +86,13 @@ export class WebRTCAwarenessProvider
    * @param options The instantiation options for a WebRTCAwarenessProvider
    */
   constructor(options: WebRTCAwarenessProvider.IOptions) {
+    const serverSettings =
+      options.serverSettings ?? ServerConnection.makeSettings();
+    const signalingUrls = options.signalingUrls.length > 0 ? options.signalingUrls : [
+      URLExt.join(serverSettings.wsUrl, 'api/signaling')
+    ];
     super(options.roomID, options.awareness.doc, {
-      signaling: [
-        URLExt.join(
-          (options.serverSettings ?? ServerConnection.makeSettings()).wsUrl,
-          'api/signaling'
-        )
-      ],
+      signaling: signalingUrls,
       awareness: options.awareness
     });
 
@@ -155,6 +155,12 @@ export namespace WebRTCAwarenessProvider {
      * The server settings.
      */
     serverSettings?: ServerConnection.ISettings;
+
+    /**
+     * The signaling server URLs for WebRTC.
+     * If empty, defaults to the server's WebSocket URL with path 'api/signaling'.
+     */
+    signalingUrls: string[];
   }
 }
 

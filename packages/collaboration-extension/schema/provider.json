@@ -10,6 +10,14 @@
       "enum": ["websocket", "webrtc"],
       "default": "websocket",
       "description": "The provider type for real-time collaboration. 'websocket' uses WebSocket, 'webrtc' uses WebRTC."
+    },
+    "signalingUrls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "List of signaling server URLs for WebRTC. If empty, defaults to the server's WebSocket URL with path 'api/signaling'."
     }
   },
   "additionalProperties": false,

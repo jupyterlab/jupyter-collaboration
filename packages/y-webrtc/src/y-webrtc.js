@@ -741,7 +741,7 @@ export class WebrtcProvider extends ObservableV2 {
     roomName,
     doc,
     {
-      signaling = ['wss://y-webrtc-eu.fly.dev'],
+      signaling = [],
       password = null,
       awareness = new awarenessProtocol.Awareness(doc),
       maxConns = 20 + math.floor(random.rand() * 15), // the random factor reduces the chance that n clients form a cluster

@@ -197,12 +197,6 @@ export class RtcContentProvider implements IContentProvider {
     });
 
     try {
-      const roomIdType =
-        (this._docmanagerSettings?.composite?.['roomIdType'] as
-          | 'fileId'
-          | 'path'
-          | undefined) ?? 'path';
-
       const providerOptions = {
         path: options.path,
         format: options.format,
@@ -211,7 +205,6 @@ export class RtcContentProvider implements IContentProvider {
         user: this._user,
         translator: this._trans,
         serverSettings: this._serverSettings,
-        roomIdType,
         drive: this._currentDrive
       };
 
