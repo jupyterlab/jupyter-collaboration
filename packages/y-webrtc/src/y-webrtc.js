@@ -144,7 +144,7 @@ const readMessage = (room, buf, syncedCallback) => {
       break;
     }
     default:
-      // console.error('Unable to compute message');
+      console.error('Unable to compute message');
       return encoder;
   }
   if (!sendReply) {
@@ -174,8 +174,6 @@ const readPeerMessage = (peerConn, buf) => {
   );
   return readMessage(room, buf, () => {
     peerConn.synced = true;
-    // Mark that a peer has synced with us, so we don't reload the document
-    room.provider._documentLoaded = true;
     log(
       'synced ',
       logging.BOLD,
@@ -205,10 +203,9 @@ const sendWebrtcConn = (webrtcConn, encoder) => {
     ')',
     logging.UNCOLOR
   );
-  //try {
-  //  webrtcConn.peer.send(encoding.toUint8Array(encoder));
-  //} catch (e) {}
-  webrtcConn.peer.send(encoding.toUint8Array(encoder));
+  try {
+    webrtcConn.peer.send(encoding.toUint8Array(encoder));
+  } catch (e) {}
 };
 
 /**
@@ -218,10 +215,9 @@ const sendWebrtcConn = (webrtcConn, encoder) => {
 const broadcastWebrtcConn = (room, m) => {
   log('broadcast message in ', logging.BOLD, room.name, logging.UNBOLD);
   room.webrtcConns.forEach(conn => {
-    //try {
-    //  conn.peer.send(m);
-    //} catch (e) {}
-    conn.peer.send(m);
+    try {
+      conn.peer.send(m);
+    } catch (e) {}
   });
 };
 
@@ -410,9 +406,7 @@ export class Room {
     this._bcSubscriber = data =>
       cryptoutils.decrypt(new Uint8Array(data), key).then(m =>
         this.mux(() => {
-          const reply = readMessage(this, m, () => {
-            0;
-          });
+          const reply = readMessage(this, m, () => {});
           if (reply) {
             broadcastBcMessage(this, encoding.toUint8Array(reply));
           }
@@ -458,12 +452,11 @@ export class Room {
       });
     };
 
-    //if (typeof window !== 'undefined') {
-    //  window.addEventListener('beforeunload', this._beforeUnloadHandler);
-    //} else if (typeof process !== 'undefined') {
-    //  process.on('exit', this._beforeUnloadHandler);
-    //}
-    window.addEventListener('beforeunload', this._beforeUnloadHandler);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', this._beforeUnloadHandler);
+    } else if (typeof process !== 'undefined') {
+      process.on('exit', this._beforeUnloadHandler);
+    }
   }
 
   connect() {
@@ -530,12 +523,11 @@ export class Room {
 
   destroy() {
     this.disconnect();
-    //if (typeof window !== 'undefined') {
-    //  window.removeEventListener('beforeunload', this._beforeUnloadHandler);
-    //} else if (typeof process !== 'undefined') {
-    //  process.off('exit', this._beforeUnloadHandler);
-    //}
-    window.removeEventListener('beforeunload', this._beforeUnloadHandler);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('beforeunload', this._beforeUnloadHandler);
+    } else if (typeof process !== 'undefined') {
+      process.off('exit', this._beforeUnloadHandler);
+    }
   }
 }
 
@@ -608,15 +600,8 @@ export class SignalingConn extends ws.WebsocketClient {
               const provider = Array.from(this.providers).find(
                 p => p.roomName === roomName
               );
-              if (provider && !provider._documentLoaded) {
-                provider._documentLoaded = true;
-                if (provider.loadDocument) {
-                  // Pass format, type, path to loadDocument so the caller can handle fetching and applying content
-                  provider.loadDocument(fileFormat, fileType, filePath);
-                }
-                // Emit event so the caller knows we are the first client
-                provider.emit('firstClient', [{ roomName }]);
-              }
+              provider.loadDocument(fileFormat, fileType, filePath);
+              provider.emit('firstClient', [{ roomName }]);
             }
           }
           const room = rooms.get(roomName);
@@ -636,9 +621,7 @@ export class SignalingConn extends ws.WebsocketClient {
               return;
             }
             const emitPeerChange = webrtcConns.has(data.from)
-              ? () => {
-                  0;
-                }
+              ? () => {}
               : () =>
                   room.provider.emit('peers', [
                     {
@@ -773,7 +756,6 @@ export class WebrtcProvider extends ObservableV2 {
     this.maxConns = maxConns;
     this.peerOpts = peerOpts;
     this.loadDocument = loadDocument;
-    this._documentLoaded = false;
     /**
      * @type {PromiseLike<CryptoKey | null>}
      */
