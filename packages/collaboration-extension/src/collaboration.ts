@@ -19,8 +19,7 @@ import { ServerConnection } from '@jupyterlab/services';
 import { URLExt } from '@jupyterlab/coreutils';
 import {
   WebSocketAwarenessProvider,
-  IAwarenessProviderFactory,
-  IAwarenessProviderFactoryToken
+  IAwarenessProviderFactory
 } from '@jupyter/docprovider';
 import { SidePanel, usersIcon } from '@jupyterlab/ui-components';
 import { IStateDB, StateDB } from '@jupyterlab/statedb';
@@ -94,7 +93,7 @@ export const rtcGlobalAwarenessPlugin: JupyterFrontEndPlugin<IAwareness> = {
   id: '@jupyter/collaboration-extension:rtcGlobalAwareness',
   description: 'Add global awareness to share working document of users.',
   requires: [IStateDB],
-  optional: [IAwarenessProviderFactoryToken],
+  optional: [IAwarenessProviderFactory],
   provides: IGlobalAwareness,
   activate: (
     app: JupyterFrontEnd,

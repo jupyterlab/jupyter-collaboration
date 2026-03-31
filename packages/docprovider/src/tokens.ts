@@ -194,9 +194,9 @@ export namespace IDocumentProviderFactory {
 /**
  * Token providing a document provider factory instance.
  */
-export const IDocumentProviderFactoryToken =
+export const IDocumentProviderFactory=
   new Token<IDocumentProviderFactory>(
-    '@jupyter/docprovider:IDocumentProviderFactoryToken'
+    '@jupyter/docprovider:IDocumentProviderFactory'
   );
 
 /**
@@ -250,9 +250,9 @@ export namespace IAwarenessProviderFactory {
 /**
  * Token providing an awareness provider factory instance.
  */
-export const IAwarenessProviderFactoryToken =
+export const IAwarenessProviderFactory =
   new Token<IAwarenessProviderFactory>(
-    '@jupyter/docprovider:IAwarenessProviderFactoryToken'
+    '@jupyter/docprovider:IAwarenessProviderFactory'
   );
 
 export interface ISessionClosePayload {

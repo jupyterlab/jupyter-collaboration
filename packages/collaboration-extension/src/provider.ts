@@ -11,8 +11,6 @@ import { ITranslator, TranslationBundle } from '@jupyterlab/translation';
 import {
   IAwarenessProviderFactory,
   IDocumentProviderFactory,
-  IDocumentProviderFactoryToken,
-  IAwarenessProviderFactoryToken,
   WebRTCProvider,
   WebSocketProvider,
   WebRTCAwarenessProvider,
@@ -119,11 +117,11 @@ class SettingBasedAwarenessProviderFactory
  */
 export const documentProviderFactoryPlugin: JupyterFrontEndPlugin<IDocumentProviderFactory> =
   {
-    id: PLUGIN_ID + ':document-factory',
+    id: PLUGIN_ID + '-document-factory',
     description: 'Provides document provider factory based on setting.',
     requires: [ISettingRegistry, ITranslator],
     optional: [],
-    provides: IDocumentProviderFactoryToken,
+    provides: IDocumentProviderFactory,
     activate: async (
       app: JupyterFrontEnd,
       settingRegistry: ISettingRegistry,
@@ -148,11 +146,11 @@ export const documentProviderFactoryPlugin: JupyterFrontEndPlugin<IDocumentProvi
  */
 export const awarenessProviderFactoryPlugin: JupyterFrontEndPlugin<IAwarenessProviderFactory> =
   {
-    id: PLUGIN_ID + ':awareness-factory',
+    id: PLUGIN_ID + '-awareness-factory',
     description: 'Provides awareness provider factory based on setting.',
     requires: [ISettingRegistry],
     optional: [],
-    provides: IAwarenessProviderFactoryToken,
+    provides: IAwarenessProviderFactory,
     activate: async (
       app: JupyterFrontEnd,
       settingRegistry: ISettingRegistry

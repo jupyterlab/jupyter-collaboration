@@ -39,7 +39,6 @@ import {
   TimelineWidget,
   RtcContentProvider,
   IDocumentProviderFactory,
-  IDocumentProviderFactoryToken
 } from '@jupyter/docprovider';
 import { Awareness } from 'y-protocols/awareness';
 import { URLExt } from '@jupyterlab/coreutils';
@@ -60,7 +59,7 @@ export const rtcContentProvider: JupyterFrontEndPlugin<ICollaborativeContentProv
     optional: [
       IGlobalAwareness,
       ISettingRegistry,
-      IDocumentProviderFactoryToken
+      IDocumentProviderFactory
     ],
     activate: async (
       app: JupyterFrontEnd,
