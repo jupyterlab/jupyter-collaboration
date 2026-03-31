@@ -38,7 +38,7 @@ import {
   IForkProvider,
   TimelineWidget,
   RtcContentProvider,
-  IDocumentProviderFactory,
+  IDocumentProviderFactory
 } from '@jupyter/docprovider';
 import { Awareness } from 'y-protocols/awareness';
 import { URLExt } from '@jupyterlab/coreutils';
@@ -56,11 +56,7 @@ export const rtcContentProvider: JupyterFrontEndPlugin<ICollaborativeContentProv
     description: 'The RTC content provider',
     provides: ICollaborativeContentProvider,
     requires: [ITranslator],
-    optional: [
-      IGlobalAwareness,
-      ISettingRegistry,
-      IDocumentProviderFactory
-    ],
+    optional: [IGlobalAwareness, ISettingRegistry, IDocumentProviderFactory],
     activate: async (
       app: JupyterFrontEnd,
       translator: ITranslator,

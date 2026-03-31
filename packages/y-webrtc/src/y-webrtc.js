@@ -205,7 +205,9 @@ const sendWebrtcConn = (webrtcConn, encoder) => {
   );
   try {
     webrtcConn.peer.send(encoding.toUint8Array(encoder));
-  } catch (e) {}
+  } catch (e) {
+    // ignore send errors
+  }
 };
 
 /**
@@ -217,7 +219,9 @@ const broadcastWebrtcConn = (room, m) => {
   room.webrtcConns.forEach(conn => {
     try {
       conn.peer.send(m);
-    } catch (e) {}
+    } catch (e) {
+      // ignore send errors
+    }
   });
 };
 

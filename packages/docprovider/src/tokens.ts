@@ -194,10 +194,9 @@ export namespace IDocumentProviderFactory {
 /**
  * Token providing a document provider factory instance.
  */
-export const IDocumentProviderFactory=
-  new Token<IDocumentProviderFactory>(
-    '@jupyter/docprovider:IDocumentProviderFactory'
-  );
+export const IDocumentProviderFactory = new Token<IDocumentProviderFactory>(
+  '@jupyter/docprovider:IDocumentProviderFactory'
+);
 
 /**
  * An interface for an awareness provider.
@@ -250,10 +249,9 @@ export namespace IAwarenessProviderFactory {
 /**
  * Token providing an awareness provider factory instance.
  */
-export const IAwarenessProviderFactory =
-  new Token<IAwarenessProviderFactory>(
-    '@jupyter/docprovider:IAwarenessProviderFactory'
-  );
+export const IAwarenessProviderFactory = new Token<IAwarenessProviderFactory>(
+  '@jupyter/docprovider:IAwarenessProviderFactory'
+);
 
 export interface ISessionClosePayload {
   reason: 'unknown_session' | 'version_mismatch' | 'initialization_error';
