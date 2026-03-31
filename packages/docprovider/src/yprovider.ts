@@ -438,9 +438,10 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
     this._serverSettings =
       options.serverSettings ?? ServerConnection.makeSettings();
     this._drive = options.drive;
-    this._signalingUrls = options.signalingUrls.length > 0 ? options.signalingUrls : [
-      URLExt.join(this._serverSettings.wsUrl, 'api/signaling')
-    ];
+    this._signalingUrls =
+      options.signalingUrls.length > 0
+        ? options.signalingUrls
+        : [URLExt.join(this._serverSettings.wsUrl, 'api/signaling')];
 
     const user = options.user;
 
@@ -502,29 +503,33 @@ export class WebRTCProvider implements IDocumentProvider, IForkProvider {
       this._serverSettings
     );
 
-    this._webrtcProvider = new YWebrtcProvider(`${session.format}:${session.type}:${this._path}`, this._sharedModel.ydoc, {
-      signaling: this._signalingUrls,
-      awareness: this._awareness,
-      loadDocument: async (
-        _format: string,
-        contentType: string,
-        path: string
-      ) => {
-        const model = await this._drive.get(path, { content: true });
-        if (model.content === undefined) {
-          return;
-        }
-        try {
-          this._sharedModel.source = model.content;
-        } catch (e) {
-          console.error('Failed to load file content:', e);
-        }
+    this._webrtcProvider = new YWebrtcProvider(
+      `${session.format}:${session.type}:${this._path}`,
+      this._sharedModel.ydoc,
+      {
+        signaling: this._signalingUrls,
+        awareness: this._awareness,
+        loadDocument: async (
+          _format: string,
+          contentType: string,
+          path: string
+        ) => {
+          const model = await this._drive.get(path, { content: true });
+          if (model.content === undefined) {
+            return;
+          }
+          try {
+            this._sharedModel.source = model.content;
+          } catch (e) {
+            console.error('Failed to load file content:', e);
+          }
 
-        // Mark document as not dirty after loading
-        const state = this._sharedModel.ydoc.getMap('state');
-        state.set('dirty', false);
+          // Mark document as not dirty after loading
+          const state = this._sharedModel.ydoc.getMap('state');
+          state.set('dirty', false);
+        }
       }
-    });
+    );
 
     this._webrtcProvider.on('synced', this._onSynced);
     this._webrtcProvider.on('firstClient', () => {

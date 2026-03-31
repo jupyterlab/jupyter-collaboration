@@ -88,9 +88,10 @@ export class WebRTCAwarenessProvider
   constructor(options: WebRTCAwarenessProvider.IOptions) {
     const serverSettings =
       options.serverSettings ?? ServerConnection.makeSettings();
-    const signalingUrls = options.signalingUrls.length > 0 ? options.signalingUrls : [
-      URLExt.join(serverSettings.wsUrl, 'api/signaling')
-    ];
+    const signalingUrls =
+      options.signalingUrls.length > 0
+        ? options.signalingUrls
+        : [URLExt.join(serverSettings.wsUrl, 'api/signaling')];
     super(options.roomID, options.awareness.doc, {
       signaling: signalingUrls,
       awareness: options.awareness

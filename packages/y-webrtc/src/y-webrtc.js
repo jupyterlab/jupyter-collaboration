@@ -2,6 +2,7 @@
  * Copyright (c) Jupyter Development Team.
  * Distributed under the terms of the Modified BSD License.
  */
+/* eslint-env browser */
 
 import * as ws from 'lib0/websocket';
 import * as map from 'lib0/map';
@@ -143,7 +144,7 @@ const readMessage = (room, buf, syncedCallback) => {
       break;
     }
     default:
-      console.error('Unable to compute message');
+      // console.error('Unable to compute message');
       return encoder;
   }
   if (!sendReply) {
@@ -204,9 +205,10 @@ const sendWebrtcConn = (webrtcConn, encoder) => {
     ')',
     logging.UNCOLOR
   );
-  try {
-    webrtcConn.peer.send(encoding.toUint8Array(encoder));
-  } catch (e) {}
+  //try {
+  //  webrtcConn.peer.send(encoding.toUint8Array(encoder));
+  //} catch (e) {}
+  webrtcConn.peer.send(encoding.toUint8Array(encoder));
 };
 
 /**
@@ -216,9 +218,10 @@ const sendWebrtcConn = (webrtcConn, encoder) => {
 const broadcastWebrtcConn = (room, m) => {
   log('broadcast message in ', logging.BOLD, room.name, logging.UNBOLD);
   room.webrtcConns.forEach(conn => {
-    try {
-      conn.peer.send(m);
-    } catch (e) {}
+    //try {
+    //  conn.peer.send(m);
+    //} catch (e) {}
+    conn.peer.send(m);
   });
 };
 
@@ -407,7 +410,9 @@ export class Room {
     this._bcSubscriber = data =>
       cryptoutils.decrypt(new Uint8Array(data), key).then(m =>
         this.mux(() => {
-          const reply = readMessage(this, m, () => {});
+          const reply = readMessage(this, m, () => {
+            0;
+          });
           if (reply) {
             broadcastBcMessage(this, encoding.toUint8Array(reply));
           }
@@ -453,11 +458,12 @@ export class Room {
       });
     };
 
-    if (typeof window !== 'undefined') {
-      window.addEventListener('beforeunload', this._beforeUnloadHandler);
-    } else if (typeof process !== 'undefined') {
-      process.on('exit', this._beforeUnloadHandler);
-    }
+    //if (typeof window !== 'undefined') {
+    //  window.addEventListener('beforeunload', this._beforeUnloadHandler);
+    //} else if (typeof process !== 'undefined') {
+    //  process.on('exit', this._beforeUnloadHandler);
+    //}
+    window.addEventListener('beforeunload', this._beforeUnloadHandler);
   }
 
   connect() {
@@ -524,11 +530,12 @@ export class Room {
 
   destroy() {
     this.disconnect();
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('beforeunload', this._beforeUnloadHandler);
-    } else if (typeof process !== 'undefined') {
-      process.off('exit', this._beforeUnloadHandler);
-    }
+    //if (typeof window !== 'undefined') {
+    //  window.removeEventListener('beforeunload', this._beforeUnloadHandler);
+    //} else if (typeof process !== 'undefined') {
+    //  process.off('exit', this._beforeUnloadHandler);
+    //}
+    window.removeEventListener('beforeunload', this._beforeUnloadHandler);
   }
 }
 
@@ -613,14 +620,14 @@ export class SignalingConn extends ws.WebsocketClient {
             }
           }
           const room = rooms.get(roomName);
-          if (room == null || typeof roomName !== 'string') {
+          if (room === null || typeof roomName !== 'string') {
             return;
           }
           const execMessage = data => {
             const webrtcConns = room.webrtcConns;
             const peerId = room.peerId;
             if (
-              data == null ||
+              data === null ||
               data.from === peerId ||
               (data.to !== undefined && data.to !== peerId) ||
               room.bcConns.has(data.from)
@@ -629,7 +636,9 @@ export class SignalingConn extends ws.WebsocketClient {
               return;
             }
             const emitPeerChange = webrtcConns.has(data.from)
-              ? () => {}
+              ? () => {
+                  0;
+                }
               : () =>
                   room.provider.emit('peers', [
                     {
