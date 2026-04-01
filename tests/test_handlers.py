@@ -119,8 +119,8 @@ async def test_room_handler_doc_client_should_emit_awareness_event(
     websocket, room_name = await rtc_connect_doc_client("text", "file", path)
     async with websocket as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
         await event.wait()
-        await sleep(0.1)
 
+    await sleep(0.1)
     fim = jp_serverapp.web_app.settings["file_id_manager"]
 
     assert doc.source == content
