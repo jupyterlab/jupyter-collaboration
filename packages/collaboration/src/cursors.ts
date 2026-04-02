@@ -50,7 +50,7 @@ export type EditorAwareness = {
   ytext: Text;
 };
 
-interface ICursorState {
+export interface ICursorState {
   /**
    * Cursor anchor
    */
@@ -76,7 +76,7 @@ interface ICursorState {
 /**
  * Awareness state definition
  */
-interface IAwarenessState extends Record<string, any> {
+export interface IAwarenessState extends Record<string, any> {
   /**
    * User identity
    */
@@ -90,7 +90,10 @@ interface IAwarenessState extends Record<string, any> {
 /**
  * Facet storing the Yjs document objects
  */
-const editorAwarenessFacet = Facet.define<EditorAwareness, EditorAwareness>({
+export const editorAwarenessFacet = Facet.define<
+  EditorAwareness,
+  EditorAwareness
+>({
   combine(configs: readonly EditorAwareness[]) {
     return configs[configs.length - 1];
   }
