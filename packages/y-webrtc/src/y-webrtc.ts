@@ -184,6 +184,7 @@ const readPeerMessage = (
       logging.BOLD,
       peerConn.remotePeerId
     );
+    room.provider.contentLoaded = true;
     checkIsSynced(room);
   });
 };
@@ -640,8 +641,13 @@ export class SignalingConn extends ws.WebsocketClient {
               const provider = Array.from(this.providers).find(
                 p => p.roomName === roomName
               );
-              if (provider && provider.loadDocument) {
+              if (
+                provider &&
+                provider.loadDocument &&
+                !provider.contentLoaded
+              ) {
                 provider.loadDocument(fileFormat, fileType, filePath);
+                provider.contentLoaded = true;
               }
               provider?.emit('firstClient', [{ roomName }]);
             }
@@ -796,6 +802,7 @@ export class WebrtcProvider extends ObservableV2<IWebrtcProviderEvents> {
     | null;
   key: Promise<CryptoKey | null>;
   room: Room | null;
+  contentLoaded: boolean;
 
   /**
    * @param roomName - The name of the room to join.
@@ -826,6 +833,7 @@ export class WebrtcProvider extends ObservableV2<IWebrtcProviderEvents> {
     this.maxConns = maxConns;
     this.peerOpts = peerOpts;
     this.loadDocument = loadDocument;
+    this.contentLoaded = false;
     this.key = password
       ? cryptoutils.deriveKey(password, roomName)
       : Promise.resolve(null);
