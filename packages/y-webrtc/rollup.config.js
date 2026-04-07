@@ -6,6 +6,7 @@
 
 import nodeResolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
+import typescript from '@rollup/plugin-typescript';
 import { terser } from 'rollup-plugin-terser';
 
 // If truthy, it expects all y-* dependencies in the upper directory.
@@ -73,6 +74,14 @@ const plugins = [
     mainFields: ['module', 'browser', 'main']
   }),
   commonjs(),
+  typescript({
+    tsconfig: './tsconfig.json',
+    compilerOptions: {
+      composite: false,
+      declaration: false,
+      emitDeclarationOnly: false
+    }
+  }),
   ...minificationPlugins
 ];
 
@@ -102,7 +111,7 @@ export default [
     plugins
   },
   {
-    input: './src/y-webrtc.js',
+    input: './src/y-webrtc.ts',
     external: id => /^(lib0|yjs|y-protocols|simple-peer)/.test(id),
     output: [
       {
@@ -110,7 +119,29 @@ export default [
         file: 'dist/y-webrtc.cjs',
         format: 'cjs',
         sourcemap: true
+      },
+      {
+        name: 'y-webrtc',
+        file: 'dist/y-webrtc.js',
+        format: 'es',
+        sourcemap: true
       }
+    ],
+    plugins: [
+      debugResolve,
+      nodeResolve({
+        mainFields: ['module', 'browser', 'main']
+      }),
+      commonjs(),
+      typescript({
+        tsconfig: './tsconfig.json',
+        compilerOptions: {
+          composite: false,
+          declaration: false,
+          emitDeclarationOnly: false
+        }
+      }),
+      ...minificationPlugins
     ]
   }
 ];

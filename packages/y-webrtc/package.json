@@ -4,17 +4,16 @@
   "description": "WebRTC provider for Yjs",
   "type": "module",
   "main": "./dist/y-webrtc.cjs",
+  "module": "./dist/y-webrtc.js",
   "types": "./dist/src/y-webrtc.d.ts",
-  "module": "./src/y-webrtc.js",
-  "unpkg": "./src/y-webrtc.mjs",
+  "unpkg": "./dist/y-webrtc.js",
   "sideEffects": false,
   "funding": {
     "type": "GitHub Sponsors ❤",
     "url": "https://github.com/sponsors/dmonad"
   },
   "exports": {
-    "module": "./src/y-webrtc.js",
-    "import": "./src/y-webrtc.js",
+    "import": "./dist/y-webrtc.js",
     "require": "./dist/y-webrtc.cjs",
     "types": "./dist/src/y-webrtc.d.ts"
   },

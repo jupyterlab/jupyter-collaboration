@@ -7,16 +7,15 @@
 
 import * as encoding from 'lib0/encoding';
 import * as decoding from 'lib0/decoding';
-import * as promise from 'lib0/promise';
-import * as error from 'lib0/error';
 import * as string from 'lib0/string';
 
 /**
- * @param {string} secret
- * @param {string} roomName
- * @return {PromiseLike<CryptoKey>}
+ * Derive a cryptographic key from a secret and room name using PBKDF2.
  */
-export const deriveKey = (secret, roomName) => {
+export const deriveKey = (
+  secret: string,
+  roomName: string
+): Promise<CryptoKey> => {
   const secretBuffer = string.encodeUtf8(secret).buffer;
   const salt = string.encodeUtf8(roomName).buffer;
   return crypto.subtle
@@ -41,13 +40,14 @@ export const deriveKey = (secret, roomName) => {
 };
 
 /**
- * @param {Uint8Array} data data to be encrypted
- * @param {CryptoKey?} key
- * @return {PromiseLike<Uint8Array>} encrypted, base64 encoded message
+ * Encrypt data using AES-GCM encryption.
  */
-export const encrypt = (data, key) => {
+export const encrypt = (
+  data: Uint8Array,
+  key: CryptoKey | null
+): Promise<Uint8Array> => {
   if (!key) {
-    return /** @type {PromiseLike<Uint8Array>} */ (promise.resolve(data));
+    return Promise.resolve(data);
   }
   const iv = crypto.getRandomValues(new Uint8Array(12));
   return crypto.subtle
@@ -69,29 +69,31 @@ export const encrypt = (data, key) => {
 };
 
 /**
- * @param {Object} data data to be encrypted
- * @param {CryptoKey?} key
- * @return {PromiseLike<Uint8Array>} encrypted data, if key is provided
+ * Encrypt a JSON-serializable object using AES-GCM encryption.
  */
-export const encryptJson = (data, key) => {
+export const encryptJson = (
+  data: any,
+  key: CryptoKey | null
+): Promise<Uint8Array> => {
   const dataEncoder = encoding.createEncoder();
   encoding.writeAny(dataEncoder, data);
   return encrypt(encoding.toUint8Array(dataEncoder), key);
 };
 
 /**
- * @param {Uint8Array} data
- * @param {CryptoKey?} key
- * @return {PromiseLike<Uint8Array>} decrypted buffer
+ * Decrypt data using AES-GCM decryption.
  */
-export const decrypt = (data, key) => {
+export const decrypt = (
+  data: Uint8Array,
+  key: CryptoKey | null
+): Promise<Uint8Array> => {
   if (!key) {
-    return /** @type {PromiseLike<Uint8Array>} */ (promise.resolve(data));
+    return Promise.resolve(data);
   }
   const dataDecoder = decoding.createDecoder(data);
   const algorithm = decoding.readVarString(dataDecoder);
   if (algorithm !== 'AES-GCM') {
-    promise.reject(error.create('Unknown encryption algorithm'));
+    throw new Error('Unknown encryption algorithm');
   }
   const iv = decoding.readVarUint8Array(dataDecoder);
   const cipher = decoding.readVarUint8Array(dataDecoder);
@@ -104,15 +106,16 @@ export const decrypt = (data, key) => {
       key,
       cipher
     )
-    .then(data => new Uint8Array(data));
+    .then(decrypted => new Uint8Array(decrypted));
 };
 
 /**
- * @param {Uint8Array} data
- * @param {CryptoKey?} key
- * @return {PromiseLike<Object>} decrypted object
+ * Decrypt data and parse it as JSON.
  */
-export const decryptJson = (data, key) =>
+export const decryptJson = (
+  data: Uint8Array,
+  key: CryptoKey | null
+): Promise<any> =>
   decrypt(data, key).then(decryptedValue =>
     decoding.readAny(decoding.createDecoder(new Uint8Array(decryptedValue)))
   );

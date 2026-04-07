@@ -6,7 +6,7 @@
 /* eslint-env browser */
 
 import * as Y from 'yjs';
-import { WebrtcProvider } from '../src/y-webrtc.js';
+import { WebrtcProvider } from '../src/y-webrtc.ts';
 
 const ydoc = new Y.Doc();
 const provider = new WebrtcProvider('webrtc-test', ydoc, {
