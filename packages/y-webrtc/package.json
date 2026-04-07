@@ -22,8 +22,6 @@
     "install:extension": "npm run build",
     "clean": "rm -rf dist",
     "start": "node ./bin/server.js",
-    "debug": "concurrently 'http-server -o index.html' 'npm run watch'",
-    "demo": "concurrently 'http-server -o demo/index.html' 'npm run watch'",
     "dist": "rollup -c",
     "types": "tsc",
     "watch": "rollup -wc",

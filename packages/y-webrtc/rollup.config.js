@@ -87,18 +87,6 @@ const plugins = [
 
 export default [
   {
-    input: './demo/index.js',
-    output: [
-      {
-        name: 'demo',
-        file: 'dist/demo.js',
-        format: 'iife',
-        sourcemap: true
-      }
-    ],
-    plugins
-  },
-  {
     input: './test/index.js',
     output: [
       {
