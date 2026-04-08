@@ -4,17 +4,17 @@
  */
 /* eslint-env node */
 
-import nodeResolve from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
-import typescript from '@rollup/plugin-typescript';
-import { terser } from 'rollup-plugin-terser';
+import nodeResolve from '@rollup/plugin-node-resolve'
+import commonjs from '@rollup/plugin-commonjs'
+import typescript from '@rollup/plugin-typescript'
+import { terser } from 'rollup-plugin-terser'
 
 // If truthy, it expects all y-* dependencies in the upper directory.
 // This is only necessary if you want to test and make changes to several repositories.
-const localImports = process.env.LOCALIMPORTS;
+const localImports = process.env.LOCALIMPORTS
 
 if (localImports) {
-  console.info('Using local imports');
+  console.info('Using local imports')
 }
 
 const customModules = new Set([
@@ -26,47 +26,47 @@ const customModules = new Set([
   'y-dom',
   'y-prosemirror',
   'y-monaco'
-]);
+])
 /**
  * @type {Set<any>}
  */
-const customLibModules = new Set(['lib0', 'y-protocols']);
+const customLibModules = new Set(['lib0', 'y-protocols'])
 
 // @ts-expect-error We use this for debugging
 const debugResolve = {
-  resolveId(importee) {
+  resolveId (importee) {
     if (localImports) {
       if (importee === 'yjs') {
-        return `${process.cwd()}/../yjs/src/index.js`;
+        return `${process.cwd()}/../yjs/src/index.js`
       }
       if (customModules.has(importee.split('/')[0])) {
-        return `${process.cwd()}/../${importee}/src/${importee}.js`;
+        return `${process.cwd()}/../${importee}/src/${importee}.js`
       }
       if (customLibModules.has(importee.split('/')[0])) {
-        return `${process.cwd()}/../${importee}`;
+        return `${process.cwd()}/../${importee}`
       }
     }
-    return null;
+    return null
   }
-};
+}
 const minificationPlugins = process.env.PRODUCTION
   ? [
-      terser({
+    terser({
+      module: true,
+      compress: {
+        hoist_vars: true,
         module: true,
-        compress: {
-          hoist_vars: true,
-          module: true,
-          passes: 1,
-          pure_getters: true,
-          unsafe_comps: true,
-          unsafe_undefined: true
-        },
-        mangle: {
-          toplevel: true
-        }
-      })
-    ]
-  : [];
+        passes: 1,
+        pure_getters: true,
+        unsafe_comps: true,
+        unsafe_undefined: true
+      },
+      mangle: {
+        toplevel: true
+      }
+    })
+  ]
+  : []
 
 const plugins = [
   debugResolve,
@@ -83,7 +83,7 @@ const plugins = [
     }
   }),
   ...minificationPlugins
-];
+]
 
 export default [
   {
@@ -132,4 +132,4 @@ export default [
       ...minificationPlugins
     ]
   }
-];
+]

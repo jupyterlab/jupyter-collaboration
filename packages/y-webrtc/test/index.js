@@ -3,7 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-
 import * as crypto from './crypto.test.js'
 
 import { runTests } from 'lib0/testing'

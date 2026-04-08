@@ -3,7 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-
 import * as cryptutils from '../src/crypto'
 import * as t from 'lib0/testing'
 import * as prng from 'lib0/prng'
