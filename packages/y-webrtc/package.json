@@ -3,39 +3,34 @@
   "version": "10.3.0",
   "description": "WebRTC provider for Yjs",
   "type": "module",
-  "main": "./dist/y-webrtc.cjs",
-  "module": "./dist/y-webrtc.js",
-  "types": "./dist/src/y-webrtc.d.ts",
-  "unpkg": "./dist/y-webrtc.js",
+  "main": "./lib/y-webrtc.js",
+  "types": "./lib/y-webrtc.d.ts",
   "sideEffects": false,
   "funding": {
     "type": "GitHub Sponsors ❤",
     "url": "https://github.com/sponsors/dmonad"
   },
   "exports": {
-    "import": "./dist/y-webrtc.js",
-    "require": "./dist/y-webrtc.cjs",
-    "types": "./dist/src/y-webrtc.d.ts"
+    ".": {
+      "import": "./lib/y-webrtc.js",
+      "types": "./lib/y-webrtc.d.ts"
+    }
   },
   "scripts": {
-    "build": "npm run clean && npm run dist && npm run types",
-    "install:extension": "npm run build",
-    "clean": "rm -rf dist",
-    "start": "node ./bin/server.js",
-    "dist": "rollup -c",
-    "types": "tsc",
-    "watch": "rollup -wc",
+    "build": "tsc -b",
+    "install:extension": "jlpm run build",
+    "clean": "rimraf lib tsconfig.tsbuildinfo",
+    "watch": "tsc -b --watch",
     "test": "npm run lint",
-    "lint": "standard && tsc",
-    "preversion": "npm run clean && npm run lint && npm run dist && npm run types"
+    "lint": "tsc"
   },
   "bin": {
     "y-webrtc-signaling": "./bin/server.js"
   },
   "files": [
-    "dist/*",
+    "lib/**/*.{d.ts,js,js.map}",
     "bin/*",
-    "src/*"
+    "schema/*"
   ],
   "repository": {
     "type": "git",
@@ -61,13 +56,9 @@
     "simple-peer": "^9.11.0"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^17.1.0",
-    "@rollup/plugin-node-resolve": "^11.2.1",
     "@types/simple-peer": "^9.11.3",
     "concurrently": "^5.3.0",
     "http-server": "^0.12.3",
-    "rollup": "^2.79.1",
-    "rollup-plugin-terser": "^7.0.2",
     "standard": "^14.3.4",
     "typescript": "~5.1.6",
     "y-protocols": "^1.0.6",
