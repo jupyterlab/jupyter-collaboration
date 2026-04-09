@@ -119,11 +119,11 @@
         "singleton": true
       },
       "y-protocols": {
-        "bundled": false,
+        "bundled": true,
         "singleton": true
       },
       "yjs": {
-        "bundled": false,
+        "bundled": true,
         "singleton": true
       }
     }
