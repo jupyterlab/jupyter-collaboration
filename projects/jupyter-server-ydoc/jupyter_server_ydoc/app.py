@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+from collections import defaultdict
 from functools import partial
 from typing import Literal, cast
-from collections import defaultdict
 
 from jupyter_server.extension.application import ExtensionApp
 from jupyter_ydoc import ydocs as YDOCS
@@ -28,9 +28,9 @@ from .utils import (
     AWARENESS_EVENTS_SCHEMA_PATH,
     EVENTS_SCHEMA_PATH,
     FORK_EVENTS_SCHEMA_PATH,
+    decode_file_path,
     encode_file_path,
     room_id_from_encoded_path,
-    decode_file_path,
 )
 from .websocketserver import JupyterWebsocketServer, RoomNotFound, exception_logger
 
