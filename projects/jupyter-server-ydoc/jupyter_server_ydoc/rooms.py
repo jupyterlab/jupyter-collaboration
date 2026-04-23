@@ -27,7 +27,7 @@ async def _apply_deterministic_source_content(ydoc: Doc, file_type: str, content
     divergent history after server restart or room eviction.
     """
 
-    source_ydoc = Doc(client_id=0)
+    source_ydoc: Doc = Doc(client_id=0)
     source_document = YDOCS.get(file_type, YFILE)(source_ydoc)
     await source_document.aset(content)
     ydoc.apply_update(source_ydoc.get_update())
