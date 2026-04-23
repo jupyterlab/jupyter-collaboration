@@ -3,4 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/* eslint-env node */
+
 module.exports = require('@jupyterlab/testing/lib/babel-config');

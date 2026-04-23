@@ -3,6 +3,9 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/* eslint-env node */
+/* eslint-disable @typescript-eslint/no-var-requires */
+
 const jestJupyterLab = require('@jupyterlab/testing/lib/jest-config');
 
 const esModules = [
