@@ -11,10 +11,6 @@ module.exports = {
     sourceType: 'module'
   },
   plugins: ['@typescript-eslint'],
-  env: {
-    node: true,
-    browser: true
-  },
   rules: {
     '@typescript-eslint/naming-convention': [
       'error',
@@ -39,19 +35,5 @@ module.exports = {
     curly: ['error', 'all'],
     eqeqeq: 'error',
     'prefer-arrow-callback': 'error'
-  },
-  overrides: [
-    {
-      files: ['*.config.js', '*.config.ts', 'rollup.config.js'],
-      env: {
-        node: true
-      }
-    },
-    {
-      files: ['**/src/**/*.js', '**/src/**/*.jsx'],
-      env: {
-        browser: true
-      }
-    }
-  ]
+  }
 };

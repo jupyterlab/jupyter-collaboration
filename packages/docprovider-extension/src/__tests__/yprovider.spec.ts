@@ -12,10 +12,10 @@ import {
   sleep,
   waitForDialog
 } from '@jupyterlab/testutils';
-import { requestDocSession } from '../requests';
+import { requestDocSession } from '@jupyter/docprovider';
 import { WebSocketProvider } from '../yprovider';
 
-jest.mock('../requests', () => ({
+jest.mock('@jupyter/docprovider', () => ({
   requestDocSession: jest.fn()
 }));
 

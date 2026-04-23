@@ -42,7 +42,6 @@
   },
   "dependencies": {
     "@jupyter/collaborative-drive": "^4.3.0",
-    "@jupyter/y-webrtc": "^10.3.0",
     "@jupyter/ydoc": "^2.1.3 || ^3.0.0",
     "@jupyterlab/apputils": "^4.5.0",
     "@jupyterlab/cells": "^4.5.0",

@@ -166,6 +166,7 @@ class DocumentRoom(YRoom):
                 if self.ystore:
                     await self.ystore.encode_state_as_update(self.ydoc)
 
+            self._document.dirty = False
             self.ready = True
             self._emit(LogLevel.INFO, "initialize", "Room initialized")
 

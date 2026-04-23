@@ -5,24 +5,36 @@
 
 import { IDocumentProvider } from '@jupyter/collaborative-drive';
 import { Dialog, showDialog } from '@jupyterlab/apputils';
-import { ServerConnection, User, Contents } from '@jupyterlab/services';
-import { TranslationBundle } from '@jupyterlab/translation';
+import { ServerConnection, User } from '@jupyterlab/services';
+import { ITranslator, TranslationBundle } from '@jupyterlab/translation';
 
 import { PromiseDelegate } from '@lumino/coreutils';
 import { Signal } from '@lumino/signaling';
 
 import { DocumentChange, YDocument } from '@jupyter/ydoc';
 
+import {
+  JupyterFrontEnd,
+  JupyterFrontEndPlugin
+} from '@jupyterlab/application';
+import {
+  IAwarenessProvider,
+  IAwarenessProviderFactory,
+  IDocumentProviderFactory,
+  IForkProvider,
+  ISessionClosePayload,
+  requestDocSession
+} from '@jupyter/docprovider';
+
+import { IAwareness } from '@jupyter/ydoc';
+
 import { Awareness } from 'y-protocols/awareness';
 import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
-import { WebrtcProvider as YWebrtcProvider } from '@jupyter/y-webrtc';
+
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
 
-import { requestDocSession } from './requests';
-import { IForkProvider } from './ydrive';
 import { URLExt } from '@jupyterlab/coreutils';
-import { ISessionClosePayload } from './tokens';
 
 /**
  * The url for the default drive service.
@@ -417,237 +429,171 @@ export namespace WebSocketProvider {
   }
 }
 
+export interface IContent {
+  type: string;
+  body: string;
+}
+
 /**
- * A class to provide Yjs synchronization over WebRTC.
+ * A class to provide Yjs synchronization over WebSocket.
+ *
+ * We specify custom messages that the server can interpret. For reference please look in yjs_ws_server.
  *
  */
-export class WebRTCProvider implements IDocumentProvider, IForkProvider {
+export class WebSocketAwarenessProvider
+  extends YWebsocketProvider
+  implements IAwarenessProvider
+{
   /**
-   * Construct a new WebRTCProvider
+   * Construct a new WebSocketAwarenessProvider
    *
-   * @param options The instantiation options for a WebRTCProvider
+   * @param options The instantiation options for a WebSocketAwarenessProvider
    */
-  constructor(options: WebRTCProvider.IOptions) {
-    this._isDisposed = false;
-    this._path = options.path;
-    this._contentType = options.contentType;
-    this._format = options.format;
-    this._sharedModel = options.model;
-    this._awareness = options.model.awareness;
-    this._webrtcProvider = null;
-    this._serverSettings =
-      options.serverSettings ?? ServerConnection.makeSettings();
-    this._drive = options.drive;
-    this._signalingUrls =
-      options.signalingUrls.length > 0
-        ? options.signalingUrls
-        : [URLExt.join(this._serverSettings.wsUrl, 'api/signaling')];
+  constructor(options: WebSocketAwarenessProvider.IOptions) {
+    super(options.url, options.roomID, options.awareness.doc, {
+      awareness: options.awareness
+    });
 
-    const user = options.user;
+    this.awareness = options.awareness;
 
-    user.ready
-      .then(() => {
-        this._onUserChanged(user);
-      })
+    this._user = options.user;
+    this._user.ready
+      .then(() => this._onUserChanged(this._user))
       .catch(e => console.error(e));
-    user.userChanged.connect(this._onUserChanged, this);
-
-    this._connect().catch(e => console.warn(e));
+    this._user.userChanged.connect(this._onUserChanged, this);
   }
 
-  /**
-   * Test whether the object has been disposed.
-   */
   get isDisposed(): boolean {
     return this._isDisposed;
   }
 
-  /**
-   * A promise that resolves when the document provider is ready.
-   */
-  get ready(): Promise<void> {
-    return this._ready.promise;
-  }
-  get contentType(): string {
-    return this._contentType;
-  }
-
-  get format(): string {
-    return this._format;
-  }
-
-  /**
-   * Dispose of the resources held by the object.
-   */
   dispose(): void {
-    if (this.isDisposed) {
+    if (this._isDisposed) {
       return;
     }
+
+    this._user.userChanged.disconnect(this._onUserChanged, this);
     this._isDisposed = true;
-    this._webrtcProvider?.off('synced', this._onSynced);
-    this._webrtcProvider?.destroy();
-    this._disconnect();
-    Signal.clearData(this);
-  }
-
-  async reconnect(): Promise<void> {
-    this._disconnect();
-    this._connect();
-  }
-
-  private async _connect(): Promise<void> {
-    const session = await requestDocSession(
-      this._format,
-      this._contentType,
-      this._path,
-      this._serverSettings
-    );
-
-    this._webrtcProvider = new YWebrtcProvider(
-      `${session.format}:${session.type}:${this._path}`,
-      this._sharedModel.ydoc,
-      {
-        signaling: this._signalingUrls,
-        awareness: this._awareness,
-        loadDocument: async (
-          _format: string,
-          contentType: string,
-          path: string
-        ) => {
-          const model = await this._drive.get(path, { content: true });
-          if (model.content === undefined) {
-            return;
-          }
-          try {
-            this._sharedModel.source = model.content;
-          } catch (e) {
-            console.error('Failed to load file content:', e);
-          }
-
-          // Mark document as not dirty after loading
-          const state = this._sharedModel.ydoc.getMap('state');
-          state.set('dirty', false);
-        }
-      }
-    );
-
-    this._webrtcProvider.on('synced', this._onSynced);
-    this._webrtcProvider.on('firstClient', () => {
-      this._ready.resolve();
-    });
-  }
-
-  async connectToForkDoc(forkRoomId: string, sessionId: string): Promise<void> {
-    this._disconnect();
-    this._webrtcProvider = new YWebrtcProvider(
-      forkRoomId,
-      this._sharedModel.ydoc,
-      {
-        signaling: this._signalingUrls,
-        awareness: this._awareness
-      }
-    );
-    this._webrtcProvider.on('synced', this._onSynced);
-  }
-
-  async save(): Promise<void> {
-    const content = this._sharedModel.source;
-    const model = await this._drive.save(this._path, {
-      content,
-      format: this._format as Contents.FileFormat,
-      type: this._contentType
-    });
-    // Update the hash from the server response and clear dirty flag
-    const state = this._sharedModel.ydoc.getMap('state');
-    state.set('hash', model.hash);
-    state.set('dirty', false);
-  }
-
-  private _disconnect(): void {
-    this._webrtcProvider?.off('synced', this._onSynced);
-    this._webrtcProvider?.destroy();
-    this._webrtcProvider = null;
+    this.destroy();
   }
 
   private _onUserChanged(user: User.IManager): void {
-    this._awareness.setLocalStateField('user', user.identity);
+    this.awareness.setLocalStateField('user', user.identity);
   }
 
-  private _onSynced = (event: any) => {
-    if (this._webrtcProvider) {
-      this._webrtcProvider.off('synced', this._onSynced);
-
-      const state = this._sharedModel.ydoc.getMap('state');
-      state.set('document_id', this._webrtcProvider.roomName);
-    }
-    this._ready.resolve();
-  };
-
-  private _awareness: Awareness;
-  private _contentType: string;
-  private _format: string;
-  private _isDisposed: boolean;
-  private _path: string;
-  private _ready = new PromiseDelegate<void>();
-  private _signalingUrls?: string[];
-  private _sharedModel: YDocument<DocumentChange>;
-  private _webrtcProvider: YWebrtcProvider | null;
-  private _serverSettings: ServerConnection.ISettings;
-  private _drive: Contents.IDrive;
+  readonly awareness: IAwareness;
+  private _isDisposed = false;
+  private _user: User.IManager;
 }
 
 /**
- * A namespace for WebRTCProvider statics.
+ * A namespace for WebSocketAwarenessProvider statics.
  */
-export namespace WebRTCProvider {
+export namespace WebSocketAwarenessProvider {
   /**
-   * The instantiation options for a WebRTCProvider.
+   * The instantiation options for a WebSocketAwarenessProvider.
    */
   export interface IOptions {
     /**
-     * The document file path
+     * The server URL
      */
-    path: string;
+    url: string;
 
     /**
-     * Content type
+     * The room ID
      */
-    contentType: string;
+    roomID: string;
 
     /**
-     * The source format
+     * The awareness object
      */
-    format: string;
-
-    /**
-     * The shared model
-     */
-    model: YDocument<DocumentChange>;
+    awareness: IAwareness;
 
     /**
      * The user data
      */
     user: User.IManager;
-
-    /**
-     * The jupyterlab translator
-     */
-    translator: TranslationBundle;
-
-    /**
-     * The server settings.
-     */
-    serverSettings?: ServerConnection.ISettings;
-
-    /**
-     * The signaling server URLs for WebRTC.
-     * If empty, defaults to the server's WebSocket URL with path 'api/signaling'.
-     */
-    signalingUrls: string[];
-
-    /**
-     * The drive to use for loading and saving document content.
-     */
-    drive: Contents.IDrive;
   }
 }
+/**
+ * The plugin ID for settings.
+ */
+const PLUGIN_ID = '@jupyter/collaboration-extension:websocket-provider';
+
+/**
+ * Document provider factory that creates WebSocket providers.
+ */
+class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
+  constructor(
+    private _user: User.IManager,
+    private _trans: TranslationBundle
+  ) {}
+
+  create(options: IDocumentProviderFactory.IOptions) {
+    return new WebSocketProvider({
+      path: options.path,
+      contentType: options.contentType,
+      format: options.format,
+      model: options.model,
+      user: this._user,
+      translator: this._trans,
+      serverSettings: options.serverSettings
+    });
+  }
+}
+
+/**
+ * Awareness provider factory that creates WebSocket awareness providers.
+ */
+class WebSocketAwarenessProviderFactory implements IAwarenessProviderFactory {
+  constructor(
+    private _user: User.IManager,
+    private _serverSettings: ServerConnection.ISettings
+  ) {}
+
+  create(options: IAwarenessProviderFactory.IOptions) {
+    const url = URLExt.join(
+      this._serverSettings.wsUrl,
+      'api/collaboration/room'
+    );
+    return new WebSocketAwarenessProvider({
+      url,
+      roomID: options.roomID,
+      awareness: options.awareness,
+      user: this._user
+    });
+  }
+}
+
+/**
+ * Plugin that provides the WebSocket document provider factory.
+ */
+export const documentProviderFactoryPlugin: JupyterFrontEndPlugin<IDocumentProviderFactory> =
+  {
+    id: PLUGIN_ID + '-document-factory',
+    description: 'Provides a WebSocket document provider factory.',
+    requires: [ITranslator],
+    optional: [],
+    provides: IDocumentProviderFactory,
+    activate: async (app: JupyterFrontEnd, translator: ITranslator) => {
+      const { user } = app.serviceManager;
+      const trans = translator.load('jupyter_collaboration');
+      return new WebSocketDocumentProviderFactory(user, trans);
+    }
+  };
+
+/**
+ * Plugin that provides the WebSocket awareness provider factory.
+ */
+export const awarenessProviderFactoryPlugin: JupyterFrontEndPlugin<IAwarenessProviderFactory> =
+  {
+    id: PLUGIN_ID + '-awareness-factory',
+    description: 'Provides awareness provider factory.',
+    requires: [],
+    optional: [],
+    provides: IAwarenessProviderFactory,
+    activate: async (app: JupyterFrontEnd) => {
+      const { user, serverSettings } = app.serviceManager;
+      return new WebSocketAwarenessProviderFactory(user, serverSettings);
+    }
+  };
