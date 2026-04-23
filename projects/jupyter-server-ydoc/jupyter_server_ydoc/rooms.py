@@ -9,6 +9,7 @@ from typing import Any, Callable
 
 from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
+from pycrdt import Doc
 from pycrdt.store import BaseYStore, YDocNotFound
 from pycrdt.websocket import YRoom
 
@@ -16,6 +17,20 @@ from .loaders import FileLoader
 from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, OutOfBandChanges
 
 YFILE = YDOCS["file"]
+
+
+async def _apply_deterministic_source_content(ydoc: Doc, file_type: str, content: Any) -> None:
+    """Load source content using a deterministic update.
+
+    Rooms rebuilt from disk must recreate the same Yjs history for identical
+    content, otherwise reconnecting clients can merge duplicate content from a
+    divergent history after server restart or room eviction.
+    """
+
+    source_ydoc = Doc(client_id=0)
+    source_document = YDOCS.get(file_type, YFILE)(source_ydoc)
+    await source_document.aset(content)
+    ydoc.apply_update(source_ydoc.get_update())
 
 
 class DocumentRoom(YRoom):
@@ -113,6 +128,7 @@ class DocumentRoom(YRoom):
         async with self._update_lock:
             # try to apply Y updates from the YStore for this document
             read_from_source = True
+            loaded_from_store = False
             if self.ystore is not None:
                 async with self.ystore.start_lock:
                     if not self.ystore.started.is_set():
@@ -133,6 +149,7 @@ class DocumentRoom(YRoom):
                         self.ystore.__class__.__name__,
                     )
                     read_from_source = False
+                    loaded_from_store = True
                 except YDocNotFound:
                     # YDoc not found in the YStore, create the document from
                     # the source file (no change history)
@@ -161,7 +178,12 @@ class DocumentRoom(YRoom):
                     self._room_id,
                     self._file.path,
                 )
-                await self._document.aset(model["content"])
+                if not loaded_from_store:
+                    await _apply_deterministic_source_content(
+                        self.ydoc, self._file_type, model["content"]
+                    )
+                else:
+                    await self._document.aset(model["content"])
 
                 if self.ystore:
                     await self.ystore.encode_state_as_update(self.ydoc)
