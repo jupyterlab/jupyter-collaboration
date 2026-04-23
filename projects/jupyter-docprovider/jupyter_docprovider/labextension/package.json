@@ -126,6 +126,11 @@
         "bundled": true,
         "singleton": true
       }
+    },
+    "_build": {
+      "load": "static/remoteEntry.9e137a1b8d123cd0bf9a.js",
+      "extension": "./extension",
+      "style": "./style"
     }
   }
 }
