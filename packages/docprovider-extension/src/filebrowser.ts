@@ -55,8 +55,8 @@ export const rtcContentProvider: JupyterFrontEndPlugin<ICollaborativeContentProv
     id: '@jupyter/docprovider-extension:content-provider',
     description: 'The RTC content provider',
     provides: ICollaborativeContentProvider,
-    requires: [ITranslator],
-    optional: [IGlobalAwareness, ISettingRegistry, IDocumentProviderFactory],
+    requires: [ITranslator, IDocumentProviderFactory],
+    optional: [IGlobalAwareness, ISettingRegistry],
     activate: async (
       app: JupyterFrontEnd,
       translator: ITranslator,
