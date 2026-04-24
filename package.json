@@ -24,6 +24,9 @@
   "workspaces": [
     "packages/*"
   ],
+  "resolutions": {
+    "lib0": "<=0.2.98"
+  },
   "scripts": {
     "dev": "python scripts/dev_install.py",
     "build": "lerna run build",

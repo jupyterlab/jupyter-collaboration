@@ -13,7 +13,6 @@
     "noUnusedLocals": true,
     "preserveWatchOutput": true,
     "resolveJsonModule": true,
-    "skipLibCheck": true,
     "strict": true,
     "strictNullChecks": true,
     "target": "es2018",

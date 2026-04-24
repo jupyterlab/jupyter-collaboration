@@ -16,6 +16,7 @@
     "@playwright/test": "^1.35.0"
   },
   "resolutions": {
-    "@playwright/test": "1.35.0"
+    "@playwright/test": "1.35.0",
+    "lib0": "<=0.2.98"
   }
 }
