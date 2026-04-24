@@ -60,9 +60,9 @@ export const rtcContentProvider: JupyterFrontEndPlugin<ICollaborativeContentProv
     activate: async (
       app: JupyterFrontEnd,
       translator: ITranslator,
+      providerFactory: IDocumentProviderFactory,
       globalAwareness: Awareness | null,
-      settingRegistry: ISettingRegistry | null,
-      providerFactory: IDocumentProviderFactory
+      settingRegistry: ISettingRegistry | null
     ): Promise<ICollaborativeContentProvider> => {
       const trans = translator.load('jupyter_collaboration');
       const defaultDrive = (app.serviceManager.contents as ContentsManager)
