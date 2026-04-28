@@ -525,7 +525,6 @@ const PLUGIN_ID = '@jupyter/collaboration-extension:websocket-provider';
  */
 class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
   constructor(
-    private _user: User.IManager,
     private _trans: TranslationBundle
   ) {}
 
@@ -535,7 +534,7 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
       contentType: options.contentType,
       format: options.format,
       model: options.model,
-      user: this._user,
+      user: options.user,
       translator: this._trans,
       serverSettings: options.serverSettings
     });
@@ -547,7 +546,6 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
  */
 class WebSocketAwarenessProviderFactory implements IAwarenessProviderFactory {
   constructor(
-    private _user: User.IManager,
     private _serverSettings: ServerConnection.ISettings
   ) {}
 
@@ -560,7 +558,7 @@ class WebSocketAwarenessProviderFactory implements IAwarenessProviderFactory {
       url,
       roomID: options.roomID,
       awareness: options.awareness,
-      user: this._user
+      user: options.user
     });
   }
 }
@@ -576,9 +574,8 @@ export const documentProviderFactoryPlugin: JupyterFrontEndPlugin<IDocumentProvi
     optional: [],
     provides: IDocumentProviderFactory,
     activate: async (app: JupyterFrontEnd, translator: ITranslator) => {
-      const { user } = app.serviceManager;
       const trans = translator.load('jupyter_collaboration');
-      return new WebSocketDocumentProviderFactory(user, trans);
+      return new WebSocketDocumentProviderFactory(trans);
     }
   };
 
@@ -593,7 +590,7 @@ export const awarenessProviderFactoryPlugin: JupyterFrontEndPlugin<IAwarenessPro
     optional: [],
     provides: IAwarenessProviderFactory,
     activate: async (app: JupyterFrontEnd) => {
-      const { user, serverSettings } = app.serviceManager;
-      return new WebSocketAwarenessProviderFactory(user, serverSettings);
+      const { serverSettings } = app.serviceManager;
+      return new WebSocketAwarenessProviderFactory(serverSettings);
     }
   };
