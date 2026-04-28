@@ -3,6 +3,7 @@
 
 import { IChangedArgs, PageConfig } from '@jupyterlab/coreutils';
 import { IDocumentManager } from '@jupyterlab/docmanager';
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { TranslationBundle } from '@jupyterlab/translation';
 import {
   Contents,
@@ -48,7 +49,12 @@ namespace RtcContentProvider {
     trans: TranslationBundle;
     globalAwareness: Awareness | null;
     serverSettings: ServerConnection.ISettings;
-    documentManager: IDocumentManager | null;
+    documentManager?: IDocumentManager | null;
+    /**
+     * @deprecated Pass `documentManager` instead. Kept for backwards
+     * compatibility; will be removed in a future major release.
+     */
+    docmanagerSettings?: ISettingRegistry.ISettings | null;
     currentDrive: Contents.IDrive;
     fileChanged?: ISignal<Contents.IDrive, Contents.IChangedArgs>;
   }
@@ -63,7 +69,7 @@ export class RtcContentProvider implements IContentProvider {
     this._currentDrive = options.currentDrive;
     this.sharedModelFactory = new SharedModelFactory(this._onCreate);
     this._providers = new Map<string, WebSocketProvider>();
-    this._documentManager = options.documentManager;
+    this._documentManager = options.documentManager ?? null;
     this._driveFileChanged = options.fileChanged;
   }
 
