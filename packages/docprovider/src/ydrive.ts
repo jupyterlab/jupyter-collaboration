@@ -50,13 +50,15 @@ namespace RtcContentProvider {
     globalAwareness: Awareness | null;
     serverSettings: ServerConnection.ISettings;
     documentManager?: IDocumentManager | null;
-    /**
-     * @deprecated Pass `documentManager` instead. Kept for backwards
-     * compatibility; will be removed in a future major release.
-     */
-    docmanagerSettings?: ISettingRegistry.ISettings | null;
     currentDrive: Contents.IDrive;
     fileChanged?: ISignal<Contents.IDrive, Contents.IChangedArgs>;
+    /**
+     * @deprecated Pass `documentManager` instead. Used as a fallback when
+     * `documentManager` is not provided. Will be removed in a future major
+     * release.
+     * @see {@link IOptions.documentManager}
+     */
+    docmanagerSettings?: ISettingRegistry.ISettings | null;
   }
 }
 
@@ -70,6 +72,7 @@ export class RtcContentProvider implements IContentProvider {
     this.sharedModelFactory = new SharedModelFactory(this._onCreate);
     this._providers = new Map<string, WebSocketProvider>();
     this._documentManager = options.documentManager ?? null;
+    this._docmanagerSettings = options.docmanagerSettings ?? null;
     this._driveFileChanged = options.fileChanged;
   }
 
@@ -240,27 +243,41 @@ export class RtcContentProvider implements IContentProvider {
       return;
     }
     // Set initial autosave value, used to determine backend autosave (default: true)
-    sharedModel.awareness.setLocalStateField(
-      'autosave',
-      this._documentManager?.autosave ?? true
-    );
-
-    // Watch for autosave changes on the document manager.
-    const handleStateChanged = (
-      _: IDocumentManager,
-      args: IChangedArgs<any>
-    ) => {
-      if (args.name === 'autosave') {
-        sharedModel.awareness.setLocalStateField(
-          'autosave',
-          this._documentManager?.autosave ?? true
-        );
+    const getAutosave = (): boolean => {
+      if (this._documentManager) {
+        return this._documentManager.autosave ?? true;
       }
+      return (
+        (this._docmanagerSettings?.composite?.['autosave'] as boolean) ?? true
+      );
     };
-    this._documentManager?.stateChanged.connect(handleStateChanged);
-    sharedModel.disposed.connect(() => {
-      this._documentManager?.stateChanged.disconnect(handleStateChanged);
-    });
+
+    sharedModel.awareness.setLocalStateField('autosave', getAutosave());
+
+    if (this._documentManager) {
+      // Watch for autosave changes on the document manager.
+      const handleStateChanged = (
+        _: IDocumentManager,
+        args: IChangedArgs<any>
+      ) => {
+        if (args.name === 'autosave') {
+          sharedModel.awareness.setLocalStateField('autosave', getAutosave());
+        }
+      };
+      this._documentManager.stateChanged.connect(handleStateChanged);
+      sharedModel.disposed.connect(() => {
+        this._documentManager?.stateChanged.disconnect(handleStateChanged);
+      });
+    } else if (this._docmanagerSettings) {
+      // Fall back to watching the deprecated docmanager settings.
+      const handleSettingsChanged = () => {
+        sharedModel.awareness.setLocalStateField('autosave', getAutosave());
+      };
+      this._docmanagerSettings.changed.connect(handleSettingsChanged);
+      sharedModel.disposed.connect(() => {
+        this._docmanagerSettings?.changed.disconnect(handleSettingsChanged);
+      });
+    }
 
     try {
       const provider = new WebSocketProvider({
@@ -442,6 +459,7 @@ export class RtcContentProvider implements IContentProvider {
   private _driveFileChanged?: ISignal<Contents.IDrive, Contents.IChangedArgs>;
   private _serverSettings: ServerConnection.ISettings;
   private _documentManager: IDocumentManager | null;
+  private _docmanagerSettings: ISettingRegistry.ISettings | null;
 }
 
 /**
