@@ -7,7 +7,6 @@ import uuid
 from datetime import datetime, timezone
 from enum import Enum, IntEnum
 from pathlib import Path
-from typing import Tuple
 
 from ._version import __version__  # noqa
 
@@ -51,7 +50,7 @@ class WriteError(Exception):
     pass
 
 
-def decode_file_path(path: str) -> Tuple[str, str, str]:
+def decode_file_path(path: str) -> tuple[str, str, str]:
     """
     Decodes a file path. The file path is composed by the format,
     content type, and path or file id separated by ':'.
@@ -60,7 +59,7 @@ def decode_file_path(path: str) -> Tuple[str, str, str]:
             path (str): File path.
 
         Returns:
-            components (Tuple[str, str, str]): A tuple with the format,
+            components (tuple[str, str, str]): A tuple with the format,
                 content type, and path or file id.
     """
     format, file_type, file_id = path.split(":", 2)
@@ -115,7 +114,7 @@ def _load_previous_sessions(root_dir: str) -> dict:
                 if isinstance(value, dict):
                     clean_sessions[str(key)] = value
             return clean_sessions
-        except (json.JSONDecodeError, IOError, UnicodeDecodeError):
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
             return {}
     return {}
 
@@ -146,7 +145,7 @@ async def save_current_session(
             del sessions[oldest_key]
         try:
             store_path.write_text(json.dumps(sessions, indent=2))
-        except IOError:
+        except OSError:
             pass
 
 
