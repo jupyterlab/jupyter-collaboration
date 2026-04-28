@@ -2167,6 +2167,7 @@ __metadata:
     "@jupyterlab/application": ^4.5.0
     "@jupyterlab/apputils": ^4.5.0
     "@jupyterlab/builder": ^4.5.0
+    "@jupyterlab/docmanager": ^4.5.0
     "@jupyterlab/docregistry": ^4.5.0
     "@jupyterlab/filebrowser": ^4.5.0
     "@jupyterlab/fileeditor": ^4.5.0
@@ -2194,6 +2195,7 @@ __metadata:
     "@jupyterlab/apputils": ^4.5.0
     "@jupyterlab/cells": ^4.5.0
     "@jupyterlab/coreutils": ^6.5.0
+    "@jupyterlab/docmanager": ^4.5.0
     "@jupyterlab/notebook": ^4.5.0
     "@jupyterlab/services": ^7.5.0
     "@jupyterlab/testing": ^4.5.0

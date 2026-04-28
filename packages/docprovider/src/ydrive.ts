@@ -1,7 +1,8 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { PageConfig } from '@jupyterlab/coreutils';
+import { IChangedArgs, PageConfig } from '@jupyterlab/coreutils';
+import { IDocumentManager } from '@jupyterlab/docmanager';
 import { TranslationBundle } from '@jupyterlab/translation';
 import {
   Contents,
@@ -26,7 +27,6 @@ import {
   ISharedModelFactory
 } from '@jupyter/collaborative-drive';
 import { Awareness } from 'y-protocols/awareness';
-import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
 
@@ -48,7 +48,7 @@ namespace RtcContentProvider {
     trans: TranslationBundle;
     globalAwareness: Awareness | null;
     serverSettings: ServerConnection.ISettings;
-    docmanagerSettings: ISettingRegistry.ISettings | null;
+    documentManager: IDocumentManager | null;
     currentDrive: Contents.IDrive;
     fileChanged?: ISignal<Contents.IDrive, Contents.IChangedArgs>;
   }
@@ -63,7 +63,7 @@ export class RtcContentProvider implements IContentProvider {
     this._currentDrive = options.currentDrive;
     this.sharedModelFactory = new SharedModelFactory(this._onCreate);
     this._providers = new Map<string, WebSocketProvider>();
-    this._docmanagerSettings = options.docmanagerSettings;
+    this._documentManager = options.documentManager;
     this._driveFileChanged = options.fileChanged;
   }
 
@@ -234,16 +234,26 @@ export class RtcContentProvider implements IContentProvider {
       return;
     }
     // Set initial autosave value, used to determine backend autosave (default: true)
-    const autosave =
-      (this._docmanagerSettings?.composite?.['autosave'] as boolean) ?? true;
+    sharedModel.awareness.setLocalStateField(
+      'autosave',
+      this._documentManager?.autosave ?? true
+    );
 
-    sharedModel.awareness.setLocalStateField('autosave', autosave);
-
-    // Watch for changes in settings
-    this._docmanagerSettings?.changed.connect(() => {
-      const newAutosave =
-        (this._docmanagerSettings?.composite?.['autosave'] as boolean) ?? true;
-      sharedModel.awareness.setLocalStateField('autosave', newAutosave);
+    // Watch for autosave changes on the document manager.
+    const handleStateChanged = (
+      _: IDocumentManager,
+      args: IChangedArgs<any>
+    ) => {
+      if (args.name === 'autosave') {
+        sharedModel.awareness.setLocalStateField(
+          'autosave',
+          this._documentManager?.autosave ?? true
+        );
+      }
+    };
+    this._documentManager?.stateChanged.connect(handleStateChanged);
+    sharedModel.disposed.connect(() => {
+      this._documentManager?.stateChanged.disconnect(handleStateChanged);
     });
 
     try {
@@ -425,7 +435,7 @@ export class RtcContentProvider implements IContentProvider {
   // This is for listening to `Drive.fileChanged` signal
   private _driveFileChanged?: ISignal<Contents.IDrive, Contents.IChangedArgs>;
   private _serverSettings: ServerConnection.ISettings;
-  private _docmanagerSettings: ISettingRegistry.ISettings | null;
+  private _documentManager: IDocumentManager | null;
 }
 
 /**
