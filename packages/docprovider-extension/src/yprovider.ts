@@ -524,9 +524,7 @@ const PLUGIN_ID = '@jupyter/collaboration-extension:websocket-provider';
  * Document provider factory that creates WebSocket providers.
  */
 class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
-  constructor(
-    private _trans: TranslationBundle
-  ) {}
+  constructor(private _trans: TranslationBundle) {}
 
   create(options: IDocumentProviderFactory.IOptions) {
     return new WebSocketProvider({
@@ -545,9 +543,7 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
  * Awareness provider factory that creates WebSocket awareness providers.
  */
 class WebSocketAwarenessProviderFactory implements IAwarenessProviderFactory {
-  constructor(
-    private _serverSettings: ServerConnection.ISettings
-  ) {}
+  constructor(private _serverSettings: ServerConnection.ISettings) {}
 
   create(options: IAwarenessProviderFactory.IOptions) {
     const url = URLExt.join(
