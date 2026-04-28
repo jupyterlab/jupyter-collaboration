@@ -17,11 +17,11 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Framework :: Jupyter"
 ]
 authors = [
@@ -55,7 +55,6 @@ test = [
     "pytest-cov",
     "anyio",
     "httpx-ws >=0.9.0",
-    "importlib_metadata >=4.8.3; python_version<'3.10'",
 ]
 
 [tool.hatch.version]

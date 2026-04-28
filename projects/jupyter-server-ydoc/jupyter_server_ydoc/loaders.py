@@ -4,10 +4,11 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable, Coroutine
 from http import HTTPStatus
 from logging import Logger, getLogger
 from time import time
-from typing import Any, Callable, Coroutine
+from typing import Any
 
 from jupyter_server.services.contents.manager import (
     AsyncContentsManager,
