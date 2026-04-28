@@ -47,14 +47,10 @@ repos:
         additional_dependencies: [tornado, pytest, 'pycrdt-websocket>=0.16.0,<0.17.0']
         stages: [manual]
 
-  - repo: https://github.com/sirosen/check-jsonschema
-    rev: 0.21.0
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.37.1
     hooks:
-      - id: check-jsonschema
-        name: "Check GitHub Workflows"
-        files: ^\.github/workflows/
-        types: [yaml]
-        args: ["--schemafile", "https://json.schemastore.org/github-workflow"]
+      - id: check-github-workflows
         stages: [manual]
 
   - repo: local
