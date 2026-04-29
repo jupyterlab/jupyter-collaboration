@@ -15,10 +15,8 @@ import {
   IEditorExtensionRegistry
 } from '@jupyterlab/codemirror';
 import { IGlobalAwareness } from '@jupyter/collaborative-drive';
-import { WebSocketAwarenessProvider } from '@jupyter/docprovider';
+import { IAwarenessProviderFactory } from '@jupyter/docprovider';
 import { SidePanel, usersIcon } from '@jupyterlab/ui-components';
-import { URLExt } from '@jupyterlab/coreutils';
-import { ServerConnection } from '@jupyterlab/services';
 import { IStateDB, StateDB } from '@jupyterlab/statedb';
 import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 
@@ -89,24 +87,26 @@ export const menuBarPlugin: JupyterFrontEndPlugin<void> = {
 export const rtcGlobalAwarenessPlugin: JupyterFrontEndPlugin<IAwareness> = {
   id: '@jupyter/collaboration-extension:rtcGlobalAwareness',
   description: 'Add global awareness to share working document of users.',
-  requires: [IStateDB],
+  requires: [IStateDB, IAwarenessProviderFactory],
   provides: IGlobalAwareness,
-  activate: (app: JupyterFrontEnd, state: StateDB): IAwareness => {
+  activate: (
+    app: JupyterFrontEnd,
+    state: StateDB,
+    factory: IAwarenessProviderFactory
+  ): IAwareness => {
     const { user } = app.serviceManager;
 
     const ydoc = new Y.Doc();
     const awareness = new Awareness(ydoc);
 
-    const server =
-      app.serviceManager.serverSettings ?? ServerConnection.makeSettings();
-    const url = URLExt.join(server.wsUrl, 'api/collaboration/room');
-
-    new WebSocketAwarenessProvider({
-      url: url,
+    const awarenessOptions = {
       roomID: 'JupyterLab:globalAwareness',
       awareness: awareness,
-      user: user
-    });
+      user: user,
+      serverSettings: app.serviceManager.serverSettings
+    };
+
+    factory.create(awarenessOptions);
 
     state.changed.connect(async () => {
       const data: any = await state.toJSON();

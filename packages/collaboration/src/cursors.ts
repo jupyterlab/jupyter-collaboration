@@ -171,7 +171,10 @@ const remoteCursorsLayer = layer({
   above: true,
   markers(view) {
     const { awareness, ytext } = view.state.facet(editorAwarenessFacet);
-    const ydoc = ytext.doc!;
+    const ydoc = ytext.doc;
+    if (!ydoc) {
+      return [];
+    }
     const cursors: LayerMarker[] = [];
     awareness.getStates().forEach((state: IAwarenessState, clientID) => {
       if (clientID === awareness.doc.clientID) {
@@ -235,7 +238,10 @@ const remoteCursorsLayer = layer({
 const userHover = hoverTooltip(
   (view, pos) => {
     const { awareness, ytext } = view.state.facet(editorAwarenessFacet);
-    const ydoc = ytext.doc!;
+    const ydoc = ytext.doc;
+    if (!ydoc) {
+      return null;
+    }
 
     for (const [clientID, state] of awareness.getStates()) {
       if (clientID === awareness.doc.clientID) {
@@ -286,7 +292,10 @@ const remoteSelectionLayer = layer({
   above: false,
   markers(view) {
     const { awareness, ytext } = view.state.facet(editorAwarenessFacet);
-    const ydoc = ytext.doc!;
+    const ydoc = ytext.doc;
+    if (!ydoc) {
+      return [];
+    }
     const cursors: LayerMarker[] = [];
     awareness.getStates().forEach((state: IAwarenessState, clientID) => {
       if (clientID === awareness.doc.clientID) {

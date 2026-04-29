@@ -25,11 +25,15 @@ type UserIconProps = {
  */
 export function UserIconComponent(props: UserIconProps): JSX.Element {
   const { userManager, onClick } = props;
-  const [user, setUser] = useState(userManager.identity!);
+  const [user, setUser] = useState(
+    userManager.identity ?? { display_name: '', color: '', initials: '' }
+  );
 
   useEffect(() => {
     const updateUser = () => {
-      setUser(userManager.identity!);
+      setUser(
+        userManager.identity ?? { display_name: '', color: '', initials: '' }
+      );
     };
 
     userManager.userChanged.connect(updateUser);
