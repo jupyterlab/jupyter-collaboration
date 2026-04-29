@@ -1,7 +1,9 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { PageConfig } from '@jupyterlab/coreutils';
+import { IChangedArgs, PageConfig } from '@jupyterlab/coreutils';
+import { IDocumentManager } from '@jupyterlab/docmanager';
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { TranslationBundle } from '@jupyterlab/translation';
 import {
   Contents,
@@ -26,6 +28,8 @@ import {
 import { IDocumentProviderFactory } from './tokens';
 import { Awareness } from 'y-protocols/awareness';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import * as decoding from 'lib0/decoding';
+import * as encoding from 'lib0/encoding';
 
 const DISABLE_RTC =
   PageConfig.getOption('disableRTC') === 'true' ? true : false;
@@ -44,10 +48,17 @@ namespace RtcContentProvider {
     trans: TranslationBundle;
     globalAwareness: Awareness | null;
     serverSettings: ServerConnection.ISettings;
-    docmanagerSettings: ISettingRegistry.ISettings | null;
+    documentManager?: IDocumentManager | null;
     currentDrive: Contents.IDrive;
     fileChanged?: ISignal<Contents.IDrive, Contents.IChangedArgs>;
     providerFactory: IDocumentProviderFactory;
+    /**
+     * @deprecated Pass `documentManager` instead. Used as a fallback when
+     * `documentManager` is not provided. Will be removed in a future major
+     * release.
+     * @see {@link IOptions.documentManager}
+     */
+    docmanagerSettings?: ISettingRegistry.ISettings | null;
   }
 }
 
@@ -60,7 +71,8 @@ export class RtcContentProvider implements IContentProvider {
     this._currentDrive = options.currentDrive;
     this.sharedModelFactory = new SharedModelFactory(this._onCreate);
     this._providers = new Map<string, IDocumentProvider & IForkProvider>();
-    this._docmanagerSettings = options.docmanagerSettings;
+    this._documentManager = options.documentManager ?? null;
+    this._docmanagerSettings = options.docmanagerSettings ?? null;
     this._driveFileChanged = options.fileChanged;
     this._providerFactory = options.providerFactory;
   }
@@ -184,17 +196,41 @@ export class RtcContentProvider implements IContentProvider {
       return;
     }
     // Set initial autosave value, used to determine backend autosave (default: true)
-    const autosave =
-      (this._docmanagerSettings?.composite?.['autosave'] as boolean) ?? true;
+    const getAutosave = (): boolean => {
+      if (this._documentManager) {
+        return this._documentManager.autosave ?? true;
+      }
+      return (
+        (this._docmanagerSettings?.composite?.['autosave'] as boolean) ?? true
+      );
+    };
 
-    sharedModel.awareness.setLocalStateField('autosave', autosave);
+    sharedModel.awareness.setLocalStateField('autosave', getAutosave());
 
-    // Watch for changes in settings
-    this._docmanagerSettings?.changed.connect(() => {
-      const newAutosave =
-        (this._docmanagerSettings?.composite?.['autosave'] as boolean) ?? true;
-      sharedModel.awareness.setLocalStateField('autosave', newAutosave);
-    });
+    if (this._documentManager) {
+      // Watch for autosave changes on the document manager.
+      const handleStateChanged = (
+        _: IDocumentManager,
+        args: IChangedArgs<any>
+      ) => {
+        if (args.name === 'autosave') {
+          sharedModel.awareness.setLocalStateField('autosave', getAutosave());
+        }
+      };
+      this._documentManager.stateChanged.connect(handleStateChanged);
+      sharedModel.disposed.connect(() => {
+        this._documentManager?.stateChanged.disconnect(handleStateChanged);
+      });
+    } else if (this._docmanagerSettings) {
+      // Fall back to watching the deprecated docmanager settings.
+      const handleSettingsChanged = () => {
+        sharedModel.awareness.setLocalStateField('autosave', getAutosave());
+      };
+      this._docmanagerSettings.changed.connect(handleSettingsChanged);
+      sharedModel.disposed.connect(() => {
+        this._docmanagerSettings?.changed.disconnect(handleSettingsChanged);
+      });
+    }
 
     try {
       const providerOptions = {
@@ -377,6 +413,7 @@ export class RtcContentProvider implements IContentProvider {
   // This is for listening to `Drive.fileChanged` signal
   private _driveFileChanged?: ISignal<Contents.IDrive, Contents.IChangedArgs>;
   private _serverSettings: ServerConnection.ISettings;
+  private _documentManager: IDocumentManager | null;
   private _docmanagerSettings: ISettingRegistry.ISettings | null;
   private _providerFactory: IDocumentProviderFactory;
 }

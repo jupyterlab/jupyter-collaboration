@@ -14,6 +14,7 @@ import { Widget } from '@lumino/widgets';
 import { IStatusBar } from '@jupyterlab/statusbar';
 import { ContentsManager } from '@jupyterlab/services';
 
+import { IDocumentManager } from '@jupyterlab/docmanager';
 import {
   IEditorTracker,
   IEditorWidgetFactory,
@@ -56,14 +57,14 @@ export const rtcContentProvider: JupyterFrontEndPlugin<ICollaborativeContentProv
     description: 'The RTC content provider',
     provides: ICollaborativeContentProvider,
     requires: [ITranslator, IDocumentProviderFactory],
-    optional: [IGlobalAwareness, ISettingRegistry],
-    activate: async (
+    optional: [IGlobalAwareness, IDocumentManager],
+    activate: (
       app: JupyterFrontEnd,
       translator: ITranslator,
       providerFactory: IDocumentProviderFactory,
       globalAwareness: Awareness | null,
-      settingRegistry: ISettingRegistry | null
-    ): Promise<ICollaborativeContentProvider> => {
+      documentManager: IDocumentManager | null
+    ): ICollaborativeContentProvider => {
       const trans = translator.load('jupyter_collaboration');
       const defaultDrive = (app.serviceManager.contents as ContentsManager)
         .defaultDrive;
@@ -78,17 +79,13 @@ export const rtcContentProvider: JupyterFrontEndPlugin<ICollaborativeContentProv
           'Cannot initialize content provider: no content provider registry.'
         );
       }
-      const docmanagerSettings = settingRegistry
-        ? await settingRegistry.load('@jupyterlab/docmanager-extension:plugin')
-        : null;
-
       const rtcContentProvider = new RtcContentProvider({
         currentDrive: defaultDrive,
         serverSettings: defaultDrive.serverSettings,
         user: app.serviceManager.user,
         trans,
         globalAwareness,
-        docmanagerSettings,
+        documentManager,
         fileChanged: defaultDrive.fileChanged,
         providerFactory: providerFactory
       });
@@ -150,7 +147,7 @@ export const ynotebook: JupyterFrontEndPlugin<void> = {
               'experimentalEnableDocumentWideUndoRedo'
             ).composite as boolean;
 
-            disableDocumentWideUndoRedo = !enableDocWideUndo ?? true;
+            disableDocumentWideUndoRedo = !enableDocWideUndo;
           };
 
           updateSettings(settings);

@@ -3,10 +3,9 @@
 
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 
-def execute(cmd: str, cwd: Optional[Path] = None) -> None:
+def execute(cmd: str, cwd: Path | None = None) -> None:
     subprocess.run(cmd.split(" "), check=True, cwd=cwd)
 
 
