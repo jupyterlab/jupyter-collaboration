@@ -21,7 +21,7 @@ import { URLExt } from '@jupyterlab/coreutils';
 /**
  * The plugin ID for settings.
  */
-const PLUGIN_ID = '@jupyter/collaboration-extension:websocket-provider';
+const PLUGIN_ID = '@jupyter/docprovider-extension:websocket-provider';
 
 /**
  * Document provider factory that creates WebSocket providers.
