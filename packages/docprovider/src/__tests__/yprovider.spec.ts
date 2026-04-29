@@ -15,7 +15,7 @@ import {
 import { requestDocSession } from '../requests';
 import { WebSocketProvider } from '../yprovider';
 
-jest.mock('@jupyter/docprovider', () => ({
+jest.mock('../requests', () => ({
   requestDocSession: jest.fn()
 }));
 
