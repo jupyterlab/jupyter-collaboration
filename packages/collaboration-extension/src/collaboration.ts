@@ -102,7 +102,8 @@ export const rtcGlobalAwarenessPlugin: JupyterFrontEndPlugin<IAwareness> = {
     const awarenessOptions = {
       roomID: 'JupyterLab:globalAwareness',
       awareness: awareness,
-      user: user
+      user: user,
+      serverSettings: app.serviceManager.serverSettings
     };
 
     factory.create(awarenessOptions);

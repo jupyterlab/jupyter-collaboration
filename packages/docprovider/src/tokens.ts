@@ -243,6 +243,11 @@ export namespace IAwarenessProviderFactory {
      * The user data
      */
     user: User.IManager;
+
+    /**
+     * The server settings.
+     */
+    serverSettings: ServerConnection.ISettings;
   }
 }
 

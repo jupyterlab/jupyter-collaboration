@@ -3,7 +3,6 @@
 | Distributed under the terms of the Modified BSD License.
 |----------------------------------------------------------------------------*/
 
-import { ServerConnection } from '@jupyterlab/services';
 import { ITranslator, TranslationBundle } from '@jupyterlab/translation';
 
 import {
@@ -47,11 +46,9 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
  * Awareness provider factory that creates WebSocket awareness providers.
  */
 class WebSocketAwarenessProviderFactory implements IAwarenessProviderFactory {
-  constructor(private _serverSettings: ServerConnection.ISettings) {}
-
   create(options: IAwarenessProviderFactory.IOptions) {
     const url = URLExt.join(
-      this._serverSettings.wsUrl,
+      options.serverSettings.wsUrl,
       'api/collaboration/room'
     );
     return new WebSocketAwarenessProvider({
@@ -90,7 +87,6 @@ export const awarenessProviderFactoryPlugin: JupyterFrontEndPlugin<IAwarenessPro
     optional: [],
     provides: IAwarenessProviderFactory,
     activate: async (app: JupyterFrontEnd) => {
-      const { serverSettings } = app.serviceManager;
-      return new WebSocketAwarenessProviderFactory(serverSettings);
+      return new WebSocketAwarenessProviderFactory();
     }
   };
