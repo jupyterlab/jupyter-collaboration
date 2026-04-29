@@ -19,11 +19,6 @@ import {
 
 import { URLExt } from '@jupyterlab/coreutils';
 
-export interface IContent {
-  type: string;
-  body: string;
-}
-
 /**
  * The plugin ID for settings.
  */

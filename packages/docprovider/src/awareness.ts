@@ -11,6 +11,11 @@ import { User } from '@jupyterlab/services';
 
 import { IAwarenessProvider } from './tokens';
 
+export interface IContent {
+  type: string;
+  body: string;
+}
+
 /**
  * A class to provide Yjs synchronization over WebSocket.
  *
