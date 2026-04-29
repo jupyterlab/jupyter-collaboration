@@ -12,7 +12,7 @@ import {
   sleep,
   waitForDialog
 } from '@jupyterlab/testutils';
-import { requestDocSession } from '@jupyter/docprovider';
+import { requestDocSession } from '../requests';
 import { WebSocketProvider } from '../yprovider';
 
 jest.mock('@jupyter/docprovider', () => ({
