@@ -27,9 +27,6 @@ import {
 } from '@jupyter/collaborative-drive';
 import { IDocumentProviderFactory } from './tokens';
 import { Awareness } from 'y-protocols/awareness';
-import { ISettingRegistry } from '@jupyterlab/settingregistry';
-import * as decoding from 'lib0/decoding';
-import * as encoding from 'lib0/encoding';
 
 const DISABLE_RTC =
   PageConfig.getOption('disableRTC') === 'true' ? true : false;
