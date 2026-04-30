@@ -225,7 +225,7 @@ class YDocExtension(ExtensionApp):
 
                 if not self.ywebsocket_server.started.is_set():
                     asyncio.create_task(self.ywebsocket_server.start())
-                    await self.ywebsocket_server.started.wait()                
+                    await self.ywebsocket_server.started.wait()
 
                 file_format_str, file_type, file_id = decode_file_path(room_id)
                 # cast down so mypy won’t complain when we pass this into DocumentRoom
