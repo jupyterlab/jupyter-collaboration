@@ -1,24 +1,28 @@
-/* -----------------------------------------------------------------------------
-| Copyright (c) Jupyter Development Team.
-| Distributed under the terms of the Modified BSD License.
-|----------------------------------------------------------------------------*/
+/*
+ * Copyright (c) Jupyter Development Team.
+ * Distributed under the terms of the Modified BSD License.
+ */
 
-import { IDocumentProvider } from '@jupyter/collaborative-drive';
-import { showErrorMessage, Dialog } from '@jupyterlab/apputils';
-import { ServerConnection, User } from '@jupyterlab/services';
-import { TranslationBundle } from '@jupyterlab/translation';
+import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
+import { Awareness } from 'y-protocols/awareness';
 
-import { PromiseDelegate } from '@lumino/coreutils';
+import * as decoding from 'lib0/decoding';
+import * as encoding from 'lib0/encoding';
+
 import { Signal } from '@lumino/signaling';
+import { PromiseDelegate } from '@lumino/coreutils';
 
 import { DocumentChange, YDocument } from '@jupyter/ydoc';
+import { IDocumentProvider } from '@jupyter/collaborative-drive';
 
-import { Awareness } from 'y-protocols/awareness';
-import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
-
-import { requestDocSession } from './requests';
-import { IForkProvider } from './ydrive';
+import { ServerConnection, User } from '@jupyterlab/services';
 import { URLExt } from '@jupyterlab/coreutils';
+import { TranslationBundle } from '@jupyterlab/translation';
+import { Dialog, showDialog } from '@jupyterlab/apputils';
+
+import { IForkProvider } from './ydrive';
+import { requestDocSession } from './requests';
+import { ISessionClosePayload } from './tokens';
 
 /**
  * The url for the default drive service.
@@ -26,12 +30,16 @@ import { URLExt } from '@jupyterlab/coreutils';
 const DOCUMENT_PROVIDER_URL = 'api/collaboration/room';
 
 /**
+ * The raw message type.
+ */
+const RAW_MESSAGE_TYPE = 2;
+
+/**
  * A class to provide Yjs synchronization over WebSocket.
  *
  * We specify custom messages that the server can interpret. For reference please look in yjs_ws_server.
  *
  */
-
 export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   /**
    * Construct a new WebSocketProvider
@@ -101,6 +109,64 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   async reconnect(): Promise<void> {
     this._disconnect();
     this._connect();
+  }
+
+  async save(): Promise<void> {
+    const ws = this._yWebsocketProvider?.ws;
+    if (ws) {
+      const saveId = ++this._saveCounter;
+      const delegate = new PromiseDelegate<void>();
+      const handler = (event: MessageEvent) => {
+        const data = new Uint8Array(event.data);
+        const decoder = decoding.createDecoder(data);
+        try {
+          const messageType = decoding.readVarUint(decoder);
+          if (messageType !== RAW_MESSAGE_TYPE) {
+            return;
+          }
+        } catch {
+          return;
+        }
+        const rawReply = decoding.readVarString(decoder);
+        let reply: {
+          type: 'save';
+          responseTo: number;
+          status: 'success' | 'skipped' | 'failed';
+        } | null = null;
+        try {
+          reply = JSON.parse(rawReply);
+        } catch (e) {
+          console.debug('The raw reply received was not a JSON reply');
+        }
+        if (
+          reply &&
+          reply['type'] === 'save' &&
+          reply['responseTo'] === saveId
+        ) {
+          if (reply.status === 'success') {
+            delegate.resolve();
+          } else if (reply.status === 'failed') {
+            delegate.reject('Saving failed');
+          } else if (reply.status === 'skipped') {
+            delegate.reject('Saving already in progress');
+          } else {
+            delegate.reject('Unrecognised save reply status');
+          }
+        }
+      };
+      ws.addEventListener('message', handler);
+      const encoder = encoding.createEncoder();
+      encoding.writeVarUint(encoder, RAW_MESSAGE_TYPE);
+      encoding.writeVarString(encoder, 'save');
+      encoding.writeVarUint(encoder, saveId);
+      const saveMessage = encoding.toUint8Array(encoder);
+      ws.send(saveMessage);
+      try {
+        await delegate.promise;
+      } finally {
+        ws.removeEventListener('message', handler);
+      }
+    }
   }
 
   private get _serverUrl() {
@@ -173,14 +239,82 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     this._awareness.setLocalStateField('user', user.identity);
   }
 
-  private _onConnectionClosed = (event: any): void => {
+  private _buildSessionExpiredMessage(
+    payload: ISessionClosePayload,
+    trans: TranslationBundle
+  ): { title: string; body: string } {
+    switch (payload.reason) {
+      case 'version_mismatch':
+        return {
+          title: trans.__('Collaboration extension updated'),
+          body: trans.__('Reload the browser tab to load the new version.')
+        };
+      case 'initialization_error':
+        return {
+          title: trans.__('Document error'),
+          body: trans.__(
+            'Failed to initialize the document. Close this tab and reopen the file.'
+          )
+        };
+      case 'unknown_session':
+      default:
+        return {
+          title: trans.__('Session expired'),
+          body: payload.errorReason
+            ? trans.__(payload.errorReason)
+            : trans.__('Reload the browser tab to continue.')
+        };
+    }
+  }
+
+  private _onConnectionClosed = async (event: CloseEvent): Promise<void> => {
+    if ([4400, 4404, 4500].includes(event.code)) {
+      if (!this._hasSynced) {
+        // Rejecting the ready promise will close the file placeholder widget.
+        const reason = this._getCloseReasonMessage(
+          event.code as 4400 | 4404 | 4500
+        );
+        this._ready.reject(reason);
+        // Disposing model prevents repeated websocket reconnection attempts.
+        // Rejecting the ready promise will ultimately close the file,
+        // but the document manager takes some time to do so.
+        this._sharedModel.dispose();
+      }
+    }
     if (event.code === 1003) {
       console.error('Document provider closed:', event.reason);
 
-      showErrorMessage(this._trans.__('Document session error'), event.reason, [
-        Dialog.okButton()
-      ]);
+      let payload: ISessionClosePayload;
+      try {
+        payload = JSON.parse(event.reason) as ISessionClosePayload;
+      } catch {
+        payload = {
+          reason: 'unknown_session',
+          sessionId: '',
+          reloadable: false,
+          errorReason: event.reason
+        };
+      }
 
+      const { title, body } = this._buildSessionExpiredMessage(
+        payload,
+        this._trans
+      );
+
+      const result = await showDialog({
+        title,
+        body,
+        buttons: payload.reloadable
+          ? [
+              Dialog.cancelButton({ label: this._trans.__('Continue') }),
+              Dialog.okButton({ label: this._trans.__('Reload') })
+            ]
+          : [Dialog.okButton({ label: this._trans.__('Ok') })]
+      });
+
+      if (result.button.accept && payload.reloadable) {
+        window.location.reload();
+      }
       // Dispose shared model immediately. Better break the document model,
       // than overriding data on disk.
       this._sharedModel.dispose();
@@ -189,6 +323,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
 
   private _onSync = (isSynced: boolean) => {
     if (isSynced) {
+      this._hasSynced = true;
       if (this._yWebsocketProvider) {
         this._yWebsocketProvider.off('sync', this._onSync);
 
@@ -198,6 +333,23 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       this._ready.resolve();
     }
   };
+
+  private _getCloseReasonMessage(code: 4400 | 4404 | 4500): string {
+    switch (code) {
+      case 4400: {
+        return this._trans.__('Bad request for %1', this._path);
+      }
+      case 4404: {
+        return this._trans.__('Could not find %1', this._path);
+      }
+      case 4500: {
+        return this._trans.__(
+          'Internal server error when loading %1',
+          this._path
+        );
+      }
+    }
+  }
 
   private _awareness: Awareness;
   private _contentType: string;
@@ -210,6 +362,8 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _yWebsocketProvider: YWebsocketProvider | null;
   private _serverSettings: ServerConnection.ISettings;
   private _trans: TranslationBundle;
+  private _hasSynced = false;
+  private _saveCounter = 0;
 }
 
 /**

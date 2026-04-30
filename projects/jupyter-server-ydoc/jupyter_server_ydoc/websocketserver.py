@@ -4,8 +4,9 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 from logging import Logger
-from typing import Any, Callable
+from typing import Any
 
 from pycrdt import Channel
 from pycrdt.store import BaseYStore

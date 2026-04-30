@@ -6,6 +6,7 @@
       {
         "name": "@jupyter/collaboration:shared-link",
         "command": "collaboration:shared-link",
+        "label": "",
         "rank": 99
       }
     ]

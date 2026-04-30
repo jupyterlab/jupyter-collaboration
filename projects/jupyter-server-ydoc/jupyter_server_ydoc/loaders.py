@@ -4,11 +4,11 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable, Coroutine
+from http import HTTPStatus
 from logging import Logger, getLogger
 from time import time
-from typing import Any, Callable, Coroutine
-from tornado.web import HTTPError
-from http import HTTPStatus
+from typing import Any
 
 from jupyter_server.services.contents.manager import (
     AsyncContentsManager,
@@ -16,6 +16,7 @@ from jupyter_server.services.contents.manager import (
 )
 from jupyter_server.utils import ensure_async
 from jupyter_server_fileid.manager import BaseFileIdManager
+from tornado.web import HTTPError
 
 from .utils import OutOfBandChanges
 
@@ -148,7 +149,8 @@ class FileLoader:
         Save the content of the file.
 
             Parameters:
-                model (dict): A dictionary with format, type, last_modified, and content of the file.
+                model (dict): A dictionary with format, type, last_modified,
+                    and content of the file.
 
             Raises:
                 OutOfBandChanges: if the file was modified at a latter time than the model
@@ -246,7 +248,10 @@ class FileLoader:
                             errors_duration = time() - consecutive_errors_started
                             if errors_duration > self._stop_poll_on_errors_after:
                                 self._log.warning(
-                                    "Stopping watching file due to consecutive errors over %s seconds: %s",
+                                    (
+                                        "Stopping watching file due to consecutive "
+                                        "errors over %s seconds: %s"
+                                    ),
                                     self._stop_poll_on_errors_after,
                                     self.path,
                                 )
@@ -313,7 +318,8 @@ class FileLoaderMapping:
         Args:
             settings: Server settings
             log: [optional] Server log; default to local logger
-            file_poll_interval: [optional] Interval between room notification; default the loader won't poll
+            file_poll_interval: [optional] Interval between room
+                notification; default the loader won't poll
         """
         self._settings = settings
         self.__dict: dict[str, FileLoader] = {}

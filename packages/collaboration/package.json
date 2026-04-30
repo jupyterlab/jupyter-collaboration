@@ -1,6 +1,6 @@
 {
   "name": "@jupyter/collaboration",
-  "version": "4.2.1",
+  "version": "4.3.0",
   "description": "JupyterLab - Real-Time Collaboration Widgets",
   "homepage": "https://github.com/jupyterlab/jupyter-collaboration",
   "bugs": {
@@ -58,7 +58,7 @@
   "devDependencies": {
     "@types/react": "~18.3.1",
     "rimraf": "^4.1.2",
-    "typescript": "~5.1.6"
+    "typescript": "~5.9.3"
   },
   "publishConfig": {
     "access": "public"

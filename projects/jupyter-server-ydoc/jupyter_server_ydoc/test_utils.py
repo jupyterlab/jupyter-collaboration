@@ -5,9 +5,9 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any
-from tornado.web import HTTPError
 
 from jupyter_server import _tz as tz
+from tornado.web import HTTPError
 
 
 class FakeFileIDManager:

@@ -100,10 +100,12 @@ export class CollaboratorsPanel extends Panel {
     const collaboratorsMap = new Map<string, ICollaboratorAwareness>();
 
     state.forEach((value: Partial<ICollaboratorAwareness>, key: any) => {
+      const currentIdentity = this._currentUser.identity;
       if (
         this._currentUser.isReady &&
         value.user &&
-        value.user.username !== this._currentUser.identity!.username
+        currentIdentity &&
+        value.user.username !== currentIdentity.username
       ) {
         const uniqueKey = `${value.user.username}-${
           value.current || 'no-current'

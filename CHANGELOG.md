@@ -4,6 +4,74 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 4.3.0
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@4.2.1...9293fa90884423049a812d8573e9d8737276d9cf))
+
+### Enhancements made
+
+- Improve UX for reconnecting after server restart [#548](https://github.com/jupyterlab/jupyter-collaboration/pull/548) ([@Darshan808](https://github.com/Darshan808), [@davidbrochart](https://github.com/davidbrochart), [@krassowski](https://github.com/krassowski))
+- Use jupyter-ydoc's `aget`/`aset` [#544](https://github.com/jupyterlab/jupyter-collaboration/pull/544) ([@davidbrochart](https://github.com/davidbrochart), [@krassowski](https://github.com/krassowski))
+
+### Bugs fixed
+
+- Skip redundant `aset` on out-of-band changes [#556](https://github.com/jupyterlab/jupyter-collaboration/pull/556) ([@jordanhboxer](https://github.com/jordanhboxer), [@Hnasar](https://github.com/Hnasar), [@claude](https://github.com/claude), [@davidbrochart](https://github.com/davidbrochart), [@krassowski](https://github.com/krassowski))
+- Fix error handling on corrupted files [#550](https://github.com/jupyterlab/jupyter-collaboration/pull/550) ([@krassowski](https://github.com/krassowski), [@Copilot](https://github.com/Copilot), [@davidbrochart](https://github.com/davidbrochart))
+
+### Maintenance and upkeep improvements
+
+- Enable Ruff `E, F, I` rules and lint codebase [#553](https://github.com/jupyterlab/jupyter-collaboration/pull/553) ([@Darshan808](https://github.com/Darshan808), [@krassowski](https://github.com/krassowski))
+- Update snapshots after JupyterLab 4.5.6 release [#551](https://github.com/jupyterlab/jupyter-collaboration/pull/551) ([@krassowski](https://github.com/krassowski), [@Darshan808](https://github.com/Darshan808))
+- Disambiguate log messages [#543](https://github.com/jupyterlab/jupyter-collaboration/pull/543) ([@Carreau](https://github.com/Carreau), [@krassowski](https://github.com/krassowski))
+
+### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/use/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2026-02-05&to=2026-03-31&type=c))
+
+@Carreau ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ACarreau+updated%3A2026-02-05..2026-03-31&type=Issues)) | @claude ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aclaude+updated%3A2026-02-05..2026-03-31&type=Issues)) | @Copilot ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ACopilot+updated%3A2026-02-05..2026-03-31&type=Issues)) | @Darshan808 ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ADarshan808+updated%3A2026-02-05..2026-03-31&type=Issues)) | @davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2026-02-05..2026-03-31&type=Issues)) | @Hnasar ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AHnasar+updated%3A2026-02-05..2026-03-31&type=Issues)) | @jordanhboxer ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajordanhboxer+updated%3A2026-02-05..2026-03-31&type=Issues)) | @krassowski ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2026-02-05..2026-03-31&type=Issues))
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
+## 4.3.0rc0
+
+No merged PRs
+
+## 4.3.0beta0
+
+No merged PRs
+
+## 4.3.0alpha0
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@4.2.1...9293fa90884423049a812d8573e9d8737276d9cf))
+
+### Enhancements made
+
+- Improve UX for reconnecting after server restart [#548](https://github.com/jupyterlab/jupyter-collaboration/pull/548) ([@Darshan808](https://github.com/Darshan808), [@davidbrochart](https://github.com/davidbrochart), [@krassowski](https://github.com/krassowski))
+- Use jupyter-ydoc's `aget`/`aset` [#544](https://github.com/jupyterlab/jupyter-collaboration/pull/544) ([@davidbrochart](https://github.com/davidbrochart), [@krassowski](https://github.com/krassowski))
+
+### Bugs fixed
+
+- Skip redundant `aset` on out-of-band changes [#556](https://github.com/jupyterlab/jupyter-collaboration/pull/556) ([@jordanhboxer](https://github.com/jordanhboxer), [@Hnasar](https://github.com/Hnasar), [@claude](https://github.com/claude), [@davidbrochart](https://github.com/davidbrochart), [@krassowski](https://github.com/krassowski))
+- Fix error handling on corrupted files [#550](https://github.com/jupyterlab/jupyter-collaboration/pull/550) ([@krassowski](https://github.com/krassowski), [@Copilot](https://github.com/Copilot), [@davidbrochart](https://github.com/davidbrochart))
+
+### Maintenance and upkeep improvements
+
+- Enable Ruff `E, F, I` rules and lint codebase [#553](https://github.com/jupyterlab/jupyter-collaboration/pull/553) ([@Darshan808](https://github.com/Darshan808), [@krassowski](https://github.com/krassowski))
+- Update snapshots after JupyterLab 4.5.6 release [#551](https://github.com/jupyterlab/jupyter-collaboration/pull/551) ([@krassowski](https://github.com/krassowski), [@Darshan808](https://github.com/Darshan808))
+- Disambiguate log messages [#543](https://github.com/jupyterlab/jupyter-collaboration/pull/543) ([@Carreau](https://github.com/Carreau), [@krassowski](https://github.com/krassowski))
+
+### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/use/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2026-02-05&to=2026-03-27&type=c))
+
+@Carreau ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ACarreau+updated%3A2026-02-05..2026-03-27&type=Issues)) | @claude ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aclaude+updated%3A2026-02-05..2026-03-27&type=Issues)) | @Copilot ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ACopilot+updated%3A2026-02-05..2026-03-27&type=Issues)) | @Darshan808 ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ADarshan808+updated%3A2026-02-05..2026-03-27&type=Issues)) | @davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2026-02-05..2026-03-27&type=Issues)) | @Hnasar ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AHnasar+updated%3A2026-02-05..2026-03-27&type=Issues)) | @jordanhboxer ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajordanhboxer+updated%3A2026-02-05..2026-03-27&type=Issues)) | @krassowski ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2026-02-05..2026-03-27&type=Issues))
+
 ## 4.2.1
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@4.2.0...22cc16de10597e59a032675144d8d37a12c6d485))
@@ -30,8 +98,6 @@ See [our definition of contributors](https://github-activity.readthedocs.io/en/l
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2025-12-10&to=2026-02-05&type=c))
 
 @Carreau ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ACarreau+updated%3A2025-12-10..2026-02-05&type=Issues)) | @davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2025-12-10..2026-02-05&type=Issues)) | @jtpio ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajtpio+updated%3A2025-12-10..2026-02-05&type=Issues)) | @krassowski ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2025-12-10..2026-02-05&type=Issues)) | @martinRenou ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AmartinRenou+updated%3A2025-12-10..2026-02-05&type=Issues))
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 4.2.0
 

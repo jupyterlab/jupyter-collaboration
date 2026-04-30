@@ -14,6 +14,7 @@ import { Widget } from '@lumino/widgets';
 import { IStatusBar } from '@jupyterlab/statusbar';
 import { ContentsManager } from '@jupyterlab/services';
 
+import { IDocumentManager } from '@jupyterlab/docmanager';
 import {
   IEditorTracker,
   IEditorWidgetFactory,
@@ -37,7 +38,8 @@ import {
 import {
   IForkProvider,
   TimelineWidget,
-  RtcContentProvider
+  RtcContentProvider,
+  IDocumentProviderFactory
 } from '@jupyter/docprovider';
 import { Awareness } from 'y-protocols/awareness';
 import { URLExt } from '@jupyterlab/coreutils';
@@ -54,14 +56,15 @@ export const rtcContentProvider: JupyterFrontEndPlugin<ICollaborativeContentProv
     id: '@jupyter/docprovider-extension:content-provider',
     description: 'The RTC content provider',
     provides: ICollaborativeContentProvider,
-    requires: [ITranslator],
-    optional: [IGlobalAwareness, ISettingRegistry],
-    activate: async (
+    requires: [ITranslator, IDocumentProviderFactory],
+    optional: [IGlobalAwareness, IDocumentManager],
+    activate: (
       app: JupyterFrontEnd,
       translator: ITranslator,
+      providerFactory: IDocumentProviderFactory,
       globalAwareness: Awareness | null,
-      settingRegistry: ISettingRegistry | null
-    ): Promise<ICollaborativeContentProvider> => {
+      documentManager: IDocumentManager | null
+    ): ICollaborativeContentProvider => {
       const trans = translator.load('jupyter_collaboration');
       const defaultDrive = (app.serviceManager.contents as ContentsManager)
         .defaultDrive;
@@ -76,18 +79,15 @@ export const rtcContentProvider: JupyterFrontEndPlugin<ICollaborativeContentProv
           'Cannot initialize content provider: no content provider registry.'
         );
       }
-      const docmanagerSettings = settingRegistry
-        ? await settingRegistry.load('@jupyterlab/docmanager-extension:plugin')
-        : null;
-
       const rtcContentProvider = new RtcContentProvider({
         currentDrive: defaultDrive,
         serverSettings: defaultDrive.serverSettings,
         user: app.serviceManager.user,
         trans,
         globalAwareness,
-        docmanagerSettings,
-        fileChanged: defaultDrive.fileChanged
+        documentManager,
+        fileChanged: defaultDrive.fileChanged,
+        providerFactory: providerFactory
       });
       registry.register('rtc', rtcContentProvider);
       return rtcContentProvider;
@@ -147,7 +147,7 @@ export const ynotebook: JupyterFrontEndPlugin<void> = {
               'experimentalEnableDocumentWideUndoRedo'
             ).composite as boolean;
 
-            disableDocumentWideUndoRedo = !enableDocWideUndo ?? true;
+            disableDocumentWideUndoRedo = !enableDocWideUndo;
           };
 
           updateSettings(settings);

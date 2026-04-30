@@ -4,13 +4,14 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 from logging import Logger
-from typing import Any, Callable
+from typing import Any
 
 from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
-from pycrdt.websocket import YRoom
 from pycrdt.store import BaseYStore, YDocNotFound
+from pycrdt.websocket import YRoom
 
 from .loaders import FileLoader
 from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, OutOfBandChanges
@@ -123,9 +124,7 @@ class DocumentRoom(YRoom):
                     self._emit(
                         LogLevel.INFO,
                         "load",
-                        "Content loaded from the store {}".format(
-                            self.ystore.__class__.__qualname__
-                        ),
+                        f"Content loaded from the store {self.ystore.__class__.__qualname__}",
                     )
                     self.log.info(
                         "Content in room %s loaded from the ystore %s",
@@ -134,7 +133,8 @@ class DocumentRoom(YRoom):
                     )
                     read_from_source = False
                 except YDocNotFound:
-                    # YDoc not found in the YStore, create the document from the source file (no change history)
+                    # YDoc not found in the YStore, create the document from
+                    # the source file (no change history)
                     pass
 
             if not read_from_source:
@@ -223,7 +223,8 @@ class DocumentRoom(YRoom):
             return
 
         async with self._update_lock:
-            await self._document.aset(model["content"])
+            if await self._document.aget() != model["content"]:
+                await self._document.aset(model["content"])
             self._document.dirty = False
 
     def _on_filepath_change(self) -> None:
@@ -343,7 +344,8 @@ class DocumentRoom(YRoom):
                 return None
 
             async with self._update_lock:
-                await self._document.aset(model["content"])
+                if await self._document.aget() != model["content"]:
+                    await self._document.aset(model["content"])
                 self._document.dirty = False
 
             self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes while saving.")

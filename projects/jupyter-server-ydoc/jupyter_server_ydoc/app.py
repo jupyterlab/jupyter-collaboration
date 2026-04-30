@@ -191,7 +191,10 @@ class YDocExtension(ExtensionApp):
         If `copy=True`, the returned shared model is a fork, meaning that any changes
          made to it will not be propagated to the shared model used by the application.
         """
-        error_msg = "You need to provide either a ``room_id`` or the ``path``, the ``content_type`` and the ``file_format``."
+        error_msg = (
+            "You need to provide either a ``room_id`` or the ``path``, "
+            "the ``content_type`` and the ``file_format``."
+        )
         if room_id is None:
             if path is None or content_type is None or file_format is None:
                 raise ValueError(error_msg)

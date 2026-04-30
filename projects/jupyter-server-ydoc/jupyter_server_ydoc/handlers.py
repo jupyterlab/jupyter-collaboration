@@ -5,17 +5,16 @@ from __future__ import annotations
 
 import asyncio
 import json
-import uuid
+import os
 from logging import Logger
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
-from typing import cast
 
 from jupyter_server.auth import authorized
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS
-from pycrdt import Doc, Encoder, UndoManager
+from pycrdt import Decoder, Doc, Encoder, UndoManager
 from pycrdt.store import BaseYStore
 from pycrdt.websocket import YRoom
 from tornado import web
@@ -27,19 +26,21 @@ from .utils import (
     JUPYTER_COLLABORATION_AWARENESS_EVENTS_URI,
     JUPYTER_COLLABORATION_EVENTS_URI,
     JUPYTER_COLLABORATION_FORK_EVENTS_URI,
+    SERVER_SESSION,
+    YDOC_SERVER_VERSION,
     LogLevel,
+    MessageType,
+    check_session_compatibility,
     decode_file_path,
     encode_file_path,
     room_id_from_encoded_path,
+    save_current_session,
 )
 from .websocketserver import JupyterWebsocketServer, RoomNotFound
-from .utils import MessageType
-from pycrdt import Decoder
 
 YFILE = YDOCS["file"]
 
 
-SERVER_SESSION = str(uuid.uuid4())
 FORK_DOCUMENTS = {}
 FORK_ROOMS: dict[str, dict[str, str]] = {}
 
@@ -67,6 +68,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
     _message_queue: asyncio.Queue[Any]
     _background_tasks: set[asyncio.Task]
     _room_locks: dict[str, asyncio.Lock] = {}
+    _session_file_lock = asyncio.Lock()
 
     def _room_lock(self, room_id: str) -> asyncio.Lock:
         if room_id not in self._room_locks:
@@ -116,7 +118,11 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                         self._emit(
                             LogLevel.WARNING,
                             None,
-                            "There is another collaborative session accessing the same file.\nThe synchronization between rooms is not supported and you might lose some of your changes.",
+                            (
+                                "There is another collaborative session accessing the same "
+                                "file.\nThe synchronization between rooms is not supported "
+                                "and you might lose some of your changes."
+                            ),
                         )
 
                     file = self._file_loaders[file_id]
@@ -235,11 +241,35 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         if isinstance(self.room, DocumentRoom):
             # Close the connection if the document session expired
             session_id = self.get_query_argument("sessionId", "")
+            root_dir = self.settings.get("server_root_dir", os.getcwd())
+            document_version = getattr(self.room._document, "version", None)
+
+            # Persist the current session so future reconnects can validate it
+            await save_current_session(
+                root_dir,
+                SERVER_SESSION,
+                YDOC_SERVER_VERSION,
+                self._session_file_lock,
+                document_version=document_version,
+            )
             if SERVER_SESSION != session_id:
-                self.close(
-                    1003,
-                    f"Document session {session_id} expired. You need to reload this browser tab.",
+                cannot_reconnect, reason = check_session_compatibility(
+                    root_dir,
+                    session_id,
+                    YDOC_SERVER_VERSION,
+                    current_document_version=document_version,
                 )
+                if cannot_reconnect:
+                    # Must ask the user to reload
+                    close_payload = json.dumps(
+                        {
+                            "reason": reason,
+                            "sessionId": session_id,
+                            "reloadable": True,
+                        }
+                    )
+                    self.close(1003, close_payload)
+                # Else accept the old session, no reload needed.
 
             # cancel the deletion of the room if it was scheduled
             if self.room.cleaner is not None:
@@ -256,13 +286,36 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
                 # Close websocket and propagate error.
                 if isinstance(e, web.HTTPError):
-                    self.log.error(f"File {file.path} not found.\n{e!r}", exc_info=e)
-                    self.close(1004, f"File {file.path} not found.")
+                    if e.status_code == 404:
+                        error_code = 4404  # custom code for "file not found"
+                        self.log.error(f"File {file.path} not found.\n{e!r}", exc_info=e)
+                    elif e.status_code == 400:
+                        error_code = 4400  # custom code for "bad request"
+                        self.log.error(f"Bad request for file {file.path}.\n{e!r}", exc_info=e)
+                    elif e.status_code == 500:
+                        error_code = 4500  # custom code for "internal server error"
+                        self.log.error(
+                            f"Internal server error for file {file.path}.\n{e!r}", exc_info=e
+                        )
+                    else:
+                        error_code = 4500  # generic error code for other HTTP errors
+                        self.log.error(
+                            f"Error initializing room for file {file.path}.\n{e!r}", exc_info=e
+                        )
+                    self.close(
+                        error_code,
+                        f"Error initializing: {file.path}.",
+                    )
                 else:
                     self.log.error(f"Error initializing: {file.path}\n{e!r}", exc_info=e)
                     self.close(
                         1003,
-                        f"Error initializing: {file.path}. You need to close the document.",
+                        json.dumps(
+                            {
+                                "reason": "initialization_error",
+                                "reloadable": False,
+                            }
+                        ),
                     )
 
                 # Clean up the room and delete the file loader
@@ -410,7 +463,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         Update the users when the global awareness changes.
 
             Parameters:
-                topic (str): `"update"` or `"change"` (`"change"` is triggered only if the states are modified).
+                topic (str): `"update"` or `"change"` (`"change"` is triggered
+                    only if the states are modified).
                 changes (tuple[dict[str, Any], Any]): The changes and the origin of the changes.
         """
         if topic != "change":

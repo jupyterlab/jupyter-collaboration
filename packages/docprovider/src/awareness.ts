@@ -1,15 +1,15 @@
-/* -----------------------------------------------------------------------------
-| Copyright (c) Jupyter Development Team.
-| Distributed under the terms of the Modified BSD License.
-|----------------------------------------------------------------------------*/
+/*
+ * Copyright (c) Jupyter Development Team.
+ * Distributed under the terms of the Modified BSD License.
+ */
 
-import { User } from '@jupyterlab/services';
-
-import { IDisposable } from '@lumino/disposable';
+import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
 
 import { IAwareness } from '@jupyter/ydoc';
 
-import { WebsocketProvider } from 'y-websocket';
+import { User } from '@jupyterlab/services';
+
+import { IAwarenessProvider } from './tokens';
 
 export interface IContent {
   type: string;
@@ -23,8 +23,8 @@ export interface IContent {
  *
  */
 export class WebSocketAwarenessProvider
-  extends WebsocketProvider
-  implements IDisposable
+  extends YWebsocketProvider
+  implements IAwarenessProvider
 {
   /**
    * Construct a new WebSocketAwarenessProvider
@@ -36,7 +36,7 @@ export class WebSocketAwarenessProvider
       awareness: options.awareness
     });
 
-    this._awareness = options.awareness;
+    this.awareness = options.awareness;
 
     this._user = options.user;
     this._user.ready
@@ -60,12 +60,12 @@ export class WebSocketAwarenessProvider
   }
 
   private _onUserChanged(user: User.IManager): void {
-    this._awareness.setLocalStateField('user', user.identity);
+    this.awareness.setLocalStateField('user', user.identity);
   }
 
+  readonly awareness: IAwareness;
   private _isDisposed = false;
   private _user: User.IManager;
-  private _awareness: IAwareness;
 }
 
 /**
