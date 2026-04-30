@@ -2786,7 +2786,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"lib0@npm:^0.2.85, lib0@npm:^0.2.98":
+"lib0@npm:<=0.2.98":
   version: 0.2.98
   resolution: "lib0@npm:0.2.98"
   dependencies:
