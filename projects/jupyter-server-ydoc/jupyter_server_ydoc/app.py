@@ -216,15 +216,16 @@ class YDocExtension(ExtensionApp):
         elif path is not None or content_type is not None or file_format is not None:
             raise ValueError(error_msg)
 
-        if not self.ywebsocket_server.started.is_set():
-            asyncio.create_task(self.ywebsocket_server.start())
-            await self.ywebsocket_server.started.wait()
         async with self._room_locks[room_id]:
             try:
                 room = await self.ywebsocket_server.get_room(room_id)
             except RoomNotFound:
                 if not create:
                     return None
+
+                if not self.ywebsocket_server.started.is_set():
+                    asyncio.create_task(self.ywebsocket_server.start())
+                    await self.ywebsocket_server.started.wait()                
 
                 file_format_str, file_type, file_id = decode_file_path(room_id)
                 # cast down so mypy won’t complain when we pass this into DocumentRoom
