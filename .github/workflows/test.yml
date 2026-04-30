@@ -224,7 +224,7 @@ jobs:
           mkdir test
           find *.tar.gz | xargs -L 1 tar -C ./test -zxvf
           cd test
-          python -m pip install "jupyterlab>=4.0.0,<5"
+          python -m pip install "jupyterlab>=4.4.0,<5"
           # install each from source, except for `jupyter_collaboration` metapackage
           find ./* -maxdepth 0 -type d -not -path './jupyter_collaboration-*' | sed 's/$/[test]/' | xargs -L 1 python -m pip install
           echo "::endgroup::"
