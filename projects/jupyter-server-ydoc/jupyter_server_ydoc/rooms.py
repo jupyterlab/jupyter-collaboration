@@ -4,8 +4,9 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 from logging import Logger
-from typing import Any, Callable
+from typing import Any
 
 from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
@@ -139,9 +140,7 @@ class DocumentRoom(YRoom):
                     self._emit(
                         LogLevel.INFO,
                         "load",
-                        "Content loaded from the store {}".format(
-                            self.ystore.__class__.__qualname__
-                        ),
+                        f"Content loaded from the store {self.ystore.__class__.__qualname__}",
                     )
                     self.log.info(
                         "Content in room %s loaded from the ystore %s",

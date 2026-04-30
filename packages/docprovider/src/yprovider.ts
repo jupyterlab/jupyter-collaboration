@@ -1,24 +1,27 @@
-/* -----------------------------------------------------------------------------
-| Copyright (c) Jupyter Development Team.
-| Distributed under the terms of the Modified BSD License.
-|----------------------------------------------------------------------------*/
+/*
+ * Copyright (c) Jupyter Development Team.
+ * Distributed under the terms of the Modified BSD License.
+ */
 
-import { IDocumentProvider } from '@jupyter/collaborative-drive';
-import { Dialog, showDialog } from '@jupyterlab/apputils';
-import { ServerConnection, User } from '@jupyterlab/services';
-import { TranslationBundle } from '@jupyterlab/translation';
+import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
+import { Awareness } from 'y-protocols/awareness';
 
-import { PromiseDelegate } from '@lumino/coreutils';
+import * as decoding from 'lib0/decoding';
+import * as encoding from 'lib0/encoding';
+
 import { Signal } from '@lumino/signaling';
+import { PromiseDelegate } from '@lumino/coreutils';
 
 import { DocumentChange, YDocument } from '@jupyter/ydoc';
+import { IDocumentProvider } from '@jupyter/collaborative-drive';
 
-import { Awareness } from 'y-protocols/awareness';
-import { WebsocketProvider as YWebsocketProvider } from 'y-websocket';
-
-import { requestDocSession } from './requests';
-import { IForkProvider } from './ydrive';
+import { ServerConnection, User } from '@jupyterlab/services';
 import { URLExt } from '@jupyterlab/coreutils';
+import { TranslationBundle } from '@jupyterlab/translation';
+import { Dialog, showDialog } from '@jupyterlab/apputils';
+
+import { IForkProvider } from './ydrive';
+import { requestDocSession } from './requests';
 import { ISessionClosePayload } from './tokens';
 
 /**
@@ -27,12 +30,16 @@ import { ISessionClosePayload } from './tokens';
 const DOCUMENT_PROVIDER_URL = 'api/collaboration/room';
 
 /**
+ * The raw message type.
+ */
+const RAW_MESSAGE_TYPE = 2;
+
+/**
  * A class to provide Yjs synchronization over WebSocket.
  *
  * We specify custom messages that the server can interpret. For reference please look in yjs_ws_server.
  *
  */
-
 export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   /**
    * Construct a new WebSocketProvider
@@ -102,6 +109,64 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   async reconnect(): Promise<void> {
     this._disconnect();
     this._connect();
+  }
+
+  async save(): Promise<void> {
+    const ws = this._yWebsocketProvider?.ws;
+    if (ws) {
+      const saveId = ++this._saveCounter;
+      const delegate = new PromiseDelegate<void>();
+      const handler = (event: MessageEvent) => {
+        const data = new Uint8Array(event.data);
+        const decoder = decoding.createDecoder(data);
+        try {
+          const messageType = decoding.readVarUint(decoder);
+          if (messageType !== RAW_MESSAGE_TYPE) {
+            return;
+          }
+        } catch {
+          return;
+        }
+        const rawReply = decoding.readVarString(decoder);
+        let reply: {
+          type: 'save';
+          responseTo: number;
+          status: 'success' | 'skipped' | 'failed';
+        } | null = null;
+        try {
+          reply = JSON.parse(rawReply);
+        } catch (e) {
+          console.debug('The raw reply received was not a JSON reply');
+        }
+        if (
+          reply &&
+          reply['type'] === 'save' &&
+          reply['responseTo'] === saveId
+        ) {
+          if (reply.status === 'success') {
+            delegate.resolve();
+          } else if (reply.status === 'failed') {
+            delegate.reject('Saving failed');
+          } else if (reply.status === 'skipped') {
+            delegate.reject('Saving already in progress');
+          } else {
+            delegate.reject('Unrecognised save reply status');
+          }
+        }
+      };
+      ws.addEventListener('message', handler);
+      const encoder = encoding.createEncoder();
+      encoding.writeVarUint(encoder, RAW_MESSAGE_TYPE);
+      encoding.writeVarString(encoder, 'save');
+      encoding.writeVarUint(encoder, saveId);
+      const saveMessage = encoding.toUint8Array(encoder);
+      ws.send(saveMessage);
+      try {
+        await delegate.promise;
+      } finally {
+        ws.removeEventListener('message', handler);
+      }
+    }
   }
 
   private get _serverUrl() {
@@ -298,6 +363,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _serverSettings: ServerConnection.ISettings;
   private _trans: TranslationBundle;
   private _hasSynced = false;
+  private _saveCounter = 0;
 }
 
 /**
