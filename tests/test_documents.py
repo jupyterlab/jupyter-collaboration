@@ -146,7 +146,7 @@ def _sync_documents(client_doc: YNotebook, room: DocumentRoom) -> dict:
     return client_doc.get(deduplicate=False)
 
 
-async def test_notebook_reconnect_with_divergent_history_duplicates_initial_cell():
+async def test_notebook_reconnect_with_divergent_history_does_not_duplicate_initial_cell():
     notebook = _notebook_model()
     room, loader = await _create_notebook_room(notebook, "divergent-history-before")
     client_doc = YNotebook()
