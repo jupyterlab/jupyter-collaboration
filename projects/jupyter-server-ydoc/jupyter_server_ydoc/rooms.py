@@ -20,20 +20,6 @@ from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, OutOfBandChanges
 YFILE = YDOCS["file"]
 
 
-async def _apply_deterministic_source_content(ydoc: Doc, file_type: str, content: Any) -> None:
-    """Load source content using a deterministic update.
-
-    Rooms rebuilt from disk must recreate the same Yjs history for identical
-    content, otherwise reconnecting clients can merge duplicate content from a
-    divergent history after server restart or room eviction.
-    """
-
-    source_ydoc: Doc = Doc(client_id=0)
-    source_document = YDOCS.get(file_type, YFILE)(source_ydoc)
-    await source_document.aset(content)
-    ydoc.apply_update(source_ydoc.get_update())
-
-
 class DocumentRoom(YRoom):
     """A Y room for a possibly stored document (e.g. a notebook)."""
 
@@ -178,9 +164,7 @@ class DocumentRoom(YRoom):
                     self._file.path,
                 )
                 if not loaded_from_store:
-                    await _apply_deterministic_source_content(
-                        self.ydoc, self._file_type, model["content"]
-                    )
+                    await self._apply_deterministic_source_content(model["content"])
                 else:
                     await self._document.aset(model["content"])
 
@@ -190,6 +174,22 @@ class DocumentRoom(YRoom):
             self._document.dirty = False
             self.ready = True
             self._emit(LogLevel.INFO, "initialize", "Room initialized")
+
+    async def _apply_deterministic_source_content(self, content: Any) -> None:
+        """Load source content using a deterministic update.
+
+        Rooms rebuilt from disk must recreate the same Yjs history for identical
+        content, otherwise reconnecting clients can merge duplicate content from a
+        divergent history after server restart or room eviction.
+
+        The client ID needs to be fixed to a deterministic value, see:
+        https://discuss.yjs.dev/t/initial-offline-value-of-a-shared-document/465
+        """
+
+        source_ydoc: Doc = Doc(client_id=0)
+        source_document = YDOCS.get(self._file_type, YFILE)(source_ydoc)
+        await source_document.aset(content)
+        self.ydoc.apply_update(source_ydoc.get_update())
 
     def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:
         data = {"level": level.value, "room": self._room_id, "path": self._file.path}
