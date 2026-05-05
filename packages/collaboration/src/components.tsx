@@ -26,13 +26,23 @@ type UserIconProps = {
 export function UserIconComponent(props: UserIconProps): JSX.Element {
   const { userManager, onClick } = props;
   const [user, setUser] = useState(
-    userManager.identity ?? { display_name: '', color: '', initials: '' }
+    userManager.identity ?? {
+      display_name: '',
+      color: '',
+      initials: '',
+      avatar_url: ''
+    }
   );
 
   useEffect(() => {
     const updateUser = () => {
       setUser(
-        userManager.identity ?? { display_name: '', color: '', initials: '' }
+        userManager.identity ?? {
+          display_name: '',
+          color: '',
+          initials: '',
+          avatar_url: ''
+        }
       );
     };
 
@@ -47,10 +57,23 @@ export function UserIconComponent(props: UserIconProps): JSX.Element {
     <div
       title={user.display_name}
       className="jp-UserInfo-Icon"
-      style={{ backgroundColor: user.color }}
+      style={!user.avatar_url ? { backgroundColor: user.color } : undefined}
       onClick={onClick}
     >
-      <span>{user.initials}</span>
+      {user.avatar_url ? (
+        <img
+          src={user.avatar_url}
+          alt={user.display_name}
+          style={{
+            width: '100%',
+            height: '100%',
+            borderRadius: '50%',
+            objectFit: 'cover'
+          }}
+        />
+      ) : (
+        <span>{user.initials}</span>
+      )}
     </div>
   );
 }

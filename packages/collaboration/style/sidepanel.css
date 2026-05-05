@@ -38,6 +38,7 @@
   border-radius: 50px;
   display: inline-flex;
   align-items: center;
+  cursor: pointer;
 }
 
 .jp-UserInfo-Icon span {
