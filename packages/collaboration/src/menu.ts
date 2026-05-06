@@ -63,12 +63,34 @@ export class RendererUserMenu extends MenuBar.Renderer {
    */
   private _createUserIcon(): VirtualElement {
     const identity = this._user.identity;
+
     if (this._user.isReady && identity?.avatar_url) {
       return h.div(
         {
           className: 'lm-MenuBar-itemIcon jp-MenuBar-imageIcon'
         },
-        h.img({ src: identity.avatar_url })
+        h.img({
+          src: identity.avatar_url,
+          onerror: (event: Event) => {
+            console.log('FAILED TO LOAD', identity?.avatar_url);
+            const img = event.currentTarget as HTMLImageElement;
+            const parent = img.parentElement;
+
+            if (parent) {
+              // Clear broken image and fallback to initials with colors
+              parent.textContent = '';
+
+              parent.style.backgroundColor = identity.color || '';
+
+              const span = document.createElement('span');
+              span.textContent = identity.initials;
+              parent.appendChild(span);
+
+              parent.classList.remove('jp-MenuBar-imageIcon');
+              parent.classList.add('jp-MenuBar-anonymousIcon');
+            }
+          }
+        })
       );
     } else if (this._user.isReady && identity) {
       return h.div(

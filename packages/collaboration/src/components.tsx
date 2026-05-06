@@ -33,6 +33,7 @@ export function UserIconComponent(props: UserIconProps): JSX.Element {
       avatar_url: ''
     }
   );
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     const updateUser = () => {
@@ -53,22 +54,26 @@ export function UserIconComponent(props: UserIconProps): JSX.Element {
     };
   }, [userManager]);
 
+  const showImage = user.avatar_url && !imgError;
+
   return (
     <div
       title={user.display_name}
       className="jp-UserInfo-Icon"
-      style={!user.avatar_url ? { backgroundColor: user.color } : undefined}
+      style={!showImage ? { backgroundColor: user.color } : undefined}
       onClick={onClick}
     >
-      {user.avatar_url ? (
+      {showImage ? (
         <img
           src={user.avatar_url}
           alt={user.display_name}
+          onError={() => setImgError(true)}
           style={{
             width: '100%',
             height: '100%',
             borderRadius: '50%',
-            objectFit: 'cover'
+            objectFit: 'cover',
+            cursor: 'pointer'
           }}
         />
       ) : (
