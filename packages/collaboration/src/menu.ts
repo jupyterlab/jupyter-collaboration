@@ -72,7 +72,6 @@ export class RendererUserMenu extends MenuBar.Renderer {
         h.img({
           src: identity.avatar_url,
           onerror: (event: Event) => {
-            console.log('FAILED TO LOAD', identity?.avatar_url);
             const img = event.currentTarget as HTMLImageElement;
             const parent = img.parentElement;
 
