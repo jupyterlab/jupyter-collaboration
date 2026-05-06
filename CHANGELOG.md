@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 4.4.0beta0
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@4.4.0-alpha.0...c6978b434fc2bd1accb41a503ab1fac10496b949))
+
+### Enhancements made
+
+- Side Panel: respect `avatar_url` [#582](https://github.com/jupyterlab/jupyter-collaboration/pull/582) ([@martinRenou](https://github.com/martinRenou), [@brichet](https://github.com/brichet), [@krassowski](https://github.com/krassowski))
+
+### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/use/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2026-05-04&to=2026-05-06&type=c))
+
+@brichet ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2026-05-04..2026-05-06&type=Issues)) | @krassowski ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2026-05-04..2026-05-06&type=Issues)) | @martinRenou ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AmartinRenou+updated%3A2026-05-04..2026-05-06&type=Issues))
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 4.4.0alpha0
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@4.3.0...690496020ae8bce06f8edc52d6f57cdbbe0d2475))
@@ -42,8 +61,6 @@ See [our definition of contributors](https://github-activity.readthedocs.io/en/l
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2026-03-31&to=2026-05-04&type=c))
 
 @abbbe ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aabbbe+updated%3A2026-03-31..2026-05-04&type=Issues)) | @brichet ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Abrichet+updated%3A2026-03-31..2026-05-04&type=Issues)) | @Copilot ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ACopilot+updated%3A2026-03-31..2026-05-04&type=Issues)) | @Darshan808 ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ADarshan808+updated%3A2026-03-31..2026-05-04&type=Issues)) | @davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2026-03-31..2026-05-04&type=Issues)) | @jtpio ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Ajtpio+updated%3A2026-03-31..2026-05-04&type=Issues)) | @krassowski ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2026-03-31..2026-05-04&type=Issues)) | @martinRenou ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AmartinRenou+updated%3A2026-03-31..2026-05-04&type=Issues)) | @mediamead ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Amediamead+updated%3A2026-03-31..2026-05-04&type=Issues)) | @SylvainCorlay ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ASylvainCorlay+updated%3A2026-03-31..2026-05-04&type=Issues))
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 4.3.0
 
