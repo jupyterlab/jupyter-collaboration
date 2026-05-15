@@ -169,3 +169,49 @@ async def test_notebook_reconnect_with_divergent_history_does_not_duplicate_init
         await recreated_loader.clean()
 
     assert len(merged["cells"]) == 1
+
+
+async def test_notebook_reconnect_fails_when_cell_structure_changes_between_restarts():
+    """Reconnecting after cell structure changes causes apply_update to raise RuntimeError.
+
+    _apply_deterministic_source_content uses Doc(client_id=0) so that Yjs item
+    clocks are stable across room restarts for identical content.  That
+    assumption breaks when the on-disk notebook changes structure between the
+    client's last sync and the next room creation: adding a primitive value
+    inside a cell (e.g. a kernel marks the cell trusted via
+    {"metadata": {"trusted": True}}) inserts one extra ItemContent::Any before
+    the source Text branch.  This shifts clock position 4 from
+    ItemContent::Type (the source Text) in the original room to
+    ItemContent::Any in the recreated room.
+
+    A client that made local edits against the original layout holds a parent
+    reference to (client_id=0, clock=4) which is no longer a valid container,
+    so yrs raises "block parent <0#4> must be deleted or shared ref type.
+    Type: 8" when that update is applied.
+    """
+    notebook_before = _notebook_model()
+    room_a, loader_a = await _create_notebook_room(notebook_before, "meta-change-before")
+    client_doc = YNotebook()
+    try:
+        # Client connects to room A and receives all client_id=0 items.
+        client_doc.ydoc.apply_update(room_a.ydoc.get_update())
+        # Client edits the cell source, creating an item whose parent is the
+        # source Text branch — a client_id=0 item at clock position 4.
+        client_doc.ycells[0]["source"] += "new content"
+    finally:
+        await room_a.stop()
+        await loader_a.clean()
+
+    # Disk content changes: cell metadata gains "trusted": True.
+    # _apply_deterministic_source_content will now allocate clock 4 to the
+    # "trusted" Any value instead of the source Text branch.
+    notebook_after = deepcopy(notebook_before)
+    notebook_after["cells"][0]["metadata"] = {"trusted": True}
+    room_b, loader_b = await _create_notebook_room(notebook_after, "meta-change-after")
+    try:
+        merged = _sync_documents(client_doc, room_b)
+    finally:
+        await room_b.stop()
+        await loader_b.clean()
+
+    assert len(merged["cells"]) == 1
