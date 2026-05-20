@@ -2,9 +2,11 @@
 # Distributed under the terms of the Modified BSD License.
 
 import asyncio
+import json
 
 from jupyter_server_ydoc.utils import (
     YDOC_SERVER_VERSION,
+    _get_jupyter_session_store,
     check_session_compatibility,
     save_current_session,
 )
@@ -102,3 +104,62 @@ async def test_allows_reconnect_without_document_version_in_old_session(tmp_path
     )
     assert cannot_reconnect is False
     assert reason == ""
+
+
+def test_session_store_path_override_used_when_set(tmp_path):
+    """``session_store_path`` overrides the default ``.jupyter`` location."""
+    override = tmp_path / "elsewhere" / "sessions.json"
+    resolved = _get_jupyter_session_store(str(tmp_path), str(override))
+    # The override directory is created on demand and the file path is honored as-is.
+    assert resolved == override
+    assert override.parent.is_dir()
+    # The default location should not have been created.
+    assert not (tmp_path / ".jupyter").exists()
+
+
+async def test_session_store_path_override_persists_records(tmp_path):
+    """Saved sessions land under the override path and reconnects honor it."""
+    override = tmp_path / "elsewhere" / "sessions.json"
+    await save_current_session(
+        str(tmp_path),
+        "override-session",
+        YDOC_SERVER_VERSION,
+        asyncio.Lock(),
+        session_store_path=str(override),
+    )
+
+    assert override.exists()
+    payload = json.loads(override.read_text())
+    assert "override-session" in payload
+    # The default location must remain untouched.
+    assert not (tmp_path / ".jupyter" / "collaboration_sessions.json").exists()
+
+    cannot_reconnect, reason = check_session_compatibility(
+        str(tmp_path),
+        "override-session",
+        YDOC_SERVER_VERSION,
+        session_store_path=str(override),
+    )
+    assert cannot_reconnect is False
+    assert reason == ""
+
+
+async def test_session_store_path_override_isolated_from_default(tmp_path):
+    """Records saved with an override are invisible to the default lookup."""
+    override = tmp_path / "elsewhere" / "sessions.json"
+    await save_current_session(
+        str(tmp_path),
+        "override-session",
+        YDOC_SERVER_VERSION,
+        asyncio.Lock(),
+        session_store_path=str(override),
+    )
+
+    # Without the override, the default lookup should treat the session as unknown.
+    cannot_reconnect, reason = check_session_compatibility(
+        str(tmp_path),
+        "override-session",
+        YDOC_SERVER_VERSION,
+    )
+    assert cannot_reconnect is True
+    assert reason == "unknown_session"
