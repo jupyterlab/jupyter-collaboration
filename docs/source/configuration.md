@@ -25,6 +25,13 @@ looses connection and goes offline for a while. You should never have to touch i
 fine to just ignore it, including in your version control system (don't commit this file). If
 you happen to delete it, there shouldn't be any serious consequence either.
 
+A second file, `collaboration_sessions.json`, is created inside a `.jupyter` directory under
+that same launch directory. It records recent collaboration session IDs so the backend can
+detect when a client is reconnecting after a server restart or version change, and prompt for
+a reload when the session can no longer be resumed safely. Like the YStore database, it is
+safe to ignore in version control and safe to delete (clients will simply be asked to reload
+on next connect).
+
 There are a number of settings that you can change:
 
 ```bash
@@ -46,6 +53,15 @@ jupyter lab --YDocExtension.document_cleanup_delay=100
 
 # The YStore class to use for storing Y updates (default: JupyterSQLiteYStore).
 jupyter lab --YDocExtension.ystore_class=pycrdt.store.TempFileYStore
+
+# Relocate the YStore SQLite database (default: '.jupyter_ystore.db' in the launch directory).
+# Useful when the launch directory is read-only, under version control, or shared between users.
+jupyter lab --SQLiteYStore.db_path=/path/to/ystore.db
+
+# Relocate the collaboration session store
+# (default: '<server_root_dir>/.jupyter/collaboration_sessions.json').
+# Useful for the same reasons as above, or to keep the launch directory free of generated state.
+jupyter lab --YDocExtension.session_store_path=/path/to/sessions.json
 ```
 
 There is an experimental feature that is currently only supported by the
