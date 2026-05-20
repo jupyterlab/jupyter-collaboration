@@ -55,12 +55,10 @@ jupyter lab --YDocExtension.document_cleanup_delay=100
 jupyter lab --YDocExtension.ystore_class=pycrdt.store.TempFileYStore
 
 # Relocate the YStore SQLite database (default: '.jupyter_ystore.db' in the launch directory).
-# Useful when the launch directory is read-only, under version control, or shared between users.
 jupyter lab --SQLiteYStore.db_path=/path/to/ystore.db
 
 # Relocate the collaboration session store
 # (default: '<server_root_dir>/.jupyter/collaboration_sessions.json').
-# Useful for the same reasons as above, or to keep the launch directory free of generated state.
 jupyter lab --YDocExtension.session_store_path=/path/to/sessions.json
 ```
 

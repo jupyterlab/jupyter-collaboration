@@ -6,7 +6,6 @@ import json
 
 from jupyter_server_ydoc.utils import (
     YDOC_SERVER_VERSION,
-    _get_jupyter_session_store,
     check_session_compatibility,
     save_current_session,
 )
@@ -106,17 +105,6 @@ async def test_allows_reconnect_without_document_version_in_old_session(tmp_path
     assert reason == ""
 
 
-def test_session_store_path_override_used_when_set(tmp_path):
-    """``session_store_path`` overrides the default ``.jupyter`` location."""
-    override = tmp_path / "elsewhere" / "sessions.json"
-    resolved = _get_jupyter_session_store(str(tmp_path), str(override))
-    # The override directory is created on demand and the file path is honored as-is.
-    assert resolved == override
-    assert override.parent.is_dir()
-    # The default location should not have been created.
-    assert not (tmp_path / ".jupyter").exists()
-
-
 async def test_session_store_path_override_persists_records(tmp_path):
     """Saved sessions land under the override path and reconnects honor it."""
     override = tmp_path / "elsewhere" / "sessions.json"
@@ -131,8 +119,8 @@ async def test_session_store_path_override_persists_records(tmp_path):
     assert override.exists()
     payload = json.loads(override.read_text())
     assert "override-session" in payload
-    # The default location must remain untouched.
-    assert not (tmp_path / ".jupyter" / "collaboration_sessions.json").exists()
+    # The default ``.jupyter`` directory should never be created when an override is set.
+    assert not (tmp_path / ".jupyter").exists()
 
     cannot_reconnect, reason = check_session_compatibility(
         str(tmp_path),
