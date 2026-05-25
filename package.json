@@ -25,7 +25,8 @@
     "packages/*"
   ],
   "resolutions": {
-    "lib0": "<=0.2.98"
+    "lib0": "<=0.2.98",
+    "@jupyter/ydoc": "4.0.0-a3"
   },
   "scripts": {
     "dev": "python scripts/dev_install.py",
