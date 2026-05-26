@@ -35,6 +35,14 @@ const DOCUMENT_PROVIDER_URL = 'api/collaboration/room';
 const RAW_MESSAGE_TYPE = 2;
 
 /**
+ * Server-to-client conflict notification: sent when a client's SYNC_STEP2
+ * contains an update whose parent references no longer exist in the current
+ * room structure (e.g. after the server was restarted and the file changed).
+ * Payload: [type=3] write_message(server_update) write_message(client_update)
+ */
+const CONFLICT_MESSAGE_TYPE = 3;
+
+/**
  * A class to provide Yjs synchronization over WebSocket.
  *
  * We specify custom messages that the server can interpret. For reference please look in yjs_ws_server.
@@ -99,6 +107,13 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       return;
     }
     this._isDisposed = true;
+    if (this._conflictWs) {
+      this._conflictWs.removeEventListener(
+        'message',
+        this._handleConflictMessage
+      );
+      this._conflictWs = null;
+    }
     this._yWebsocketProvider?.off('connection-close', this._onConnectionClosed);
     this._yWebsocketProvider?.off('sync', this._onSync);
     this._yWebsocketProvider?.destroy();
@@ -203,6 +218,11 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
 
     this._yWebsocketProvider.on('sync', this._onSync);
     this._yWebsocketProvider.on('connection-close', this._onConnectionClosed);
+    this._yWebsocketProvider.on('status', ({ status }: { status: string }) => {
+      if (status === 'connected') {
+        this._attachConflictListener();
+      }
+    });
   }
 
   async connectToForkDoc(forkRoomId: string, sessionId: string): Promise<void> {
@@ -321,6 +341,52 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     }
   };
 
+  private _attachConflictListener(): void {
+    if (this._conflictWs) {
+      this._conflictWs.removeEventListener(
+        'message',
+        this._handleConflictMessage
+      );
+    }
+    const ws = this._yWebsocketProvider?.ws;
+    if (ws) {
+      ws.addEventListener('message', this._handleConflictMessage);
+      this._conflictWs = ws;
+    }
+  }
+
+  private _handleConflictMessage = async (
+    event: MessageEvent
+  ): Promise<void> => {
+    if (!(event.data instanceof ArrayBuffer)) {
+      return;
+    }
+    const data = new Uint8Array(event.data);
+    if (data.length === 0) {
+      return;
+    }
+    const decoder = decoding.createDecoder(data);
+    let msgType: number;
+    try {
+      msgType = decoding.readVarUint(decoder);
+    } catch {
+      return;
+    }
+    if (msgType !== CONFLICT_MESSAGE_TYPE) {
+      return;
+    }
+    await showDialog({
+      title: this._trans.__('Edit Conflict'),
+      body: this._trans.__(
+        'Your recent changes could not be applied because the document ' +
+          'structure changed while you were disconnected (for example, a ' +
+          'kernel or external tool modified the file). Your edits were not ' +
+          'saved to the shared document.'
+      ),
+      buttons: [Dialog.okButton({ label: this._trans.__('Dismiss') })]
+    });
+  };
+
   private _onSync = (isSynced: boolean) => {
     if (isSynced) {
       this._hasSynced = true;
@@ -364,6 +430,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _trans: TranslationBundle;
   private _hasSynced = false;
   private _saveCounter = 0;
+  private _conflictWs: WebSocket | null = null;
 }
 
 /**
