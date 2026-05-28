@@ -66,6 +66,8 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     this._serverSettings =
       options.serverSettings ?? ServerConnection.makeSettings();
     this._trans = options.translator;
+    this._onConflictSaveAs = options.onConflictSaveAs;
+    this._onConflictRevert = options.onConflictRevert;
 
     const user = options.user;
 
@@ -375,7 +377,26 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     if (msgType !== CONFLICT_MESSAGE_TYPE) {
       return;
     }
-    await showDialog({
+    const buttons: Dialog.IButton[] = [
+      Dialog.cancelButton({ label: this._trans.__('Dismiss') })
+    ];
+    if (this._onConflictRevert) {
+      buttons.push(
+        Dialog.warnButton({
+          label: this._trans.__('Revert'),
+          actions: ['revert']
+        })
+      );
+    }
+    if (this._onConflictSaveAs) {
+      buttons.push(
+        Dialog.okButton({
+          label: this._trans.__('Save As'),
+          actions: ['save-as']
+        })
+      );
+    }
+    const result = await showDialog({
       title: this._trans.__('Edit Conflict'),
       body: this._trans.__(
         'Your recent changes could not be applied because the document ' +
@@ -383,8 +404,13 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
           'kernel or external tool modified the file). Your edits were not ' +
           'saved to the shared document.'
       ),
-      buttons: [Dialog.okButton({ label: this._trans.__('Dismiss') })]
+      buttons
     });
+    if (result.button.actions.includes('revert')) {
+      await this._onConflictRevert?.();
+    } else if (result.button.actions.includes('save-as')) {
+      await this._onConflictSaveAs?.();
+    }
   };
 
   private _onSync = (isSynced: boolean) => {
@@ -431,6 +457,8 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _hasSynced = false;
   private _saveCounter = 0;
   private _conflictWs: WebSocket | null = null;
+  private _onConflictSaveAs?: () => Promise<void>;
+  private _onConflictRevert?: () => Promise<void>;
 }
 
 /**
@@ -480,5 +508,15 @@ export namespace WebSocketProvider {
      * The server settings.
      */
     serverSettings?: ServerConnection.ISettings;
+
+    /**
+     * Called when the user chooses "Save As" from the conflict dialog.
+     */
+    onConflictSaveAs?: () => Promise<void>;
+
+    /**
+     * Called when the user chooses "Revert" from the conflict dialog.
+     */
+    onConflictRevert?: () => Promise<void>;
   }
 }
