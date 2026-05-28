@@ -12,7 +12,7 @@ from jupyter_ydoc import ydocs as YDOCS
 from jupyter_ydoc.ybasedoc import YBaseDoc
 from pycrdt import Doc
 from pycrdt.store import BaseYStore
-from traitlets import Bool, Float, Type
+from traitlets import Bool, Float, Type, Unicode
 
 from .handlers import (
     DocForkHandler,
@@ -93,6 +93,17 @@ class YDocExtension(ExtensionApp):
         model.""",
     )
 
+    session_store_path = Unicode(
+        None,
+        allow_none=True,
+        config=True,
+        help="""Path to the JSON file used to record collaboration session IDs for
+        reconnect compatibility checks. When unset, defaults to
+        ``<server_root_dir>/.jupyter/collaboration_sessions.json``. Set this to
+        relocate the file (for example into a per-user data directory) so the
+        server root stays free of generated state.""",
+    )
+
     _room_locks: dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
 
     def initialize(self):
@@ -108,6 +119,7 @@ class YDocExtension(ExtensionApp):
                 "collaborative_document_cleanup_delay": self.document_cleanup_delay,
                 "collaborative_document_save_delay": self.document_save_delay,
                 "collaborative_ystore_class": self.ystore_class,
+                "collaborative_session_store_path": self.session_store_path,
             }
         )
 

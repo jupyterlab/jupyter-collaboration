@@ -87,8 +87,23 @@ def room_id_from_encoded_path(encoded_path: str) -> str:
     return encoded_path.split("/")[-1]
 
 
-def _get_jupyter_session_store(root_dir: str) -> Path:
-    """Return path to the session store file in .jupyter folder."""
+def _get_jupyter_session_store(root_dir: str, session_store_path: str | None = None) -> Path:
+    """Return path to the session store file.
+
+    If ``session_store_path`` is provided it is honored as-is (its parent
+    directory is created on demand). Otherwise the default location
+    ``<root_dir>/.jupyter/collaboration_sessions.json`` is used.
+    """
+    if session_store_path:
+        try:
+            target = Path(session_store_path).expanduser()
+            target.parent.mkdir(parents=True, exist_ok=True)
+            return target
+        except OSError:
+            # Configured path is unwritable — fall through to /dev/null so the
+            # server stays up; callers tolerate write failures already.
+            return Path(os.devnull)
+
     try:
         expanded = Path(root_dir).expanduser()
         resolved = expanded.resolve()
@@ -100,9 +115,9 @@ def _get_jupyter_session_store(root_dir: str) -> Path:
         return Path(os.devnull)
 
 
-def _load_previous_sessions(root_dir: str) -> dict:
+def _load_previous_sessions(root_dir: str, session_store_path: str | None = None) -> dict:
     """Load previous session records from .jupyter folder."""
-    store_path = _get_jupyter_session_store(root_dir)
+    store_path = _get_jupyter_session_store(root_dir, session_store_path)
     if store_path.exists():
         try:
             sessions = json.loads(store_path.read_text())
@@ -125,12 +140,13 @@ async def save_current_session(
     version: str,
     lock: asyncio.Lock,
     document_version: str | None = None,
+    session_store_path: str | None = None,
 ) -> None:
     """Persist the current session ID, server version, and optionally
-    document version to .jupyter folder."""
+    document version to the session store."""
     async with lock:
-        store_path = _get_jupyter_session_store(root_dir)
-        sessions = _load_previous_sessions(root_dir)
+        store_path = _get_jupyter_session_store(root_dir, session_store_path)
+        sessions = _load_previous_sessions(root_dir, session_store_path)
 
         sessions[session_id] = {
             "version": version,
@@ -154,6 +170,7 @@ def check_session_compatibility(
     client_session_id: str,
     current_version: str,
     current_document_version: str | None = None,
+    session_store_path: str | None = None,
 ) -> tuple[bool, str]:
     """
     Determine whether a client carrying an old session ID can reconnect or not.
@@ -164,7 +181,7 @@ def check_session_compatibility(
     if client_session_id == SERVER_SESSION:
         return False, ""
 
-    previous_sessions = _load_previous_sessions(root_dir)
+    previous_sessions = _load_previous_sessions(root_dir, session_store_path)
 
     # Session ID not in our records at all → unknown origin, reject
     if client_session_id not in previous_sessions:
