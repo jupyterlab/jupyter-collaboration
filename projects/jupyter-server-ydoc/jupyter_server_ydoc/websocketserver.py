@@ -148,12 +148,16 @@ class JupyterWebsocketServer(WebsocketServer):
         #### Note:
             This method runs in a coroutine for debugging purposes.
         """
+        prev_clients_nb = 0
         while True:
             try:
                 await asyncio.sleep(60)
             except asyncio.CancelledError:
                 break
             clients_nb = sum(len(room.clients) for room in self.rooms.values())
-            self.log.info("Processed %s Y patches in one minute", self.ypatch_nb)
-            self.log.info("Connected Y users: %s", clients_nb)
-            self.ypatch_nb = 0
+            if self.ypatch_nb:
+                self.log.debug("Processed %s Y patches in one minute", self.ypatch_nb)
+                self.ypatch_nb = 0
+            if clients_nb != prev_clients_nb:
+                self.log.debug("Connected Y users: %s", clients_nb)
+            prev_clients_nb = clients_nb
