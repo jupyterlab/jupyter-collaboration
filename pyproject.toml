@@ -3,7 +3,7 @@
 
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling>=1.4.0", "hatch-nodejs-version", "jupyterlab>=4.0.0"]
+requires = ["hatchling>=1.4.0", "hatch-nodejs-version", "jupyterlab>=4.6.0b1"]
 
 [project]
 name = "jupyter-collaboration-monorepo"
@@ -30,7 +30,7 @@ test = [
     "jupyter-server-ydoc[test] @ {root:uri}/projects/jupyter-server-ydoc",
 ]
 docs = [
-    "jupyterlab>=4.4.0",
+    "jupyterlab>=4.6.0b1",
     "sphinx",
     "myst-parser",
     "pydata-sphinx-theme",
