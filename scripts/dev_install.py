@@ -11,7 +11,8 @@ def execute(cmd: str, cwd: Path | None = None) -> None:
 
 def install_dev() -> None:
     install_build_deps = (
-        "python -m pip install jupyterlab>=4.4.0,<5 hatchling>=1.4.0 hatch-jupyter-builder>=0.5"
+        "python -m pip install jupyterlab>=4.4.0,<5 hatchling>=1.4.0 hatch-jupyter-builder>=0.5 "
+        "editables"
     )
     install_js_deps = "jlpm install"
 
