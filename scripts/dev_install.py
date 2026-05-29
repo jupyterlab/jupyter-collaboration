@@ -24,7 +24,9 @@ def install_dev() -> None:
         execute(f"pip uninstall {real_package_name} -y")
         # Clean old labextension builds to avoid skip-if-exists cache issues
         if py_package in ["jupyter-collaboration-ui", "jupyter-docprovider"]:
-            labext_dir = Path(python_package_prefix) / py_package / real_package_name / "labextension"
+            labext_dir = (
+                Path(python_package_prefix) / py_package / real_package_name / "labextension"
+            )
             if labext_dir.exists():
                 execute(f"rm -rf {labext_dir}")
         execute(f"pip install -e {python_package_prefix}/{py_package}[test]")
