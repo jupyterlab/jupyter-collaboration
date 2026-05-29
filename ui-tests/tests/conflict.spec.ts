@@ -224,4 +224,24 @@ test.describe.serial('Conflict handling', () => {
       await expect(saveAsDialog).not.toBeVisible();
     }
   );
+
+  test(
+    'Show Diff button opens a diff widget',
+    async ({ page, request, tmpPath, baseURL }) => {
+      const dialog = await triggerConflict(
+        page,
+        request,
+        tmpPath,
+        baseURL,
+        notebookName
+      );
+      await dialog.getByRole('button', { name: 'Show Diff' }).click();
+
+      // The diff widget should appear as a main area tab.
+      const diffWidget = page.locator('.jp-MainAreaWidget .nbdime-Widget');
+      await expect(diffWidget).toBeVisible({ timeout: 10000 });
+
+      await diffWidget.screenshot({ path: 'conflict-diff.png' });
+    }
+  );
 });
