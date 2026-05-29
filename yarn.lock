@@ -2066,7 +2066,7 @@ __metadata:
     "@jupyter/collaboration": ^4.4.0
     "@jupyter/collaborative-drive": ^4.4.0
     "@jupyter/docprovider": ^4.4.0
-    "@jupyter/ydoc": 4.0.0-a3
+    "@jupyter/ydoc": ^4.0.0-a3
     "@jupyterlab/application": ^4.6.0-beta.1
     "@jupyterlab/apputils": ^4.6.0
     "@jupyterlab/builder": ^4.6.0-alpha.5
@@ -2116,7 +2116,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@jupyter/collaborative-drive@workspace:packages/collaborative-drive"
   dependencies:
-    "@jupyter/ydoc": 4.0.0-a3
+    "@jupyter/ydoc": ^4.0.0-a3
     "@jupyterlab/services": ^7.6.0-beta.1
     "@lumino/coreutils": ^2.2.1
     "@lumino/disposable": ^2.1.4
@@ -2131,7 +2131,7 @@ __metadata:
   dependencies:
     "@jupyter/collaborative-drive": ^4.4.0
     "@jupyter/docprovider": ^4.4.0
-    "@jupyter/ydoc": 4.0.0-a3
+    "@jupyter/ydoc": ^4.0.0-a3
     "@jupyterlab/application": ^4.6.0-beta.1
     "@jupyterlab/apputils": ^4.6.0
     "@jupyterlab/builder": ^4.6.0-alpha.5
@@ -2159,7 +2159,7 @@ __metadata:
   resolution: "@jupyter/docprovider@workspace:packages/docprovider"
   dependencies:
     "@jupyter/collaborative-drive": ^4.4.0
-    "@jupyter/ydoc": 4.0.0-a3
+    "@jupyter/ydoc": ^4.0.0-a3
     "@jupyterlab/apputils": ^4.6.0
     "@jupyterlab/cells": ^4.6.0-beta.1
     "@jupyterlab/coreutils": ^6.6.0-beta.1
