@@ -35,14 +35,6 @@ const DOCUMENT_PROVIDER_URL = 'api/collaboration/room';
 const RAW_MESSAGE_TYPE = 2;
 
 /**
- * Server-to-client conflict notification: sent when a client's SYNC_STEP2
- * contains an update whose parent references no longer exist in the current
- * room structure (e.g. after the server was restarted and the file changed).
- * Payload: [type=3] write_message(server_update) write_message(client_update)
- */
-const CONFLICT_MESSAGE_TYPE = 3;
-
-/**
  * A class to provide Yjs synchronization over WebSocket.
  *
  * We specify custom messages that the server can interpret. For reference please look in yjs_ws_server.
@@ -368,13 +360,15 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       return;
     }
     const decoder = decoding.createDecoder(data);
-    let msgType: number;
     try {
-      msgType = decoding.readVarUint(decoder);
+      if (decoding.readVarUint(decoder) !== RAW_MESSAGE_TYPE) {
+        return;
+      }
+      const payload = JSON.parse(decoding.readVarString(decoder));
+      if (!payload || payload.type !== 'conflict') {
+        return;
+      }
     } catch {
-      return;
-    }
-    if (msgType !== CONFLICT_MESSAGE_TYPE) {
       return;
     }
     const buttons: Dialog.IButton[] = [

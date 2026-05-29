@@ -27,7 +27,6 @@ class MessageType(IntEnum):
     SYNC = 0
     AWARENESS = 1
     RAW = 2
-    CONFLICT = 3
     CHAT = 125
 
 

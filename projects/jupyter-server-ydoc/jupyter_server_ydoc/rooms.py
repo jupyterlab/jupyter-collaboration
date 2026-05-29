@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from collections.abc import Callable
 from inspect import isawaitable
 from logging import Logger
@@ -14,13 +15,13 @@ from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
 from pycrdt import (
     Doc,
+    Encoder,
     YMessageType,
     YSyncMessageType,
     create_sync_message,
     handle_sync_message,
     is_awareness_disconnect_message,
     read_message,
-    write_message,
 )
 from pycrdt.store import BaseYStore, YDocNotFound
 from pycrdt.websocket import YRoom
@@ -239,22 +240,6 @@ class DocumentRoom(YRoom):
         except asyncio.CancelledError:
             pass
 
-    def _make_conflict_message(self, client_update: bytes) -> bytes:
-        """Build a CONFLICT message carrying the current server state and the rejected client update.
-
-        The frontend can use this to present Save As / View Diff / Reapply options.
-        Message layout:
-          [MessageType.CONFLICT byte]
-          [write_message(server_update)]
-          [write_message(client_update)]
-        """
-        server_update = self.ydoc.get_update()
-        return (
-            bytes([MessageType.CONFLICT])
-            + write_message(server_update)
-            + write_message(client_update)
-        )
-
     async def serve(self, channel):
         """Serve a client, intercepting InvalidParent conflicts without crashing the room."""
         try:
@@ -291,11 +276,10 @@ class DocumentRoom(YRoom):
                                     channel.path,
                                     exc,
                                 )
-                                # Extract the raw update bytes from the sync message so
-                                # we can echo them back alongside the current server state.
-                                client_update = read_message(message[2:])
-                                conflict_msg = self._make_conflict_message(client_update)
-                                tg.start_soon(channel.send, conflict_msg)
+                                encoder = Encoder()
+                                encoder.write_var_uint(MessageType.RAW)
+                                encoder.write_var_string(json.dumps({"type": "conflict"}))
+                                tg.start_soon(channel.send, encoder.to_bytes())
                             else:
                                 raise
                             continue
