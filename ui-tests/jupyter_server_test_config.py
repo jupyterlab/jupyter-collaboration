@@ -13,7 +13,7 @@ from typing import Any, cast
 from jupyterlab.galata import configure_jupyter_server
 
 # `c` is injected by jupyter-server while loading this config file.
-c = cast(Any, c)  # noqa: F821
+c = cast(Any, globals()["c"])
 configure_jupyter_server(c)  # noqa
 
 # Fast room eviction so conflict tests don't need to wait 60 seconds.
