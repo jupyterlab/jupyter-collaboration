@@ -1,6 +1,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from collections.abc import AsyncIterator
 from copy import deepcopy
 from importlib.metadata import entry_points
 from time import time
@@ -10,11 +11,40 @@ from anyio import create_task_group, sleep
 from jupyter_server_ydoc.loaders import FileLoader
 from jupyter_server_ydoc.rooms import DocumentRoom
 from jupyter_server_ydoc.test_utils import FakeContentsManager, FakeEventLogger, FakeFileIDManager
+from jupyter_server_ydoc.utils import MessageType
 from jupyter_ydoc import YNotebook
-from pycrdt import Provider
+from pycrdt import Provider, YMessageType, YSyncMessageType, write_message
 from pycrdt.websocket.websocket import HttpxWebsocket
 
 jupyter_ydocs = {ep.name: ep.load() for ep in entry_points(group="jupyter_ydoc")}
+
+
+class _SingleMessageChannel:
+    """Mock channel that delivers one message to the room then stops iteration."""
+
+    def __init__(self, message: bytes) -> None:
+        self._message = message
+        self._sent: list[bytes] = []
+        self._iter_done = False
+
+    @property
+    def path(self) -> str:
+        return "mock://test"
+
+    def __aiter__(self) -> AsyncIterator[bytes]:
+        return self
+
+    async def __anext__(self) -> bytes:
+        if self._iter_done:
+            raise StopAsyncIteration
+        self._iter_done = True
+        return self._message
+
+    async def send(self, message: bytes) -> None:
+        self._sent.append(message)
+
+    async def recv(self) -> bytes:
+        raise StopAsyncIteration
 
 
 @pytest.fixture
@@ -169,3 +199,73 @@ async def test_notebook_reconnect_with_divergent_history_does_not_duplicate_init
         await recreated_loader.clean()
 
     assert len(merged["cells"]) == 1
+
+
+async def test_notebook_reconnect_sends_conflict_when_cell_structure_changes_between_restarts():
+    """When cell structure changes between room restarts, serve() must not crash.
+
+    _apply_deterministic_source_content uses Doc(client_id=0) so that Yjs item
+    clocks are stable across room restarts for identical content.  That
+    assumption breaks when the on-disk notebook changes structure between the
+    client's last sync and the next room creation: adding a primitive value
+    inside a cell (e.g. a kernel marks the cell trusted via
+    {"metadata": {"trusted": True}}) inserts one extra ItemContent::Any before
+    the source Text branch.  This shifts clock position 4 from
+    ItemContent::Type (the source Text) in the original room to
+    ItemContent::Any in the recreated room.
+
+    A client that made local edits against the original layout holds a parent
+    reference to (client_id=0, clock=4) which is no longer a valid container,
+    so yrs raises "block parent <0#4> must be deleted or shared ref type.
+    Type: 8" when that update is applied.
+
+    The server must catch this, keep the room intact, and send a CONFLICT
+    message back to the client so the frontend can offer Save As / View Diff.
+    """
+    notebook_before = _notebook_model()
+    room_a, loader_a = await _create_notebook_room(notebook_before, "meta-change-before")
+    client_doc = YNotebook()
+    try:
+        # Client connects to room A and receives all client_id=0 items.
+        client_doc.ydoc.apply_update(room_a.ydoc.get_update())
+        # Client edits the cell source, creating an item whose parent is the
+        # source Text branch — a client_id=0 item at clock position 4.
+        client_doc.ycells[0]["source"] += "new content"
+    finally:
+        await room_a.stop()
+        await loader_a.clean()
+
+    # Disk content changes: cell metadata gains "trusted": True.
+    # _apply_deterministic_source_content will now allocate clock 4 to the
+    # "trusted" Any value instead of the source Text branch.
+    notebook_after = deepcopy(notebook_before)
+    notebook_after["cells"][0]["metadata"] = {"trusted": True}
+    room_b, loader_b = await _create_notebook_room(notebook_after, "meta-change-after")
+    try:
+        # Build a SYNC_UPDATE message carrying the client's conflicting edit.
+        client_update = client_doc.ydoc.get_update()
+        sync_update_msg = bytes([YMessageType.SYNC, YSyncMessageType.SYNC_UPDATE]) + write_message(
+            client_update
+        )
+        channel = _SingleMessageChannel(sync_update_msg)
+
+        # serve() must complete without raising even though apply_update would crash.
+        await room_b.serve(channel)
+
+        # The room must have sent at least a SYNC_STEP2 and a CONFLICT message.
+        message_types = [msg[0] for msg in channel._sent]
+        assert (
+            MessageType.CONFLICT in message_types
+        ), f"Expected a CONFLICT message, got types: {message_types}"
+
+        # The CONFLICT message carries the current server state and rejected client update.
+        conflict_msg = next(m for m in channel._sent if m[0] == MessageType.CONFLICT)
+        assert len(conflict_msg) > 1
+
+        # The room itself must remain coherent — still one cell.
+        server_notebook = YNotebook()
+        server_notebook.ydoc.apply_update(room_b.ydoc.get_update())
+        assert len(server_notebook.get(deduplicate=False)["cells"]) == 1
+    finally:
+        await room_b.stop()
+        await loader_b.clean()

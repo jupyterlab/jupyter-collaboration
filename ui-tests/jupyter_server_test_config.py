@@ -15,5 +15,22 @@ from jupyterlab.galata import configure_jupyter_server
 c: Any
 configure_jupyter_server(c)  # noqa
 
+# Fast room eviction so conflict tests don't need to wait 60 seconds.
+c.YDocExtension.document_cleanup_delay = 1
+
+# Force-close dead WebSocket connections quickly.  Playwright's setOffline(true)
+# blocks network I/O without tearing down existing TCP connections, so pings are
+# needed to make the server detect the disconnection.  The conflict test goes
+# offline for 10 s; with interval=2 + timeout=5 the dead connection closes ≤7 s
+# after going offline, leaving enough margin before the test comes back online.
+c.ServerApp.websocket_ping_interval = 2  # seconds between pings
+c.ServerApp.websocket_ping_timeout = 5  # close connection if no pong within 5 s
+
+# Use SQLiteYStore with a predictable path so conflict tests can delete
+# the database during the offline period to force room recreation via
+# _apply_deterministic_source_content. This simulates the production scenario
+# where a room is evicted and the notebook structure changes on disk.
+c.SQLiteYStore.db_path = "/tmp/jupyter_ystore_ui_test.db"
+
 # Uncomment to set server log level to debug level
 # c.ServerApp.log_level = "DEBUG"
