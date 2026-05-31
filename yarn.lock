@@ -2094,6 +2094,8 @@ __metadata:
     "@jupyterlab/builder": ^4.4.0
     "@jupyterlab/codemirror": ^4.5.0
     "@jupyterlab/coreutils": ^6.5.0
+    "@jupyterlab/fileeditor": ^4.5.0
+    "@jupyterlab/notebook": ^4.5.0
     "@jupyterlab/services": ^7.5.0
     "@jupyterlab/statedb": ^4.5.0
     "@jupyterlab/translation": ^4.5.0
