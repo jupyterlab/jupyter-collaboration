@@ -1,7 +1,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from collections.abc import AsyncIterator
 from copy import deepcopy
 from importlib.metadata import entry_points
 from time import time
@@ -13,7 +12,7 @@ from jupyter_server_ydoc.rooms import DocumentRoom
 from jupyter_server_ydoc.test_utils import FakeContentsManager, FakeEventLogger, FakeFileIDManager
 from jupyter_server_ydoc.utils import MessageType
 from jupyter_ydoc import YNotebook
-from pycrdt import Provider, YMessageType, YSyncMessageType, write_message
+from pycrdt import Channel, Provider, YMessageType, YSyncMessageType, write_message
 from pycrdt.websocket.websocket import HttpxWebsocket
 
 jupyter_ydocs = {ep.name: ep.load() for ep in entry_points(group="jupyter_ydoc")}
@@ -31,7 +30,7 @@ class _SingleMessageChannel:
     def path(self) -> str:
         return "mock://test"
 
-    def __aiter__(self) -> AsyncIterator[bytes]:
+    def __aiter__(self) -> Channel:
         return self
 
     async def __anext__(self) -> bytes:
