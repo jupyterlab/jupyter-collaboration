@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - nodefaults
 dependencies:
-  - jupyterlab >=4.0.0
+  - jupyterlab >=4.6.0b1
   - nodejs >=18,<19
   - python >=3.11,<3.12
   - yarn >=3,<4
