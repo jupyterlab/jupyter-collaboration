@@ -6,22 +6,15 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import Callable
-from inspect import isawaitable
 from logging import Logger
 from typing import Any
 
-from anyio import create_task_group
 from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
 from pycrdt import (
+    Channel,
     Doc,
     Encoder,
-    YMessageType,
-    YSyncMessageType,
-    create_sync_message,
-    handle_sync_message,
-    is_awareness_disconnect_message,
-    read_message,
 )
 from pycrdt.store import BaseYStore, YDocNotFound
 from pycrdt.websocket import YRoom
@@ -70,6 +63,8 @@ class DocumentRoom(YRoom):
         # Listen for document changes
         self._document.observe(self._on_document_change)
         self._file.observe(self.room_id, self._on_outofband_change, self._on_filepath_change)
+
+        self.on_message_error = self._handle_sync_message_error
 
     @property
     def file_format(self) -> str:
@@ -240,72 +235,31 @@ class DocumentRoom(YRoom):
         except asyncio.CancelledError:
             pass
 
-    async def serve(self, channel):
-        """Serve a client, intercepting InvalidParent conflicts without crashing the room."""
-        try:
-            async with create_task_group() as tg:
-                self.clients.add(channel)
-                sync_message = create_sync_message(self.ydoc)
-                self.log.debug(
-                    "Sending %s message to endpoint: %s",
-                    YSyncMessageType.SYNC_STEP1.name,
-                    channel.path,
-                )
-                await channel.send(sync_message)
-                async for message in channel:
-                    skip = False
-                    if self.on_message:
-                        _skip = self.on_message(message)
-                        skip = await _skip if isawaitable(_skip) else _skip
-                    if skip:
-                        continue
-                    message_type = message[0]
-                    if message_type == YMessageType.SYNC:
-                        self.log.debug(
-                            "Received %s message from endpoint: %s",
-                            YSyncMessageType(message[1]).name,
-                            channel.path,
-                        )
-                        try:
-                            reply = handle_sync_message(message[1:], self.ydoc)
-                        except RuntimeError as exc:
-                            if "block parent" in str(exc):
-                                self.log.warning(
-                                    "Conflict in room %s from %s: %s",
-                                    self._room_id,
-                                    channel.path,
-                                    exc,
-                                )
-                                encoder = Encoder()
-                                encoder.write_var_uint(MessageType.RAW)
-                                encoder.write_var_string(json.dumps({"type": "conflict"}))
-                                tg.start_soon(channel.send, encoder.to_bytes())
-                            else:
-                                raise
-                            continue
-                        if reply is not None:
-                            self.log.debug(
-                                "Sending %s message to endpoint: %s",
-                                YSyncMessageType.SYNC_STEP2.name,
-                                channel.path,
-                            )
-                            tg.start_soon(channel.send, reply)
-                    elif message_type == YMessageType.AWARENESS:
-                        self.log.debug(
-                            "Received %s message from endpoint: %s",
-                            YMessageType.AWARENESS.name,
-                            channel.path,
-                        )
-                        disconnection = is_awareness_disconnect_message(message[1:])
-                        for client in self.clients:
-                            if disconnection and client == channel:
-                                continue
-                            tg.start_soon(client.send, message)
-                        self.awareness.apply_awareness_update(read_message(message[1:]), self)
-        except Exception as exception:
-            self._handle_exception(exception)
-        finally:
-            self.clients.remove(channel)
+    async def _handle_sync_message_error(
+        self, exc: Exception, message: bytes, channel: Channel
+    ) -> bool:
+        """Handle errors raised by handle_sync_message.
+
+        Intercepts InvalidParent conflicts caused by a stale client reconnecting
+        after the room was evicted and rebuilt from a modified file. Sends a RAW
+        conflict notification so the client can offer a resolution dialog, and
+        returns True so the serve loop continues for the remaining clients.
+        """
+        if not message or message[0] != MessageType.SYNC:
+            return False
+        if not (isinstance(exc, RuntimeError) and "block parent" in str(exc)):
+            return False
+        self.log.warning(
+            "Conflict in room %s from %s: %s",
+            self._room_id,
+            channel.path,
+            exc,
+        )
+        encoder = Encoder()
+        encoder.write_var_uint(MessageType.RAW)
+        encoder.write_var_string(json.dumps({"type": "conflict"}))
+        await channel.send(encoder.to_bytes())
+        return True
 
     async def _on_outofband_change(self) -> None:
         """
