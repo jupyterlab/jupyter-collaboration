@@ -10,7 +10,7 @@ def execute(cmd: str, cwd: Path | None = None) -> None:
 
 
 def install_dev() -> None:
-    install_build_deps = "python -m pip install jupyterlab>=4.4.0,<5"
+    install_build_deps = "python -m pip install jupyterlab>=4.6.0b1,<5"
     install_js_deps = "jlpm install"
 
     python_package_prefix = "projects"
@@ -22,6 +22,13 @@ def install_dev() -> None:
     for py_package in python_packages:
         real_package_name = py_package.replace("-", "_")
         execute(f"pip uninstall {real_package_name} -y")
+        # Clean old labextension builds to avoid skip-if-exists cache issues
+        if py_package in ["jupyter-collaboration-ui", "jupyter-docprovider"]:
+            labext_dir = (
+                Path(python_package_prefix) / py_package / real_package_name / "labextension"
+            )
+            if labext_dir.exists():
+                execute(f"rm -rf {labext_dir}")
         execute(f"pip install -e {python_package_prefix}/{py_package}[test]")
 
         # List of server extensions
