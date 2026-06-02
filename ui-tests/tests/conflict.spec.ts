@@ -165,7 +165,7 @@ test.describe.serial('Conflict handling', () => {
         baseURL,
         notebookName
       );
-      expect(dialog).toHaveScreenshot('conflict-dialog.png');
+      expect(dialog.screenshot()).toMatchSnapshot('conflict-dialog.png');
       await dialog.getByRole('button', { name: 'Dismiss' }).click();
       await expect(dialog).not.toBeVisible();
     }
@@ -242,7 +242,7 @@ test.describe.serial('Conflict handling', () => {
       const diffWidget = page.locator('.jp-MainAreaWidget:has(.nbdime-Widget)');
       await expect(diffWidget).toBeVisible({ timeout: 10000 });
 
-      expect(diffWidget).toHaveScreenshot('conflict-diff.png');
+      expect(diffWidget.screenshot()).toMatchSnapshot('conflict-diff.png');
     }
   );
 });
