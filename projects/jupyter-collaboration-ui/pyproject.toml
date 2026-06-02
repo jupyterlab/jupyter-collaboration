@@ -3,7 +3,7 @@
 
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling>=1.4.0", "jupyterlab>=4.0.0"]
+requires = ["hatchling>=1.4.0", "jupyterlab>=4.6.0b1"]
 
 [project]
 name = "jupyter-collaboration-ui"
