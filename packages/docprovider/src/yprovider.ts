@@ -403,8 +403,8 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       title: this._trans.__('Edit Conflict'),
       body: this._trans.__(
         'Your recent changes could not be applied because the document ' +
-          'structure changed while you were disconnected (for example, a ' +
-          'kernel or external tool modified the file). Your edits were not ' +
+          'structure changed while you were disconnected (for example, another ' +
+          'user or external tool modified the file). Your edits were not ' +
           'saved to the shared document.'
       ),
       buttons

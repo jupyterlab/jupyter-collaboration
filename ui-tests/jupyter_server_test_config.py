@@ -8,11 +8,12 @@ opens the server to the world and provide access to JupyterLab
 JavaScript objects through the global window variable.
 """
 
-from typing import Any
+from typing import Any, cast
 
 from jupyterlab.galata import configure_jupyter_server
 
-c: Any
+# `c` is injected by jupyter-server while loading this config file.
+c = cast(Any, globals()["c"])
 configure_jupyter_server(c)  # noqa
 
 # Fast room eviction so conflict tests don't need to wait 60 seconds.

@@ -1,7 +1,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from collections.abc import AsyncIterator
 from copy import deepcopy
 from importlib.metadata import entry_points
 from time import time
@@ -13,7 +12,7 @@ from jupyter_server_ydoc.rooms import DocumentRoom
 from jupyter_server_ydoc.test_utils import FakeContentsManager, FakeEventLogger, FakeFileIDManager
 from jupyter_server_ydoc.utils import MessageType
 from jupyter_ydoc import YNotebook
-from pycrdt import Provider, YMessageType, YSyncMessageType, write_message
+from pycrdt import Channel, Provider, YMessageType, YSyncMessageType, write_message
 from pycrdt.websocket.websocket import HttpxWebsocket
 
 jupyter_ydocs = {ep.name: ep.load() for ep in entry_points(group="jupyter_ydoc")}
@@ -31,7 +30,7 @@ class _SingleMessageChannel:
     def path(self) -> str:
         return "mock://test"
 
-    def __aiter__(self) -> AsyncIterator[bytes]:
+    def __aiter__(self) -> Channel:
         return self
 
     async def __anext__(self) -> bytes:
@@ -252,14 +251,15 @@ async def test_notebook_reconnect_sends_conflict_when_cell_structure_changes_bet
         # serve() must complete without raising even though apply_update would crash.
         await room_b.serve(channel)
 
-        # The room must have sent at least a SYNC_STEP2 and a CONFLICT message.
+        # The room must have sent at least a SYNC_STEP2 and a RAW conflict message.
         message_types = [msg[0] for msg in channel._sent]
         assert (
-            MessageType.CONFLICT in message_types
-        ), f"Expected a CONFLICT message, got types: {message_types}"
+            MessageType.RAW in message_types
+        ), f"Expected a RAW conflict message, got types: {message_types}"
 
-        # The CONFLICT message carries the current server state and rejected client update.
-        conflict_msg = next(m for m in channel._sent if m[0] == MessageType.CONFLICT)
+        # The RAW conflict message encodes a JSON payload with type=conflict.
+        conflict_msg = next(m for m in channel._sent if m[0] == MessageType.RAW)
+        assert b'"type": "conflict"' in conflict_msg
         assert len(conflict_msg) > 1
 
         # The room itself must remain coherent — still one cell.

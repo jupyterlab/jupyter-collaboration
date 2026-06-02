@@ -18,7 +18,7 @@ import {
 
 import { URLExt } from '@jupyterlab/coreutils';
 import { MainAreaWidget } from '@jupyterlab/apputils';
-import { IEditorServices } from '@jupyterlab/codeeditor';
+import { CodeEditor, IEditorServices } from '@jupyterlab/codeeditor';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { Contents } from '@jupyterlab/services';
 
@@ -27,6 +27,7 @@ import { JSONValue } from '@lumino/coreutils';
 import type * as nbformat from '@jupyterlab/nbformat';
 
 import { ConflictDiffWidget } from './conflictDiffWidget';
+import { CommandRegistry } from '@lumino/commands';
 
 /**
  * The plugin ID for settings.
@@ -80,20 +81,20 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
     });
   }
   private _trans: TranslationBundle;
-  private _commands: JupyterFrontEnd['commands'];
-  private _shell: JupyterFrontEnd['shell'];
+  private _commands: CommandRegistry;
+  private _shell: JupyterFrontEnd.IShell;
   private _contents: Contents.IManager;
-  private _editorFactory: IEditorServices['factoryService']['newInlineEditor'];
+  private _editorFactory: CodeEditor.Factory;
   private _rendermime: IRenderMimeRegistry;
 }
 
 namespace WebSocketDocumentProviderFactory {
   export interface IOptions {
     translator: TranslationBundle;
-    commands: JupyterFrontEnd['commands'];
-    shell: JupyterFrontEnd['shell'];
+    commands: CommandRegistry;
+    shell: JupyterFrontEnd.IShell;
     contents: Contents.IManager;
-    editorFactory: IEditorServices['factoryService']['newInlineEditor'];
+    editorFactory: CodeEditor.Factory;
     rendermime: IRenderMimeRegistry;
   }
 }
