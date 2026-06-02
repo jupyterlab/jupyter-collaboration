@@ -26,7 +26,8 @@ fine to just ignore it, including in your version control system (don't commit t
 you happen to delete it, there shouldn't be any serious consequence either.
 
 A second file, `collaboration_sessions.json`, is created inside a `.jupyter` directory under
-that same launch directory. It records recent collaboration session IDs so the backend can
+the server's root directory (`ServerApp.root_dir`, which defaults to the directory where
+JupyterLab was launched). It records recent collaboration session IDs so the backend can
 detect when a client is reconnecting after a server restart or version change, and prompt for
 a reload when the session can no longer be resumed safely. Like the YStore database, it is
 safe to ignore in version control and safe to delete (clients will simply be asked to reload

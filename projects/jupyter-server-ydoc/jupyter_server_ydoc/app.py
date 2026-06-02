@@ -100,7 +100,7 @@ class YDocExtension(ExtensionApp):
         help="""Path to the JSON file used to record collaboration session IDs for
         reconnect compatibility checks. When unset, defaults to
         ``<server_root_dir>/.jupyter/collaboration_sessions.json``. Set this to
-        relocate the file (for example into a per-user data directory) so the
+        relocate the file (for example into a dedicated data directory) so the
         server root stays free of generated state.""",
     )
 
