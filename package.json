@@ -25,7 +25,8 @@
     "packages/*"
   ],
   "resolutions": {
-    "lib0": "<=0.2.98"
+    "lib0": "<=0.2.98",
+    "@jupyterlab/rendermime": "^4.6.0-beta.1"
   },
   "scripts": {
     "dev": "python scripts/dev_install.py",
