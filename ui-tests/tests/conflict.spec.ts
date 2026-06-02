@@ -165,6 +165,7 @@ test.describe.serial('Conflict handling', () => {
         baseURL,
         notebookName
       );
+      expect(dialog).toHaveScreenshot('conflict-dialog.png');
       await dialog.getByRole('button', { name: 'Dismiss' }).click();
       await expect(dialog).not.toBeVisible();
     }
@@ -238,10 +239,10 @@ test.describe.serial('Conflict handling', () => {
       await dialog.getByRole('button', { name: 'Show Diff' }).click();
 
       // The diff widget should appear as a main area tab.
-      const diffWidget = page.locator('.jp-MainAreaWidget .nbdime-Widget');
+      const diffWidget = page.locator('.jp-MainAreaWidget:has(.nbdime-Widget)');
       await expect(diffWidget).toBeVisible({ timeout: 10000 });
 
-      await diffWidget.screenshot({ path: 'conflict-diff.png' });
+      expect(diffWidget).toHaveScreenshot('conflict-diff.png');
     }
   );
 });
