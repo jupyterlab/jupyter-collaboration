@@ -69,11 +69,14 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
       onConflictRevert: () => this._commands.execute('docmanager:reload'),
       onConflictShowDiff: async (localContent: JSONValue) => {
         const serverModel = await contents.get(path, { content: true });
-        const widget = await ConflictDiffWidget.create({
-          base: serverModel.content as nbformat.INotebookContent,
-          remote: localContent as nbformat.INotebookContent,
+        const widget = new ConflictDiffWidget({
+          translator: this._trans,
           editorFactory,
           rendermime
+        });
+        await widget.create({
+          base: serverModel.content as nbformat.INotebookContent,
+          remote: localContent as nbformat.INotebookContent
         });
         const main = new MainAreaWidget({ content: widget });
         main.title.label = this._trans.__('Conflict diff: %1', path);

@@ -6,7 +6,8 @@
 import type * as nbformat from '@jupyterlab/nbformat';
 import type { CodeEditor } from '@jupyterlab/codeeditor';
 import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
-import type { ITranslator } from '@jupyterlab/translation';
+import { nullTranslator } from '@jupyterlab/translation';
+import type { TranslationBundle } from '@jupyterlab/translation';
 
 import { Widget } from '@lumino/widgets';
 
@@ -30,23 +31,40 @@ import '../style/conflictDiff.css';
  * of using Panel.addWidget(), which would fail due to the class identity mismatch.
  */
 export class ConflictDiffWidget extends Widget {
-  private _nbdiffWidget: NotebookDiffWidget;
+  private _nbdiffWidget: NotebookDiffWidget | null = null;
+  private _editorFactory: CodeEditor.Factory;
+  private _rendermime: IRenderMimeRegistry;
+  private _trans: TranslationBundle;
 
-  private constructor(
-    diffWidget: NotebookDiffWidget,
-    base: string,
-    remote: string
-  ) {
+  constructor(options: ConflictDiffWidget.IOptions) {
     super();
     this.addClass('nbdime-Widget');
-    this._nbdiffWidget = diffWidget;
-
-    const headerNode = _makeHeaderNode(base, remote);
+    this._editorFactory = options.editorFactory;
+    this._rendermime = options.rendermime;
+    this._trans =
+      options.translator ?? nullTranslator.load('jupyter_collaboration');
     this.node.style.display = 'flex';
     this.node.style.flexDirection = 'column';
     this.node.style.height = '100%';
     this.node.style.overflow = 'auto';
-    this.node.appendChild(headerNode);
+  }
+
+  async create(options: ConflictDiffWidget.ICreateOptions): Promise<void> {
+    const diff = _diffNotebooks(options.base, options.remote);
+    const model = new NotebookDiffModel(options.base, diff);
+    const diffWidget = new NotebookDiffWidget({
+      model,
+      rendermime: this._rendermime,
+      editorFactory: this._editorFactory
+    });
+    await diffWidget.init();
+    this._nbdiffWidget = diffWidget;
+    this.node.appendChild(
+      _makeHeaderNode(
+        this._trans.__('Server version'),
+        this._trans.__('Local version')
+      )
+    );
     this.node.appendChild(diffWidget.node);
   }
 
@@ -54,37 +72,21 @@ export class ConflictDiffWidget extends Widget {
     if (this.isDisposed) {
       return;
     }
-    this._nbdiffWidget.dispose();
+    this._nbdiffWidget?.dispose();
     super.dispose();
-  }
-
-  static async create(
-    options: ConflictDiffWidget.IOptions
-  ): Promise<ConflictDiffWidget> {
-    const diff = _diffNotebooks(options.base, options.remote);
-    const model = new NotebookDiffModel(options.base, diff);
-    const diffWidget = new NotebookDiffWidget({
-      model,
-      rendermime: options.rendermime,
-      editorFactory: options.editorFactory,
-      translator: options.translator
-    });
-    await diffWidget.init();
-    return new ConflictDiffWidget(
-      diffWidget,
-      'Server version',
-      'Local version'
-    );
   }
 }
 
 export namespace ConflictDiffWidget {
   export interface IOptions {
-    base: nbformat.INotebookContent;
-    remote: nbformat.INotebookContent;
+    translator?: TranslationBundle;
     editorFactory: CodeEditor.Factory;
     rendermime: IRenderMimeRegistry;
-    translator?: ITranslator;
+  }
+
+  export interface ICreateOptions {
+    base: nbformat.INotebookContent;
+    remote: nbformat.INotebookContent;
   }
 }
 
