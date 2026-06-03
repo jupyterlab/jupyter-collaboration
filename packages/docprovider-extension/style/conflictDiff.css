@@ -28,3 +28,10 @@
   background-color: var(--jp-diff-added-color0);
   padding: 0 4px;
 }
+
+/* diff.css hides .jp-Cellrow-metadata on added/deleted cells by default.
+   Override that so metadata changes are always visible in the conflict diff. */
+.nbdime-Widget .jp-Diff-added .jp-Cellrow-metadata,
+.nbdime-Widget .jp-Diff-deleted .jp-Cellrow-metadata {
+  display: block !important;
+}

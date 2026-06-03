@@ -178,12 +178,30 @@ function _diffNotebooks(
         valuelist: remoteCells.slice(ri, remoteIdx)
       });
     }
-    if (_getSource(baseCells[baseIdx]) !== _getSource(remoteCells[remoteIdx])) {
+    const sourceChanged =
+      _getSource(baseCells[baseIdx]) !== _getSource(remoteCells[remoteIdx]);
+    const metaChanged =
+      JSON.stringify(baseCells[baseIdx].metadata) !==
+      JSON.stringify(remoteCells[remoteIdx].metadata);
+
+    if (sourceChanged) {
       cellsDiff.push({ op: 'removerange', key: baseIdx, length: 1 });
       cellsDiff.push({
         op: 'addrange',
         key: baseIdx,
         valuelist: [remoteCells[remoteIdx]]
+      });
+    } else if (metaChanged) {
+      cellsDiff.push({
+        op: 'patch',
+        key: baseIdx,
+        diff: [
+          {
+            op: 'replace',
+            key: 'metadata',
+            value: remoteCells[remoteIdx].metadata
+          }
+        ]
       });
     }
     bi = baseIdx + 1;
@@ -205,8 +223,12 @@ function _diffNotebooks(
     });
   }
 
-  if (cellsDiff.length === 0) {
-    return [];
+  const topDiff: IDiffEntry[] = [];
+  if (cellsDiff.length > 0) {
+    topDiff.push({ op: 'patch', key: 'cells', diff: cellsDiff });
   }
-  return [{ op: 'patch', key: 'cells', diff: cellsDiff }];
+  if (JSON.stringify(base.metadata) !== JSON.stringify(remote.metadata)) {
+    topDiff.push({ op: 'replace', key: 'metadata', value: remote.metadata });
+  }
+  return topDiff;
 }
