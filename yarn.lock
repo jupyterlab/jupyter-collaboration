@@ -2146,6 +2146,7 @@ __metadata:
     "@jupyterlab/rendermime": ^4.6.0-beta.1
     "@jupyterlab/settingregistry": ^4.6.0-beta.1
     "@jupyterlab/translation": ^4.6.0-beta.1
+    "@jupyterlab/ui-components": ^4.6.0-beta.1
     "@lumino/commands": ^2.3.2
     "@types/react": ~18.3.1
     nbdime: ^7.0.4

@@ -245,4 +245,69 @@ test.describe.serial('Conflict handling', () => {
       expect(await diffWidget.screenshot()).toMatchSnapshot('conflict-diff.png');
     }
   );
+
+  test(
+    'Save Local As button in diff toolbar opens the save-as dialog',
+    async ({ page, request, tmpPath, baseURL }) => {
+      const dialog = await triggerConflict(
+        page,
+        request,
+        tmpPath,
+        baseURL,
+        notebookName
+      );
+      await dialog.getByRole('button', { name: 'Show Diff' }).click();
+
+      const diffWidget = page.locator('.jp-MainAreaWidget:has(.nbdime-Widget)');
+      await expect(diffWidget).toBeVisible({ timeout: 10000 });
+
+      await diffWidget.getByRole('button', { name: 'Save Local As' }).click();
+
+      // docmanager:save-as opens a path-input dialog.
+      const saveAsDialog = page.locator('.jp-Dialog');
+      await expect(saveAsDialog.locator('input')).toBeVisible({ timeout: 5000 });
+
+      // Cancel without saving.
+      await saveAsDialog.getByRole('button', { name: 'Cancel' }).click();
+      await expect(saveAsDialog).not.toBeVisible();
+    }
+  );
+
+  test(
+    'Revert to Remote button in diff toolbar reloads the document',
+    async ({ page, request, tmpPath, baseURL }) => {
+      const dialog = await triggerConflict(
+        page,
+        request,
+        tmpPath,
+        baseURL,
+        notebookName
+      );
+      await dialog.getByRole('button', { name: 'Show Diff' }).click();
+
+      const diffWidget = page.locator('.jp-MainAreaWidget:has(.nbdime-Widget)');
+      await expect(diffWidget).toBeVisible({ timeout: 10000 });
+
+      await diffWidget.getByRole('button', { name: 'Revert to Remote' }).click();
+
+      // After reload, handle any follow-up dialog (kernel selection or
+      // reload confirmation).
+      const followUp = page.locator('.jp-Dialog');
+      try {
+        await followUp.waitFor({ state: 'visible', timeout: 3000 });
+        const noKernel = followUp.getByRole('button', { name: 'No Kernel' });
+        if (await noKernel.isVisible({ timeout: 300 })) {
+          await noKernel.click();
+        } else {
+          await followUp.locator('.jp-mod-accept').click();
+        }
+        await expect(followUp).not.toBeVisible({ timeout: 5000 });
+      } catch {
+        // No follow-up dialog.
+      }
+
+      // After reload the notebook should show the server state: 2 cells.
+      await expect(page.locator('.jp-Cell')).toHaveCount(2, { timeout: 5000 });
+    }
+  );
 });
