@@ -298,7 +298,7 @@ jobs:
           key: ${{ runner.os }}-${{ steps.pw-version.outputs.version }}
 
       - name: Install browser
-        run: jlpm playwright install chromium --only-shell
+        run: jlpm playwright install chromium
         working-directory: ui-tests
 
       - name: run tests
