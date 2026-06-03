@@ -51,7 +51,7 @@
     "test:cov": "lerna run test:cov",
     "test:debug": "lerna run test:debug",
     "test:debug:watch": "lerna run test:debug:watch",
-    "watch": "lerna run watch"
+    "watch": "lerna run watch --parallel"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "~5.55.0",
