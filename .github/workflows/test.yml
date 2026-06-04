@@ -281,15 +281,21 @@ jobs:
         run: |
           jlpm install
         working-directory: ui-tests
-      - name: Set up browser cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ${{ github.workspace }}/pw-browsers
-          key: ${{ runner.os }}-${{ hashFiles('ui-tests/yarn.lock') }}
-      - name: Install browser
-        run: jlpm playwright install chromium
+
+      - name: Find out Playwright version
+        id: pw-version
+        run: |
+          set -e
+          PW_VERSION=$(grep -m1 "playwright@" yarn.lock)
+          echo "Playwright version: $PW_VERSION"
+          echo "version=$PW_VERSION" >> $GITHUB_OUTPUT
         working-directory: ui-tests
+
+      - name: Set up browser cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ github.workspace }}/pw-browsers
+          key: ${{ runner.os }}-${{ steps.pw-version.outputs.version }}
 
       - name: run tests
         working-directory: ui-tests
