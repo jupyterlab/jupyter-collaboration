@@ -297,6 +297,10 @@ jobs:
           path: ${{ github.workspace }}/pw-browsers
           key: ${{ runner.os }}-${{ steps.pw-version.outputs.version }}
 
+      - name: Install browser
+        run: jlpm playwright install chromium
+        working-directory: ui-tests
+
       - name: run tests
         working-directory: ui-tests
         run: |

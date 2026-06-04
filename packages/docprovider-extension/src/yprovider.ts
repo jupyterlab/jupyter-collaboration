@@ -27,7 +27,10 @@ const PLUGIN_ID = '@jupyter/docprovider-extension:websocket-provider';
  * Document provider factory that creates WebSocket providers.
  */
 class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
-  constructor(private _trans: TranslationBundle) {}
+  constructor(options: WebSocketDocumentProviderFactory.IOptions) {
+    this._trans = options.translator;
+    this._commands = options.commands;
+  }
 
   create(options: IDocumentProviderFactory.IOptions) {
     return new WebSocketProvider({
@@ -37,8 +40,19 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
       model: options.model,
       user: options.user,
       translator: this._trans,
-      serverSettings: options.serverSettings
+      serverSettings: options.serverSettings,
+      onConflictSaveAs: () => this._commands.execute('docmanager:save-as'),
+      onConflictRevert: () => this._commands.execute('docmanager:reload')
     });
+  }
+  private _trans: TranslationBundle;
+  private _commands: JupyterFrontEnd['commands'];
+}
+
+namespace WebSocketDocumentProviderFactory {
+  export interface IOptions {
+    translator: TranslationBundle;
+    commands: JupyterFrontEnd['commands'];
   }
 }
 
@@ -72,7 +86,10 @@ export const documentProviderFactoryPlugin: JupyterFrontEndPlugin<IDocumentProvi
     provides: IDocumentProviderFactory,
     activate: async (app: JupyterFrontEnd, translator: ITranslator) => {
       const trans = translator.load('jupyter_collaboration');
-      return new WebSocketDocumentProviderFactory(trans);
+      return new WebSocketDocumentProviderFactory({
+        translator: trans,
+        commands: app.commands
+      });
     }
   };
 

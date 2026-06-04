@@ -58,6 +58,8 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     this._serverSettings =
       options.serverSettings ?? ServerConnection.makeSettings();
     this._trans = options.translator;
+    this._onConflictSaveAs = options.onConflictSaveAs;
+    this._onConflictRevert = options.onConflictRevert;
 
     const user = options.user;
 
@@ -99,6 +101,13 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       return;
     }
     this._isDisposed = true;
+    if (this._conflictWs) {
+      this._conflictWs.removeEventListener(
+        'message',
+        this._handleConflictMessage
+      );
+      this._conflictWs = null;
+    }
     this._yWebsocketProvider?.off('connection-close', this._onConnectionClosed);
     this._yWebsocketProvider?.off('sync', this._onSync);
     this._yWebsocketProvider?.destroy();
@@ -203,6 +212,11 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
 
     this._yWebsocketProvider.on('sync', this._onSync);
     this._yWebsocketProvider.on('connection-close', this._onConnectionClosed);
+    this._yWebsocketProvider.on('status', ({ status }: { status: string }) => {
+      if (status === 'connected') {
+        this._attachConflictListener();
+      }
+    });
   }
 
   async connectToForkDoc(forkRoomId: string, sessionId: string): Promise<void> {
@@ -321,6 +335,78 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     }
   };
 
+  private _attachConflictListener(): void {
+    if (this._conflictWs) {
+      this._conflictWs.removeEventListener(
+        'message',
+        this._handleConflictMessage
+      );
+    }
+    const ws = this._yWebsocketProvider?.ws;
+    if (ws) {
+      ws.addEventListener('message', this._handleConflictMessage);
+      this._conflictWs = ws;
+    }
+  }
+
+  private _handleConflictMessage = async (
+    event: MessageEvent
+  ): Promise<void> => {
+    if (!(event.data instanceof ArrayBuffer)) {
+      return;
+    }
+    const data = new Uint8Array(event.data);
+    if (data.length === 0) {
+      return;
+    }
+    const decoder = decoding.createDecoder(data);
+    try {
+      if (decoding.readVarUint(decoder) !== RAW_MESSAGE_TYPE) {
+        return;
+      }
+      const payload = JSON.parse(decoding.readVarString(decoder));
+      if (!payload || payload.type !== 'conflict') {
+        return;
+      }
+    } catch {
+      return;
+    }
+    const buttons: Dialog.IButton[] = [
+      Dialog.cancelButton({ label: this._trans.__('Dismiss') })
+    ];
+    if (this._onConflictRevert) {
+      buttons.push(
+        Dialog.warnButton({
+          label: this._trans.__('Revert'),
+          actions: ['revert']
+        })
+      );
+    }
+    if (this._onConflictSaveAs) {
+      buttons.push(
+        Dialog.okButton({
+          label: this._trans.__('Save As'),
+          actions: ['save-as']
+        })
+      );
+    }
+    const result = await showDialog({
+      title: this._trans.__('Edit Conflict'),
+      body: this._trans.__(
+        'Your recent changes could not be applied because the document ' +
+          'structure changed while you were disconnected (for example, another ' +
+          'user or external tool modified the file). Your edits were not ' +
+          'saved to the shared document.'
+      ),
+      buttons
+    });
+    if (result.button.actions.includes('revert')) {
+      await this._onConflictRevert?.();
+    } else if (result.button.actions.includes('save-as')) {
+      await this._onConflictSaveAs?.();
+    }
+  };
+
   private _onSync = (isSynced: boolean) => {
     if (isSynced) {
       this._hasSynced = true;
@@ -364,6 +450,9 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _trans: TranslationBundle;
   private _hasSynced = false;
   private _saveCounter = 0;
+  private _conflictWs: WebSocket | null = null;
+  private _onConflictSaveAs?: () => Promise<void>;
+  private _onConflictRevert?: () => Promise<void>;
 }
 
 /**
@@ -413,5 +502,15 @@ export namespace WebSocketProvider {
      * The server settings.
      */
     serverSettings?: ServerConnection.ISettings;
+
+    /**
+     * Called when the user chooses "Save As" from the conflict dialog.
+     */
+    onConflictSaveAs?: () => Promise<void>;
+
+    /**
+     * Called when the user chooses "Revert" from the conflict dialog.
+     */
+    onConflictRevert?: () => Promise<void>;
   }
 }
