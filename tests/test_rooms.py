@@ -6,7 +6,6 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import AsyncMock, patch
 
-from pycrdt import YSyncMessageType
 from jupyter_server_ydoc.loaders import FileLoader
 from jupyter_server_ydoc.rooms import DocumentRoom
 from jupyter_server_ydoc.test_utils import (
@@ -16,6 +15,7 @@ from jupyter_server_ydoc.test_utils import (
 )
 from jupyter_server_ydoc.utils import MessageType, OutOfBandChanges
 from jupyter_ydoc import YUnicode
+from pycrdt import YSyncMessageType
 
 
 async def test_should_initialize_document_room_without_store(rtc_create_mock_document_room):
@@ -305,9 +305,7 @@ async def test_progressive_notebook_initialize_streams_before_load_finishes():
         started.set()
         await resume.wait()
 
-    with patch.object(
-        room, "_apply_deterministic_source_content", slow_apply_source_content
-    ):
+    with patch.object(room, "_apply_deterministic_source_content", slow_apply_source_content):
         task = asyncio.create_task(room.initialize())
         await asyncio.wait_for(started.wait(), timeout=1)
         await asyncio.wait_for(task, timeout=1)
@@ -318,13 +316,9 @@ async def test_progressive_notebook_initialize_streams_before_load_finishes():
         room._on_document_change("cells", None)
         assert room._saving_document is None
         assert room._save_to_disc() is None
-        assert room._filter_message(
-            bytes([MessageType.SYNC, YSyncMessageType.SYNC_UPDATE])
-        )
+        assert room._filter_message(bytes([MessageType.SYNC, YSyncMessageType.SYNC_UPDATE]))
         assert room._filter_message(bytes([MessageType.SYNC, YSyncMessageType.SYNC_STEP2]))
-        assert not room._filter_message(
-            bytes([MessageType.SYNC, YSyncMessageType.SYNC_STEP1])
-        )
+        assert not room._filter_message(bytes([MessageType.SYNC, YSyncMessageType.SYNC_STEP1]))
         assert not room._filter_message(bytes([MessageType.AWARENESS, 0]))
 
         resume.set()

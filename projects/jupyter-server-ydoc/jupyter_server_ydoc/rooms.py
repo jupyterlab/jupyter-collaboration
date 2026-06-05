@@ -297,8 +297,7 @@ class DocumentRoom(YRoom):
             self._block_client_document_updates
             and len(message) > 1
             and message[0] == MessageType.SYNC
-            and message[1]
-            in (YSyncMessageType.SYNC_STEP2, YSyncMessageType.SYNC_UPDATE)
+            and message[1] in (YSyncMessageType.SYNC_STEP2, YSyncMessageType.SYNC_UPDATE)
         )
 
     async def _handle_sync_message_error(
