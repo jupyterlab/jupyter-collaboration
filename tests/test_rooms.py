@@ -6,7 +6,15 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import AsyncMock, patch
 
-from jupyter_server_ydoc.utils import OutOfBandChanges
+from pycrdt import YSyncMessageType
+from jupyter_server_ydoc.loaders import FileLoader
+from jupyter_server_ydoc.rooms import DocumentRoom
+from jupyter_server_ydoc.test_utils import (
+    FakeContentsManager,
+    FakeEventLogger,
+    FakeFileIDManager,
+)
+from jupyter_server_ydoc.utils import MessageType, OutOfBandChanges
 from jupyter_ydoc import YUnicode
 
 
@@ -258,6 +266,75 @@ async def test_on_outofband_change_skips_aset_when_content_unchanged(
     with patch.object(room._document, "aset", new_callable=AsyncMock) as mock_aset:
         await room._on_outofband_change()
         mock_aset.assert_not_called()
+
+
+async def test_progressive_notebook_initialize_streams_before_load_finishes():
+    content = {
+        "cells": [],
+        "metadata": {},
+        "nbformat": 4,
+        "nbformat_minor": 5,
+    }
+    cm = FakeContentsManager({"content": content, "writable": True})
+    loader = FileLoader(
+        "notebook-id",
+        FakeFileIDManager({"notebook-id": "large.ipynb"}),
+        cm,
+        poll_interval=None,
+    )
+    room = DocumentRoom(
+        "test-room",
+        "json",
+        "notebook",
+        loader,
+        FakeEventLogger(),
+        None,
+        None,
+        save_delay=0.01,
+        notebook_load_progressively=True,
+        notebook_output_delay_threshold_mb=50,
+    )
+    started = asyncio.Event()
+    resume = asyncio.Event()
+
+    async def slow_apply_source_content(value, progressive=False):
+        assert value == content
+        assert progressive is True
+        assert room.ready
+        assert room._update_lock.locked()
+        started.set()
+        await resume.wait()
+
+    with patch.object(
+        room, "_apply_deterministic_source_content", slow_apply_source_content
+    ):
+        task = asyncio.create_task(room.initialize())
+        await asyncio.wait_for(started.wait(), timeout=1)
+        await asyncio.wait_for(task, timeout=1)
+
+        assert room.ready
+        assert room._update_lock.locked()
+
+        room._on_document_change("cells", None)
+        assert room._saving_document is None
+        assert room._save_to_disc() is None
+        assert room._filter_message(
+            bytes([MessageType.SYNC, YSyncMessageType.SYNC_UPDATE])
+        )
+        assert room._filter_message(bytes([MessageType.SYNC, YSyncMessageType.SYNC_STEP2]))
+        assert not room._filter_message(
+            bytes([MessageType.SYNC, YSyncMessageType.SYNC_STEP1])
+        )
+        assert not room._filter_message(bytes([MessageType.AWARENESS, 0]))
+
+        resume.set()
+        for _ in range(20):
+            if not room._update_lock.locked():
+                break
+            await asyncio.sleep(0.01)
+
+    assert not room._update_lock.locked()
+    assert not room._filter_message(bytes([MessageType.SYNC, YSyncMessageType.SYNC_UPDATE]))
 
     assert not room._document.dirty
 

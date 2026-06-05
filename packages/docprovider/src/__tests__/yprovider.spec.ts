@@ -162,6 +162,15 @@ describe('@jupyter/docprovider', () => {
 
         await expect(provider.ready).resolves.toBeUndefined();
       });
+
+      it('should resolve ready when websocket connects', async () => {
+        const provider = createProvider();
+        const wsProvider = await waitForProviderConnect(provider);
+
+        wsProvider.emit('status', { status: 'connected' });
+
+        await expect(provider.ready).resolves.toBeUndefined();
+      });
     });
   });
 });
