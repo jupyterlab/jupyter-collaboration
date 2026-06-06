@@ -4,18 +4,23 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from collections.abc import Callable
 from logging import Logger
 from typing import Any
 
 from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
-from pycrdt import Doc
+from pycrdt import (
+    Channel,
+    Doc,
+    Encoder,
+)
 from pycrdt.store import BaseYStore, YDocNotFound
 from pycrdt.websocket import YRoom
 
 from .loaders import FileLoader
-from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, OutOfBandChanges
+from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, MessageType, OutOfBandChanges
 
 YFILE = YDOCS["file"]
 
@@ -58,6 +63,8 @@ class DocumentRoom(YRoom):
         # Listen for document changes
         self._document.observe(self._on_document_change)
         self._file.observe(self.room_id, self._on_outofband_change, self._on_filepath_change)
+
+        self.on_message_error = self._handle_sync_message_error
 
     @property
     def file_format(self) -> str:
@@ -185,7 +192,6 @@ class DocumentRoom(YRoom):
         The client ID needs to be fixed to a deterministic value, see:
         https://discuss.yjs.dev/t/initial-offline-value-of-a-shared-document/465
         """
-
         source_ydoc: Doc = Doc(client_id=0)
         source_document = YDOCS.get(self._file_type, YFILE)(source_ydoc)
         await source_document.aset(content)
@@ -228,6 +234,32 @@ class DocumentRoom(YRoom):
             await super()._broadcast_updates()
         except asyncio.CancelledError:
             pass
+
+    async def _handle_sync_message_error(
+        self, exc: Exception, message: bytes, channel: Channel
+    ) -> bool:
+        """Handle errors raised by handle_sync_message.
+
+        Intercepts InvalidParent conflicts caused by a stale client reconnecting
+        after the room was evicted and rebuilt from a modified file. Sends a RAW
+        conflict notification so the client can offer a resolution dialog, and
+        returns True so the serve loop continues for the remaining clients.
+        """
+        if not message or message[0] != MessageType.SYNC:
+            return False
+        if not (isinstance(exc, RuntimeError) and "block parent" in str(exc)):
+            return False
+        self.log.warning(
+            "Conflict in room %s from %s: %s",
+            self._room_id,
+            channel.path,
+            exc,
+        )
+        encoder = Encoder()
+        encoder.write_var_uint(MessageType.RAW)
+        encoder.write_var_string(json.dumps({"type": "conflict"}))
+        await channel.send(encoder.to_bytes())
+        return True
 
     async def _on_outofband_change(self) -> None:
         """

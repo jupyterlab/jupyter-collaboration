@@ -2,6 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 import asyncio
+import json
 
 from jupyter_server_ydoc.utils import (
     YDOC_SERVER_VERSION,
@@ -102,3 +103,51 @@ async def test_allows_reconnect_without_document_version_in_old_session(tmp_path
     )
     assert cannot_reconnect is False
     assert reason == ""
+
+
+async def test_session_store_path_override_persists_records(tmp_path):
+    """Saved sessions land under the override path and reconnects honor it."""
+    override = tmp_path / "elsewhere" / "sessions.json"
+    await save_current_session(
+        str(tmp_path),
+        "override-session",
+        YDOC_SERVER_VERSION,
+        asyncio.Lock(),
+        session_store_path=str(override),
+    )
+
+    assert override.exists()
+    payload = json.loads(override.read_text())
+    assert "override-session" in payload
+    # The default ``.jupyter`` directory should never be created when an override is set.
+    assert not (tmp_path / ".jupyter").exists()
+
+    cannot_reconnect, reason = check_session_compatibility(
+        str(tmp_path),
+        "override-session",
+        YDOC_SERVER_VERSION,
+        session_store_path=str(override),
+    )
+    assert cannot_reconnect is False
+    assert reason == ""
+
+
+async def test_session_store_path_override_isolated_from_default(tmp_path):
+    """Records saved with an override are invisible to the default lookup."""
+    override = tmp_path / "elsewhere" / "sessions.json"
+    await save_current_session(
+        str(tmp_path),
+        "override-session",
+        YDOC_SERVER_VERSION,
+        asyncio.Lock(),
+        session_store_path=str(override),
+    )
+
+    # Without the override, the default lookup should treat the session as unknown.
+    cannot_reconnect, reason = check_session_compatibility(
+        str(tmp_path),
+        "override-session",
+        YDOC_SERVER_VERSION,
+    )
+    assert cannot_reconnect is True
+    assert reason == "unknown_session"
