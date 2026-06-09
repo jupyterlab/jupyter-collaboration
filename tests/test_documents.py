@@ -1,6 +1,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from collections.abc import Callable
 from copy import deepcopy
 from importlib.metadata import entry_points
 from time import time
@@ -340,7 +341,7 @@ def _server_cell_ids(room: DocumentRoom) -> list[str]:
     return [c["id"] for c in snapshot.get(deduplicate=False)["cells"]]
 
 
-async def _wait_until(predicate, timeout: float = 2.0) -> None:
+async def _wait_until(predicate: Callable[[], bool], timeout: float = 2.0) -> None:
     """Poll an async-friendly predicate until true or the timeout elapses."""
     elapsed = 0.0
     step = 0.02
