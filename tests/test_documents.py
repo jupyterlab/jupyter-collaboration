@@ -6,13 +6,20 @@ from importlib.metadata import entry_points
 from time import time
 
 import pytest
-from anyio import create_task_group, sleep
+from anyio import Event, create_task_group, sleep
 from jupyter_server_ydoc.loaders import FileLoader
 from jupyter_server_ydoc.rooms import DocumentRoom
 from jupyter_server_ydoc.test_utils import FakeContentsManager, FakeEventLogger, FakeFileIDManager
 from jupyter_server_ydoc.utils import MessageType
 from jupyter_ydoc import YNotebook
-from pycrdt import Channel, Provider, YMessageType, YSyncMessageType, write_message
+from pycrdt import (
+    Channel,
+    Provider,
+    YMessageType,
+    YSyncMessageType,
+    handle_sync_message,
+    write_message,
+)
 from pycrdt.websocket.websocket import HttpxWebsocket
 
 jupyter_ydocs = {ep.name: ep.load() for ep in entry_points(group="jupyter_ydoc")}
@@ -44,6 +51,61 @@ class _SingleMessageChannel:
 
     async def recv(self) -> bytes:
         raise StopAsyncIteration
+
+
+class _HandshakeChannel(Channel):
+    """Mock channel that completes a server-initiated sync handshake.
+
+    ``serve()`` first sends SYNC_STEP1 (the server's state vector); this channel
+    captures it and replies, on its first iteration, with the client's
+    SYNC_STEP2 (the update the client owes the server), exactly as a real client
+    would. This is the realistic protocol path: unlike a full state exchange,
+    a SYNC_STEP2 computed against the server's state vector only carries items
+    the server's vector does not already cover.
+
+    With ``stay_connected=True`` the channel keeps the serve() loop alive after
+    replying (so the client remains in ``room.clients``) until ``disconnect()``
+    is called. This is needed to observe messages the server broadcasts from a
+    deferred task, such as the conflict notification raised by divergent cells.
+
+    Only ``recv()``/``send()``/``path`` are defined; the async-iteration
+    machinery is inherited from the ``Channel`` protocol (``__anext__`` calls
+    ``recv()``).
+    """
+
+    def __init__(self, client_doc: YNotebook, *, stay_connected: bool = False) -> None:
+        self._client_doc = client_doc
+        self._sent: list[bytes] = []
+        self._replied = False
+        self._stay_connected = stay_connected
+        self._disconnect = Event()
+
+    @property
+    def path(self) -> str:
+        return "mock://client"
+
+    async def recv(self) -> bytes:
+        if not self._replied:
+            self._replied = True
+            # _sent[0] is the server's SYNC_STEP1, sent before the serve() loop.
+            step2 = handle_sync_message(self._sent[0][1:], self._client_doc.ydoc)
+            assert step2 is not None and step2[1] == YSyncMessageType.SYNC_STEP2
+            return step2
+        if self._stay_connected:
+            await self._disconnect.wait()
+        raise StopAsyncIteration
+
+    async def send(self, message: bytes) -> None:
+        self._sent.append(message)
+
+    def disconnect(self) -> None:
+        """Let the serve() loop exit on its next iteration."""
+        self._disconnect.set()
+
+    @property
+    def received(self) -> list[bytes]:
+        """Messages the server sent to this channel."""
+        return self._sent
 
 
 @pytest.fixture
@@ -269,3 +331,240 @@ async def test_notebook_reconnect_sends_conflict_when_cell_structure_changes_bet
     finally:
         await room_b.stop()
         await loader_b.clean()
+
+
+def _server_cell_ids(room: DocumentRoom) -> list[str]:
+    """Read the raw (non-deduplicated) cell IDs from a room's YDoc."""
+    snapshot = YNotebook()
+    snapshot.ydoc.apply_update(room.ydoc.get_update())
+    return [c["id"] for c in snapshot.get(deduplicate=False)["cells"]]
+
+
+async def _wait_until(predicate, timeout: float = 2.0) -> None:
+    """Poll an async-friendly predicate until true or the timeout elapses."""
+    elapsed = 0.0
+    step = 0.02
+    while not predicate() and elapsed < timeout:
+        await sleep(step)
+        elapsed += step
+
+
+async def test_notebook_reconnect_deduplicates_added_cell_after_restart():
+    """A cell added during the session must not survive twice after a restart.
+
+    Regression test for the silent cell-duplication reported after a server
+    restart on a long-running session backed by a no-op store (history is not
+    persisted, so every room is rebuilt deterministically from disk with
+    Doc(client_id=0)).
+
+    Timeline:
+      1. The client opens the notebook and receives [cell-1] (client_id=0).
+      2. The client appends cell-2. Because the edit originates on the client,
+         cell-2 is created under the client's own (random) client id.
+      3. Autosave persists [cell-1, cell-2] to disk.
+      4. The server restarts. The no-op store keeps nothing, so the room is
+         rebuilt from disk and _apply_deterministic_source_content recreates
+         BOTH cells under client_id=0; cell-2 now lives at (client_id=0, ...).
+      5. The client reconnects. serve() sends SYNC_STEP1 (the server's state
+         vector); the client replies with SYNC_STEP2 carrying the items the
+         server's vector does not cover, i.e. its own (client_id != 0) cell-2.
+
+    The server's vector already covers client_id=0 but knows nothing of the
+    client's id, so handle_sync_message appends the client's cell-2 as a new
+    array entry next to the one rebuilt under client_id=0, without raising.
+    Because the two copies are identical, DocumentRoom removes the redundant
+    one (no user data lost) and the room converges back to [cell-1, cell-2].
+
+    Unlike test_notebook_reconnect_sends_conflict_when_cell_structure_changes_between_restarts
+    (which edits cell *source*, shifting a parent clock and raising "block
+    parent"), an array-level insert keeps every parent valid, so the symptom is
+    duplicated cells rather than an exception.
+    """
+    notebook = _notebook_model()  # one cell: cell-1
+    room_a, loader_a = await _create_notebook_room(notebook, "dup-before")
+    client_doc = YNotebook()
+    try:
+        # Client connects and receives the original client_id=0 history.
+        client_doc.ydoc.apply_update(room_a.ydoc.get_update())
+        # Client appends a second cell, created under the client's own id.
+        client_doc.append_cell(
+            {
+                "cell_type": "code",
+                "id": "cell-2",
+                "metadata": {},
+                "source": "y = 2",
+                "outputs": [],
+                "execution_count": None,
+            }
+        )
+        # Autosave would persist both cells to disk.
+        autosaved = client_doc.get(deduplicate=False)
+    finally:
+        await room_a.stop()
+        await loader_a.clean()
+
+    # Server restart: rebuild the room deterministically from the autosaved
+    # file. Both cells are now recreated under client_id=0.
+    room_b, loader_b = await _create_notebook_room(autosaved, "dup-after")
+    try:
+        assert _server_cell_ids(room_b) == ["cell-1", "cell-2"]
+
+        # The client reconnects and completes the sync handshake. This momentarily
+        # duplicates cell-2, then the deferred repair removes the redundant copy.
+        channel = _HandshakeChannel(client_doc)
+        await room_b.serve(channel)
+        await _wait_until(lambda: _server_cell_ids(room_b) == ["cell-1", "cell-2"])
+
+        # The room converged to a single cell-2, no duplication.
+        assert _server_cell_ids(room_b) == ["cell-1", "cell-2"]
+        # The duplicate was exact, so no conflict was raised.
+        assert all(m[0] != MessageType.RAW for m in channel._sent)
+    finally:
+        await room_b.stop()
+        await loader_b.clean()
+
+
+async def test_notebook_reconnect_preserves_uniquely_added_cell():
+    """Cells the client added that are not on disk survive the dedup repair.
+
+    The client adds two cells: cell-2 is autosaved to disk (so the rebuilt room
+    holds a client_id=0 copy of it, which the reconnect then duplicates), while
+    cell-3 is added afterwards and never persisted, so it exists only under the
+    client's id. Deduplicating cell-2 must not disturb the unique cell-3.
+    """
+    notebook = _notebook_model()  # one cell: cell-1
+    room_a, loader_a = await _create_notebook_room(notebook, "unique-before")
+    client_doc = YNotebook()
+    try:
+        client_doc.ydoc.apply_update(room_a.ydoc.get_update())
+        # cell-2 is added and autosaved, so it ends up on disk.
+        client_doc.append_cell(
+            {
+                "cell_type": "code",
+                "id": "cell-2",
+                "metadata": {},
+                "source": "y = 2",
+                "outputs": [],
+                "execution_count": None,
+            }
+        )
+        autosaved = client_doc.get(deduplicate=False)
+        # cell-3 is added afterwards and never saved: it exists only on the client.
+        client_doc.append_cell(
+            {
+                "cell_type": "code",
+                "id": "cell-3",
+                "metadata": {},
+                "source": "z = 3",
+                "outputs": [],
+                "execution_count": None,
+            }
+        )
+    finally:
+        await room_a.stop()
+        await loader_a.clean()
+
+    # Server restart: rebuild from the autosaved file (cell-1 and cell-2 only).
+    room_b, loader_b = await _create_notebook_room(autosaved, "unique-after")
+    try:
+        assert _server_cell_ids(room_b) == ["cell-1", "cell-2"]
+
+        # Reconnecting duplicates cell-2 and brings the never-saved cell-3.
+        channel = _HandshakeChannel(client_doc)
+        await room_b.serve(channel)
+        await _wait_until(lambda: _server_cell_ids(room_b) == ["cell-1", "cell-2", "cell-3"])
+
+        # cell-2 was deduplicated while the unique cell-3 was preserved intact.
+        cells = _server_notebook(room_b).get(deduplicate=False)["cells"]
+        assert [c["id"] for c in cells] == ["cell-1", "cell-2", "cell-3"]
+        cell_3 = next(c for c in cells if c["id"] == "cell-3")
+        assert cell_3["source"] == "z = 3"
+        # The duplicate was exact, so no conflict was raised.
+        assert all(m[0] != MessageType.RAW for m in channel._sent)
+    finally:
+        await room_b.stop()
+        await loader_b.clean()
+
+
+async def test_notebook_reconnect_raises_conflict_when_duplicate_cells_diverge():
+    """Divergent same-id cells keep the client's copy and surface a conflict.
+
+    Same setup as the deduplication test, but the client runs cell-2 *after*
+    the autosave (bumping its execution_count), so its copy diverges from the
+    version persisted to disk (and thus from the deterministically rebuilt
+    server copy, which carries client_id=0). The client's in-memory edit is the
+    data at risk, so DocumentRoom drops the on-disk copy and keeps the client's,
+    then broadcasts a RAW conflict so the frontend can offer Save As or Revert
+    (the on-disk version is always recoverable through Revert).
+
+    A never-saved cell-3 is added as well to confirm that resolving the
+    divergent cell-2 leaves uniquely-added cells untouched.
+    """
+    notebook = _notebook_model()  # one cell: cell-1
+    room_a, loader_a = await _create_notebook_room(notebook, "diverge-before")
+    client_doc = YNotebook()
+    try:
+        client_doc.ydoc.apply_update(room_a.ydoc.get_update())
+        client_doc.append_cell(
+            {
+                "cell_type": "code",
+                "id": "cell-2",
+                "metadata": {},
+                "source": "y = 2",
+                "outputs": [],
+                "execution_count": None,
+            }
+        )
+        # Autosave persists cell-2 with execution_count None.
+        autosaved = client_doc.get(deduplicate=False)
+        # The client runs cell-2 *after* the save, diverging from disk.
+        client_doc.ycells[1]["execution_count"] = 5
+        # cell-3 is added afterwards and never saved: it exists only on the client.
+        client_doc.append_cell(
+            {
+                "cell_type": "code",
+                "id": "cell-3",
+                "metadata": {},
+                "source": "z = 3",
+                "outputs": [],
+                "execution_count": None,
+            }
+        )
+    finally:
+        await room_a.stop()
+        await loader_a.clean()
+
+    # Server restart: rebuild from the autosaved file (cell-2 source "y = 2").
+    room_b, loader_b = await _create_notebook_room(autosaved, "diverge-after")
+    try:
+        # The client reconnects through serve(). It stays connected so it can
+        # observe the conflict the server broadcasts from its deferred repair.
+        channel = _HandshakeChannel(client_doc, stay_connected=True)
+        async with create_task_group() as tg:
+            tg.start_soon(room_b.serve, channel)
+            await _wait_until(lambda: any(m[0] == MessageType.RAW for m in channel.received))
+            channel.disconnect()
+
+        # A conflict was surfaced rather than a silent merge.
+        conflict = [m for m in channel.received if m[0] == MessageType.RAW]
+        assert conflict, "expected a RAW conflict broadcast"
+        assert b'"type": "conflict"' in conflict[0]
+
+        cells = _server_notebook(room_b).get(deduplicate=False)["cells"]
+        # The client's copy (execution_count 5) is kept; the on-disk copy
+        # (client_id=0, execution_count None) is dropped and recoverable via Revert.
+        cell_2_execution_count_list = [c["execution_count"] for c in cells if c["id"] == "cell-2"]
+        assert cell_2_execution_count_list == [5], cell_2_execution_count_list
+        # The never-saved cell-3 is preserved intact.
+        assert [c["id"] for c in cells] == ["cell-1", "cell-2", "cell-3"]
+        cell_3 = next(c for c in cells if c["id"] == "cell-3")
+        assert cell_3["source"] == "z = 3"
+    finally:
+        await room_b.stop()
+        await loader_b.clean()
+
+
+def _server_notebook(room: DocumentRoom) -> YNotebook:
+    snapshot = YNotebook()
+    snapshot.ydoc.apply_update(room.ydoc.get_update())
+    return snapshot
