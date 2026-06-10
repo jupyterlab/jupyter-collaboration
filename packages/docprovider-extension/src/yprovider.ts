@@ -57,6 +57,54 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
     const rendermime = this._rendermime;
     const path = options.path;
 
+    const onConflictShowNotebookDiff = async (localContent: JSONValue) => {
+      const serverModel = await contents.get(path, { content: true });
+      const widget = new ConflictDiffWidget({
+        translator: this._trans,
+        editorFactory,
+        rendermime
+      });
+      await widget.create({
+        base: serverModel.content as nbformat.INotebookContent,
+        remote: localContent as nbformat.INotebookContent
+      });
+      const main = new MainAreaWidget({ content: widget });
+      main.title.label = this._trans.__('Conflict diff: %1', path);
+      main.title.closable = true;
+      main.toolbar.addItem(
+        'revertToRemote',
+        new ToolbarButton({
+          icon: undoIcon,
+          label: this._trans.__('Revert to Remote'),
+          tooltip: this._trans.__(
+            'Discard local changes and reload the server version'
+          ),
+          onClick: () => {
+            const context = this._docManager.findWidget(path)?.context;
+            if (context && !context.isDisposed) {
+              void context.revert();
+            }
+          }
+        })
+      );
+      main.toolbar.addItem(
+        'saveLocalAs',
+        new ToolbarButton({
+          icon: saveIcon,
+          label: this._trans.__('Save Local As'),
+          tooltip: this._trans.__('Save the local version with a new name'),
+          onClick: () => {
+            const context = this._docManager.findWidget(path)?.context;
+            if (context && !context.isDisposed) {
+              void context.saveAs();
+            }
+          }
+        })
+      );
+      shell.add(main, 'main');
+      shell.activateById(main.id);
+    };
+
     return new WebSocketProvider({
       path,
       contentType: options.contentType,
@@ -67,53 +115,12 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
       serverSettings: options.serverSettings,
       onConflictSaveAs: () => this._commands.execute('docmanager:save-as'),
       onConflictRevert: () => this._commands.execute('docmanager:reload'),
-      onConflictShowDiff: async (localContent: JSONValue) => {
-        const serverModel = await contents.get(path, { content: true });
-        const widget = new ConflictDiffWidget({
-          translator: this._trans,
-          editorFactory,
-          rendermime
-        });
-        await widget.create({
-          base: serverModel.content as nbformat.INotebookContent,
-          remote: localContent as nbformat.INotebookContent
-        });
-        const main = new MainAreaWidget({ content: widget });
-        main.title.label = this._trans.__('Conflict diff: %1', path);
-        main.title.closable = true;
-        main.toolbar.addItem(
-          'revertToRemote',
-          new ToolbarButton({
-            icon: undoIcon,
-            label: this._trans.__('Revert to Remote'),
-            tooltip: this._trans.__(
-              'Discard local changes and reload the server version'
-            ),
-            onClick: () => {
-              const context = this._docManager.findWidget(path)?.context;
-              if (context && !context.isDisposed) {
-                void context.revert();
-              }
-            }
-          })
-        );
-        main.toolbar.addItem(
-          'saveLocalAs',
-          new ToolbarButton({
-            icon: saveIcon,
-            label: this._trans.__('Save Local As'),
-            tooltip: this._trans.__('Save the local version with a new name'),
-            onClick: () => {
-              const context = this._docManager.findWidget(path)?.context;
-              if (context && !context.isDisposed) {
-                void context.saveAs();
-              }
-            }
-          })
-        );
-        shell.add(main, 'main');
-        shell.activateById(main.id);
-      }
+      // The diff view is notebook-specific (uses nbdime), so only offer it
+      // when the document being opened is a notebook.
+      onConflictShowDiff:
+        options.contentType === 'notebook'
+          ? onConflictShowNotebookDiff
+          : undefined
     });
   }
   private _trans: TranslationBundle;
