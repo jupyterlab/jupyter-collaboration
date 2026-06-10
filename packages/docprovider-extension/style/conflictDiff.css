@@ -1,0 +1,37 @@
+/* -----------------------------------------------------------------------------
+| Copyright (c) Jupyter Development Team.
+| Distributed under the terms of the Modified BSD License.
+|---------------------------------------------------------------------------- */
+
+.jp-conflict-diff-header.nbdime-Diff {
+  border-bottom: var(--jp-border-width) solid var(--jp-toolbar-border-color);
+  box-shadow: var(--jp-toolbar-box-shadow);
+  background: var(--jp-toolbar-background);
+  flex: 0 0 auto;
+}
+
+.jp-conflict-diff-header .nbdime-header-banner {
+  display: grid;
+  grid-template-columns: 47% 6% 47%;
+}
+
+.jp-conflict-diff-header .nbdime-header-base {
+  grid-column: 1;
+  display: inline-block;
+  background-color: var(--jp-diff-deleted-color0);
+  padding: 0 4px;
+}
+
+.jp-conflict-diff-header .nbdime-header-remote {
+  grid-column: 3;
+  display: inline-block;
+  background-color: var(--jp-diff-added-color0);
+  padding: 0 4px;
+}
+
+/* diff.css hides .jp-Cellrow-metadata on added/deleted cells by default.
+   Override that so metadata changes are always visible in the conflict diff. */
+.nbdime-Widget .jp-Diff-added .jp-Cellrow-metadata,
+.nbdime-Widget .jp-Diff-deleted .jp-Cellrow-metadata {
+  display: block !important;
+}

@@ -25,7 +25,8 @@
     "packages/*"
   ],
   "resolutions": {
-    "lib0": "<=0.2.98"
+    "lib0": "<=0.2.98",
+    "@jupyterlab/rendermime": "^4.6.0-beta.1"
   },
   "scripts": {
     "dev": "python scripts/dev_install.py",
@@ -50,7 +51,7 @@
     "test:cov": "lerna run test:cov",
     "test:debug": "lerna run test:debug",
     "test:debug:watch": "lerna run test:debug:watch",
-    "watch": "lerna run watch"
+    "watch": "lerna run watch --parallel"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "~5.55.0",
