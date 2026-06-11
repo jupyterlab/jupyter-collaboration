@@ -110,6 +110,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     }
     this._yWebsocketProvider?.off('connection-close', this._onConnectionClosed);
     this._yWebsocketProvider?.off('sync', this._onSync);
+    this._yWebsocketProvider?.off('status', this._onStatus);
     this._yWebsocketProvider?.destroy();
     this._disconnect();
     Signal.clearData(this);
@@ -212,11 +213,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
 
     this._yWebsocketProvider.on('sync', this._onSync);
     this._yWebsocketProvider.on('connection-close', this._onConnectionClosed);
-    this._yWebsocketProvider.on('status', ({ status }: { status: string }) => {
-      if (status === 'connected') {
-        this._attachConflictListener();
-      }
-    });
+    this._yWebsocketProvider.on('status', this._onStatus);
   }
 
   async connectToForkDoc(forkRoomId: string, sessionId: string): Promise<void> {
@@ -245,6 +242,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _disconnect(): void {
     this._yWebsocketProvider?.off('connection-close', this._onConnectionClosed);
     this._yWebsocketProvider?.off('sync', this._onSync);
+    this._yWebsocketProvider?.off('status', this._onStatus);
     this._yWebsocketProvider?.destroy();
     this._yWebsocketProvider = null;
   }
@@ -416,6 +414,17 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         const state = this._sharedModel.ydoc.getMap('state');
         state.set('document_id', this._yWebsocketProvider.roomname);
       }
+      this._ready.resolve();
+    }
+  };
+
+  private _onStatus = ({
+    status
+  }: {
+    status: 'connecting' | 'connected' | 'disconnected';
+  }) => {
+    if (status === 'connected') {
+      this._attachConflictListener();
       this._ready.resolve();
     }
   };

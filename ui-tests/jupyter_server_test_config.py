@@ -19,6 +19,11 @@ configure_jupyter_server(c)  # noqa
 # Fast room eviction so conflict tests don't need to wait 60 seconds.
 c.YDocExtension.document_cleanup_delay = 1
 
+# Keep the delayed-output path observable in UI tests without oversized
+# notebook fixtures.
+c.YDocExtension.notebook_load_progressively = True
+c.YDocExtension.notebook_output_delay_threshold_mb = 7
+
 # Force-close dead WebSocket connections quickly.  Playwright's setOffline(true)
 # blocks network I/O without tearing down existing TCP connections, so pings are
 # needed to make the server detect the disconnection.  The conflict test goes
