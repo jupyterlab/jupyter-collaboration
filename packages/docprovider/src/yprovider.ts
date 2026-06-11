@@ -287,10 +287,10 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         'The document failed to load. Please try opening it again.'
       );
       this._ready.reject(msg);
-      this._ready.promise.catch(() => {});
+      this._ready.promise.catch(() => undefined);
       this._sharedModel.dispose();
     }
-  }
+  };
 
   async connectToForkDoc(forkRoomId: string, sessionId: string): Promise<void> {
     const token = this._serverSettings.token;
