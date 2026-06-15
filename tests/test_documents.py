@@ -15,43 +15,14 @@ from jupyter_server_ydoc.utils import MessageType
 from jupyter_ydoc import YNotebook
 from pycrdt import (
     Channel,
+    Doc,
     Provider,
-    YMessageType,
     YSyncMessageType,
     handle_sync_message,
-    write_message,
 )
 from pycrdt.websocket.websocket import HttpxWebsocket
 
 jupyter_ydocs = {ep.name: ep.load() for ep in entry_points(group="jupyter_ydoc")}
-
-
-class _SingleMessageChannel:
-    """Mock channel that delivers one message to the room then stops iteration."""
-
-    def __init__(self, message: bytes) -> None:
-        self._message = message
-        self._sent: list[bytes] = []
-        self._iter_done = False
-
-    @property
-    def path(self) -> str:
-        return "mock://test"
-
-    def __aiter__(self) -> Channel:
-        return self
-
-    async def __anext__(self) -> bytes:
-        if self._iter_done:
-            raise StopAsyncIteration
-        self._iter_done = True
-        return self._message
-
-    async def send(self, message: bytes) -> None:
-        self._sent.append(message)
-
-    async def recv(self) -> bytes:
-        raise StopAsyncIteration
 
 
 class _HandshakeChannel(Channel):
@@ -232,6 +203,17 @@ async def _create_notebook_room(notebook: dict, room_id: str) -> tuple[DocumentR
     return room, loader
 
 
+def _client_notebook(client_id: int = 1) -> YNotebook:
+    """A client YNotebook with a Yjs-like (uint32) client id.
+
+    Real collaborative clients are y-websocket/Yjs, which use uint32 client ids;
+    the server relies on that to tell genuine client edits (small ids) from
+    deterministic disk rebuilds (large, marked ids). Tests must mirror this, so
+    a client's edits are recognised as edits rather than mistaken for a rebuild.
+    """
+    return YNotebook(Doc(client_id=client_id))
+
+
 def _sync_documents(client_doc: YNotebook, room: DocumentRoom) -> dict:
     room.ydoc.apply_update(client_doc.ydoc.get_update())
     client_doc.ydoc.apply_update(room.ydoc.get_update())
@@ -241,7 +223,7 @@ def _sync_documents(client_doc: YNotebook, room: DocumentRoom) -> dict:
 async def test_notebook_reconnect_with_divergent_history_does_not_duplicate_initial_cell():
     notebook = _notebook_model()
     room, loader = await _create_notebook_room(notebook, "divergent-history-before")
-    client_doc = YNotebook()
+    client_doc = _client_notebook()
 
     try:
         # Initial connection: client receives the original server-side history.
@@ -263,72 +245,115 @@ async def test_notebook_reconnect_with_divergent_history_does_not_duplicate_init
     assert len(merged["cells"]) == 1
 
 
-async def test_notebook_reconnect_sends_conflict_when_cell_structure_changes_between_restarts():
-    """When cell structure changes between room restarts, serve() must not crash.
+async def test_notebook_reconnect_does_not_revert_cell_to_previous_version():
+    """A stale client must catch up to content that changed while it was away.
 
-    _apply_deterministic_source_content uses Doc(client_id=0) so that Yjs item
-    clocks are stable across room restarts for identical content.  That
-    assumption breaks when the on-disk notebook changes structure between the
-    client's last sync and the next room creation: adding a primitive value
-    inside a cell (e.g. a kernel marks the cell trusted via
-    {"metadata": {"trusted": True}}) inserts one extra ItemContent::Any before
-    the source Text branch.  This shifts clock position 4 from
-    ItemContent::Type (the source Text) in the original room to
-    ItemContent::Any in the recreated room.
+    Regression test for the sporadic "cell content resets to a previous version"
+    report (no YStore, long session, occasional server restart):
 
-    A client that made local edits against the original layout holds a parent
-    reference to (client_id=0, clock=4) which is no longer a valid container,
-    so yrs raises "block parent <0#4> must be deleted or shared ref type.
-    Type: 8" when that update is applied.
-
-    The server must catch this, keep the room intact, and send a CONFLICT
-    message back to the client so the frontend can offer Save As / View Diff.
+      1. The client opens the notebook and caches cell-1 = "old".
+      2. The client goes idle / loses its socket but keeps its in-memory YDoc.
+      3. Meanwhile the cell is changed to "new" and saved to disk (by another
+         client or an out-of-band edit).
+      4. The server restarts. With a no-op store the room is rebuilt from disk.
+         The rebuild is content-addressed, so "new" is authored under a client id
+         derived from the new content (distinct from the id the client holds for
+         "old") instead of colliding at the same (client_id, clock).
+      5. The client reconnects and syncs its stale cell into the room. Because the
+         client made no edits, the deferred repair adopts the authoritative
+         on-disk version and drops the stale copy; the client then catches up to
+         "new" (no conflict). Previously the state vectors falsely matched and the
+         client was left stuck on "old".
     """
-    notebook_before = _notebook_model()
-    room_a, loader_a = await _create_notebook_room(notebook_before, "meta-change-before")
-    client_doc = YNotebook()
+    before = _notebook_model()
+    before["cells"][0]["source"] = "old version of the cell"
+    room_a, loader_a = await _create_notebook_room(before, "revert-before")
+    client_doc = _client_notebook()
     try:
-        # Client connects to room A and receives all client_id=0 items.
+        # Initial connection: the client caches the "old" content (no edits).
         client_doc.ydoc.apply_update(room_a.ydoc.get_update())
-        # Client edits the cell source, creating an item whose parent is the
-        # source Text branch — a client_id=0 item at clock position 4.
-        client_doc.ycells[0]["source"] += "new content"
+        assert client_doc.get()["cells"][0]["source"] == "old version of the cell"
     finally:
         await room_a.stop()
         await loader_a.clean()
 
-    # Disk content changes: cell metadata gains "trusted": True.
-    # _apply_deterministic_source_content will now allocate clock 4 to the
-    # "trusted" Any value instead of the source Text branch.
-    notebook_after = deepcopy(notebook_before)
-    notebook_after["cells"][0]["metadata"] = {"trusted": True}
-    room_b, loader_b = await _create_notebook_room(notebook_after, "meta-change-after")
+    # The cell is changed to "new" and saved while the client is away; the server
+    # restarts and rebuilds the room from the new on-disk content.
+    after = _notebook_model()
+    after["cells"][0]["source"] = "new version of the cell"
+    room_b, loader_b = await _create_notebook_room(after, "revert-after")
     try:
-        # Build a SYNC_UPDATE message carrying the client's conflicting edit.
-        client_update = client_doc.ydoc.get_update()
-        sync_update_msg = bytes([YMessageType.SYNC, YSyncMessageType.SYNC_UPDATE]) + write_message(
-            client_update
-        )
-        channel = _SingleMessageChannel(sync_update_msg)
-
-        # serve() must complete without raising even though apply_update would crash.
+        # Reconnect: the client syncs its stale cell into the room.
+        channel = _HandshakeChannel(client_doc)
         await room_b.serve(channel)
 
-        # The room must have sent at least a SYNC_STEP2 and a RAW conflict message.
-        message_types = [msg[0] for msg in channel._sent]
-        assert (
-            MessageType.RAW in message_types
-        ), f"Expected a RAW conflict message, got types: {message_types}"
+        def _server_source() -> str | None:
+            cells = _server_notebook(room_b).get(deduplicate=False)["cells"]
+            return cells[0]["source"] if len(cells) == 1 else None
 
-        # The RAW conflict message encodes a JSON payload with type=conflict.
-        conflict_msg = next(m for m in channel._sent if m[0] == MessageType.RAW)
-        assert b'"type": "conflict"' in conflict_msg
-        assert len(conflict_msg) > 1
+        # The repair recognises the client made no edits and adopts the
+        # authoritative on-disk version, dropping the stale copy.
+        await _wait_until(lambda: _server_source() == "new version of the cell")
+        assert _server_cell_ids(room_b) == ["cell-1"]
+        assert _server_source() == "new version of the cell"
+        # No conflict was surfaced: the client had no edits to preserve.
+        assert all(m[0] != MessageType.RAW for m in channel.received)
 
-        # The room itself must remain coherent — still one cell.
-        server_notebook = YNotebook()
-        server_notebook.ydoc.apply_update(room_b.ydoc.get_update())
-        assert len(server_notebook.get(deduplicate=False)["cells"]) == 1
+        # The client catches up to the new content when it pulls the repair.
+        client_doc.ydoc.apply_update(room_b.ydoc.get_update(client_doc.ydoc.get_state()))
+        assert client_doc.get()["cells"][0]["source"] == "new version of the cell"
+    finally:
+        await room_b.stop()
+        await loader_b.clean()
+
+
+async def test_notebook_reconnect_conflict_preserves_client_source_edit():
+    """A client source edit that conflicts with a changed-on-disk cell is kept.
+
+    The client edits cell-1's source while, concurrently, the same cell is
+    changed on disk (another client or an external tool) and the room is rebuilt
+    from it after a no-op-store restart. The content-addressed rebuild gives the
+    on-disk version a client id distinct from the one the client holds, so on
+    reconnect both survive as a divergent same-id cell rather than colliding.
+    Because the client edited the cell, the repair keeps the client's copy and
+    surfaces a conflict (the on-disk version stays recoverable via Revert), so
+    the user's edit is never silently dropped and the room stays coherent.
+    """
+    before = _notebook_model()
+    before["cells"][0]["source"] = "shared"
+    room_a, loader_a = await _create_notebook_room(before, "edit-conflict-before")
+    client_doc = _client_notebook()
+    try:
+        client_doc.ydoc.apply_update(room_a.ydoc.get_update())
+        # The client appends to the cell source (authored under its own id).
+        source = client_doc.ycells[0]["source"]
+        source.insert(len(str(source)), " + my local edit")
+    finally:
+        await room_a.stop()
+        await loader_a.clean()
+
+    # The same cell is changed on disk while the client was away.
+    after = _notebook_model()
+    after["cells"][0]["source"] = "shared + disk edit"
+    room_b, loader_b = await _create_notebook_room(after, "edit-conflict-after")
+    try:
+        # The client reconnects and stays connected to observe the broadcast.
+        channel = _HandshakeChannel(client_doc, stay_connected=True)
+        async with create_task_group() as tg:
+            tg.start_soon(room_b.serve, channel)
+            await _wait_until(lambda: any(m[0] == MessageType.RAW for m in channel.received))
+            channel.disconnect()
+
+        # A conflict was surfaced rather than a silent merge or revert.
+        conflict = [m for m in channel.received if m[0] == MessageType.RAW]
+        assert conflict, "expected a RAW conflict broadcast"
+        assert b'"type": "conflict"' in conflict[0]
+
+        # The room stays coherent and keeps the client's edit; the on-disk copy
+        # is dropped (Revert can restore it).
+        cells = _server_notebook(room_b).get(deduplicate=False)["cells"]
+        assert len(cells) == 1, cells
+        assert cells[0]["source"] == "shared + my local edit", cells[0]["source"]
     finally:
         await room_b.stop()
         await loader_b.clean()
@@ -383,7 +408,7 @@ async def test_notebook_reconnect_deduplicates_added_cell_after_restart():
     """
     notebook = _notebook_model()  # one cell: cell-1
     room_a, loader_a = await _create_notebook_room(notebook, "dup-before")
-    client_doc = YNotebook()
+    client_doc = _client_notebook()
     try:
         # Client connects and receives the original client_id=0 history.
         client_doc.ydoc.apply_update(room_a.ydoc.get_update())
@@ -435,7 +460,7 @@ async def test_notebook_reconnect_preserves_uniquely_added_cell():
     """
     notebook = _notebook_model()  # one cell: cell-1
     room_a, loader_a = await _create_notebook_room(notebook, "unique-before")
-    client_doc = YNotebook()
+    client_doc = _client_notebook()
     try:
         client_doc.ydoc.apply_update(room_a.ydoc.get_update())
         # cell-2 is added and autosaved, so it ends up on disk.
@@ -503,7 +528,7 @@ async def test_notebook_reconnect_raises_conflict_when_duplicate_cells_diverge()
     """
     notebook = _notebook_model()  # one cell: cell-1
     room_a, loader_a = await _create_notebook_room(notebook, "diverge-before")
-    client_doc = YNotebook()
+    client_doc = _client_notebook()
     try:
         client_doc.ydoc.apply_update(room_a.ydoc.get_update())
         client_doc.append_cell(
