@@ -15,6 +15,7 @@ import {
   userEditorCursors
 } from './collaboration';
 import { sharedLink } from './sharedlink';
+import { statusBarTimeline } from './timeline';
 
 /**
  * Export the plugins as default.
@@ -25,6 +26,7 @@ const plugins: JupyterFrontEndPlugin<any>[] = [
   rtcGlobalAwarenessPlugin,
   rtcPanelPlugin,
   sharedLink,
+  statusBarTimeline,
   userEditorCursors
 ];
 

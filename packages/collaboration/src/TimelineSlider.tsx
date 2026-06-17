@@ -6,7 +6,7 @@
 import { ReactWidget } from '@jupyterlab/apputils';
 import { TimelineSliderComponent } from './component';
 import * as React from 'react';
-import { IForkProvider } from './ydrive';
+import { IForkProvider } from '@jupyter/docprovider';
 import { ServerConnection } from '@jupyterlab/services';
 
 export class TimelineWidget extends ReactWidget {

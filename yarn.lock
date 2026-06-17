@@ -2072,8 +2072,10 @@ __metadata:
     "@jupyterlab/builder": ^4.6.0-alpha.5
     "@jupyterlab/codemirror": ^4.6.0-beta.1
     "@jupyterlab/coreutils": ^6.6.0-beta.1
+    "@jupyterlab/docregistry": ^4.6.0-beta.1
     "@jupyterlab/services": ^7.6.0-beta.1
     "@jupyterlab/statedb": ^4.6.0-beta.1
+    "@jupyterlab/statusbar": ^4.6.0-beta.1
     "@jupyterlab/translation": ^4.6.0-beta.1
     "@jupyterlab/ui-components": ^4.6.0-beta.1
     "@lumino/widgets": ^2.8.0
@@ -2093,6 +2095,7 @@ __metadata:
   dependencies:
     "@codemirror/state": ^6.2.0
     "@codemirror/view": ^6.7.0
+    "@jupyter/docprovider": ^5.0.0-alpha.0
     "@jupyterlab/apputils": ^4.7.0-beta.1
     "@jupyterlab/coreutils": ^6.6.0-beta.1
     "@jupyterlab/docregistry": ^4.6.0-beta.1
