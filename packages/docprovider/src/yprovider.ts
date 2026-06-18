@@ -10,7 +10,7 @@ import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
 
 import { Signal } from '@lumino/signaling';
-import { PromiseDelegate } from '@lumino/coreutils';
+import { JSONValue, PromiseDelegate } from '@lumino/coreutils';
 
 import { DocumentChange, YDocument } from '@jupyter/ydoc';
 import { IDocumentProvider } from '@jupyter/collaborative-drive';
@@ -66,6 +66,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     this._trans = options.translator;
     this._onConflictSaveAs = options.onConflictSaveAs;
     this._onConflictRevert = options.onConflictRevert;
+    this._onConflictShowDiff = options.onConflictShowDiff;
 
     const user = options.user;
 
@@ -455,6 +456,14 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         })
       );
     }
+    if (this._onConflictShowDiff) {
+      buttons.push(
+        Dialog.okButton({
+          label: this._trans.__('Show Diff'),
+          actions: ['show-diff']
+        })
+      );
+    }
     if (this._onConflictSaveAs) {
       buttons.push(
         Dialog.okButton({
@@ -475,6 +484,8 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     });
     if (result.button.actions.includes('revert')) {
       await this._onConflictRevert?.();
+    } else if (result.button.actions.includes('show-diff')) {
+      await this._onConflictShowDiff?.(this._sharedModel.getSource());
     } else if (result.button.actions.includes('save-as')) {
       await this._onConflictSaveAs?.();
     }
@@ -529,6 +540,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _onConflictRevert?: () => Promise<void>;
   private _loadTimeoutId: number | null = null;
   private _isShowingDialog = false;
+  private _onConflictShowDiff?: (localContent: JSONValue) => Promise<void>;
 }
 
 /**
@@ -588,5 +600,11 @@ export namespace WebSocketProvider {
      * Called when the user chooses "Revert" from the conflict dialog.
      */
     onConflictRevert?: () => Promise<void>;
+
+    /**
+     * Called when the user chooses "Show Diff" from the conflict dialog.
+     * Receives the current local document content as JSON.
+     */
+    onConflictShowDiff?: (localContent: JSONValue) => Promise<void>;
   }
 }
