@@ -7,13 +7,7 @@
 
 import { JupyterFrontEndPlugin } from '@jupyterlab/application';
 
-import {
-  rtcContentProvider,
-  yfile,
-  ynotebook,
-  logger,
-  statusBarTimeline
-} from './filebrowser';
+import { rtcContentProvider, yfile, ynotebook, logger } from './filebrowser';
 import { notebookCellExecutor } from './executor';
 import { forkManagerPlugin } from './forkManager';
 import {
@@ -30,7 +24,6 @@ const plugins: JupyterFrontEndPlugin<unknown>[] = [
   ynotebook,
   logger,
   notebookCellExecutor,
-  statusBarTimeline,
   forkManagerPlugin,
   documentProviderFactoryPlugin,
   awarenessProviderFactoryPlugin

@@ -4,15 +4,14 @@
 |----------------------------------------------------------------------------*/
 
 import React, { useState, useRef } from 'react';
-import '../style/slider.css';
 import {
+  IForkProvider,
   requestUndoRedo,
   requestDocSession,
   requestDocumentTimeline
-} from './requests';
+} from '@jupyter/docprovider';
 import { historyIcon } from '@jupyterlab/ui-components';
 import { Notification } from '@jupyterlab/apputils';
-import { IForkProvider } from './ydrive';
 import { ServerConnection } from '@jupyterlab/services';
 
 type Props = {
