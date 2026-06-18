@@ -164,6 +164,7 @@ async def _create_notebook_room(notebook: dict, room_id: str) -> tuple[DocumentR
         None,
         None,
         None,
+        notebook_load_progressively=False,
     )
     await room.initialize()
     return room, loader

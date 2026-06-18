@@ -137,6 +137,10 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                         self.log,
                         exception_handler=exception_logger,
                         save_delay=self._document_save_delay,
+                        notebook_load_progressively=self._notebook_load_progressively,
+                        notebook_output_delay_threshold_mb=(
+                            self._notebook_output_delay_threshold_mb
+                        ),
                     )
 
                 else:
@@ -181,6 +185,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         room_locks: dict[str, asyncio.Lock] | None = None,
         document_cleanup_delay: float | None = 60.0,
         document_save_delay: float | None = 1.0,
+        notebook_load_progressively: bool = True,
+        notebook_output_delay_threshold_mb: float | None = 100,
     ) -> None:
         self._background_tasks = set()
         # File ID manager cannot be passed as argument as the extension may load after this one
@@ -189,6 +195,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self._ystore_class = ystore_class
         self._cleanup_delay = document_cleanup_delay
         self._document_save_delay = document_save_delay
+        self._notebook_load_progressively = notebook_load_progressively
+        self._notebook_output_delay_threshold_mb = notebook_output_delay_threshold_mb
         self._websocket_server = ywebsocket_server
         self._message_queue = asyncio.Queue()
         self._room_id = ""
