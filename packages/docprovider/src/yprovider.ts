@@ -270,7 +270,14 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       ),
       buttons: [
         Dialog.cancelButton({ label: this._trans.__('Cancel') }),
-        Dialog.okButton({ label: this._trans.__('Retry') })
+        Dialog.okButton({
+          label: this._trans.__('Continue waiting'),
+          actions: ['continue']
+        }),
+        Dialog.warnButton({
+          label: this._trans.__('Retry'),
+          actions: ['retry']
+        })
       ]
     });
 
@@ -280,7 +287,9 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       return;
     }
 
-    if (result.button.accept) {
+    if (result.button.actions.includes('continue')) {
+      this._startLoadTimeout();
+    } else if (result.button.actions.includes('retry')) {
       await this.reconnect();
     } else {
       this._disconnect();

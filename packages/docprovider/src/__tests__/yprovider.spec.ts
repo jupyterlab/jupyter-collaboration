@@ -7,6 +7,7 @@ import { YFile } from '@jupyter/ydoc';
 import { nullTranslator } from '@jupyterlab/translation';
 import {
   acceptDialog,
+  dangerDialog,
   dismissDialog,
   FakeUserManager,
   sleep,
@@ -226,12 +227,30 @@ describe('@jupyter/docprovider', () => {
         (provider as any)._onLoadTimeout();
 
         await waitForDialog(undefined, 1000);
-        // Retry button is the second button (accept=true)
-        await acceptDialog(undefined, 50);
+        await dangerDialog(undefined, 50);
         await sleep(100);
 
         expect(reconnectSpy).toHaveBeenCalled();
         reconnectSpy.mockRestore();
+        provider.dispose();
+      });
+
+      it('should restart timeout when continue waiting is clicked', async () => {
+        const startLoadTimeoutSpy = jest.spyOn(
+          WebSocketProvider.prototype as any,
+          '_startLoadTimeout'
+        );
+        const provider = createProvider();
+        await waitForProviderConnect(provider);
+
+        (provider as any)._onLoadTimeout();
+
+        await waitForDialog(undefined, 1000);
+        await acceptDialog(undefined, 50);
+        await sleep(100);
+
+        expect(startLoadTimeoutSpy).toHaveBeenCalled();
+        startLoadTimeoutSpy.mockRestore();
         provider.dispose();
       });
     });
