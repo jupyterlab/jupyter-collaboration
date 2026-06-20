@@ -38,7 +38,7 @@
     "clean:all": "lerna run clean:all",
     "docs": "typedoc",
     "eslint": "jlpm eslint:check --fix",
-    "eslint:check": "eslint . --ext .ts,.tsx",
+    "eslint:check": "eslint .",
     "install:extension": "lerna run install:extension",
     "lint": "jlpm prettier && jlpm eslint && jlpm stylelint",
     "lint:check": "jlpm prettier:check && jlpm eslint:check",
@@ -54,13 +54,12 @@
     "watch": "lerna run watch --parallel"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "~5.55.0",
-    "@typescript-eslint/parser": "~5.55.0",
-    "eslint": "~8.36.0",
-    "eslint-config-prettier": "~8.7.0",
-    "eslint-plugin-jest": "~27.2.1",
-    "eslint-plugin-prettier": "~4.2.1",
-    "eslint-plugin-react": "~7.32.2",
+    "@eslint/js": "^9.30.0",
+    "eslint": "^9.30.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-jest": "^28.13.0",
+    "eslint-plugin-prettier": "^5.5.1",
+    "eslint-plugin-react": "^7.37.5",
     "lerna": "^6.5.1",
     "prettier": "^2.8.4",
     "rimraf": "^4.1.2",
@@ -69,6 +68,7 @@
     "stylelint-config-standard": "^30.0.1",
     "stylelint-prettier": "^3.0.0",
     "typedoc": "~0.23.28",
-    "typescript": "~5.9.3"
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.35.0"
   }
 }
