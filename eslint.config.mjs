@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import prettierRecommended from 'eslint-plugin-prettier/recommended';
+import jupyter from '@jupyter/eslint-plugin';
 
 export default tseslint.config(
   {
@@ -26,6 +27,10 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   prettierRecommended,
+  {
+    plugins: { jupyter }
+  },
+  ...jupyter.configs.recommended,
   {
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
