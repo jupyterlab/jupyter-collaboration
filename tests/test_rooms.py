@@ -268,7 +268,7 @@ async def test_on_outofband_change_skips_aset_when_content_unchanged(
         mock_aset.assert_not_called()
 
 
-async def test_progressive_notebook_initialize_streams_before_load_finishes():
+async def test_progressive_document_initialize_streams_before_load_finishes():
     content = {
         "cells": [],
         "metadata": {},
@@ -291,8 +291,8 @@ async def test_progressive_notebook_initialize_streams_before_load_finishes():
         None,
         None,
         save_delay=0.01,
-        notebook_load_progressively=True,
-        notebook_output_delay_threshold_mb=50,
+        document_load_progressively=True,
+        document_output_delay_threshold_mb=50,
     )
     started = asyncio.Event()
     resume = asyncio.Event()
@@ -331,6 +331,72 @@ async def test_progressive_notebook_initialize_streams_before_load_finishes():
     assert not room._filter_message(bytes([MessageType.SYNC, YSyncMessageType.SYNC_UPDATE]))
 
     assert not room._document.dirty
+
+
+async def test_progressive_document_initialize_uses_standard_load_for_base_fallback():
+    loader = FileLoader(
+        "file-id",
+        FakeFileIDManager({"file-id": "large.txt"}),
+        FakeContentsManager({"content": "large text content", "writable": True}),
+        poll_interval=None,
+    )
+    room = DocumentRoom(
+        "test-room",
+        "text",
+        "file",
+        loader,
+        FakeEventLogger(),
+        None,
+        None,
+        document_load_progressively=True,
+        document_output_delay_threshold_mb=50,
+    )
+
+    assert not room._should_load_document_progressively(loaded_from_store=False)
+
+
+async def test_progressive_source_content_calls_generic_document_setter():
+    content = "content"
+
+    class CustomDocument:
+        calls: list[tuple[str, float | None]] = []
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def aset(self, value):
+            raise AssertionError("aset should not be used for progressive source content")
+
+        async def aset_progressively(self, value, delay_outputs_above_mb=None):
+            self.calls.append((value, delay_outputs_above_mb))
+
+        def observe(self, callback):
+            pass
+
+        def unobserve(self):
+            pass
+
+    cm = FakeContentsManager({"content": content, "writable": True})
+    loader = FileLoader(
+        "file-id",
+        FakeFileIDManager({"file-id": "large.custom"}),
+        cm,
+        poll_interval=None,
+    )
+    with patch.dict("jupyter_server_ydoc.rooms.YDOCS", {"custom": CustomDocument}):
+        room = DocumentRoom(
+            "test-room",
+            "text",
+            "custom",
+            loader,
+            FakeEventLogger(),
+            None,
+            None,
+            document_output_delay_threshold_mb=50,
+        )
+        await room._apply_deterministic_source_content(content, progressive=True)
+
+    assert CustomDocument.calls == [(content, 50)]
 
 
 async def test_on_outofband_change_calls_aset_when_content_changed(

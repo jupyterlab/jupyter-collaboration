@@ -11,6 +11,7 @@ from typing import Any
 
 from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
+from jupyter_ydoc.ybasedoc import YBaseDoc
 from pycrdt import (
     Channel,
     Doc,
@@ -41,8 +42,8 @@ class DocumentRoom(YRoom):
         ystore: BaseYStore | None,
         log: Logger | None,
         save_delay: float | None = None,
-        notebook_load_progressively: bool = True,
-        notebook_output_delay_threshold_mb: float | None = 100,
+        document_load_progressively: bool = True,
+        document_output_delay_threshold_mb: float | None = 100,
         exception_handler: Callable[[Exception, Logger], bool] | None = None,
     ):
         super().__init__(ready=False, ystore=ystore, exception_handler=exception_handler, log=log)
@@ -56,8 +57,8 @@ class DocumentRoom(YRoom):
 
         self._logger = logger
         self._save_delay = save_delay
-        self._notebook_load_progressively = notebook_load_progressively
-        self._notebook_output_delay_threshold_mb = notebook_output_delay_threshold_mb
+        self._document_load_progressively = document_load_progressively
+        self._document_output_delay_threshold_mb = document_output_delay_threshold_mb
 
         self._update_lock = asyncio.Lock()
         self._cleaner: asyncio.Task | None = None
@@ -179,7 +180,7 @@ class DocumentRoom(YRoom):
                     self._room_id,
                     self._file.path,
                 )
-                if self._should_load_notebook_progressively(loaded_from_store):
+                if self._should_load_document_progressively(loaded_from_store):
                     self._block_client_document_updates = True
                     self.ready = True
                     self._emit(LogLevel.INFO, "initialize", "Room initialized")
@@ -201,11 +202,13 @@ class DocumentRoom(YRoom):
             if release_update_lock:
                 self._update_lock.release()
 
-    def _should_load_notebook_progressively(self, loaded_from_store: bool) -> bool:
+    def _should_load_document_progressively(self, loaded_from_store: bool) -> bool:
+        progressive_setter = getattr(type(self._document), "aset_progressively", None)
         return (
-            self._file_type == "notebook"
-            and self._notebook_load_progressively
+            self._document_load_progressively
             and not loaded_from_store
+            and progressive_setter is not None
+            and progressive_setter is not YBaseDoc.aset_progressively
         )
 
     async def _finish_progressive_initialization(self, content: Any) -> None:
@@ -242,10 +245,9 @@ class DocumentRoom(YRoom):
         if progressive:
             subscription = source_ydoc.observe(lambda event: self.ydoc.apply_update(event.update))
             try:
-                await source_document.aset(
+                await source_document.aset_progressively(
                     content,
-                    progressive=True,
-                    delay_outputs_above_mb=self._notebook_output_delay_threshold_mb,
+                    delay_outputs_above_mb=self._document_output_delay_threshold_mb,
                 )
             finally:
                 source_ydoc.unobserve(subscription)

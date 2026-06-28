@@ -76,20 +76,20 @@ class YDocExtension(ExtensionApp):
         Defaults to 1s, if None then the document will never be saved.""",
     )
 
-    notebook_load_progressively = Bool(
+    document_load_progressively = Bool(
         True,
         config=True,
-        help="""Whether to progressively load notebooks from disk into the shared document.
-        When enabled, notebook metadata and cells can be streamed to clients before the full
-        notebook has finished loading.""",
+        help="""Whether to progressively load documents from disk into the shared document.
+        When enabled, a shared document can stream its content to clients before the full
+        source file has finished loading.""",
     )
 
-    notebook_output_delay_threshold_mb = Float(
+    document_output_delay_threshold_mb = Float(
         100,
         allow_none=True,
         config=True,
-        help="""Notebook output size in MB above which outputs are delayed during progressive
-        notebook loading. Set to None to keep outputs with their cells.""",
+        help="""Output size in MB above which a shared document may delay loading outputs
+        during progressive document loading. Set to None to keep outputs with their content.""",
     )
 
     ystore_class = Type(
@@ -134,9 +134,9 @@ class YDocExtension(ExtensionApp):
                 "collaborative_file_poll_interval": self.file_poll_interval,
                 "collaborative_document_cleanup_delay": self.document_cleanup_delay,
                 "collaborative_document_save_delay": self.document_save_delay,
-                "collaborative_notebook_load_progressively": self.notebook_load_progressively,
-                "collaborative_notebook_output_delay_threshold_mb": (
-                    self.notebook_output_delay_threshold_mb
+                "collaborative_document_load_progressively": self.document_load_progressively,
+                "collaborative_document_output_delay_threshold_mb": (
+                    self.document_output_delay_threshold_mb
                 ),
                 "collaborative_ystore_class": self.ystore_class,
                 "collaborative_session_store_path": self.session_store_path,
@@ -186,9 +186,9 @@ class YDocExtension(ExtensionApp):
                     {
                         "document_cleanup_delay": self.document_cleanup_delay,
                         "document_save_delay": self.document_save_delay,
-                        "notebook_load_progressively": self.notebook_load_progressively,
-                        "notebook_output_delay_threshold_mb": (
-                            self.notebook_output_delay_threshold_mb
+                        "document_load_progressively": self.document_load_progressively,
+                        "document_output_delay_threshold_mb": (
+                            self.document_output_delay_threshold_mb
                         ),
                         "file_loaders": self.file_loaders,
                         "ystore_class": ystore_class,
@@ -282,8 +282,8 @@ class YDocExtension(ExtensionApp):
                     self.log,
                     exception_handler=exception_logger,
                     save_delay=self.document_save_delay,
-                    notebook_load_progressively=self.notebook_load_progressively,
-                    notebook_output_delay_threshold_mb=self.notebook_output_delay_threshold_mb,
+                    document_load_progressively=self.document_load_progressively,
+                    document_output_delay_threshold_mb=self.document_output_delay_threshold_mb,
                 )
                 await room.initialize()
                 try:
