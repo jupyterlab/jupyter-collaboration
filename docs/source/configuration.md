@@ -55,9 +55,9 @@ jupyter lab --YDocExtension.document_cleanup_delay=100
 # Whether documents loaded from disk should be streamed progressively (default: True).
 jupyter lab --YDocExtension.document_load_progressively=False
 
-# Delay document outputs larger than this size in MB during progressive loading (default: 100).
-# If None, outputs are loaded with their content.
-jupyter lab --YDocExtension.document_output_delay_threshold_mb=50
+# Delay notebook outputs larger than this size in MB during progressive loading (default: 100).
+# If None, outputs are loaded with the inputs.
+jupyter lab --YDocExtension.notebook_output_delay_threshold_mb=50
 
 # The YStore class to use for storing Y updates (default: JupyterSQLiteYStore).
 jupyter lab --YDocExtension.ystore_class=pycrdt.store.TempFileYStore

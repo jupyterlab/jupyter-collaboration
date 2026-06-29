@@ -84,12 +84,12 @@ class YDocExtension(ExtensionApp):
         source file has finished loading.""",
     )
 
-    document_output_delay_threshold_mb = Float(
+    notebook_output_delay_threshold_mb = Float(
         100,
         allow_none=True,
         config=True,
-        help="""Output size in MB above which a shared document may delay loading outputs
-        during progressive document loading. Set to None to keep outputs with their content.""",
+        help="""Output size in MB above which a shared notebook may delay loading outputs
+        during progressive document loading. Set to None to keep loading outputs with the inputs.""",
     )
 
     ystore_class = Type(
@@ -135,8 +135,8 @@ class YDocExtension(ExtensionApp):
                 "collaborative_document_cleanup_delay": self.document_cleanup_delay,
                 "collaborative_document_save_delay": self.document_save_delay,
                 "collaborative_document_load_progressively": self.document_load_progressively,
-                "collaborative_document_output_delay_threshold_mb": (
-                    self.document_output_delay_threshold_mb
+                "collaborative_notebook_output_delay_threshold_mb": (
+                    self.notebook_output_delay_threshold_mb
                 ),
                 "collaborative_ystore_class": self.ystore_class,
                 "collaborative_session_store_path": self.session_store_path,
@@ -187,8 +187,8 @@ class YDocExtension(ExtensionApp):
                         "document_cleanup_delay": self.document_cleanup_delay,
                         "document_save_delay": self.document_save_delay,
                         "document_load_progressively": self.document_load_progressively,
-                        "document_output_delay_threshold_mb": (
-                            self.document_output_delay_threshold_mb
+                        "notebook_output_delay_threshold_mb": (
+                            self.notebook_output_delay_threshold_mb
                         ),
                         "file_loaders": self.file_loaders,
                         "ystore_class": ystore_class,
@@ -283,12 +283,12 @@ class YDocExtension(ExtensionApp):
                     exception_handler=exception_logger,
                     save_delay=self.document_save_delay,
                     document_load_progressively=self.document_load_progressively,
-                    document_output_delay_threshold_mb=self.document_output_delay_threshold_mb,
+                    notebook_output_delay_threshold_mb=self.notebook_output_delay_threshold_mb,
                 )
-                await room.initialize()
                 try:
                     await self.ywebsocket_server.start_room(room)
                     self.ywebsocket_server.add_room(room_id, room)
+                    await room.initialize()
                     self.log.info(f"Created and started room: {room_id}")
                 except Exception as e:
                     self.log.error("Room %s failed to start on websocket server", room_id)

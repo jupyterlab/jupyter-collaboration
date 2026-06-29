@@ -17,7 +17,7 @@ def test_default_settings(jp_serverapp):
     assert settings["document_cleanup_delay"] == 60
     assert settings["document_save_delay"] == 1
     assert settings["document_load_progressively"] is True
-    assert settings["document_output_delay_threshold_mb"] == 100
+    assert settings["notebook_output_delay_threshold_mb"] == 100
     assert settings["ystore_class"] == SQLiteYStore
 
 
@@ -66,13 +66,13 @@ def test_settings_should_change_document_progressive_loading(jp_configurable_ser
     assert settings["document_load_progressively"] is False
 
 
-def test_settings_should_change_document_output_delay_threshold(jp_configurable_serverapp):
-    argv = ["--YDocExtension.document_output_delay_threshold_mb=50"]
+def test_settings_should_change_notebook_output_delay_threshold(jp_configurable_serverapp):
+    argv = ["--YDocExtension.notebook_output_delay_threshold_mb=50"]
 
     app = jp_configurable_serverapp(argv=argv)
     settings = app.web_app.settings["jupyter_server_ydoc_config"]
 
-    assert settings["document_output_delay_threshold_mb"] == 50
+    assert settings["notebook_output_delay_threshold_mb"] == 50
 
 
 def test_settings_should_change_ystore_class(jp_configurable_serverapp):

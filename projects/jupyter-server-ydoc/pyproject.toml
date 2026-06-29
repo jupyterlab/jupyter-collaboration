@@ -29,9 +29,9 @@ authors = [
 ]
 dependencies = [
     "jupyter_server>=2.15.0,<3.0.0",
-    "jupyter_ydoc @ git+https://github.com/MUFFANUJ/jupyter_ydoc.git@streamNotebook",
+    "jupyter_ydoc @ git+https://github.com/davidbrochart/jupyter_ydoc.git@finish",
     "pycrdt",
-    "pycrdt-websocket>=0.16.2,<0.17.0",
+    "pycrdt-websocket>=0.16.4,<0.17.0",
     "jupyter_events>=0.11.0",
     "jupyter_server_fileid>=0.7.0,<1",
     "jsonschema>=4.18.0"
@@ -60,9 +60,6 @@ test = [
 [tool.hatch.version]
 path = "jupyter_server_ydoc/_version.py"
 
-[tool.hatch.metadata]
-allow-direct-references = true
-
 [tool.hatch.build.targets.sdist]
 exclude = ["/.github", "/binder", "node_modules"]
 
@@ -74,3 +71,6 @@ exclude = ["/.github", "/binder", "node_modules"]
 
 [tool.check-wheel-contents]
 ignore = ["W002"]
+
+[tool.hatch.metadata]
+allow-direct-references = true

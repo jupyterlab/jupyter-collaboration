@@ -11,12 +11,10 @@ from typing import Any
 
 from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
-from jupyter_ydoc.ybasedoc import YBaseDoc
 from pycrdt import (
     Channel,
     Doc,
     Encoder,
-    YSyncMessageType,
 )
 from pycrdt.store import BaseYStore, YDocNotFound
 from pycrdt.websocket import YRoom
@@ -43,7 +41,7 @@ class DocumentRoom(YRoom):
         log: Logger | None,
         save_delay: float | None = None,
         document_load_progressively: bool = True,
-        document_output_delay_threshold_mb: float | None = 100,
+        notebook_output_delay_threshold_mb: float | None = 100,
         exception_handler: Callable[[Exception, Logger], bool] | None = None,
     ):
         super().__init__(ready=False, ystore=ystore, exception_handler=exception_handler, log=log)
@@ -58,20 +56,18 @@ class DocumentRoom(YRoom):
         self._logger = logger
         self._save_delay = save_delay
         self._document_load_progressively = document_load_progressively
-        self._document_output_delay_threshold_mb = document_output_delay_threshold_mb
+        self._notebook_output_delay_threshold_mb = notebook_output_delay_threshold_mb
 
         self._update_lock = asyncio.Lock()
         self._cleaner: asyncio.Task | None = None
         self._saving_document: asyncio.Task | None = None
         self._messages: dict[str, asyncio.Lock] = {}
         self._background_tasks = set()
-        self._block_client_document_updates = False
 
         # Listen for document changes
         self._document.observe(self._on_document_change)
         self._file.observe(self.room_id, self._on_outofband_change, self._on_filepath_change)
 
-        self.on_message = self._filter_message
         self.on_message_error = self._handle_sync_message_error
 
     @property
@@ -180,56 +176,46 @@ class DocumentRoom(YRoom):
                     self._room_id,
                     self._file.path,
                 )
-                if self._should_load_document_progressively(loaded_from_store):
-                    self._block_client_document_updates = True
-                    self.ready = True
-                    self._emit(LogLevel.INFO, "initialize", "Room initialized")
-                    self.create_task(self._finish_progressive_initialization(model["content"]))
-                    release_update_lock = False
-                    return
-                elif not loaded_from_store:
-                    await self._apply_deterministic_source_content(model["content"])
+                if not loaded_from_store:
+                    if self._document_load_progressively:
+                        initialized = asyncio.Event()
+                        finish = asyncio.Event()
+                        self.create_task(self._finish_progressive_initialization(model["content"], initialized, finish))
+                        await initialized.wait()
+                        self.ready = True
+                        await self.ydoc_observed.wait()
+                        finish.set()
+                        release_update_lock = False
+                        self._emit(LogLevel.INFO, "initialize", "Room initialized")
+                        return
+                    else:
+                        await self._apply_deterministic_source_content(model["content"])
                 else:
                     await self._document.aset(model["content"])
 
                 if self.ystore:
                     await self.ystore.encode_state_as_update(self.ydoc)
 
-            self._document.dirty = False
             self.ready = True
             self._emit(LogLevel.INFO, "initialize", "Room initialized")
         finally:
             if release_update_lock:
                 self._update_lock.release()
 
-    def _should_load_document_progressively(self, loaded_from_store: bool) -> bool:
-        progressive_setter = getattr(type(self._document), "aset_progressively", None)
-        return (
-            self._document_load_progressively
-            and not loaded_from_store
-            and progressive_setter is not None
-            and progressive_setter is not YBaseDoc.aset_progressively
-        )
-
-    async def _finish_progressive_initialization(self, content: Any) -> None:
+    async def _finish_progressive_initialization(self, content: Any, initialized: asyncio.Event, finish: asyncio.Event) -> None:
         try:
-            # Give YRoom's ready watcher a chance to subscribe before source
-            # transactions are replayed into the live room.
-            await asyncio.sleep(0)
-            await self._apply_deterministic_source_content(content, progressive=True)
+            await self._apply_deterministic_source_content(content, progressive=True, initialized=initialized, finish=finish)
             if self.ystore:
                 await self.ystore.encode_state_as_update(self.ydoc)
-            self._document.dirty = False
         except Exception as e:
             msg = f"Error loading content from file: {self._file.path}\n{e!r}"
             self.log.error(msg, exc_info=e)
             self._emit(LogLevel.ERROR, None, msg)
         finally:
-            self._block_client_document_updates = False
             self._update_lock.release()
 
     async def _apply_deterministic_source_content(
-        self, content: Any, progressive: bool = False
+        self, content: Any, progressive: bool = False, initialized: asyncio.Event | None = None, finish: asyncio.Event | None = None
     ) -> None:
         """Load source content using a deterministic update.
 
@@ -247,7 +233,9 @@ class DocumentRoom(YRoom):
             try:
                 await source_document.aset_progressively(
                     content,
-                    delay_outputs_above_mb=self._document_output_delay_threshold_mb,
+                    initialized=initialized,
+                    finish=finish,
+                    delay_outputs_above_mb=self._notebook_output_delay_threshold_mb
                 )
             finally:
                 source_ydoc.unobserve(subscription)
@@ -292,15 +280,6 @@ class DocumentRoom(YRoom):
             await super()._broadcast_updates()
         except asyncio.CancelledError:
             pass
-
-    def _filter_message(self, message: bytes) -> bool:
-        """Skip client document updates while source content is still loading."""
-        return (
-            self._block_client_document_updates
-            and len(message) > 1
-            and message[0] == MessageType.SYNC
-            and message[1] in (YSyncMessageType.SYNC_STEP2, YSyncMessageType.SYNC_UPDATE)
-        )
 
     async def _handle_sync_message_error(
         self, exc: Exception, message: bytes, channel: Channel
