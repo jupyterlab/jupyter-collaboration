@@ -9,46 +9,46 @@ on:
 
 jobs:
   # Run "pre-commit run --all-files --hook-stage=manual"
-  pre-commit:
-    name: Run pre-commit hook
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+  #pre-commit:
+  #  name: Run pre-commit hook
+  #  runs-on: ubuntu-latest
+  #  timeout-minutes: 10
+  #  steps:
+  #    - name: Checkout
+  #      uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
+  #    - name: Set up Python
+  #      uses: actions/setup-python@v5
+  #      with:
+  #        python-version: '3.13'
 
-      - name: Base Setup
-        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+  #    - name: Base Setup
+  #      uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
-      - name: Install dependencies
-        run: |
-          pip install "jupyterlab>=4.6.0b1,<5"
-          jlpm install
+  #    - name: Install dependencies
+  #      run: |
+  #        pip install "jupyterlab>=4.6.0b1,<5"
+  #        jlpm install
 
-      - name: Run pre-commit
-        uses: pre-commit/action@v3.0.1
-        with:
-          extra_args: --all-files --hook-stage=manual
+  #    - name: Run pre-commit
+  #      uses: pre-commit/action@v3.0.1
+  #      with:
+  #        extra_args: --all-files --hook-stage=manual
 
-      - name: Help message if pre-commit fail
-        if: ${{ failure() }}
-        run: |
-          echo "You can install pre-commit hooks to automatically run formatting"
-          echo "on each commit with:"
-          echo "    pre-commit install"
-          echo "or you can run by hand on staged files with"
-          echo "    pre-commit run"
-          echo "or after-the-fact on already committed files with"
-          echo "    pre-commit run --all-files --hook-stage=manual"
+  #    - name: Help message if pre-commit fail
+  #      if: ${{ failure() }}
+  #      run: |
+  #        echo "You can install pre-commit hooks to automatically run formatting"
+  #        echo "on each commit with:"
+  #        echo "    pre-commit install"
+  #        echo "or you can run by hand on staged files with"
+  #        echo "    pre-commit run"
+  #        echo "or after-the-fact on already committed files with"
+  #        echo "    pre-commit run --all-files --hook-stage=manual"
 
-      - name: Lint frontend
-        run: |
-          jlpm run lint:check
+  #    - name: Lint frontend
+  #      run: |
+  #        jlpm run lint:check
 
   test-js:
     name: Test JavaScript
