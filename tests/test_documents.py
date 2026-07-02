@@ -64,7 +64,7 @@ async def test_dirty(
 
     websocket, room_name = await rtc_connect_doc_client(file_format, file_type, file_path)
     async with websocket as ws, Provider(jupyter_ydoc.ydoc, HttpxWebsocket(ws, room_name)):
-        await sleep(0.1)
+        await sleep(0.2)
         for _ in range(2):
             jupyter_ydoc.dirty = True
             await sleep(rtc_document_save_delay * 1.5)
