@@ -53,7 +53,7 @@ jobs:
   test-js:
     name: Test JavaScript
     runs-on: ubuntu-latest
-    needs: [pre-commit]
+    #needs: [pre-commit]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -77,7 +77,7 @@ jobs:
 
   test-py:
     name: Test Python
-    needs: [pre-commit]
+    #needs: [pre-commit]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
@@ -188,7 +188,7 @@ jobs:
 
   make_sdist:
     name: Make SDist
-    needs: [pre-commit]
+    #needs: [pre-commit]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
