@@ -88,8 +88,8 @@ class YDocExtension(ExtensionApp):
         100,
         allow_none=True,
         config=True,
-        help="""Output size in MB above which a shared notebook may delay loading outputs
-        during progressive document loading. Set to None to keep loading outputs with the inputs.""",
+        help="""Output size in MB above which a shared notebook may delay loading outputs during
+        progressive document loading. Set to None to keep loading outputs with the inputs.""",
     )
 
     ystore_class = Type(

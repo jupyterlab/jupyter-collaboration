@@ -180,7 +180,11 @@ class DocumentRoom(YRoom):
                     if self._document_load_progressively:
                         initialized = asyncio.Event()
                         finish = asyncio.Event()
-                        self.create_task(self._finish_progressive_initialization(model["content"], initialized, finish))
+                        self.create_task(
+                            self._finish_progressive_initialization(
+                                model["content"], initialized, finish
+                            )
+                        )
                         await initialized.wait()
                         self.ready = True
                         await self.ydoc_observed.wait()
@@ -202,9 +206,13 @@ class DocumentRoom(YRoom):
             if release_update_lock:
                 self._update_lock.release()
 
-    async def _finish_progressive_initialization(self, content: Any, initialized: asyncio.Event, finish: asyncio.Event) -> None:
+    async def _finish_progressive_initialization(
+        self, content: Any, initialized: asyncio.Event, finish: asyncio.Event
+    ) -> None:
         try:
-            await self._apply_deterministic_source_content(content, progressive=True, initialized=initialized, finish=finish)
+            await self._apply_deterministic_source_content(
+                content, progressive=True, initialized=initialized, finish=finish
+            )
             if self.ystore:
                 await self.ystore.encode_state_as_update(self.ydoc)
         except Exception as e:
@@ -215,7 +223,11 @@ class DocumentRoom(YRoom):
             self._update_lock.release()
 
     async def _apply_deterministic_source_content(
-        self, content: Any, progressive: bool = False, initialized: asyncio.Event | None = None, finish: asyncio.Event | None = None
+        self,
+        content: Any,
+        progressive: bool = False,
+        initialized: asyncio.Event | None = None,
+        finish: asyncio.Event | None = None,
     ) -> None:
         """Load source content using a deterministic update.
 
@@ -235,7 +247,7 @@ class DocumentRoom(YRoom):
                     content,
                     initialized=initialized,
                     finish=finish,
-                    delay_outputs_above_mb=self._notebook_output_delay_threshold_mb
+                    delay_outputs_above_mb=self._notebook_output_delay_threshold_mb,
                 )
             finally:
                 source_ydoc.unobserve(subscription)

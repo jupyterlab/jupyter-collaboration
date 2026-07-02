@@ -6,16 +6,8 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import AsyncMock, patch
 
-from jupyter_server_ydoc.loaders import FileLoader
-from jupyter_server_ydoc.rooms import DocumentRoom
-from jupyter_server_ydoc.test_utils import (
-    FakeContentsManager,
-    FakeEventLogger,
-    FakeFileIDManager,
-)
-from jupyter_server_ydoc.utils import MessageType, OutOfBandChanges
+from jupyter_server_ydoc.utils import OutOfBandChanges
 from jupyter_ydoc import YUnicode
-from pycrdt import YSyncMessageType
 
 
 async def test_should_initialize_document_room_without_store(rtc_create_mock_document_room):
