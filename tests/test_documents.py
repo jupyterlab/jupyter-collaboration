@@ -64,15 +64,15 @@ async def test_dirty(
 
     websocket, room_name = await rtc_connect_doc_client(file_format, file_type, file_path)
     async with websocket as ws, Provider(jupyter_ydoc.ydoc, HttpxWebsocket(ws, room_name)):
-        # the server might not be ready to receive updates from this client yet
-        jupyter_ydoc.dirty = True
-        await sleep(rtc_document_save_delay * 1.5)
-        # so don't expect dirty to be cleared
-
-        # now the server should be ready, check that dirty is cleared
-        jupyter_ydoc.dirty = True
-        await sleep(rtc_document_save_delay * 1.5)
-        assert not jupyter_ydoc.dirty
+        for _ in range(3):
+            jupyter_ydoc.dirty = True
+            await sleep(rtc_document_save_delay * 1.5)
+            # the server might not be ready to receive updates from this client yet
+            # if it is, it should clear the dirty state
+            if not jupyter_ydoc.dirty:
+                return
+        else:
+            assert not jupyter_ydoc.dirty
 
 
 async def cleanup(jp_serverapp):
