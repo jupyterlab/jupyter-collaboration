@@ -306,6 +306,7 @@ jobs:
         run: |
           jlpm test
           TIMELINE_FEATURE=1 jlpm test:timeline
+          CONFLICT_FEATURE=1 jlpm test:conflict
 
       - name: Upload Playwright Test report
         if: always()

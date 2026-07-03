@@ -5,6 +5,9 @@ import { expect, galata, test } from '@jupyterlab/galata';
 import { unlink } from 'fs/promises';
 import type { Page, APIRequestContext } from '@playwright/test';
 
+const isConflictEnv = process.env.CONFLICT_FEATURE || "0";
+const isConflict = parseInt(isConflictEnv)
+
 /**
  * A minimal notebook with one cell.
  *
@@ -158,6 +161,10 @@ test.describe.serial('Conflict handling', () => {
   test(
     'shows a conflict dialog and dismisses it',
     async ({ page, request, tmpPath, baseURL }) => {
+      if (!isConflict) {
+        console.log('Skipping this test.');
+        return;
+      }
       const dialog = await triggerConflict(
         page,
         request,
@@ -174,6 +181,10 @@ test.describe.serial('Conflict handling', () => {
   test(
     'Revert button reloads the document from disk',
     async ({ page, request, tmpPath, baseURL }) => {
+      if (!isConflict) {
+        console.log('Skipping this test.');
+        return;
+      }
       const dialog = await triggerConflict(
         page,
         request,
@@ -207,6 +218,10 @@ test.describe.serial('Conflict handling', () => {
   test(
     'Save As button opens the save-as dialog',
     async ({ page, request, tmpPath, baseURL }) => {
+      if (!isConflict) {
+        console.log('Skipping this test.');
+        return;
+      }
       const dialog = await triggerConflict(
         page,
         request,
@@ -229,6 +244,10 @@ test.describe.serial('Conflict handling', () => {
   test(
     'Show Diff button opens a diff widget',
     async ({ page, request, tmpPath, baseURL }) => {
+      if (!isConflict) {
+        console.log('Skipping this test.');
+        return;
+      }
       const dialog = await triggerConflict(
         page,
         request,
@@ -249,6 +268,10 @@ test.describe.serial('Conflict handling', () => {
   test(
     'Save Local As button in diff toolbar opens the save-as dialog',
     async ({ page, request, tmpPath, baseURL }) => {
+      if (!isConflict) {
+        console.log('Skipping this test.');
+        return;
+      }
       const dialog = await triggerConflict(
         page,
         request,
@@ -276,6 +299,10 @@ test.describe.serial('Conflict handling', () => {
   test(
     'Revert to Remote button in diff toolbar reloads the document',
     async ({ page, request, tmpPath, baseURL }) => {
+      if (!isConflict) {
+        console.log('Skipping this test.');
+        return;
+      }
       const dialog = await triggerConflict(
         page,
         request,
