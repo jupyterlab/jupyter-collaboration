@@ -178,6 +178,7 @@ class DocumentRoom(YRoom):
                 )
                 if not loaded_from_store:
                     if self._document_load_progressively:
+                        release_update_lock = False
                         initialized = asyncio.Event()
                         finish = asyncio.Event()
                         self.create_task(
@@ -189,7 +190,6 @@ class DocumentRoom(YRoom):
                         self.ready = True
                         await self.ydoc_observed.wait()
                         finish.set()
-                        release_update_lock = False
                         self._emit(LogLevel.INFO, "initialize", "Room initialized")
                         return
                     else:
