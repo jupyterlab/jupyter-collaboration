@@ -11,6 +11,9 @@ const baseConfig = require('@jupyterlab/galata/lib/playwright-config');
 module.exports = {
   ...baseConfig,
   workers: 1,
+  testMatch: 'tests/conflict.spec.ts',
+  testIgnore: '**/.ipynb_checkpoints/**',
+  timeout: 120 * 1000,
   webServer: {
     command: 'jlpm start:conflict',
     url: 'http://localhost:8888/lab',
@@ -21,13 +24,5 @@ module.exports = {
     toMatchSnapshot: {
       maxDiffPixelRatio: 0.01
     }
-  },
-  projects: [
-    {
-      name: 'conflict-tests',
-      testMatch: 'tests/conflict.spec.ts',
-      testIgnore: '**/.ipynb_checkpoints/**',
-      timeout: 120 * 1000
-    }
-  ]
+  }
 };
