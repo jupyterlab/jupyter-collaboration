@@ -52,8 +52,8 @@ jupyter lab --YDocExtension.file_poll_interval=2
 # If None, the document will be kept in memory forever.
 jupyter lab --YDocExtension.document_cleanup_delay=100
 
-# Whether documents loaded from disk should be streamed progressively (default: True).
-jupyter lab --YDocExtension.document_load_progressively=False
+# Whether documents loaded from disk should be streamed progressively (default: False).
+jupyter lab --YDocExtension.document_load_progressively=True
 
 # Delay notebook outputs larger than this size in MB during progressive loading (default: 100).
 # If None, outputs are loaded with the inputs.

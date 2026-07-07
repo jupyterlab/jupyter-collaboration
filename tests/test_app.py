@@ -58,12 +58,12 @@ def test_settings_should_change_save_delay(jp_configurable_serverapp):
 
 
 def test_settings_should_change_document_progressive_loading(jp_configurable_serverapp):
-    argv = ["--YDocExtension.document_load_progressively=False"]
+    argv = ["--YDocExtension.document_load_progressively=True"]
 
     app = jp_configurable_serverapp(argv=argv)
     settings = app.web_app.settings["jupyter_server_ydoc_config"]
 
-    assert settings["document_load_progressively"] is False
+    assert settings["document_load_progressively"]
 
 
 def test_settings_should_change_notebook_output_delay_threshold(jp_configurable_serverapp):

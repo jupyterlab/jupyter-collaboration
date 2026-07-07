@@ -185,7 +185,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         room_locks: dict[str, asyncio.Lock] | None = None,
         document_cleanup_delay: float | None = 60.0,
         document_save_delay: float | None = 1.0,
-        document_load_progressively: bool = True,
+        document_load_progressively: bool = False,
         notebook_output_delay_threshold_mb: float | None = 100,
     ) -> None:
         self._background_tasks = set()

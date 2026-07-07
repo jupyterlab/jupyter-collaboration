@@ -259,6 +259,8 @@ async def test_on_outofband_change_skips_aset_when_content_unchanged(
         await room._on_outofband_change()
         mock_aset.assert_not_called()
 
+    assert not room._document.dirty
+
 
 async def test_on_outofband_change_calls_aset_when_content_changed(
     rtc_create_mock_document_room,

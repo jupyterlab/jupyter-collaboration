@@ -77,7 +77,7 @@ class YDocExtension(ExtensionApp):
     )
 
     document_load_progressively = Bool(
-        True,
+        False,
         config=True,
         help="""Whether to progressively load documents from disk into the shared document.
         When enabled, a shared document can stream its content to clients before the full

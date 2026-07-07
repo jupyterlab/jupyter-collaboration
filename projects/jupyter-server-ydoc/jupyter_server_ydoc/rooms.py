@@ -40,7 +40,7 @@ class DocumentRoom(YRoom):
         ystore: BaseYStore | None,
         log: Logger | None,
         save_delay: float | None = None,
-        document_load_progressively: bool = True,
+        document_load_progressively: bool = False,
         notebook_output_delay_threshold_mb: float | None = 100,
         exception_handler: Callable[[Exception, Logger], bool] | None = None,
     ):
