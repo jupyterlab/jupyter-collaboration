@@ -233,6 +233,11 @@ class DocumentRoom(YRoom):
             self._document_progressively_loaded.set_exception(e)
         else:
             self._document_progressively_loaded.set_result(None)
+            if await self._document.aget() != content:
+                # that means there were user changes while progressively loading, save the document
+                self._saving_document = asyncio.create_task(
+                    self._maybe_save_document(self._saving_document, save_now=True)
+                )
         finally:
             self._update_lock.release()
 
