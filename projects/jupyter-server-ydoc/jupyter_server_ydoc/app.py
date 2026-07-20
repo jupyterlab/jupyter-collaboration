@@ -306,7 +306,7 @@ class YDocExtension(ExtensionApp):
         if isinstance(room, DocumentRoom):
             if copy:
                 if room._document_load_progressively:
-                    await room._progressive_init_done.wait()
+                    await room._document_progressively_loaded
                 update = room.ydoc.get_update()
 
                 fork_ydoc: Doc = Doc()

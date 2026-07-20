@@ -7,7 +7,7 @@ import asyncio
 import json
 from collections.abc import Callable
 from logging import Logger
-from typing import Any
+from typing import Any, cast
 
 from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
@@ -57,13 +57,19 @@ class DocumentRoom(YRoom):
         self._save_delay = save_delay
         self._document_load_progressively = document_load_progressively
         self._notebook_output_delay_threshold_mb = notebook_output_delay_threshold_mb
+        if (
+            document_load_progressively
+            and notebook_output_delay_threshold_mb is not None
+            and notebook_output_delay_threshold_mb < 0
+        ):
+            raise ValueError("notebook_output_delay_threshold_mb must be >=0 or None")
 
         self._update_lock = asyncio.Lock()
         self._cleaner: asyncio.Task | None = None
         self._saving_document: asyncio.Task | None = None
         self._messages: dict[str, asyncio.Lock] = {}
         self._background_tasks = set()
-        self._progressive_init_done = asyncio.Event()
+        self._document_progressively_loaded: asyncio.Future[None] = asyncio.Future()
 
         # Listen for document changes
         self._document.observe(self._on_document_change)
@@ -188,6 +194,10 @@ class DocumentRoom(YRoom):
                             )
                         )
                         await initialized.wait()
+                        if self._document_progressively_loaded.done() and (
+                            exc := self._document_progressively_loaded.exception() is not None
+                        ):
+                            raise cast(BaseException, exc)
                         self.ready = True
                         await self.ydoc_observed.wait()
                         finish.set()
@@ -220,9 +230,11 @@ class DocumentRoom(YRoom):
             msg = f"Error loading content from file: {self._file.path}\n{e!r}"
             self.log.error(msg, exc_info=e)
             self._emit(LogLevel.ERROR, None, msg)
+            self._document_progressively_loaded.set_exception(e)
+        else:
+            self._document_progressively_loaded.set_result(None)
         finally:
             self._update_lock.release()
-            self._progressive_init_done.set()
 
     async def _apply_deterministic_source_content(
         self,
