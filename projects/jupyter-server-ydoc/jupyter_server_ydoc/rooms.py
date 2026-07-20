@@ -63,6 +63,7 @@ class DocumentRoom(YRoom):
         self._saving_document: asyncio.Task | None = None
         self._messages: dict[str, asyncio.Lock] = {}
         self._background_tasks = set()
+        self._progressive_init_done = asyncio.Event()
 
         # Listen for document changes
         self._document.observe(self._on_document_change)
@@ -221,6 +222,7 @@ class DocumentRoom(YRoom):
             self._emit(LogLevel.ERROR, None, msg)
         finally:
             self._update_lock.release()
+            self._progressive_init_done.set()
 
     async def _apply_deterministic_source_content(
         self,
