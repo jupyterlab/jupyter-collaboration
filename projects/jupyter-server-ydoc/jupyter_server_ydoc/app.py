@@ -92,13 +92,25 @@ class YDocExtension(ExtensionApp):
         progressive document loading. Set to None to keep loading outputs with the inputs.""",
     )
 
+    disable_ystore = Bool(
+        False,
+        config=True,
+        help="""Whether to disable the YStore. Defaults to False.
+
+        The YStore (see ``ystore_class``) persists the history of updates made to shared
+        documents, allowing the history to be restored across server restarts and enabling
+        the timeline feature. When disabled, updates are only kept in memory while a
+        document is open, no update history is written to disk, and the timeline feature
+        is not available.""",
+    )
+
     ystore_class = Type(
         default_value=SQLiteYStore,
         klass=BaseYStore,
         config=True,
         help="""The YStore class to use for storing Y updates. Defaults to an SQLiteYStore,
         which stores Y updates in a '.jupyter_ystore.db' SQLite database in the current
-        directory.""",
+        directory. Ignored if ``disable_ystore`` is True.""",
     )
 
     server_side_execution = Bool(
@@ -138,7 +150,7 @@ class YDocExtension(ExtensionApp):
                 "collaborative_notebook_output_delay_threshold_mb": (
                     self.notebook_output_delay_threshold_mb
                 ),
-                "collaborative_ystore_class": self.ystore_class,
+                "collaborative_ystore_class": None if self.disable_ystore else self.ystore_class,
                 "collaborative_session_store_path": self.session_store_path,
             }
         )
@@ -146,10 +158,15 @@ class YDocExtension(ExtensionApp):
     def initialize_handlers(self):
         page_config = self.serverapp.web_app.settings.setdefault("page_config_data", {})
         page_config.setdefault("disableRTC", self.disable_rtc)
+        page_config.setdefault("disableYStore", self.disable_ystore)
         page_config.setdefault("serverSideExecution", self.server_side_execution)
 
         # Set configurable parameters to YStore class
-        ystore_class: type[BaseYStore] = partial(self.ystore_class, config=self.config)  # type:ignore[assignment]
+        ystore_class: type[BaseYStore] | None = None
+        if self.disable_ystore:
+            self.log.info("YStore is disabled: document update history will not be persisted")
+        else:
+            ystore_class = partial(self.ystore_class, config=self.config)  # type:ignore[assignment]
 
         self.ywebsocket_server = JupyterWebsocketServer(
             rooms_ready=False,
@@ -201,7 +218,7 @@ class YDocExtension(ExtensionApp):
                     r"/api/collaboration/timeline/(.*)",
                     TimelineHandler,
                     {
-                        "ystore_class": self.ystore_class,
+                        "ystore_class": None if self.disable_ystore else self.ystore_class,
                         "ywebsocket_server": self.ywebsocket_server,
                     },
                 ),
@@ -266,11 +283,13 @@ class YDocExtension(ExtensionApp):
                 file_format_str, file_type, file_id = decode_file_path(room_id)
                 # cast down so mypy won’t complain when we pass this into DocumentRoom
                 file_format = cast(Literal["json", "text"], file_format_str)
-                updates_file_path = f".{file_type}:{file_id}.y"
-                ystore = self.ystore_class(
-                    path=updates_file_path,
-                    log=self.log,
-                )
+                ystore: BaseYStore | None = None
+                if not self.disable_ystore:
+                    updates_file_path = f".{file_type}:{file_id}.y"
+                    ystore = self.ystore_class(
+                        path=updates_file_path,
+                        log=self.log,
+                    )
                 # Create a new room
                 room = DocumentRoom(
                     room_id,

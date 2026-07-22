@@ -127,11 +127,13 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                         )
 
                     file = self._file_loaders[file_id]
-                    updates_file_path = f".{file_type}:{file_id}.y"
-                    ystore = self._ystore_class(
-                        path=updates_file_path,
-                        log=self.log,
-                    )
+                    ystore = None
+                    if self._ystore_class is not None:
+                        updates_file_path = f".{file_type}:{file_id}.y"
+                        ystore = self._ystore_class(
+                            path=updates_file_path,
+                            log=self.log,
+                        )
                     self.room = DocumentRoom(
                         self._room_id,
                         file_format,
@@ -186,7 +188,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self,
         ywebsocket_server: JupyterWebsocketServer,
         file_loaders: FileLoaderMapping,
-        ystore_class: type[BaseYStore],
+        ystore_class: type[BaseYStore] | None,
         room_locks: dict[str, asyncio.Lock] | None = None,
         document_cleanup_delay: float | None = 60.0,
         document_save_delay: float | None = 1.0,
@@ -564,7 +566,7 @@ class TimelineHandler(APIHandler):
     auth_resource = "contents"
 
     def initialize(
-        self, ystore_class: type[BaseYStore], ywebsocket_server: JupyterWebsocketServer
+        self, ystore_class: type[BaseYStore] | None, ywebsocket_server: JupyterWebsocketServer
     ) -> None:
         self.ystore_class = ystore_class
         self.ywebsocket_server = ywebsocket_server
@@ -582,6 +584,16 @@ class TimelineHandler(APIHandler):
         try:
             room_id = room_id_from_encoded_path(encoded_path)
             room: YRoom = await self.ywebsocket_server.get_room(room_id)
+            ystore = room.ystore
+            if ystore is None:
+                self.set_status(404)
+                self.finish(
+                    {
+                        "code": 404,
+                        "error": "Timeline is not available because the YStore is disabled",
+                    }
+                )
+                return
             fork_ydoc: Doc = Doc()
 
             ydoc_factory = YDOCS.get(content_type)
@@ -598,8 +610,6 @@ class TimelineHandler(APIHandler):
             FORK_DOCUMENTS[idx] = ydoc_factory(fork_ydoc)
             undo_manager: UndoManager = FORK_DOCUMENTS[idx].undo_manager
 
-            ystore = room.ystore
-            assert ystore
             updates_and_timestamps = [(item[0], item[-1]) async for item in ystore.read()]
 
             result_timestamps = []
