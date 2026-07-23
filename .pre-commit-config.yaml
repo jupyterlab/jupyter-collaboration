@@ -2,9 +2,6 @@ ci:
   # skip any check that needs internet access
   skip: [prettier, eslint, stylelint]
 
-default_language_version:
-  node: system
-
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
@@ -58,15 +55,15 @@ repos:
       - id: prettier
         name: prettier
         entry: 'jlpm run prettier'
-        language: node
+        language: system
         types_or: [json, ts, tsx, javascript, jsx, css]
       - id: eslint
         name: eslint
         entry: 'jlpm run eslint'
-        language: node
+        language: system
         types_or: [ts, tsx, javascript, jsx]
       - id: stylelint
         name: stylelint
         entry: 'jlpm run stylelint'
-        language: node
+        language: system
         types: [css]
