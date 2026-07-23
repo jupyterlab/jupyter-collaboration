@@ -32,6 +32,11 @@ relying on the persisted history (such as the document timeline) are not availab
 useful on deployments where the database file would grow too large or where persisting it is
 impractical.
 
+> **Note**: The persisted history is also what allows merging document changes across a server
+> restart. With the YStore disabled, a client reconnecting after a server restart can run into
+> conflicts, which may lead to duplicated content or require reloading the document (see
+> [issue #594](https://github.com/jupyterlab/jupyter-collaboration/issues/594)).
+
 A second file, `collaboration_sessions.json`, is created inside a `.jupyter` directory under
 the server's root directory (`ServerApp.root_dir`, which defaults to the directory where
 JupyterLab was launched). It records recent collaboration session IDs so the backend can
