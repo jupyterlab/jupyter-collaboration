@@ -10,8 +10,10 @@ from logging import Logger
 from typing import Any
 
 from jupyter_events import EventLogger
+from jupyter_ydoc import YNotebook
 from jupyter_ydoc import ydocs as YDOCS
 from pycrdt import (
+    Assoc,
     Channel,
     Doc,
     Encoder,
@@ -59,6 +61,7 @@ class DocumentRoom(YRoom):
         self._saving_document: asyncio.Task | None = None
         self._messages: dict[str, asyncio.Lock] = {}
         self._background_tasks = set()
+        self._deduplicating = False
 
         # Listen for document changes
         self._document.observe(self._on_document_change)
@@ -255,11 +258,145 @@ class DocumentRoom(YRoom):
             channel.path,
             exc,
         )
+        await channel.send(self._conflict_message())
+        return True
+
+    @staticmethod
+    def _conflict_message() -> bytes:
+        """Build a RAW conflict notification for the frontend resolution dialog."""
         encoder = Encoder()
         encoder.write_var_uint(MessageType.RAW)
         encoder.write_var_string(json.dumps({"type": "conflict"}))
-        await channel.send(encoder.to_bytes())
-        return True
+        return encoder.to_bytes()
+
+    async def _broadcast_conflict(self) -> None:
+        """Send a RAW conflict notification to all connected clients."""
+        message = self._conflict_message()
+        for client in list(self.clients):
+            try:
+                await client.send(message)
+            except Exception as exc:  # noqa: BLE001
+                self.log.warning("Failed to send conflict notification to %s: %s", client.path, exc)
+
+    def _has_duplicate_cell_ids(self) -> bool:
+        """Cheaply check whether any cell ID appears more than once.
+
+        Reads only the ``id`` of each cell (no full conversion), so it is safe
+        to run on every cell change; the expensive content comparison in
+        _deduplicate_cells only runs when this returns True.
+        """
+        if not isinstance(self._document, YNotebook):
+            return False
+        seen: set[str] = set()
+        ycells = self._document.ycells
+        for index in range(len(ycells)):
+            cell_id = ycells[index].get("id")
+            if cell_id is None:
+                continue
+            if cell_id in seen:
+                return True
+            seen.add(cell_id)
+        return False
+
+    def _maybe_deduplicate_cells(self) -> None:
+        """Schedule duplicate-cell repair when duplicate cell IDs are present.
+
+        Duplicate cell IDs appear when a client that edited the document during
+        a session reconnects after the room was rebuilt deterministically
+        (client_id=0) from disk: the same cells then exist both under
+        client_id=0 and under the client's own id, and the reconnect sync
+        appends the client's copies next to the rebuilt ones.
+
+        Repair must run outside the observer (mutating the document inside a
+        change callback raises "read-only transaction"), so it is deferred to a
+        background task, mirroring the autosave scheduling.
+        """
+        if self._deduplicating or self._update_lock.locked():
+            return
+        if not self._has_duplicate_cell_ids():
+            return
+        self._deduplicating = True
+        self.create_task(self._deduplicate_cells())
+
+    def _cell_client_ids(self, count: int) -> list[int | None]:
+        """Return the originating Yjs client id of each cell, by index.
+
+        The deterministic rebuild from disk uses Doc(client_id=0), so cells with
+        client id 0 are the on-disk copies, while a reconnecting client's cells
+        carry its own (non-zero) client id.
+        """
+        client_ids: list[int | None] = []
+        with self._document.ydoc.transaction():
+            for index in range(count):
+                sticky = self._document.ycells.sticky_index(index, Assoc.AFTER)
+                item = sticky.to_json().get("item") if sticky is not None else None
+                client_ids.append(item.get("client") if item else None)
+        return client_ids
+
+    async def _deduplicate_cells(self) -> None:
+        """Repair duplicate cells introduced by a divergent-history merge.
+
+        Cells are grouped by id. Exact duplicates (identical content) are
+        collapsed to a single copy, so no user data is lost. When same-id cells
+        differ, the on-disk copy (client_id=0) is dropped and the reconnecting
+        client's copy is kept: the client's in-memory edits are the data at risk,
+        while the on-disk version stays recoverable through "Revert" (and a diff
+        can compare the kept copy against disk). A conflict is then surfaced so
+        the user can choose how to resolve it.
+        """
+        has_divergent = False
+        try:
+            async with self._update_lock:
+                cells = self._document.get(deduplicate=False)["cells"]
+                client_ids = self._cell_client_ids(len(cells))
+
+                groups: dict[str, list[int]] = {}
+                for index, cell in enumerate(cells):
+                    cell_id = cell.get("id")
+                    if cell_id is not None:
+                        groups.setdefault(cell_id, []).append(index)
+
+                to_delete: list[int] = []
+                for indices in groups.values():
+                    if len(indices) < 2:
+                        continue
+                    first = cells[indices[0]]
+                    if all(cells[i] == first for i in indices[1:]):
+                        # Exact duplicates: keep the first copy, drop the rest.
+                        to_delete.extend(indices[1:])
+                        continue
+                    # Divergent copies: drop the on-disk (client_id=0) copies and
+                    # keep the client's, unless we cannot tell them apart (then
+                    # keep everything so no edit is lost).
+                    has_divergent = True
+                    disk = [i for i in indices if client_ids[i] == 0]
+                    if disk and len(disk) < len(indices):
+                        to_delete.extend(disk)
+
+                if to_delete:
+                    with self._document.ydoc.transaction():
+                        for index in sorted(set(to_delete), reverse=True):
+                            del self._document.ycells[index]
+                    self.log.warning(
+                        "Removed %d duplicate cell(s) in room %s after a "
+                        "divergent-history merge",
+                        len(to_delete),
+                        self._room_id,
+                    )
+                    self._emit(
+                        LogLevel.WARNING,
+                        "deduplicate",
+                        f"Removed {len(to_delete)} duplicate cell(s).",
+                    )
+        finally:
+            self._deduplicating = False
+
+        if has_divergent:
+            self.log.warning(
+                "Divergent duplicate cells in room %s; surfacing conflict",
+                self._room_id,
+            )
+            await self._broadcast_conflict()
 
     async def _on_outofband_change(self) -> None:
         """
@@ -302,6 +439,11 @@ class DocumentRoom(YRoom):
             document. This tasks are debounced (60 seconds by default) so we
             need to cancel previous tasks before creating a new one.
         """
+        # Repair duplicate cells from a divergent-history merge (e.g. a client
+        # reconnecting after a deterministic room rebuild).
+        if target == "cells":
+            self._maybe_deduplicate_cells()
+
         # Collect autosave values from all clients
         autosave_states = [
             state.get("autosave", True)
