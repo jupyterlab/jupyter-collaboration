@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from collections import defaultdict
+from collections.abc import Callable
 from functools import partial
 from typing import Literal, cast
 
@@ -162,11 +163,11 @@ class YDocExtension(ExtensionApp):
         page_config.setdefault("serverSideExecution", self.server_side_execution)
 
         # Set configurable parameters to YStore class
-        ystore_class: type[BaseYStore] | None = None
+        ystore_class: Callable[..., BaseYStore] | None = None
         if self.disable_ystore:
             self.log.info("YStore is disabled: document update history will not be persisted")
         else:
-            ystore_class = partial(self.ystore_class, config=self.config)  # type:ignore[assignment]
+            ystore_class = partial(self.ystore_class, config=self.config)
 
         self.ywebsocket_server = JupyterWebsocketServer(
             rooms_ready=False,
@@ -218,7 +219,6 @@ class YDocExtension(ExtensionApp):
                     r"/api/collaboration/timeline/(.*)",
                     TimelineHandler,
                     {
-                        "ystore_class": None if self.disable_ystore else self.ystore_class,
                         "ywebsocket_server": self.ywebsocket_server,
                     },
                 ),

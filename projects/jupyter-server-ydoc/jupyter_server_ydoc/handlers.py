@@ -6,6 +6,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+from collections.abc import Callable
 from logging import Logger
 from typing import Any, cast
 from uuid import uuid4
@@ -188,7 +189,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self,
         ywebsocket_server: JupyterWebsocketServer,
         file_loaders: FileLoaderMapping,
-        ystore_class: type[BaseYStore] | None,
+        ystore_class: Callable[..., BaseYStore] | None,
         room_locks: dict[str, asyncio.Lock] | None = None,
         document_cleanup_delay: float | None = 60.0,
         document_save_delay: float | None = 1.0,
@@ -565,10 +566,7 @@ class DocSessionHandler(APIHandler):
 class TimelineHandler(APIHandler):
     auth_resource = "contents"
 
-    def initialize(
-        self, ystore_class: type[BaseYStore] | None, ywebsocket_server: JupyterWebsocketServer
-    ) -> None:
-        self.ystore_class = ystore_class
+    def initialize(self, ywebsocket_server: JupyterWebsocketServer) -> None:
         self.ywebsocket_server = ywebsocket_server
 
     @web.authenticated
