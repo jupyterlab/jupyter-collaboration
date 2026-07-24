@@ -1,7 +1,12 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-"""Server configuration for integration tests.
+"""Server configuration for conflict-resolution integration tests.
+
+Progressive document loading is disabled so that
+_apply_deterministic_source_content fully populates the Ydoc before
+any client sync, which is needed for the stale-parent RuntimeError
+("block parent") to be raised on reconnect after an out-of-band change.
 
 !! Never use this configuration in production because it
 opens the server to the world and provide access to JupyterLab
@@ -19,10 +24,10 @@ configure_jupyter_server(c)  # noqa
 # Fast room eviction so conflict tests don't need to wait 60 seconds.
 c.YDocExtension.document_cleanup_delay = 1
 
-# Keep the delayed-output path observable in UI tests without oversized
-# notebook fixtures.
-c.YDocExtension.document_load_progressively = True
-c.YDocExtension.notebook_output_delay_threshold_mb = 7
+# Disable progressive loading – the full document content must be
+# deterministically loaded before the client can sync so that stale
+# parent references trigger the conflict detection path.
+c.YDocExtension.document_load_progressively = False
 
 # Force-close dead WebSocket connections quickly.  Playwright's setOffline(true)
 # blocks network I/O without tearing down existing TCP connections, so pings are
@@ -37,6 +42,3 @@ c.ServerApp.websocket_ping_timeout = 5  # close connection if no pong within 5 s
 # _apply_deterministic_source_content. This simulates the production scenario
 # where a room is evicted and the notebook structure changes on disk.
 c.SQLiteYStore.db_path = "/tmp/jupyter_ystore_ui_test.db"
-
-# Uncomment to set server log level to debug level
-# c.ServerApp.log_level = "DEBUG"
