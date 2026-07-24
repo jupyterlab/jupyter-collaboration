@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
+import uuid
 from collections.abc import Callable
 from logging import Logger
 from typing import Any
@@ -20,6 +22,7 @@ from pycrdt.store import BaseYStore, YDocNotFound
 from pycrdt.websocket import YRoom
 
 from .loaders import FileLoader
+from .sessions import DocumentSessionStore, content_hash
 from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, MessageType, OutOfBandChanges
 
 YFILE = YDOCS["file"]
@@ -29,6 +32,11 @@ class DocumentRoom(YRoom):
     """A Y room for a possibly stored document (e.g. a notebook)."""
 
     _background_tasks: set[asyncio.Task]
+
+    # Rebuild client ids carry this marker bit so they can never collide with
+    # ids of genuine Yjs clients (uint32, i.e. < 2**32) while staying below
+    # 2**53 so they remain safe to serialize as JSON numbers.
+    _REBUILD_CLIENT_MARKER = 1 << 47
 
     def __init__(
         self,
@@ -43,6 +51,7 @@ class DocumentRoom(YRoom):
         document_load_progressively: bool = False,
         notebook_output_delay_threshold_mb: float | None = 100,
         exception_handler: Callable[[Exception, Logger], bool] | None = None,
+        session_store: DocumentSessionStore | None = None,
     ):
         super().__init__(ready=False, ystore=ystore, exception_handler=exception_handler, log=log)
 
@@ -63,6 +72,9 @@ class DocumentRoom(YRoom):
             and notebook_output_delay_threshold_mb < 0
         ):
             raise ValueError("notebook_output_delay_threshold_mb must be >=0 or None")
+
+        self._session_store = session_store if session_store is not None else DocumentSessionStore()
+        self.session_id: str | None = None
 
         self._update_lock = asyncio.Lock()
         self._cleaner: asyncio.Task | None = None
@@ -176,6 +188,12 @@ class DocumentRoom(YRoom):
                     )
                     read_from_source = True
 
+            # The document session must be assigned before the room is marked
+            # ready (including the progressive-loading early return below) so
+            # that the websocket handler can validate client claims against it
+            # before serving any Yjs synchronization.
+            self._assign_session(model["content"], loaded_from_store)
+
             if read_from_source:
                 self._emit(LogLevel.INFO, "load", "Content loaded from disk.")
                 self.log.info(
@@ -242,6 +260,123 @@ class DocumentRoom(YRoom):
         finally:
             self._update_lock.release()
 
+    def _assign_session(self, content: Any, loaded_from_store: bool) -> None:
+        """Assign the document session ID for this room incarnation.
+
+            Parameters:
+                content (Any): The document content the room was loaded with.
+                loaded_from_store (bool): Whether the Yjs history was
+                    restored from the YStore.
+
+        ### Note:
+            The session is kept when the Yjs history lineage continues
+            (restored from the YStore, or deterministically rebuilt from
+            content identical to the rebuild that founded the lineage) and
+            rolled when the room is rebuilt from the source file with
+            different content: the situation in which clients holding the
+            previous lineage must not resynchronize blindly.
+        """
+        store = self._session_store
+        session = store.get(self._room_id)
+        if loaded_from_store:
+            if session is None:
+                self.session_id = store.roll(self._room_id, "store")
+            else:
+                # Keep the session (and the hash of the rebuild which founded
+                # this lineage, if any); downgrade a "rest" origin so a later
+                # rebuild cannot adopt a session that now covers Yjs history.
+                self.session_id = store.update(
+                    self._room_id, "store", rebuild_hash=session.rebuild_hash
+                )
+            return
+
+        # The room is being rebuilt from the source file.
+        deterministic = self._rebuild_is_deterministic(content)
+        rebuild_hash = content_hash(content) if deterministic else None
+        if (
+            session is not None
+            and deterministic
+            and (
+                (session.rebuild_hash is not None and session.rebuild_hash == rebuild_hash)
+                or session.origin == "rest"
+            )
+        ):
+            # Either the rebuild replays the exact Yjs coordinates that
+            # founded the current lineage, or no Yjs history ever existed
+            # under this session (it was only minted by the REST handler):
+            # clients holding the session can safely resynchronize.
+            self.session_id = store.update(self._room_id, "rebuild", rebuild_hash=rebuild_hash)
+        else:
+            self.session_id = store.roll(self._room_id, "rebuild", rebuild_hash=rebuild_hash)
+            self.log.info(
+                "Room %s rebuilt with a diverging history; new document session %s",
+                self._room_id,
+                self.session_id,
+            )
+
+    def _rebuild_is_deterministic(self, content: Any) -> bool:
+        """Whether rebuilding from this content replays reproducible Yjs items.
+
+            Parameters:
+                content (Any): The document content to rebuild from.
+
+            Returns:
+                deterministic (bool): Whether the rebuild is deterministic.
+
+        ### Note:
+            Notebook cells without an ``id`` get a random UUID assigned on
+            load, which makes the rebuilt history differ between rebuilds of
+            identical content; such content must never share a rebuild
+            client id nor keep its document session across rebuilds.
+        """
+        if self._file_type != "notebook":
+            return True
+        try:
+            cells = content.get("cells", [])
+            return all("id" in cell for cell in cells)
+        except AttributeError:
+            return False
+
+    @classmethod
+    def _content_client_id(cls, content: Any) -> int:
+        """Derive the Yjs client id for a deterministic rebuild from content.
+
+            Parameters:
+                content (Any): The document content to rebuild from.
+
+            Returns:
+                client_id (int): A content-addressed, marked Yjs client id.
+
+        ### Note:
+            Identical content maps to the same client id, keeping rebuilds
+            idempotent for reconnecting clients (as with the previous fixed
+            ``client_id=0``), while different content maps to a different id
+            so that two rebuild lineages can never collide on the same
+            ``(client_id, clock)`` coordinates with different items.
+        """
+        digest = hashlib.sha256(
+            json.dumps(content, sort_keys=True, default=str).encode("utf-8")
+        ).digest()
+        marker = cls._REBUILD_CLIENT_MARKER
+        return (int.from_bytes(digest[:6], "big") & (marker - 1)) | marker
+
+    def _rebuild_client_id(self, content: Any) -> int:
+        """The Yjs client id to use when rebuilding a room from content.
+
+        Parameters:
+            content (Any): The document content to rebuild from.
+
+        Returns:
+            client_id (int): A marked Yjs client id, content-addressed
+                when the rebuild is deterministic and random otherwise.
+        """
+        if self._rebuild_is_deterministic(content):
+            return self._content_client_id(content)
+        # Content that cannot be rebuilt deterministically must never reuse
+        # the coordinates of a previous rebuild.
+        marker = self._REBUILD_CLIENT_MARKER
+        return (uuid.uuid4().int & (marker - 1)) | marker
+
     async def _apply_deterministic_source_content(
         self,
         content: Any,
@@ -257,8 +392,11 @@ class DocumentRoom(YRoom):
 
         The client ID needs to be fixed to a deterministic value, see:
         https://discuss.yjs.dev/t/initial-offline-value-of-a-shared-document/465
+        It is additionally derived from the content so that rebuilds of
+        different content occupy disjoint Yjs coordinates (see
+        ``_content_client_id``).
         """
-        source_ydoc: Doc = Doc(client_id=0)
+        source_ydoc: Doc = Doc(client_id=self._rebuild_client_id(content))
         source_document = YDOCS.get(self._file_type, YFILE)(source_ydoc)
         if progressive:
             subscription = source_ydoc.observe(lambda event: self.ydoc.apply_update(event.update))

@@ -22,6 +22,7 @@ from tornado.websocket import WebSocketHandler
 
 from .loaders import FileLoaderMapping
 from .rooms import DocumentRoom, TransientRoom
+from .sessions import DocumentSessionStore
 from .utils import (
     JUPYTER_COLLABORATION_AWARENESS_EVENTS_URI,
     JUPYTER_COLLABORATION_EVENTS_URI,
@@ -141,6 +142,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                         notebook_output_delay_threshold_mb=(
                             self._notebook_output_delay_threshold_mb
                         ),
+                        session_store=self._doc_session_store,
                     )
 
                 else:
@@ -187,12 +189,14 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         document_save_delay: float | None = 1.0,
         document_load_progressively: bool = False,
         notebook_output_delay_threshold_mb: float | None = 100,
+        doc_session_store: DocumentSessionStore | None = None,
     ) -> None:
         self._background_tasks = set()
         # File ID manager cannot be passed as argument as the extension may load after this one
         self._file_id_manager = self.settings["file_id_manager"]
         self._file_loaders = file_loaders
         self._ystore_class = ystore_class
+        self._doc_session_store = doc_session_store
         self._cleanup_delay = document_cleanup_delay
         self._document_save_delay = document_save_delay
         self._document_load_progressively = document_load_progressively
@@ -241,102 +245,133 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
     async def open(self, room_id: str) -> None:  # type:ignore[override]
         """
         On connection open.
+
+        For document rooms, the server session and the document session are
+        both validated *before* the serve task is created, so that a client
+        holding a diverged Yjs history never gets to exchange sync messages
+        with the room.
         """
-        self.create_task(self._websocket_server.serve(self))
-
-        if isinstance(self.room, DocumentRoom):
-            # Close the connection if the document session expired
-            session_id = self.get_query_argument("sessionId", "")
-            root_dir = self.settings.get("server_root_dir", os.getcwd())
-            session_store_path = self.settings.get("collaborative_session_store_path")
-            document_version = getattr(self.room._document, "version", None)
-
-            # Persist the current session so future reconnects can validate it
-            await save_current_session(
-                root_dir,
-                SERVER_SESSION,
-                YDOC_SERVER_VERSION,
-                self._session_file_lock,
-                document_version=document_version,
-                session_store_path=session_store_path,
-            )
-            if SERVER_SESSION != session_id:
-                cannot_reconnect, reason = check_session_compatibility(
-                    root_dir,
-                    session_id,
-                    YDOC_SERVER_VERSION,
-                    current_document_version=document_version,
-                    session_store_path=session_store_path,
-                )
-                if cannot_reconnect:
-                    # Must ask the user to reload
-                    close_payload = json.dumps(
-                        {
-                            "reason": reason,
-                            "sessionId": session_id,
-                            "reloadable": True,
-                        }
-                    )
-                    self.close(1003, close_payload)
-                # Else accept the old session, no reload needed.
-
-            # cancel the deletion of the room if it was scheduled
-            if self.room.cleaner is not None:
-                self.room.cleaner.cancel()
-
-            try:
-                # Initialize the room
-                async with self._room_lock(self._room_id):
-                    await self.room.initialize()
-                self._emit_awareness_event(self.current_user.username, "join")
-            except Exception as e:
-                _, _, file_id = decode_file_path(self._room_id)
-                file = self._file_loaders[file_id]
-
-                # Close websocket and propagate error.
-                if isinstance(e, web.HTTPError):
-                    if e.status_code == 404:
-                        error_code = 4404  # custom code for "file not found"
-                        self.log.error(f"File {file.path} not found.\n{e!r}", exc_info=e)
-                    elif e.status_code == 400:
-                        error_code = 4400  # custom code for "bad request"
-                        self.log.error(f"Bad request for file {file.path}.\n{e!r}", exc_info=e)
-                    elif e.status_code == 500:
-                        error_code = 4500  # custom code for "internal server error"
-                        self.log.error(
-                            f"Internal server error for file {file.path}.\n{e!r}", exc_info=e
-                        )
-                    else:
-                        error_code = 4500  # generic error code for other HTTP errors
-                        self.log.error(
-                            f"Error initializing room for file {file.path}.\n{e!r}", exc_info=e
-                        )
-                    self.close(
-                        error_code,
-                        f"Error initializing: {file.path}.",
-                    )
-                else:
-                    self.log.error(f"Error initializing: {file.path}\n{e!r}", exc_info=e)
-                    self.close(
-                        1003,
-                        json.dumps(
-                            {
-                                "reason": "initialization_error",
-                                "reloadable": False,
-                            }
-                        ),
-                    )
-
-                # Clean up the room and delete the file loader
-                if len(self.room.clients) == 0 or self.room.clients == {self}:
-                    self._message_queue.put_nowait(b"")
-                    self._cleanup_delay = 0
-                    await self._clean_room()
-
-            self._emit(LogLevel.INFO, "initialize", "New client connected.")
-        else:
+        if not isinstance(self.room, DocumentRoom):
+            self.create_task(self._websocket_server.serve(self))
             if self._room_id != "JupyterLab:globalAwareness":
                 self._emit_awareness_event(self.current_user.username, "join")
+            return
+
+        # Close the connection if the document session expired
+        session_id = self.get_query_argument("sessionId", "")
+        root_dir = self.settings.get("server_root_dir", os.getcwd())
+        session_store_path = self.settings.get("collaborative_session_store_path")
+        document_version = getattr(self.room._document, "version", None)
+
+        # Persist the current session so future reconnects can validate it
+        await save_current_session(
+            root_dir,
+            SERVER_SESSION,
+            YDOC_SERVER_VERSION,
+            self._session_file_lock,
+            document_version=document_version,
+            session_store_path=session_store_path,
+        )
+        if SERVER_SESSION != session_id:
+            cannot_reconnect, reason = check_session_compatibility(
+                root_dir,
+                session_id,
+                YDOC_SERVER_VERSION,
+                current_document_version=document_version,
+                session_store_path=session_store_path,
+            )
+            if cannot_reconnect:
+                # Must ask the user to reload
+                close_payload = json.dumps(
+                    {
+                        "reason": reason,
+                        "sessionId": session_id,
+                        "reloadable": True,
+                    }
+                )
+                self.close(1003, close_payload)
+                return
+            # Else accept the old session, no reload needed.
+
+        # cancel the deletion of the room if it was scheduled
+        if self.room.cleaner is not None:
+            self.room.cleaner.cancel()
+
+        try:
+            # Initialize the room
+            async with self._room_lock(self._room_id):
+                await self.room.initialize()
+            self._emit_awareness_event(self.current_user.username, "join")
+        except Exception as e:
+            _, _, file_id = decode_file_path(self._room_id)
+            file = self._file_loaders[file_id]
+
+            # Close websocket and propagate error.
+            if isinstance(e, web.HTTPError):
+                if e.status_code == 404:
+                    error_code = 4404  # custom code for "file not found"
+                    self.log.error(f"File {file.path} not found.\n{e!r}", exc_info=e)
+                elif e.status_code == 400:
+                    error_code = 4400  # custom code for "bad request"
+                    self.log.error(f"Bad request for file {file.path}.\n{e!r}", exc_info=e)
+                elif e.status_code == 500:
+                    error_code = 4500  # custom code for "internal server error"
+                    self.log.error(
+                        f"Internal server error for file {file.path}.\n{e!r}", exc_info=e
+                    )
+                else:
+                    error_code = 4500  # generic error code for other HTTP errors
+                    self.log.error(
+                        f"Error initializing room for file {file.path}.\n{e!r}", exc_info=e
+                    )
+                self.close(
+                    error_code,
+                    f"Error initializing: {file.path}.",
+                )
+            else:
+                self.log.error(f"Error initializing: {file.path}\n{e!r}", exc_info=e)
+                self.close(
+                    1003,
+                    json.dumps(
+                        {
+                            "reason": "initialization_error",
+                            "reloadable": False,
+                        }
+                    ),
+                )
+
+            # Clean up the room and delete the file loader
+            if len(self.room.clients) == 0 or self.room.clients == {self}:
+                self._message_queue.put_nowait(b"")
+                self._cleanup_delay = 0
+                await self._clean_room()
+            return
+
+        # Refuse to serve a client whose local document belongs to a different
+        # document session (i.e. a diverged Yjs history lineage). The client
+        # is expected to reconcile its content first (rebase or conflict
+        # resolution) and reconnect claiming the new session.
+        claimed_doc_session = self.get_query_argument("docSessionId", "")
+        if claimed_doc_session and claimed_doc_session != self.room.session_id:
+            self.log.info(
+                "Client claims document session %s but room %s is on session %s; refusing sync",
+                claimed_doc_session,
+                self._room_id,
+                self.room.session_id,
+            )
+            self.close(
+                1003,
+                json.dumps(
+                    {
+                        "reason": "session_changed",
+                        "sessionId": self.room.session_id,
+                    }
+                ),
+            )
+            return
+
+        self.create_task(self._websocket_server.serve(self))
+        self._emit(LogLevel.INFO, "initialize", "New client connected.")
 
     async def send(self, message: bytes) -> None:
         """
@@ -402,10 +437,14 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         # stop serving this client
         self._message_queue.put_nowait(b"")
-        if isinstance(self.room, DocumentRoom) and self.room.clients == {self}:
-            # no client in this room after we disconnect
-            # keep the document for a while in case someone reconnects
+        if isinstance(self.room, DocumentRoom) and self.room.clients <= {self}:
+            # No client in this room after we disconnect: keep the document
+            # for a while in case someone reconnects. The subset check also
+            # covers clients which were refused before being served (e.g. on
+            # a document session mismatch) and hence never joined the room.
             self.log.info("Cleaning room: %s", self._room_id)
+            if self.room.cleaner is not None:
+                self.room.cleaner.cancel()
             self.room.cleaner = asyncio.create_task(self._clean_room())
         if self._room_id != "JupyterLab:globalAwareness":
             self._emit_awareness_event(self.current_user.username, "leave")
@@ -505,6 +544,32 @@ class DocSessionHandler(APIHandler):
 
     auth_resource = "contents"
 
+    def initialize(self, doc_session_store: DocumentSessionStore | None = None) -> None:
+        self._doc_session_store = doc_session_store
+
+    def _document_session_id(self, format: str, content_type: str, file_id: str) -> str | None:
+        """The current document session ID for the room of this document.
+
+            Parameters:
+                format (str): Document format.
+                content_type (str): Document content type.
+                file_id (str): File unique identifier.
+
+            Returns:
+                session_id (str | None): The document session ID, or ``None``
+                    when no session store is configured.
+
+        ### Note:
+            If no session exists yet it is minted with the "rest" origin,
+            which lets the first room initialization adopt it no matter how
+            it loads its content (no Yjs history exists under the session
+            yet).
+        """
+        if self._doc_session_store is None:
+            return None
+        room_id = room_id_from_encoded_path(encode_file_path(format, content_type, file_id))
+        return self._doc_session_store.get_or_create(room_id, "rest")
+
     @web.authenticated
     @authorized  # type: ignore[misc]
     async def put(self, path: str) -> asyncio.Future[Any]:
@@ -530,6 +595,7 @@ class DocSessionHandler(APIHandler):
                     "type": content_type,
                     "fileId": idx,
                     "sessionId": SERVER_SESSION,
+                    "documentSessionId": self._document_session_id(format, content_type, idx),
                 }
             )
             self.set_status(200)
@@ -549,6 +615,7 @@ class DocSessionHandler(APIHandler):
                 "type": content_type,
                 "fileId": idx,
                 "sessionId": SERVER_SESSION,
+                "documentSessionId": self._document_session_id(format, content_type, idx),
             }
         )
         self.set_status(201)

@@ -2,27 +2,36 @@
 // Distributed under the terms of the Modified BSD License.
 
 import { expect, galata, test } from '@jupyterlab/galata';
-import { unlink } from 'fs/promises';
-import type { Page, APIRequestContext } from '@playwright/test';
-
-const isConflictEnv = process.env.CONFLICT_FEATURE || "0";
-const isConflict = parseInt(isConflictEnv)
+import type { IJupyterLabPageFixture } from '@jupyterlab/galata';
+import { rm } from 'fs/promises';
+import type { APIRequestContext, BrowserContext } from '@playwright/test';
+import { newInterceptedPage, ICollabWSControl } from './collab-ws-helpers';
 
 /**
- * A minimal notebook with one cell.
+ * These tests exercise the "Edit Conflict" flow driven by document sessions:
  *
- * When the room is recreated after a NEW CELL is inserted at the beginning,
- * _apply_deterministic_source_content (which pins client_id=0) shifts the
- * clock positions for all subsequent items (including the source Text branch
- * of the original cell).
+ * 1. The client edits a notebook and the edit is autosaved (so the client's
+ *    last-known save hash matches the file on disk).
+ * 2. The client loses its collaboration websocket and makes a further,
+ *    unsaved local edit.
+ * 3. While it is away, the room is evicted, the YStore database is deleted
+ *    and the file is changed on disk, so the next room incarnation is
+ *    rebuilt from changed content and rolls its document session ID.
+ * 4. When the client reconnects, the server refuses to synchronize with it
+ *    (its Yjs history belongs to the previous session). The client fetches
+ *    the server content, sees both a local unsaved edit and a changed file
+ *    (save-hash mismatch), and surfaces the "Edit Conflict" dialog with
+ *    Dismiss / Revert / Show Diff / Save As options.
  *
- * A client that was connected to the original room holds a local YDoc edit
- * whose parent references the source Text at clock position N. After the room
- * is recreated with a new cell prepended, the source Text is at position N+K
- * where K is the number of new items. The parent reference (0, N) now points
- * to a different Yjs item type, so applying the client's buffered SYNC_STEP2
- * raises "block parent <0#N> must be deleted or shared ref type" on the server.
+ * Unlike the previous implementation (which relied on a Yjs integration
+ * error timed against a fully-populated server document), this flow is
+ * timing-independent and works with progressive document loading enabled;
+ * these tests run against the default server config, which enables it.
  */
+
+const YSTORE_DB = '/tmp/jupyter_ystore_ui_test.db';
+const YSTORE_FILES = [YSTORE_DB, `${YSTORE_DB}-shm`, `${YSTORE_DB}-wal`];
+
 const INITIAL_NOTEBOOK = {
   nbformat: 4,
   nbformat_minor: 5,
@@ -39,13 +48,17 @@ const INITIAL_NOTEBOOK = {
   ]
 };
 
+/**
+ * The out-of-band change: a new cell is prepended and the original cell
+ * loses the client's saved edit.
+ */
 const MODIFIED_NOTEBOOK = {
   ...INITIAL_NOTEBOOK,
   cells: [
     {
       cell_type: 'code',
       id: 'cell-0',
-      metadata: { trusted: true, collapsed: false, scrolled: false },
+      metadata: {},
       source: 'print("new cell")',
       outputs: [],
       execution_count: null
@@ -55,12 +68,14 @@ const MODIFIED_NOTEBOOK = {
 };
 
 /**
- * Sets up the conflict scenario: open notebook, type something, go offline,
- * delete ystore, overwrite notebook on disk, come back online.
+ * Sets up the conflict scenario: open notebook, type something and let it
+ * autosave, sever the collaboration websocket, make an unsaved edit, delete
+ * the ystore, overwrite the notebook on disk, let the client reconnect.
  * Returns when the conflict dialog is visible.
  */
 async function triggerConflict(
-  page: Page,
+  page: IJupyterLabPageFixture,
+  ws: ICollabWSControl,
   request: APIRequestContext,
   tmpPath: string,
   baseURL: string,
@@ -100,30 +115,39 @@ async function triggerConflict(
   await page.keyboard.type('x = 1');
   await page.notebook.leaveCellEditingMode(0);
 
-  // Give y-websocket a moment to deliver the SYNC_UPDATE to the server.
-  await page.waitForTimeout(500);
+  // 1. Wait for the edit to be autosaved so that the client records the
+  //    hash of the saved file (the base for conflict detection).
+  await expect(async () => {
+    const resp = await request.get(
+      `${baseURL}/api/contents/${notebookPath}?content=1`
+    );
+    expect(resp.ok()).toBeTruthy();
+    const model = await resp.json();
+    expect(model.content.cells[0].source).toContain('x = 1');
+  }).toPass({ timeout: 15000 });
+  // Give the save-related state (hash, dirty) a moment to sync to the client.
+  await page.waitForTimeout(1000);
 
-  // 1. The browser goes offline.
-  await page.context().setOffline(true);
+  // 2. The client's collaboration websocket is severed and the user keeps
+  //    editing: these edits are unsaved, which is what makes the upcoming
+  //    divergence a real conflict.
+  await ws.sever();
+  await page.notebook.enterCellEditingMode(0);
+  await page.keyboard.press('End');
+  await page.keyboard.type(' # local edit');
+  await page.notebook.leaveCellEditingMode(0);
 
-  // 2. Wait for room eviction and WebSocket timeout detection.
-  await page.waitForTimeout(10000);
+  // 3. Wait for room eviction (document_cleanup_delay=1s in the test
+  //    config).
+  await page.waitForTimeout(3000);
 
-  // 3. Delete the ystore database to force Room R2 to rebuild from disk
-  //    via _apply_deterministic_source_content (client_id=0). Without this,
-  //    SQLiteYStore preserves R1's history and R2 uses aset(), keeping the
-  //    source Text at the original clock position → no conflict.
-  await unlink('/tmp/jupyter_ystore_ui_test.db');
+  // 4. Delete the ystore database so the next room incarnation is rebuilt
+  //    from disk instead of restoring the previous Yjs history.
+  await Promise.all(YSTORE_FILES.map(file => rm(file, { force: true })));
 
-  // 4. Overwrite the notebook on disk to insert a NEW CELL at the beginning.
-  //    The Jupyter server normalises cell dicts to nbformat order:
-  //      {cell_type, execution_count, id, metadata, outputs, source}
-  //    so source Text lands at Yjs clock +7 from the cell Map's position
-  //    (0=Map, 1=cell_type, 2=execution_count, 3=id, 4=metadata YMap,
-  //     5=key1, 6=key2, 7=key3 [ContentAny], 8=outputs, 9=source YText).
-  //    With THREE metadata keys on cell-0, position (0,7) becomes the third
-  //    metadata entry (ContentAny).  The client's stale edit has parent=(0,7)
-  //    which now points to a non-shared-ref type → RuntimeError on the server.
+  // 5. Overwrite the notebook on disk: the room will be rebuilt from
+  //    content that diverges from both the client's content and its
+  //    last-known save, so the document session ID rolls.
   const putResp = await request.put(
     `${baseURL}/api/contents/${notebookPath}`,
     {
@@ -137,11 +161,10 @@ async function triggerConflict(
   );
   expect(putResp.ok()).toBeTruthy();
 
-  // 5. Come back online. y-websocket reconnects; the server creates
-  //    Room R2 from the modified file. The browser's YDoc still has the
-  //    edit referencing source Text at its R1 clock position. The stale
-  //    parent reference now points to a non-Text Yjs item.
-  await page.context().setOffline(false);
+  // 6. Let the client back in. y-websocket reconnects claiming the old
+  //    document session; the server refuses before any Yjs sync and the
+  //    client shows the conflict dialog (local unsaved edit + changed file).
+  ws.restore();
 
   const dialog = page.locator('.jp-Dialog');
   await expect(dialog).toBeVisible({ timeout: 15000 });
@@ -151,190 +174,204 @@ async function triggerConflict(
 
 test.describe.serial('Conflict handling', () => {
   const notebookName = 'conflict_test.ipynb';
+  let page: IJupyterLabPageFixture;
+  let ws: ICollabWSControl;
+  let context: BrowserContext;
 
-  test.afterEach(async ({ page, request, tmpPath }) => {
-    const contents = galata.newContentsHelper(request);
-    await contents.deleteFile(`${tmpPath}/${notebookName}`).catch(() => {});
-    await page.close();
+  test.beforeEach(async ({ browser, baseURL, tmpPath, waitForApplication }) => {
+    ({ page, ws, context } = await newInterceptedPage({
+      browser,
+      baseURL: baseURL!,
+      tmpPath,
+      waitForApplication
+    }));
   });
 
-  test(
-    'shows a conflict dialog and dismisses it',
-    async ({ page, request, tmpPath, baseURL }) => {
-      if (!isConflict) {
-        console.log('Skipping this test.');
-        return;
-      }
-      const dialog = await triggerConflict(
-        page,
-        request,
-        tmpPath,
-        baseURL,
-        notebookName
-      );
-      expect(await dialog.locator('.jp-Dialog-content').screenshot()).toMatchSnapshot('conflict-dialog.png');
-      await dialog.getByRole('button', { name: 'Dismiss' }).click();
-      await expect(dialog).not.toBeVisible();
-    }
-  );
+  test.afterEach(async ({ request, tmpPath }) => {
+    const contents = galata.newContentsHelper(request);
+    await contents.deleteFile(`${tmpPath}/${notebookName}`).catch(() => {});
+    await page
+      .unrouteAll({ behavior: 'ignoreErrors' })
+      .catch(() => undefined);
+    await page.close().catch(() => undefined);
+    await context.close().catch(() => undefined);
+  });
 
-  test(
-    'Revert button reloads the document from disk',
-    async ({ page, request, tmpPath, baseURL }) => {
-      if (!isConflict) {
-        console.log('Skipping this test.');
-        return;
-      }
-      const dialog = await triggerConflict(
-        page,
-        request,
-        tmpPath,
-        baseURL,
-        notebookName
-      );
-      await dialog.getByRole('button', { name: 'Revert' }).click();
+  test('shows a conflict dialog and dismisses it', async ({
+    request,
+    tmpPath,
+    baseURL
+  }) => {
+    const dialog = await triggerConflict(
+      page,
+      ws,
+      request,
+      tmpPath,
+      baseURL!,
+      notebookName
+    );
+    expect(
+      await dialog.locator('.jp-Dialog-content').screenshot()
+    ).toMatchSnapshot('conflict-dialog.png');
+    await dialog.getByRole('button', { name: 'Dismiss' }).click();
+    await expect(dialog).not.toBeVisible();
+  });
 
-      // After reload, handle any follow-up dialog (kernel selection or
-      // reload confirmation).
-      const followUp = page.locator('.jp-Dialog');
-      try {
-        await followUp.waitFor({ state: 'visible', timeout: 3000 });
-        const noKernel = followUp.getByRole('button', { name: 'No Kernel' });
-        if (await noKernel.isVisible({ timeout: 300 })) {
-          await noKernel.click();
-        } else {
-          await followUp.locator('.jp-mod-accept').click();
-        }
-        await expect(followUp).not.toBeVisible({ timeout: 5000 });
-      } catch {
-        // No follow-up dialog.
-      }
+  test('toolbar indicator allows resolving a dismissed conflict', async ({
+    request,
+    tmpPath,
+    baseURL
+  }) => {
+    const dialog = await triggerConflict(
+      page,
+      ws,
+      request,
+      tmpPath,
+      baseURL!,
+      notebookName
+    );
+    await dialog.getByRole('button', { name: 'Dismiss' }).click();
+    await expect(dialog).not.toBeVisible();
 
-      // After reload the notebook should show the server state: 2 cells.
-      await expect(page.locator('.jp-Cell')).toHaveCount(2, { timeout: 5000 });
-    }
-  );
+    // The document stays disconnected from collaboration: a warning
+    // indicator shows in the document toolbar.
+    const indicator = page.locator('.jp-ConflictIndicator');
+    await expect(indicator).toBeVisible();
 
-  test(
-    'Save As button opens the save-as dialog',
-    async ({ page, request, tmpPath, baseURL }) => {
-      if (!isConflict) {
-        console.log('Skipping this test.');
-        return;
-      }
-      const dialog = await triggerConflict(
-        page,
-        request,
-        tmpPath,
-        baseURL,
-        notebookName
-      );
-      await dialog.getByRole('button', { name: 'Save As' }).click();
+    // Clicking it re-opens the conflict dialog.
+    await indicator.click();
+    const reopened = page.locator('.jp-Dialog');
+    await expect(reopened).toBeVisible();
+    await expect(reopened).toContainText('Edit Conflict');
 
-      // docmanager:save-as replaces the conflict dialog with a path input dialog.
-      const saveAsDialog = page.locator('.jp-Dialog');
-      await expect(saveAsDialog.locator('input')).toBeVisible({ timeout: 5000 });
+    // Resolving through it adopts the server version and removes the
+    // indicator.
+    await reopened.getByRole('button', { name: 'Revert' }).click();
+    await expect(page.locator('.jp-Cell')).toHaveCount(2, { timeout: 15000 });
+    await expect(page.locator('.jp-Cell').first()).toContainText('new cell');
+    await expect(page.locator('.jp-ConflictIndicator')).toHaveCount(0);
+  });
 
-      // Cancel without saving.
-      await saveAsDialog.getByRole('button', { name: 'Cancel' }).click();
-      await expect(saveAsDialog).not.toBeVisible();
-    }
-  );
+  test('Revert button adopts the server version', async ({
+    request,
+    tmpPath,
+    baseURL
+  }) => {
+    const dialog = await triggerConflict(
+      page,
+      ws,
+      request,
+      tmpPath,
+      baseURL!,
+      notebookName
+    );
+    await dialog.getByRole('button', { name: 'Revert' }).click();
 
-  test(
-    'Show Diff button opens a diff widget',
-    async ({ page, request, tmpPath, baseURL }) => {
-      if (!isConflict) {
-        console.log('Skipping this test.');
-        return;
-      }
-      const dialog = await triggerConflict(
-        page,
-        request,
-        tmpPath,
-        baseURL,
-        notebookName
-      );
-      await dialog.getByRole('button', { name: 'Show Diff' }).click();
+    // After revert the notebook should show the server state: 2 cells.
+    await expect(page.locator('.jp-Cell')).toHaveCount(2, { timeout: 15000 });
+    await expect(page.locator('.jp-Cell').first()).toContainText('new cell');
+    // The local unsaved edit was discarded.
+    await expect(page.locator('.jp-Notebook')).not.toContainText('local edit');
+  });
 
-      // The diff widget should appear as a main area tab.
-      const diffWidget = page.locator('.jp-MainAreaWidget:has(.nbdime-Widget)');
-      await expect(diffWidget).toBeVisible({ timeout: 10000 });
+  test('Save As button opens the save-as dialog', async ({
+    request,
+    tmpPath,
+    baseURL
+  }) => {
+    const dialog = await triggerConflict(
+      page,
+      ws,
+      request,
+      tmpPath,
+      baseURL!,
+      notebookName
+    );
+    await dialog.getByRole('button', { name: 'Save As' }).click();
 
-      expect(await diffWidget.screenshot()).toMatchSnapshot('conflict-diff.png');
-    }
-  );
+    // docmanager:save-as replaces the conflict dialog with a path input dialog.
+    const saveAsDialog = page.locator('.jp-Dialog');
+    await expect(saveAsDialog.locator('input')).toBeVisible({ timeout: 5000 });
 
-  test(
-    'Save Local As button in diff toolbar opens the save-as dialog',
-    async ({ page, request, tmpPath, baseURL }) => {
-      if (!isConflict) {
-        console.log('Skipping this test.');
-        return;
-      }
-      const dialog = await triggerConflict(
-        page,
-        request,
-        tmpPath,
-        baseURL,
-        notebookName
-      );
-      await dialog.getByRole('button', { name: 'Show Diff' }).click();
+    // Cancel without saving.
+    await saveAsDialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(saveAsDialog).not.toBeVisible();
+  });
 
-      const diffWidget = page.locator('.jp-MainAreaWidget:has(.nbdime-Widget)');
-      await expect(diffWidget).toBeVisible({ timeout: 10000 });
+  test('Show Diff button opens a diff widget', async ({
+    request,
+    tmpPath,
+    baseURL
+  }) => {
+    const dialog = await triggerConflict(
+      page,
+      ws,
+      request,
+      tmpPath,
+      baseURL!,
+      notebookName
+    );
+    await dialog.getByRole('button', { name: 'Show Diff' }).click();
 
-      await diffWidget.getByRole('button', { name: 'Save Local As' }).click();
+    // The diff widget should appear as a main area tab.
+    const diffWidget = page.locator('.jp-MainAreaWidget:has(.nbdime-Widget)');
+    await expect(diffWidget).toBeVisible({ timeout: 10000 });
 
-      // docmanager:save-as opens a path-input dialog.
-      const saveAsDialog = page.locator('.jp-Dialog');
-      await expect(saveAsDialog.locator('input')).toBeVisible({ timeout: 5000 });
+    expect(await diffWidget.screenshot()).toMatchSnapshot('conflict-diff.png');
+  });
 
-      // Cancel without saving.
-      await saveAsDialog.getByRole('button', { name: 'Cancel' }).click();
-      await expect(saveAsDialog).not.toBeVisible();
-    }
-  );
+  test('Save Local As button in diff toolbar opens the save-as dialog', async ({
+    request,
+    tmpPath,
+    baseURL
+  }) => {
+    const dialog = await triggerConflict(
+      page,
+      ws,
+      request,
+      tmpPath,
+      baseURL!,
+      notebookName
+    );
+    await dialog.getByRole('button', { name: 'Show Diff' }).click();
 
-  test(
-    'Revert to Remote button in diff toolbar reloads the document',
-    async ({ page, request, tmpPath, baseURL }) => {
-      if (!isConflict) {
-        console.log('Skipping this test.');
-        return;
-      }
-      const dialog = await triggerConflict(
-        page,
-        request,
-        tmpPath,
-        baseURL,
-        notebookName
-      );
-      await dialog.getByRole('button', { name: 'Show Diff' }).click();
+    const diffWidget = page.locator('.jp-MainAreaWidget:has(.nbdime-Widget)');
+    await expect(diffWidget).toBeVisible({ timeout: 10000 });
 
-      const diffWidget = page.locator('.jp-MainAreaWidget:has(.nbdime-Widget)');
-      await expect(diffWidget).toBeVisible({ timeout: 10000 });
+    await diffWidget.getByRole('button', { name: 'Save Local As' }).click();
 
-      await diffWidget.getByRole('button', { name: 'Revert to Remote' }).click();
+    // docmanager:save-as opens a path-input dialog.
+    const saveAsDialog = page.locator('.jp-Dialog');
+    await expect(saveAsDialog.locator('input')).toBeVisible({ timeout: 5000 });
 
-      // After reload, handle any follow-up dialog (kernel selection or
-      // reload confirmation).
-      const followUp = page.locator('.jp-Dialog');
-      try {
-        await followUp.waitFor({ state: 'visible', timeout: 3000 });
-        const noKernel = followUp.getByRole('button', { name: 'No Kernel' });
-        if (await noKernel.isVisible({ timeout: 300 })) {
-          await noKernel.click();
-        } else {
-          await followUp.locator('.jp-mod-accept').click();
-        }
-        await expect(followUp).not.toBeVisible({ timeout: 5000 });
-      } catch {
-        // No follow-up dialog.
-      }
+    // Cancel without saving.
+    await saveAsDialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(saveAsDialog).not.toBeVisible();
+  });
 
-      // After reload the notebook should show the server state: 2 cells.
-      await expect(page.locator('.jp-Cell')).toHaveCount(2, { timeout: 5000 });
-    }
-  );
+  test('Revert to Remote button in diff toolbar adopts the server version', async ({
+    request,
+    tmpPath,
+    baseURL
+  }) => {
+    const dialog = await triggerConflict(
+      page,
+      ws,
+      request,
+      tmpPath,
+      baseURL!,
+      notebookName
+    );
+    await dialog.getByRole('button', { name: 'Show Diff' }).click();
+
+    const diffWidget = page.locator('.jp-MainAreaWidget:has(.nbdime-Widget)');
+    await expect(diffWidget).toBeVisible({ timeout: 10000 });
+
+    await diffWidget.getByRole('button', { name: 'Revert to Remote' }).click();
+
+    // The diff widget closes and the notebook shows the server state.
+    await expect(diffWidget).not.toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.jp-Cell')).toHaveCount(2, { timeout: 15000 });
+    await expect(page.locator('.jp-Cell').first()).toContainText('new cell');
+  });
 });

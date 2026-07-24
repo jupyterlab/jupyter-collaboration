@@ -36,6 +36,104 @@ export interface ISessionModel {
    * Server session identifier
    */
   sessionId: string;
+  /**
+   * Document session identifier.
+   *
+   * Identifies the current Yjs history lineage of the document room; it
+   * changes whenever the room history is rebuilt from a diverging source
+   * (e.g. after a server restart without a persisted YStore, or an
+   * out-of-band file change while the room was evicted). Absent when the
+   * server predates document sessions.
+   */
+  documentSessionId?: string | null;
+}
+
+/**
+ * A document model from the contents REST API.
+ */
+export interface IContentsModel {
+  /**
+   * The content of the document.
+   */
+  content: any;
+  /**
+   * Hash of the document content on disk, when supported by the server.
+   */
+  hash?: string | null;
+  /**
+   * The algorithm used to compute the hash.
+   */
+  hash_algorithm?: string;
+}
+
+/**
+ * Fetch the current server-side content (and its hash) of a document
+ * through the contents REST API.
+ *
+ * @param path - The document file path.
+ * @param format - The document format (e.g. `'text'` or `'json'`).
+ * @param type - The document content type (e.g. `'notebook'`).
+ * @param serverSettings - The server settings.
+ * @returns The contents model with content and hash.
+ */
+export async function requestDocumentContent(
+  path: string,
+  format: string,
+  type: string,
+  serverSettings?: ServerConnection.ISettings
+): Promise<IContentsModel> {
+  const settings = serverSettings ?? ServerConnection.makeSettings();
+  const params: Record<string, string | number> = {
+    content: 1,
+    hash: 1,
+    type
+  };
+  if (format === 'text' || format === 'base64') {
+    // The contents API only accepts 'text' and 'base64' as the format
+    // query parameter; notebooks ('json') must not pass it.
+    params.format = format;
+  }
+  const url =
+    URLExt.join(settings.baseUrl, 'api/contents', URLExt.encodeParts(path)) +
+    URLExt.objectToQueryString(params);
+
+  // This request typically runs right after a server restart was detected;
+  // the browser may then try to reuse a dead pooled connection, on which
+  // the request would hang indefinitely. Time out and retry (a retried
+  // request gets a fresh connection).
+  let response: Response | null = null;
+  let lastError: unknown = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      response = await ServerConnection.makeRequest(
+        url,
+        { signal: AbortSignal.timeout(8000) },
+        settings
+      );
+      break;
+    } catch (error) {
+      lastError = error;
+      response = null;
+    }
+  }
+  if (response === null) {
+    throw new ServerConnection.NetworkError(lastError as Error);
+  }
+
+  let data: any = await response.text();
+  if (data.length > 0) {
+    try {
+      data = JSON.parse(data);
+    } catch (error) {
+      console.error('Not a JSON response body.', response);
+    }
+  }
+
+  if (!response.ok) {
+    throw new ServerConnection.ResponseError(response, data.message || data);
+  }
+
+  return data as IContentsModel;
 }
 
 /**

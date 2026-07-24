@@ -9,6 +9,7 @@ import pytest
 from anyio import create_task_group, sleep
 from jupyter_server_ydoc.loaders import FileLoader
 from jupyter_server_ydoc.rooms import DocumentRoom
+from jupyter_server_ydoc.sessions import DocumentSessionStore
 from jupyter_server_ydoc.test_utils import FakeContentsManager, FakeEventLogger, FakeFileIDManager
 from jupyter_server_ydoc.utils import MessageType
 from jupyter_ydoc import YNotebook
@@ -153,7 +154,9 @@ def _notebook_model() -> dict:
     }
 
 
-async def _create_notebook_room(notebook: dict, room_id: str) -> tuple[DocumentRoom, FileLoader]:
+async def _create_notebook_room(
+    notebook: dict, room_id: str, session_store: DocumentSessionStore | None = None
+) -> tuple[DocumentRoom, FileLoader]:
     file_id = f"file-{room_id}"
     loader = FileLoader(
         file_id,
@@ -170,6 +173,7 @@ async def _create_notebook_room(notebook: dict, room_id: str) -> tuple[DocumentR
         None,
         None,
         document_load_progressively=False,
+        session_store=session_store,
     )
     await room.initialize()
     return room, loader
@@ -206,46 +210,106 @@ async def test_notebook_reconnect_with_divergent_history_does_not_duplicate_init
     assert len(merged["cells"]) == 1
 
 
-async def test_notebook_reconnect_sends_conflict_when_cell_structure_changes_between_restarts():
-    """When cell structure changes between room restarts, serve() must not crash.
+async def test_changed_rebuild_rolls_session_and_stale_updates_do_not_crash():
+    """A changed rebuild rolls the document session; stale updates cannot crash it.
 
-    _apply_deterministic_source_content uses Doc(client_id=0) so that Yjs item
-    clocks are stable across room restarts for identical content.  That
-    assumption breaks when the on-disk notebook changes structure between the
-    client's last sync and the next room creation: adding a primitive value
-    inside a cell (e.g. a kernel marks the cell trusted via
-    {"metadata": {"trusted": True}}) inserts one extra ItemContent::Any before
-    the source Text branch.  This shifts clock position 4 from
-    ItemContent::Type (the source Text) in the original room to
-    ItemContent::Any in the recreated room.
+    Rooms rebuilt from disk derive their Yjs client id from the content
+    (see ``DocumentRoom._content_client_id``), so when the on-disk notebook
+    changes between the client's last sync and the next room creation, the
+    rebuilt items live on coordinates disjoint from anything the stale client
+    holds. Applying the client's stale update can therefore never alias or
+    crash on the rebuilt items (historically this raised "block parent <0#4>
+    must be deleted or shared ref type" with the fixed client_id=0), but it
+    WOULD duplicate content, since the CRDT merge keeps both disjoint copies.
 
-    A client that made local edits against the original layout holds a parent
-    reference to (client_id=0, clock=4) which is no longer a valid container,
-    so yrs raises "block parent <0#4> must be deleted or shared ref type.
-    Type: 8" when that update is applied.
-
-    The server must catch this, keep the room intact, and send a CONFLICT
-    message back to the client so the frontend can offer Save As / View Diff.
+    This is exactly why the rebuild rolls the document session ID: the
+    websocket handler refuses clients claiming the previous session before
+    any sync message is exchanged, so the duplicating merge shown at the end
+    of this test can only be produced by a non-conforming client.
     """
+    session_store = DocumentSessionStore()
     notebook_before = _notebook_model()
-    room_a, loader_a = await _create_notebook_room(notebook_before, "meta-change-before")
+    room_a, loader_a = await _create_notebook_room(
+        notebook_before, "meta-change", session_store=session_store
+    )
+    session_a = room_a.session_id
     client_doc = YNotebook()
     try:
-        # Client connects to room A and receives all client_id=0 items.
+        # Client connects to room A and receives the rebuilt items.
         client_doc.ydoc.apply_update(room_a.ydoc.get_update())
-        # Client edits the cell source, creating an item whose parent is the
-        # source Text branch — a client_id=0 item at clock position 4.
+        # Client edits the cell source, referencing the room A source Text.
         client_doc.ycells[0]["source"] += "new content"
     finally:
         await room_a.stop()
         await loader_a.clean()
 
     # Disk content changes: cell metadata gains "trusted": True.
-    # _apply_deterministic_source_content will now allocate clock 4 to the
-    # "trusted" Any value instead of the source Text branch.
     notebook_after = deepcopy(notebook_before)
     notebook_after["cells"][0]["metadata"] = {"trusted": True}
-    room_b, loader_b = await _create_notebook_room(notebook_after, "meta-change-after")
+    room_b, loader_b = await _create_notebook_room(
+        notebook_after, "meta-change", session_store=session_store
+    )
+    try:
+        # The rebuild diverged, so the document session must have rolled;
+        # real clients holding session_a are refused before any sync happens.
+        assert room_b.session_id != session_a
+
+        # Even if a stale update does reach the room (e.g. a non-conforming
+        # client), it must not crash serve().
+        client_update = client_doc.ydoc.get_update()
+        sync_update_msg = bytes([YMessageType.SYNC, YSyncMessageType.SYNC_UPDATE]) + write_message(
+            client_update
+        )
+        channel = _SingleMessageChannel(sync_update_msg)
+        await room_b.serve(channel)
+
+        # The merge keeps both disjoint copies of the cell: the duplication
+        # symptom the session gate exists to prevent for conforming clients.
+        server_notebook = YNotebook()
+        server_notebook.ydoc.apply_update(room_b.ydoc.get_update())
+        cells = server_notebook.get(deduplicate=False)["cells"]
+        assert [cell["id"] for cell in cells] == ["cell-1", "cell-1"]
+    finally:
+        await room_b.stop()
+        await loader_b.clean()
+
+
+async def test_notebook_reconnect_sends_conflict_when_stale_update_is_incompatible(monkeypatch):
+    """The RAW conflict message is kept as a safety net for incompatible updates.
+
+    Content-addressed rebuild client ids make coordinate collisions between
+    different rebuilds impossible in normal operation, but a non-conforming
+    client could still send an update that is structurally incompatible with
+    the room history. This test forces the historical collision by pinning the
+    rebuild client id, and checks that the server catches the resulting
+    "block parent" error, keeps the room intact, and sends a RAW CONFLICT
+    message back to the client so the frontend can offer a resolution dialog.
+    """
+    pinned_id = DocumentRoom._REBUILD_CLIENT_MARKER | 42
+    monkeypatch.setattr(
+        DocumentRoom, "_content_client_id", classmethod(lambda cls, content: pinned_id)
+    )
+
+    notebook_before = _notebook_model()
+    room_a, loader_a = await _create_notebook_room(notebook_before, "pinned-before")
+    client_doc = YNotebook()
+    try:
+        # Client connects to room A and receives all pinned-client-id items.
+        client_doc.ydoc.apply_update(room_a.ydoc.get_update())
+        # Client edits the cell source, creating an item whose parent is the
+        # source Text branch of room A.
+        client_doc.ycells[0]["source"] += "new content"
+    finally:
+        await room_a.stop()
+        await loader_a.clean()
+
+    # Disk content changes: cell metadata gains "trusted": True. With the
+    # pinned client id the rebuilt items reuse the stale coordinates, so the
+    # clock of the source Text shifts and the client's edit now references a
+    # non-container item.
+    notebook_after = deepcopy(notebook_before)
+    notebook_after["cells"][0]["metadata"] = {"trusted": True}
+    room_b, loader_b = await _create_notebook_room(notebook_after, "pinned-after")
     try:
         # Build a SYNC_UPDATE message carrying the client's conflicting edit.
         client_update = client_doc.ydoc.get_update()

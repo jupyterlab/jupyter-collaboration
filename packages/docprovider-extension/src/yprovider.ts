@@ -25,11 +25,14 @@ import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { Contents } from '@jupyterlab/services';
 
 import { JSONValue } from '@lumino/coreutils';
+import { Widget } from '@lumino/widgets';
 
 import type * as nbformat from '@jupyterlab/nbformat';
 
 import { ConflictDiffWidget } from './conflictDiffWidget';
 import { CommandRegistry } from '@lumino/commands';
+
+import '../style/conflictIndicator.css';
 
 /**
  * The plugin ID for settings.
@@ -57,7 +60,10 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
     const rendermime = this._rendermime;
     const path = options.path;
 
-    const onConflictShowNotebookDiff = async (localContent: JSONValue) => {
+    const onConflictShowNotebookDiff = async (
+      localContent: JSONValue,
+      actions?: WebSocketProvider.IConflictActions
+    ) => {
       const serverModel = await contents.get(path, { content: true });
       const widget = new ConflictDiffWidget({
         translator: this._trans,
@@ -80,6 +86,13 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
             'Discard local changes and reload the server version'
           ),
           onClick: () => {
+            if (actions?.revert) {
+              // Conflict bound to a document session change: rejoin the new
+              // session (a plain context revert cannot restore the content,
+              // as it is synchronized over the websocket).
+              void actions.revert().then(() => main.close());
+              return;
+            }
             const context = this._docManager.findWidget(path)?.context;
             if (context && !context.isDisposed) {
               void context.revert();
@@ -105,7 +118,7 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
       shell.activateById(main.id);
     };
 
-    return new WebSocketProvider({
+    const provider = new WebSocketProvider({
       path,
       contentType: options.contentType,
       format: options.format,
@@ -122,6 +135,44 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
           ? onConflictShowNotebookDiff
           : undefined
     });
+
+    // While a conflict stays unresolved the document is disconnected from
+    // collaboration and local edits are not shared: surface this with a
+    // toolbar indicator (styled like the read-only indicator) which
+    // re-opens the conflict dialog on click.
+    let conflictIndicator: Widget | null = null;
+    provider.conflictStateChanged.connect((_, active) => {
+      if (active) {
+        if (conflictIndicator && !conflictIndicator.isDisposed) {
+          return;
+        }
+        const widget = this._docManager.findWidget(path);
+        if (!widget) {
+          return;
+        }
+        conflictIndicator = Private.createConflictIndicator(
+          provider,
+          this._trans
+        );
+        if (
+          !widget.toolbar.insertBefore(
+            'kernelName',
+            'session-conflict-indicator',
+            conflictIndicator
+          )
+        ) {
+          widget.toolbar.addItem(
+            'session-conflict-indicator',
+            conflictIndicator
+          );
+        }
+      } else {
+        conflictIndicator?.dispose();
+        conflictIndicator = null;
+      }
+    });
+
+    return provider;
   }
   private _trans: TranslationBundle;
   private _commands: CommandRegistry;
@@ -141,6 +192,41 @@ namespace WebSocketDocumentProviderFactory {
     contents: Contents.IManager;
     editorFactory: CodeEditor.Factory;
     rendermime: IRenderMimeRegistry;
+  }
+}
+
+namespace Private {
+  /**
+   * Create a toolbar indicator for an unresolved edit conflict.
+   *
+   * Styled after the JupyterLab read-only indicator
+   * (`createReadonlyLabel` in `@jupyterlab/docregistry`); clicking it
+   * re-opens the "Edit Conflict" dialog.
+   *
+   * @param provider - The document provider holding the pending conflict.
+   * @param trans - The translation bundle.
+   * @returns The toolbar widget.
+   */
+  export function createConflictIndicator(
+    provider: WebSocketProvider,
+    trans: TranslationBundle
+  ): Widget {
+    const node = document.createElement('div');
+    const span = document.createElement('span');
+    span.className = 'jp-ToolbarLabelComponent jp-ConflictIndicator';
+    span.textContent = trans.__('Edit conflict');
+    span.title = trans.__(
+      'Collaboration is paused and local changes are not shared because ' +
+        'the document changed while you were disconnected. ' +
+        'Click to resolve the conflict.'
+    );
+    node.appendChild(span);
+    node.addEventListener('click', () => {
+      void provider.showConflictDialog();
+    });
+    const widget = new Widget({ node });
+    widget.addClass('jp-ConflictIndicator-item');
+    return widget;
   }
 }
 
