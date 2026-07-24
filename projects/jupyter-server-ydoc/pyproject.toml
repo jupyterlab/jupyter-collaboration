@@ -28,7 +28,7 @@ authors = [
     { name = "Jupyter Development Team", email = "jupyter@googlegroups.com" },
 ]
 dependencies = [
-    "jupyter_server>=2.15.0,<3.0.0",
+    "jupyter_server>=2.19.0,<3.0.0",
     "jupyter_ydoc >=4.1.1,<5.0.0",
     "pycrdt",
     "pycrdt-websocket>=0.16.4,<0.17.0",
