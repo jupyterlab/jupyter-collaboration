@@ -30,6 +30,10 @@ jobs:
           pip install "jupyterlab>=4.6.0b1,<5"
           jlpm install
 
+      - name: Build the extension
+        run: |
+          jlpm build
+
       - name: Run pre-commit
         uses: pre-commit/action@v3.0.1
         with:
