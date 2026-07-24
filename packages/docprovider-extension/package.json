@@ -41,8 +41,8 @@
     "build:lib": "tsc --sourceMap",
     "build:lib:prod": "tsc",
     "build:prod": "jlpm run clean && jlpm run build:lib:prod && jlpm run build:labextension",
-    "build:labextension": "jupyter labextension build .",
-    "build:labextension:dev": "jupyter labextension build --development True .",
+    "build:labextension": "jupyter-builder build .",
+    "build:labextension:dev": "jupyter-builder build --development True .",
     "clean": "jlpm run clean:lib",
     "clean:lib": "rimraf lib tsconfig.tsbuildinfo node_modules",
     "clean:labextension": "rimraf ../../projects/jupyter-docprovider/jupyter_docprovider/labextension",
@@ -50,7 +50,7 @@
     "install:extension": "jlpm run build",
     "watch": "run-p watch:src watch:labextension",
     "watch:src": "tsc -w",
-    "watch:labextension": "jupyter labextension watch ."
+    "watch:labextension": "jupyter-builder watch ."
   },
   "dependencies": {
     "@jupyter/collaborative-drive": "^5.0.0-alpha.0",
@@ -77,7 +77,7 @@
     "yjs": "^13.5.40"
   },
   "devDependencies": {
-    "@jupyterlab/builder": "^4.6.0-alpha.5",
+    "@jupyter/builder": "^1.0.0",
     "@types/react": "~18.3.1",
     "npm-run-all": "^4.1.5",
     "rimraf": "^4.1.2",
