@@ -64,7 +64,9 @@ def test_get_or_create_is_stable():
     assert _is_uuid(session_id)
     # Repeated calls return the same ID and do not overwrite the origin.
     assert store.get_or_create("room", "store") == session_id
-    assert store.get("room").origin == "rest"
+    session = store.get("room")
+    assert session is not None
+    assert session.origin == "rest"
     # A different room gets a different ID.
     assert store.get_or_create("other-room", "rest") != session_id
 
@@ -76,6 +78,7 @@ def test_roll_changes_id():
     assert rolled != first
     assert _is_uuid(rolled)
     session = store.get("room")
+    assert session is not None
     assert session.session_id == rolled
     assert session.origin == "rebuild"
     assert session.rebuild_hash == "abc"
@@ -87,12 +90,15 @@ def test_update_keeps_id_and_mutates_metadata():
     updated = store.update("room", "rebuild", rebuild_hash="abc")
     assert updated == first
     session = store.get("room")
+    assert session is not None
     assert session.origin == "rebuild"
     assert session.rebuild_hash == "abc"
     # Updating an unknown room falls back to minting a new session.
     minted = store.update("unknown-room", "store")
     assert _is_uuid(minted)
-    assert store.get("unknown-room").origin == "store"
+    minted_session = store.get("unknown-room")
+    assert minted_session is not None
+    assert minted_session.origin == "store"
 
 
 def test_persistence_across_instances(tmp_path):
@@ -105,6 +111,7 @@ def test_persistence_across_instances(tmp_path):
     second_store = DocumentSessionStore(path=path)
     assert second_store.get_or_create("room", "store") == session_id
     session = second_store.get("room")
+    assert session is not None
     assert session.origin == "rebuild"
     assert session.rebuild_hash == "abc"
 
@@ -168,6 +175,7 @@ async def test_identical_rebuild_keeps_session():
     try:
         assert session_a is not None
         session = session_store.get("room")
+        assert session is not None
         assert session.origin == "rebuild"
         assert session.rebuild_hash == content_hash(notebook)
     finally:
@@ -196,7 +204,9 @@ async def test_changed_rebuild_rolls_session():
     room_b, loader_b = await _create_notebook_room(changed, "room", session_store=session_store)
     try:
         assert room_b.session_id != session_a
-        assert session_store.get("room").rebuild_hash == content_hash(changed)
+        session = session_store.get("room")
+        assert session is not None
+        assert session.rebuild_hash == content_hash(changed)
     finally:
         await room_b.stop()
         await loader_b.clean()
@@ -214,6 +224,7 @@ async def test_rest_origin_session_is_adopted_by_first_rebuild():
         # to a rebuild lineage.
         assert room.session_id == rest_session
         session = session_store.get("room")
+        assert session is not None
         assert session.origin == "rebuild"
         assert session.rebuild_hash == content_hash(notebook)
     finally:
@@ -230,7 +241,9 @@ async def test_store_origin_session_without_matching_hash_rolls_on_rebuild():
     room, loader = await _create_notebook_room(notebook, "room", session_store=session_store)
     try:
         assert room.session_id != store_session
-        assert session_store.get("room").origin == "rebuild"
+        session = session_store.get("room")
+        assert session is not None
+        assert session.origin == "rebuild"
     finally:
         await room.stop()
         await loader.clean()
@@ -245,7 +258,9 @@ async def test_notebook_with_idless_cell_rolls_session_on_every_rebuild():
     session_a = room_a.session_id
     try:
         # Non-deterministic rebuilds never record a rebuild hash.
-        assert session_store.get("room").rebuild_hash is None
+        session = session_store.get("room")
+        assert session is not None
+        assert session.rebuild_hash is None
     finally:
         await room_a.stop()
         await loader_a.clean()
@@ -268,20 +283,32 @@ async def test_restore_from_ystore_keeps_session(tmp_path):
     room_id = "room"
     ystore_path = f"notebook:{room_id}.y"
 
-    ystore_a = SQLiteYStore(path=ystore_path, config=config)
+    ystore_a = SQLiteYStore(
+        path=ystore_path,
+        # `SQLiteYStore` here is a subclass of both `LoggingConfigurable`
+        # and `pycrdt.store.SQLiteYStore`, but mypy gets lost:
+        config=config,  # type:ignore[call-arg]
+    )
     room_a, loader_a = await _create_notebook_room_with_ystore(
         notebook, room_id, session_store, ystore_a
     )
     session_a = room_a.session_id
     try:
         # First incarnation rebuilt from disk and wrote its state to the store.
-        assert session_store.get(room_id).origin == "rebuild"
+        session = session_store.get(room_id)
+        assert session is not None
+        assert session.origin == "rebuild"
     finally:
         await room_a.stop()
         await loader_a.clean()
         await ystore_a.stop()
 
-    ystore_b = SQLiteYStore(path=ystore_path, config=config)
+    ystore_b = SQLiteYStore(
+        path=ystore_path,
+        # `SQLiteYStore` here is a subclass of both `LoggingConfigurable`
+        # and `pycrdt.store.SQLiteYStore`, but mypy gets lost:
+        config=config,  # type:ignore[call-arg]
+    )
     room_b, loader_b = await _create_notebook_room_with_ystore(
         notebook, room_id, session_store, ystore_b
     )
@@ -290,6 +317,7 @@ async def test_restore_from_ystore_keeps_session(tmp_path):
         # lineage continues, so the session is kept.
         assert room_b.session_id == session_a
         session = session_store.get(room_id)
+        assert session is not None
         assert session.origin == "store"
         # The hash of the rebuild which founded the lineage is preserved.
         assert session.rebuild_hash == content_hash(notebook)
