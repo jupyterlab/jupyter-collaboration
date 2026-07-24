@@ -49,7 +49,7 @@ Issues = "https://github.com/jupyterlab/jupyter-collaboration/issues/new/choose"
 test = [
     "coverage",
     "dirty-equals",
-    "jupyter_server[test]>=2.15.0",
+    "jupyter_server[test]>=2.19.0",
     "jupyter_server_fileid[test]",
     "pytest>=7.0",
     "pytest-cov",
