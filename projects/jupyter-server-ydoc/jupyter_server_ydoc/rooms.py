@@ -7,7 +7,7 @@ import asyncio
 import json
 from collections.abc import Callable
 from logging import Logger
-from typing import Any, cast
+from typing import Any
 
 from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
@@ -194,9 +194,10 @@ class DocumentRoom(YRoom):
                             )
                         )
                         await initialized.wait()
-                        if self._document_progressively_loaded.done() and (
-                            exc := self._document_progressively_loaded.exception()
-                        ) is not None:
+                        if (
+                            self._document_progressively_loaded.done()
+                            and (exc := self._document_progressively_loaded.exception()) is not None
+                        ):
                             raise exc
                         self.ready = True
                         await self.ydoc_observed.wait()
