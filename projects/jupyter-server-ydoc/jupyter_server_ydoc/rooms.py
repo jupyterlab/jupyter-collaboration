@@ -195,9 +195,9 @@ class DocumentRoom(YRoom):
                         )
                         await initialized.wait()
                         if self._document_progressively_loaded.done() and (
-                            exc := self._document_progressively_loaded.exception() is not None
-                        ):
-                            raise cast(BaseException, exc)
+                            exc := self._document_progressively_loaded.exception()
+                        ) is not None:
+                            raise exc
                         self.ready = True
                         await self.ydoc_observed.wait()
                         finish.set()
