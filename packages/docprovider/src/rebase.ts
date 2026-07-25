@@ -412,7 +412,7 @@ export function applyContent(
  * The adoption deliberately leaves `Y.Map` keys alone (see
  * {@link clearOrderedSharedTypes}), so after resynchronizing, a key set in
  * the discarded lineage still competes with the value of the new one, and
- * Yjs resolves that by client id — a coin flip which the stale value wins
+ * Yjs resolves that by client id - a coin flip which the stale value wins
  * half of the time, after which it is saved back to disk. Rewriting the
  * authoritative values here settles it: a write made after synchronizing is
  * causally later than both, so it wins for every client.

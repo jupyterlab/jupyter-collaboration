@@ -12,6 +12,7 @@ a history that diverged from its own without first reconciling the content.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import sys
 from asyncio import Event, sleep
@@ -46,7 +47,11 @@ async def _fetch_document_session(rtc_fetch_session, path: str) -> dict:
 
 
 async def _sync_once(url: str, room_name: str) -> str:
-    """Connect, wait for the initial synchronization, return the content."""
+    """Connect, wait for the initial synchronization, return the content.
+
+    Fails rather than hanging if the server never sends content, as a
+    refused connection would otherwise wait forever.
+    """
     event = Event()
 
     def _on_document_change(target: str, e: Any) -> None:
@@ -56,7 +61,8 @@ async def _sync_once(url: str, room_name: str) -> str:
     doc = YUnicode()
     doc.observe(_on_document_change)
     async with aconnect_ws(url) as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
-        await event.wait()
+        async with asyncio.timeout(10):
+            await event.wait()
         await sleep(0.1)
     return doc.source
 
@@ -71,10 +77,15 @@ def _wipe_ystore(jp_root_dir) -> None:
         db.unlink()
 
 
-async def test_history_rebuilt_from_unchanged_file_keeps_the_session(
+async def test_history_rebuilt_from_unchanged_file_still_rolls_the_session(
     rtc_create_file, rtc_fetch_session, jp_root_dir, jp_http_port, jp_base_url
 ):
-    """Losing the history of an untouched file must not disturb clients."""
+    """A rebuild is a new lineage even when the file never changed.
+
+    The rebuilt items are new, so a client holding the previous ones has to
+    reconcile before resynchronizing. Its content is identical, so it does
+    so silently, but it is refused first rather than merging blindly.
+    """
     path, content = await rtc_create_file("kept.txt", "hello")
     session_data = await _fetch_document_session(rtc_fetch_session, path)
     doc_session = session_data["documentSessionId"]
@@ -85,11 +96,19 @@ async def test_history_rebuilt_from_unchanged_file_keeps_the_session(
     await _evict_room()
     _wipe_ystore(jp_root_dir)
 
-    # The room is rebuilt from a file which never changed, replaying exactly
-    # the history the client still holds: it may rejoin without reconciling.
-    assert await _sync_once(url, room_name) == content
-    after = await _fetch_document_session(rtc_fetch_session, path)
-    assert after["documentSessionId"] == doc_session
+    with pytest.raises((WebSocketDisconnect, BaseExceptionGroup)) as exc_info:
+        async with aconnect_ws(url) as ws:
+            await ws.receive()
+    disconnect = _extract_ws_disconnect(exc_info.value)
+    assert disconnect.code == 1003
+    payload = json.loads(disconnect.reason)
+    assert payload["reason"] == "session_changed"
+    assert payload["sessionId"] != doc_session
+
+    # Claiming the session the server reported gets the client back in, on
+    # the same content it already had.
+    fresh_url, _ = _doc_room_ws_url(jp_http_port, jp_base_url, session_data, payload["sessionId"])
+    assert await _sync_once(fresh_url, room_name) == content
 
 
 async def test_out_of_band_change_rolls_the_session_and_refuses_stale_clients(
@@ -167,13 +186,13 @@ async def test_a_refused_client_reports_neither_joining_nor_leaving(
 async def test_file_reverted_to_the_founding_content_rolls_the_session(
     rtc_create_file, rtc_fetch_session, jp_root_dir, jp_http_port, jp_base_url
 ):
-    """A lineage which advanced cannot be re-entered by rebuilding its origin.
+    """A version control checkout cannot be silently undone by a client.
 
     Once the room has written different content to disk, clients hold history
-    the file no longer reflects. Reverting the file (a version control
-    checkout) rebuilds the *founding* content, which is byte-identical to
-    what founded the session - but rejoining it would push the content the
-    file was reverted away from straight back to disk.
+    the file no longer reflects. Reverting the file rebuilds content which is
+    byte-identical to what the room started from, but letting a client rejoin
+    on that would push the content the file was reverted away from straight
+    back to disk.
     """
     path, _ = await rtc_create_file("reverted.txt", "original")
     session_data = await _fetch_document_session(rtc_fetch_session, path)

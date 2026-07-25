@@ -18,10 +18,8 @@ import { newInterceptedPage } from './collab-ws-helpers';
  * - identical content: the client discards its local Yjs history and
  *   rejoins the new session (issue #594; historically this duplicated
  *   every cell);
- * - unchanged file + unsaved local edits: if the rebuilt history replays
- *   identical content the session is even kept and the offline edits merge
- *   through plain Yjs sync; if the session rolled, the client rejoins and
- *   re-applies its edits on top (semantic rebase);
+ * - unchanged file + unsaved local edits: the client rejoins and re-applies
+ *   its edits on top (semantic rebase);
  * - changed file + no local edits: the stale client catches up to the new
  *   content (issue #597; historically the client was stuck on the old
  *   content).
@@ -212,13 +210,12 @@ test.describe.serial('Document session reconciliation', () => {
       await expect(page.locator('.jp-Cell')).toHaveCount(1);
 
       // The document is live again: further edits reach the disk. This also
-      // establishes that the client rejoined — the assertions above hold on
+      // establishes that the client rejoined, as the assertions above hold on
       // the local document alone.
       await typeInFirstCell(page, '\ny = 2');
       await waitForOnDisk(request, baseURL!, notebookPath, 'y = 2');
 
-      // The lineage advanced past its founding rebuild when the edit was
-      // saved, so the rebuild founds a new one and the client had to
+      // Rebuilding from disk founds a new lineage, so the client had to
       // reconcile rather than resynchronize onto it.
       expect(
         await documentSessionId(request, baseURL!, notebookPath)
@@ -240,7 +237,7 @@ test.describe.serial('Document session reconciliation', () => {
     waitForApplication
   }) => {
     // Edits made while disconnected must come back when the room is rebuilt
-    // from a file which nobody touched meanwhile — silently, with no dialog
+    // from a file which nobody touched meanwhile, silently, with no dialog
     // and no duplicated cells.
     //
     // A first eviction cycle settles the file first: opening a notebook
@@ -300,21 +297,11 @@ test.describe.serial('Document session reconciliation', () => {
         'offline_edit = True'
       );
 
-      // Whether the session survived this round trip is deliberately not
-      // asserted: it is timing-dependent, and observed to go both ways
-      // between runs. Reconnecting a notebook writes it back (trusted
-      // metadata, kernel preferences, the client's own resynchronization),
-      // and whether such a write lands before the eviction decides whether
-      // the next rebuild replays the founding lineage or founds a new one.
-      // The edit has to survive either way — merged by plain
-      // synchronization, or re-applied on top — and that is what the
-      // assertions above check.
-      //
-      // Each branch is pinned where it can be driven precisely: the roll by
-      // the first test in this file, the keep by
-      // `test_history_rebuilt_from_unchanged_file_keeps_the_session` in
-      // tests/test_session_rebase.py.
-      expect(foundingSession).toBeTruthy();
+      // Rebuilding from disk always founds a new lineage, so the offline
+      // edit came back through the rebase rather than a plain merge.
+      expect(
+        await documentSessionId(request, baseURL!, notebookPath)
+      ).not.toEqual(foundingSession);
     } finally {
       await page
         .unrouteAll({ behavior: 'ignoreErrors' })

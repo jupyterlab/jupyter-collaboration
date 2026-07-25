@@ -35,14 +35,15 @@ on next connect).
 
 A sibling file, `collaboration_sessions_documents.json`, records the per-document session
 IDs. A document session identifies one continuous edit history of a document: it is kept for
-as long as the history is carried forward (including across server restarts when the YStore
-is intact) and changes whenever the history is rebuilt from a file whose content diverged
-(for example after a server restart without a persisted YStore, or an out-of-band change to
-the file while its room was evicted). Clients use it to detect that their local copy of a
-document belongs to a diverged history before exchanging any synchronization messages, and
-then either rebase their changes silently or surface an "Edit Conflict" dialog. This file is
-also safe to ignore in version control and safe to delete (document sessions roll more
-eagerly, which only makes clients re-validate their content on reconnect).
+as long as that history is carried forward (including across server restarts, when the
+YStore is intact) and changes whenever the history is rebuilt from the file, which happens
+whenever a room is opened without a usable YStore, i.e. after a server restart without one,
+or when its room was evicted. Clients use it to detect that their local copy of a document
+belongs to a history the server no longer has, before exchanging any synchronization
+messages, and then either reconcile their changes silently or surface an "Edit Conflict"
+dialog. This file is also safe to ignore in version control and safe to delete (document
+sessions then roll more eagerly, which only makes clients re-validate their content on
+reconnect).
 
 There are a number of settings that you can change:
 

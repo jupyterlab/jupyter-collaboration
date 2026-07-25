@@ -13,7 +13,7 @@ from jupyter_server_ydoc.sessions import DocumentSessionStore
 from jupyter_server_ydoc.test_utils import FakeContentsManager, FakeEventLogger, FakeFileIDManager
 from jupyter_server_ydoc.utils import MessageType
 from jupyter_ydoc import YNotebook
-from pycrdt import Channel, Provider, YMessageType, YSyncMessageType, write_message
+from pycrdt import Channel, Doc, Provider, YMessageType, YSyncMessageType, write_message
 from pycrdt.websocket.websocket import HttpxWebsocket
 
 jupyter_ydocs = {ep.name: ep.load() for ep in entry_points(group="jupyter_ydoc")}
@@ -188,14 +188,14 @@ def _sync_documents(client_doc: YNotebook, room: DocumentRoom) -> dict:
     return client_doc.get(deduplicate=False)
 
 
-async def test_notebook_reconnect_with_divergent_history_does_not_duplicate_initial_cell():
-    """A rebuild of unchanged content replays the very same Yjs items.
+async def test_rebuilt_room_is_a_new_lineage_a_stale_client_must_not_merge_into():
+    """Why the document session gate exists (issue #594).
 
-    This is what lets a client whose session was kept resynchronize by plain
-    Yjs sync, with no reconciliation and nothing to re-render - historically
-    (issue #594) it duplicated every cell instead. The session store is
-    shared across both room incarnations because it is the same room, opened
-    again after the server lost its in-memory state.
+    A room rebuilt from disk builds brand new Yjs items, even from
+    byte-identical content. A client still holding the previous lineage
+    would therefore merge two disjoint copies and duplicate every cell.
+    That is exactly what the rolled session prevents, by having the server
+    refuse the client until it has reconciled its content.
     """
     notebook = _notebook_model()
     session_store = DocumentSessionStore()
@@ -216,27 +216,27 @@ async def test_notebook_reconnect_with_divergent_history_does_not_duplicate_init
         notebook, "divergent-history", session_store=session_store
     )
     try:
-        # The lineage continues, so the client may merge without reconciling.
-        assert recreated_room.session_id == room.session_id
+        # The rebuild founds a new lineage, so the client is refused.
+        assert recreated_room.session_id != room.session_id
+        # And this is what would happen if it were not: two copies.
         merged = _sync_documents(client_doc, recreated_room)
     finally:
         await recreated_room.stop()
         await recreated_loader.clean()
 
-    assert len(merged["cells"]) == 1
+    assert len(merged["cells"]) == 2
 
 
 async def test_changed_rebuild_rolls_session_and_stale_updates_do_not_crash():
     """A changed rebuild rolls the document session; stale updates cannot crash it.
 
-    Rooms rebuilt from disk derive their Yjs client id from the content
-    (see ``DocumentRoom._content_client_id``), so when the on-disk notebook
-    changes between the client's last sync and the next room creation, the
-    rebuilt items live on coordinates disjoint from anything the stale client
-    holds. Applying the client's stale update can therefore never alias or
-    crash on the rebuilt items (historically this raised "block parent <0#4>
-    must be deleted or shared ref type" with the fixed client_id=0), but it
-    WOULD duplicate content, since the CRDT merge keeps both disjoint copies.
+    Rooms rebuilt from disk build their items under a fresh random Yjs
+    client id, so the rebuilt items live on coordinates disjoint from
+    anything a stale client holds. Applying the client's stale update can
+    therefore never alias or crash on the rebuilt items (historically this
+    raised "block parent <0#4> must be deleted or shared ref type" with the
+    fixed client_id=0), but it WOULD duplicate content, since the CRDT merge
+    keeps both disjoint copies.
 
     This is exactly why the rebuild rolls the document session ID: the
     websocket handler refuses clients claiming the previous session before
@@ -293,16 +293,23 @@ async def test_changed_rebuild_rolls_session_and_stale_updates_do_not_crash():
 async def test_notebook_reconnect_sends_conflict_when_stale_update_is_incompatible(monkeypatch):
     """The RAW conflict message is kept as a safety net for incompatible updates.
 
-    Content-addressed rebuild client ids make coordinate collisions between
-    different rebuilds impossible in normal operation, but a non-conforming
+    Random rebuild client ids make coordinate collisions between different
+    rebuilds vanishingly unlikely in normal operation, but a non-conforming
     client could still send an update that is structurally incompatible with
     the room history. This test forces the historical collision by pinning the
-    rebuild client id, and checks that the server catches the resulting
-    "block parent" error, keeps the room intact, and sends a RAW CONFLICT
-    message back to the client so the frontend can offer a resolution dialog.
+    client id every rebuild uses, and checks that the server catches the
+    resulting "block parent" error, keeps the room intact, and sends a RAW
+    CONFLICT message back to the client so the frontend can offer a
+    resolution dialog.
     """
-    pinned_id = DocumentRoom._REBUILD_CLIENT_MARKER | 42
-    monkeypatch.setattr(DocumentRoom, "_rebuild_client_id", lambda self, content: pinned_id)
+
+    async def _pinned_rebuild(self, content, progressive=False, initialized=None, finish=None):
+        source_ydoc = Doc(client_id=42)
+        source_document = jupyter_ydocs[self._file_type](source_ydoc)
+        await source_document.aset(content)
+        self.ydoc.apply_update(source_ydoc.get_update())
+
+    monkeypatch.setattr(DocumentRoom, "_apply_source_content", _pinned_rebuild)
 
     notebook_before = _notebook_model()
     room_a, loader_a = await _create_notebook_room(notebook_before, "pinned-before")

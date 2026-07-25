@@ -3,14 +3,13 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import uuid
 from dataclasses import asdict, dataclass
 from logging import Logger, getLogger
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 SessionOrigin = Literal["rest", "store", "rebuild"]
 
@@ -43,40 +42,6 @@ def document_session_store_path(
     return base.with_name(base.stem + "_documents.json")
 
 
-def lineage_fingerprint(content: Any, procedure: str) -> str:
-    """Fingerprint of a deterministic rebuild of a document.
-
-        Parameters:
-            content (Any): The document content model.
-            procedure (str): An opaque description of *how* the content is
-                turned into Yjs items (see
-                ``DocumentRoom._rebuild_procedure``).
-
-        Returns:
-            digest (str): The hexadecimal SHA-256 digest identifying the
-                rebuild.
-
-    ### Note:
-        Two rebuilds sharing a fingerprint must produce byte-identical Yjs
-        items, because the fingerprint decides both whether a room keeps
-        its document session and which client id the rebuild uses. Anything
-        the resulting items depend on must therefore be part of it:
-
-        - the content *including the order of its keys*: ``jupyter_ydoc``
-          inserts map entries in iteration order, and Yjs items record that
-          order, so a re-serialized file with reordered keys rebuilds to
-          different items (this is why the JSON is **not** sorted here);
-        - the procedure, which covers the loading mode and the version of
-          the library performing the load.
-    """
-    serialized = json.dumps(content, sort_keys=False, default=str, ensure_ascii=False)
-    digest = hashlib.sha256()
-    digest.update(procedure.encode("utf-8"))
-    digest.update(b"\0")
-    digest.update(serialized.encode("utf-8"))
-    return digest.hexdigest()
-
-
 @dataclass
 class DocumentSession:
     """A record describing the current session of a document room.
@@ -87,18 +52,12 @@ class DocumentSession:
       connection; no Yjs history exists under this session yet, so the first
       room initialization may adopt it regardless of how it loads content.
     - ``"store"``: the session covers a history lineage restored from a YStore.
-    - ``"rebuild"``: the session started from a deterministic rebuild of the
-      on-disk content whose fingerprint is ``rebuild_hash``.
-
-    ``rebuild_hash`` is cleared as soon as the lineage advances past that
-    founding rebuild (see ``DocumentSessionStore.invalidate_rebuild``), so a
-    later rebuild can only be recognized as replaying the lineage while the
-    lineage still *is* its founding rebuild.
+    - ``"rebuild"``: the session covers a lineage built from the on-disk
+      content, which is new every time a room is rebuilt.
     """
 
     session_id: str
     origin: SessionOrigin
-    rebuild_hash: str | None = None
 
 
 class DocumentSessionStore:
@@ -141,13 +100,9 @@ class DocumentSessionStore:
             origin = record.get("origin")
             if not isinstance(session_id, str) or origin not in ("rest", "store", "rebuild"):
                 continue
-            rebuild_hash = record.get("rebuild_hash")
-            if rebuild_hash is not None and not isinstance(rebuild_hash, str):
-                rebuild_hash = None
             self._sessions[str(room_id)] = DocumentSession(
                 session_id=session_id,
                 origin=origin,
-                rebuild_hash=rebuild_hash,
             )
 
     def _persist(self) -> None:
@@ -203,23 +158,20 @@ class DocumentSessionStore:
             self._persist()
         return session.session_id
 
-    def update(self, room_id: str, origin: SessionOrigin, rebuild_hash: str | None = None) -> str:
-        """Keep the current session ID but update its lineage metadata.
+    def update(self, room_id: str, origin: SessionOrigin) -> str:
+        """Keep the current session ID but record a new origin for it.
 
         Parameters:
             room_id (str): Room ID.
             origin (SessionOrigin): The new session origin.
-            rebuild_hash (str | None): The content hash of the rebuild
-                founding the lineage, if any.
 
         Returns:
             session_id (str): The (unchanged) session ID.
         """
         session = self._sessions.get(room_id)
         if session is None:
-            return self.roll(room_id, origin, rebuild_hash)
+            return self.roll(room_id, origin)
         session.origin = origin
-        session.rebuild_hash = rebuild_hash
         self._persist()
         return session.session_id
 
@@ -242,44 +194,17 @@ class DocumentSessionStore:
         self._persist()
         return session_id
 
-    def invalidate_rebuild(self, room_id: str) -> None:
-        """Record that the lineage advanced past its founding rebuild.
-
-        Parameters:
-            room_id (str): Room ID.
-
-        ### Note:
-            Keeping a session across a rebuild is only sound while the
-            lineage still holds exactly the content that founded it: the
-            rebuild then replays the very items the clients already have.
-            Once the room has written different content to disk (a save, or
-            adopting an out-of-band change), a future rebuild of the
-            *founding* content - e.g. the file being reverted by a version
-            control checkout - is a different lineage, and clients holding
-            the advanced one must not silently resynchronize onto it (they
-            would push the content the file was reverted away from back).
-        """
-        session = self._sessions.get(room_id)
-        if session is None or session.rebuild_hash is None:
-            return
-        session.rebuild_hash = None
-        self._persist()
-
-    def roll(self, room_id: str, origin: SessionOrigin, rebuild_hash: str | None = None) -> str:
+    def roll(self, room_id: str, origin: SessionOrigin) -> str:
         """Mint a new session ID for a room, marking the previous lineage dead.
 
         Parameters:
             room_id (str): Room ID.
             origin (SessionOrigin): The origin of the new session.
-            rebuild_hash (str | None): The content hash of the rebuild
-                founding the new lineage, if any.
 
         Returns:
             session_id (str): The newly minted session ID.
         """
-        session = DocumentSession(
-            session_id=str(uuid.uuid4()), origin=origin, rebuild_hash=rebuild_hash
-        )
+        session = DocumentSession(session_id=str(uuid.uuid4()), origin=origin)
         self._sessions[room_id] = session
         self._persist()
         return session.session_id

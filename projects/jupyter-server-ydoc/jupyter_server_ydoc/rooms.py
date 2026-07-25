@@ -4,11 +4,8 @@
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import json
-import uuid
 from collections.abc import Callable
-from importlib.metadata import PackageNotFoundError, version
 from logging import Logger
 from typing import Any
 
@@ -23,35 +20,16 @@ from pycrdt.store import BaseYStore, YDocNotFound
 from pycrdt.websocket import YRoom
 
 from .loaders import FileLoader
-from .sessions import DocumentSessionStore, lineage_fingerprint
+from .sessions import DocumentSessionStore
 from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, MessageType, OutOfBandChanges
 
 YFILE = YDOCS["file"]
-
-
-def _version_of(distribution: str) -> str:
-    try:
-        return version(distribution)
-    except PackageNotFoundError:  # pragma: no cover
-        return "unknown"
-
-
-# The libraries which decide the layout of the Yjs items a rebuild produces
-# (see `DocumentRoom._rebuild_procedure`).
-JUPYTER_YDOC_VERSION = _version_of("jupyter-ydoc")
-PYCRDT_VERSION = _version_of("pycrdt")
 
 
 class DocumentRoom(YRoom):
     """A Y room for a possibly stored document (e.g. a notebook)."""
 
     _background_tasks: set[asyncio.Task]
-
-    # Rebuild client ids carry this marker bit, and are otherwise derived
-    # from 47 bits of a rebuild fingerprint, so that two rebuilds collide
-    # only with probability 2**-47. They stay below 2**53 to remain exactly
-    # representable as JSON numbers in the browser.
-    _REBUILD_CLIENT_MARKER = 1 << 47
 
     def __init__(
         self,
@@ -90,8 +68,6 @@ class DocumentRoom(YRoom):
 
         self._session_store = session_store if session_store is not None else DocumentSessionStore()
         self.session_id: str | None = None
-        self._lineage_advanced = False
-        self._founding_digest: str | None = None
 
         self._update_lock = asyncio.Lock()
         self._cleaner: asyncio.Task | None = None
@@ -209,7 +185,7 @@ class DocumentRoom(YRoom):
             # ready (including the progressive-loading early return below) so
             # that the websocket handler can validate client claims against it
             # before serving any Yjs synchronization.
-            self._assign_session(model["content"], loaded_from_store)
+            self._assign_session(loaded_from_store)
 
             if read_from_source:
                 self._emit(LogLevel.INFO, "load", "Content loaded from disk.")
@@ -241,14 +217,13 @@ class DocumentRoom(YRoom):
                         self._emit(LogLevel.INFO, "initialize", "Room initialized")
                         return
                     else:
-                        await self._apply_deterministic_source_content(model["content"])
+                        await self._apply_source_content(model["content"])
                 else:
                     await self._document.aset(model["content"])
 
                 if self.ystore:
                     await self.ystore.encode_state_as_update(self.ydoc)
 
-            await self._record_founding_content()
             self._publish_loaded_hash(model)
             self.ready = True
             self._emit(LogLevel.INFO, "initialize", "Room initialized")
@@ -277,7 +252,7 @@ class DocumentRoom(YRoom):
         self, content: Any, initialized: asyncio.Event, finish: asyncio.Event
     ) -> None:
         try:
-            await self._apply_deterministic_source_content(
+            await self._apply_source_content(
                 content, progressive=True, initialized=initialized, finish=finish
             )
             if self.ystore:
@@ -289,9 +264,6 @@ class DocumentRoom(YRoom):
             self._document_progressively_loaded.set_exception(e)
         else:
             self._document_progressively_loaded.set_result(None)
-            # Only now does the document hold the content the lineage is
-            # founded on; the room was already marked ready above.
-            await self._record_founding_content()
             if await self._document.aget() != content:
                 # that means there were user changes while progressively loading, save the document
                 self._saving_document = asyncio.create_task(
@@ -300,33 +272,35 @@ class DocumentRoom(YRoom):
         finally:
             self._update_lock.release()
 
-    def _assign_session(self, content: Any, loaded_from_store: bool) -> None:
+    def _assign_session(self, loaded_from_store: bool) -> None:
         """Assign the document session ID for this room incarnation.
 
             Parameters:
-                content (Any): The document content the room was loaded with.
                 loaded_from_store (bool): Whether the Yjs history was
                     restored from the YStore.
 
         ### Note:
-            The session is kept when the Yjs history lineage continues
-            (restored from the YStore, or deterministically rebuilt from
-            content identical to the rebuild that founded the lineage) and
-            rolled when the room is rebuilt from the source file with
-            different content: the situation in which clients holding the
-            previous lineage must not resynchronize blindly.
+            The session identifies one Yjs history lineage, and there are
+            exactly two ways a room comes to hold one:
+
+            - restored from the YStore, which continues the lineage the
+              clients already hold, so the session is kept;
+            - rebuilt from the source file, which creates brand new Yjs
+              items under a fresh client id (see
+              ``_apply_source_content``) and therefore a new lineage, so
+              the session rolls. Clients holding the old one reconcile
+              their content before resynchronizing.
+
+            A rebuild always rolls, even when the file did not change: the
+            items it produces are new regardless, and pretending otherwise
+            is what makes tombstoning content unsafe.
         """
         store = self._session_store
         session = store.get(self._room_id)
-        self._lineage_advanced = False
         if loaded_from_store:
             if session is not None:
-                # Keep the session (and the hash of the rebuild which founded
-                # this lineage, if any); downgrade a "rest" origin so a later
-                # rebuild cannot adopt a session that now covers Yjs history.
-                self.session_id = store.update(
-                    self._room_id, "store", rebuild_hash=session.rebuild_hash
-                )
+                # Downgrade a "rest" origin: the session now covers history.
+                self.session_id = store.update(self._room_id, "store")
             elif carried := self._carried_session_id():
                 # The session store was lost (deleted, or never writable)
                 # but the history was not. Recover the identity the history
@@ -345,26 +319,17 @@ class DocumentRoom(YRoom):
             self._publish_session_id()
             return
 
-        # The room is being rebuilt from the source file.
-        deterministic = self._rebuild_is_deterministic(content)
-        rebuild_hash = self._rebuild_fingerprint(content) if deterministic else None
-        if (
-            session is not None
-            and deterministic
-            and (
-                (session.rebuild_hash is not None and session.rebuild_hash == rebuild_hash)
-                or session.origin == "rest"
-            )
-        ):
-            # Either the rebuild replays the exact Yjs coordinates that
-            # founded the current lineage, or no Yjs history ever existed
-            # under this session (it was only minted by the REST handler):
-            # clients holding the session can safely resynchronize.
-            self.session_id = store.update(self._room_id, "rebuild", rebuild_hash=rebuild_hash)
+        # Rebuilt from the source file: new items, hence a new lineage.
+        if session is not None and session.origin == "rest":
+            # No Yjs history ever existed under this session: it was minted
+            # by the REST handler for a client which has nothing to protect
+            # yet, so it can cover this first rebuild instead of costing that
+            # client a refusal round trip on the very first open.
+            self.session_id = store.update(self._room_id, "rebuild")
         else:
-            self.session_id = store.roll(self._room_id, "rebuild", rebuild_hash=rebuild_hash)
+            self.session_id = store.roll(self._room_id, "rebuild")
             self.log.info(
-                "Room %s rebuilt with a diverging history; new document session %s",
+                "Room %s rebuilt from disk; new document session %s",
                 self._room_id,
                 self.session_id,
             )
@@ -393,185 +358,32 @@ class DocumentRoom(YRoom):
         if self.session_id and self._carried_session_id() != self.session_id:
             self._document.ystate["document_session"] = self.session_id
 
-    async def _record_founding_content(self) -> None:
-        """Remember the document content this lineage was founded with.
-
-        ### Note:
-            Kept as a digest rather than a copy: documents can be large, and
-            this only ever needs to answer "is the content still the one we
-            started from?" (see ``_note_content_written``). It is taken from
-            the shared document rather than the file model, so that both
-            sides of that comparison are in the same representation -
-            loading a file through ``jupyter_ydoc`` fills in defaults and
-            does not preserve key order.
-        """
-        self._founding_digest = lineage_fingerprint(await self._document.aget(), "document")
-
-    def _note_content_written(self, content: Any) -> None:
-        """Record the content this lineage now represents on disk.
-
-            Parameters:
-                content (Any): The content the room just wrote to, or took
-                    from, the file.
-
-        ### Note:
-            While the lineage still represents exactly the content that
-            founded it, a later rebuild of that content replays the very
-            items the clients hold, so they may rejoin without reconciling.
-            The moment it represents something else, that stops being true:
-            a rebuild of the founding content - a version control checkout,
-            an editor undo - is then a *different* lineage, and clients
-            holding this one must not silently push their content over it
-            (see ``DocumentSessionStore.invalidate_rebuild``).
-
-            Writing back identical content (which happens routinely, as
-            saves are not gated on the content having changed) leaves the
-            lineage where it was, and must not cost clients their
-            zero-disruption reconnect.
-        """
-        if self._lineage_advanced:
-            return
-        if (
-            self._founding_digest is not None
-            and lineage_fingerprint(content, "document") == self._founding_digest
-        ):
-            return
-        self._lineage_advanced = True
-        self._session_store.invalidate_rebuild(self._room_id)
-
-    def _rebuild_is_deterministic(self, content: Any) -> bool:
-        """Whether rebuilding from this content replays reproducible Yjs items.
-
-            Parameters:
-                content (Any): The document content to rebuild from.
-
-            Returns:
-                deterministic (bool): Whether the rebuild is deterministic.
-
-        ### Note:
-            Notebook cells without an ``id`` get a random UUID assigned on
-            load, which makes the rebuilt history differ between rebuilds of
-            identical content; so does an empty notebook, for which
-            ``jupyter_ydoc`` synthesizes a cell with a random id. Such
-            content must never share a rebuild client id nor keep its
-            document session across rebuilds.
-
-            Document types other than notebooks are assumed reproducible;
-            a third-party type registered under the ``jupyter_ydoc``
-            entry point which assigns random identifiers would need to be
-            excluded here as well.
-        """
-        if self._file_type != "notebook":
-            return True
-        try:
-            cells = content.get("cells", [])
-        except AttributeError:
-            return False
-        if not cells:
-            return False
-        return all("id" in cell for cell in cells)
-
-    def _rebuild_procedure(self) -> str:
-        """Describe how this room turns content into Yjs items.
-
-        Returns:
-            procedure (str): An opaque key covering everything besides the
-                content itself that the rebuilt Yjs items depend on.
-
-        ### Note:
-            Identical content loaded through a different procedure yields
-            different items at the *same* coordinates, which silently
-            corrupts documents when the two are merged. The loading mode is
-            server configuration and can therefore differ between two runs
-            of the same server, so it takes part in the fingerprint, as do
-            the versions of the libraries deciding the item layout
-            (``jupyter_ydoc`` builds the document, ``pycrdt`` encodes it).
-            Erring towards too many distinct procedures only costs clients a
-            reconciliation they would otherwise have been spared; erring the
-            other way corrupts their documents.
-        """
-        if self._document_load_progressively:
-            mode = f"progressive:{self._notebook_output_delay_threshold_mb}"
-        else:
-            mode = "whole"
-        return "|".join(
-            (
-                JUPYTER_YDOC_VERSION,
-                PYCRDT_VERSION,
-                self._file_type,
-                self._file_format,
-                mode,
-            )
-        )
-
-    def _rebuild_fingerprint(self, content: Any) -> str:
-        """The fingerprint of rebuilding this room from the given content.
-
-        Parameters:
-            content (Any): The document content to rebuild from.
-
-        Returns:
-            fingerprint (str): The rebuild fingerprint.
-        """
-        return lineage_fingerprint(content, self._rebuild_procedure())
-
-    def _rebuild_client_id(self, content: Any) -> int:
-        """The Yjs client id to use when rebuilding a room from content.
-
-        Parameters:
-            content (Any): The document content to rebuild from.
-
-        Returns:
-            client_id (int): A marked Yjs client id, derived from the
-                rebuild fingerprint when the rebuild is deterministic and
-                random otherwise.
-
-        ### Note:
-            Rebuilds sharing a fingerprint produce identical items, so they
-            may (and must) share a client id, which keeps reconnecting
-            clients idempotent as the previous fixed ``client_id=0`` did.
-            Every other rebuild gets a different id, so its items can never
-            land on the coordinates of another lineage.
-
-            The session id takes part in the derivation so that a *rolled*
-            session always implies disjoint coordinates. Clients reconcile a
-            rolled session by tombstoning their content and resynchronizing,
-            which is only harmless because the items they delete cannot
-            exist in the new lineage; two rebuilds of identical content on
-            either side of a roll would otherwise share coordinates, and the
-            tombstones would delete the room's live content for everyone.
-        """
-        marker = self._REBUILD_CLIENT_MARKER
-        if self._rebuild_is_deterministic(content):
-            digest = hashlib.sha256()
-            digest.update((self.session_id or "").encode("utf-8"))
-            digest.update(b"\0")
-            digest.update(self._rebuild_fingerprint(content).encode("utf-8"))
-            return (int.from_bytes(digest.digest()[:6], "big") & (marker - 1)) | marker
-        # Content that cannot be rebuilt deterministically must never reuse
-        # the coordinates of a previous rebuild.
-        return (uuid.uuid4().int & (marker - 1)) | marker
-
-    async def _apply_deterministic_source_content(
+    async def _apply_source_content(
         self,
         content: Any,
         progressive: bool = False,
         initialized: asyncio.Event | None = None,
         finish: asyncio.Event | None = None,
     ) -> None:
-        """Load source content using a deterministic update.
+        """Build the room's Yjs items from the content of the source file.
 
-        Rooms rebuilt from disk must recreate the same Yjs history for identical
-        content, otherwise reconnecting clients can merge duplicate content from a
-        divergent history after server restart or room eviction.
+            Parameters:
+                content (Any): The document content to load.
+                progressive (bool): Whether to stream the content in.
+                initialized (asyncio.Event | None): Set once the document
+                    structure is in place, for progressive loading.
+                finish (asyncio.Event | None): Awaited before the remaining
+                    content is streamed, for progressive loading.
 
-        The client ID needs to be fixed to a deterministic value, see:
-        https://discuss.yjs.dev/t/initial-offline-value-of-a-shared-document/465
-        It is additionally derived from the content so that rebuilds of
-        different content occupy disjoint Yjs coordinates (see
-        ``_content_client_id``).
+        ### Note:
+            The items are built in a throwaway document with an ordinary
+            random client id, so a rebuild always produces a *new* Yjs
+            history lineage rather than pretending to continue an existing
+            one. Clients holding the previous lineage are told so by their
+            document session being refused, and reconcile their content
+            before resynchronizing (see ``_assign_session``).
         """
-        source_ydoc: Doc = Doc(client_id=self._rebuild_client_id(content))
+        source_ydoc: Doc = Doc()
         source_document = YDOCS.get(self._file_type, YFILE)(source_ydoc)
         if progressive:
             subscription = source_ydoc.observe(lambda event: self.ydoc.apply_update(event.update))
@@ -684,7 +496,6 @@ class DocumentRoom(YRoom):
         """
         async with self._update_lock:
             if await self._document.aget() != model["content"]:
-                self._note_content_written(model["content"])
                 await self._document.aset(model["content"])
             self._document.dirty = False
             self._publish_loaded_hash(model)
@@ -787,7 +598,6 @@ class DocumentRoom(YRoom):
                 }
             )
             if saved_model:
-                self._note_content_written(content)
                 async with self._update_lock:
                     self._document.dirty = False
                     self._document.hash = saved_model["hash"]
