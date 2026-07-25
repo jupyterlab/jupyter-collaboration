@@ -913,7 +913,16 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     server: IContentsModel | null = null
   ): Promise<void> {
     this._setPendingConflict({ localContent, newSessionId, server });
-    await this.showConflictDialog();
+    // The reconciliation is parked here until the user decides, so the
+    // resolution they pick is allowed to take over the connection even
+    // though a reconciliation is nominally still in progress.
+    const wasAwaiting = this._awaitingUserResolution;
+    this._awaitingUserResolution = true;
+    try {
+      await this.showConflictDialog();
+    } finally {
+      this._awaitingUserResolution = wasAwaiting;
+    }
   }
 
   /**
@@ -952,8 +961,10 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         // live and shared, deleting the content for every collaborator.
         return;
       }
-      if (this._rebasing) {
-        // A reconciliation owns the connection; let it finish.
+      if (this._rebasing && !this._awaitingUserResolution) {
+        // A reconciliation is actively working on the connection; only one
+        // of the two may drive it. (A reconciliation parked on this very
+        // dialog does not count: it is waiting for exactly this answer.)
         return;
       }
       this._rebasing = true;
@@ -1252,6 +1263,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   } | null = null;
   private _conflictStateChanged = new Signal<this, boolean>(this);
   private _rebasing = false;
+  private _awaitingUserResolution = false;
   private _pendingRoll: string | null = null;
   private _rollListeners = new Set<() => void>();
   private _stopConvergenceWatch: () => void = () => undefined;

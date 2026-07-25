@@ -79,7 +79,13 @@ async function triggerConflict(
   request: APIRequestContext,
   tmpPath: string,
   baseURL: string,
-  notebookName: string
+  notebookName: string,
+  /**
+   * Perform the out-of-band change to the file. Defaults to overwriting it
+   * with {@link MODIFIED_NOTEBOOK}; a test which needs the file's cell ids
+   * and metadata preserved supplies its own.
+   */
+  changeFileOutOfBand?: () => Promise<void>
 ) {
   const notebookPath = `${tmpPath}/${notebookName}`;
 
@@ -145,21 +151,25 @@ async function triggerConflict(
   //    from disk instead of restoring the previous Yjs history.
   await Promise.all(YSTORE_FILES.map(file => rm(file, { force: true })));
 
-  // 5. Overwrite the notebook on disk: the room will be rebuilt from
-  //    content that diverges from both the client's content and its
-  //    last-known save, so the document session ID rolls.
-  const putResp = await request.put(
-    `${baseURL}/api/contents/${notebookPath}`,
-    {
-      headers: { 'Content-Type': 'application/json' },
-      data: JSON.stringify({
-        type: 'notebook',
-        format: 'json',
-        content: MODIFIED_NOTEBOOK
-      })
-    }
-  );
-  expect(putResp.ok()).toBeTruthy();
+  // 5. Change the notebook on disk: the room will be rebuilt from content
+  //    that diverges from both the client's content and its last-known
+  //    save, so the document session ID rolls.
+  if (changeFileOutOfBand) {
+    await changeFileOutOfBand();
+  } else {
+    const putResp = await request.put(
+      `${baseURL}/api/contents/${notebookPath}`,
+      {
+        headers: { 'Content-Type': 'application/json' },
+        data: JSON.stringify({
+          type: 'notebook',
+          format: 'json',
+          content: MODIFIED_NOTEBOOK
+        })
+      }
+    );
+    expect(putResp.ok()).toBeTruthy();
+  }
 
   // 6. Let the client back in. y-websocket reconnects claiming the old
   //    document session; the server refuses before any Yjs sync and the
@@ -250,6 +260,75 @@ test.describe.serial('Conflict handling', () => {
     await expect(page.locator('.jp-Cell')).toHaveCount(2, { timeout: 15000 });
     await expect(page.locator('.jp-Cell').first()).toContainText('new cell');
     await expect(page.locator('.jp-ConflictIndicator')).toHaveCount(0);
+  });
+
+  test('a dismissed conflict resolves itself once the content converges', async ({
+    request,
+    tmpPath,
+    baseURL
+  }) => {
+    // A dismissed conflict leaves the document disconnected from the room.
+    // If the user then brings its content onto the server version by hand,
+    // there is nothing left to decide and collaboration must resume on its
+    // own, rather than stay paused until the document is reopened.
+    //
+    // The out-of-band change here edits an existing cell instead of adding
+    // one, which is what an external formatter, a jupytext sync or a version
+    // control checkout does. Cell ids live in the file, so both sides keep
+    // identifying the cell the same way and the user *can* converge onto it.
+    const notebookPath = `${tmpPath}/${notebookName}`;
+    const converged = 'x = 1 # from disk';
+    const dialog = await triggerConflict(
+      page,
+      ws,
+      request,
+      tmpPath,
+      baseURL!,
+      notebookName,
+      async () => {
+        // Derive the new file content from the file itself, so that ids and
+        // notebook metadata stay exactly what the client already holds.
+        const resp = await request.get(
+          `${baseURL}/api/contents/${notebookPath}?content=1`
+        );
+        expect(resp.ok()).toBeTruthy();
+        const model = await resp.json();
+        model.content.cells[0].source = converged;
+        const put = await request.put(
+          `${baseURL}/api/contents/${notebookPath}`,
+          {
+            headers: { 'Content-Type': 'application/json' },
+            data: JSON.stringify({
+              type: 'notebook',
+              format: 'json',
+              content: model.content
+            })
+          }
+        );
+        expect(put.ok()).toBeTruthy();
+      }
+    );
+    await dialog.getByRole('button', { name: 'Dismiss' }).click();
+    await expect(page.locator('.jp-ConflictIndicator')).toBeVisible();
+
+    // The user drops their conflicting edit and takes the version on disk.
+    await page.notebook.setCell(0, 'code', converged);
+
+    // No click required: the provider notices and rejoins.
+    await expect(page.locator('.jp-ConflictIndicator')).toHaveCount(0, {
+      timeout: 30000
+    });
+
+    // Collaboration really resumed: a fresh edit reaches the disk again.
+    await page.notebook.setCell(0, 'code', `${converged}\nreconnected = True`);
+    await expect(async () => {
+      const resp = await request.get(
+        `${baseURL}/api/contents/${notebookPath}?content=1`
+      );
+      expect(resp.ok()).toBeTruthy();
+      const model = await resp.json();
+      expect(JSON.stringify(model.content.cells)).toContain('reconnected');
+    }).toPass({ timeout: 20000 });
   });
 
   test('saving is refused while a conflict is unresolved', async ({
