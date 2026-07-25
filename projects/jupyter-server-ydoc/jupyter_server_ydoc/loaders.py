@@ -135,33 +135,15 @@ class FileLoader:
             # saved: clients compare it against the file to tell their own
             # unsaved edits apart from an out-of-band change (see the
             # rebase decision in the `docprovider` package).
-            try:
-                model = await ensure_async(
-                    self._contents_manager.get(
-                        self.path,
-                        format=format,
-                        type=file_type,
-                        content=True,
-                        require_hash=True,
-                    )
+            model = await ensure_async(
+                self._contents_manager.get(
+                    self.path,
+                    format=format,
+                    type=file_type,
+                    content=True,
+                    require_hash=True,
                 )
-            except TypeError as e:
-                if "require_hash" not in str(e):
-                    # An unrelated type error, which retrying would only hide.
-                    raise
-                # A contents manager predating `require_hash` (added in
-                # jupyter-server 2.11). Opening documents must keep working:
-                # clients simply fall back to asking the user when they
-                # cannot prove a file is unchanged.
-                self._log.debug(
-                    "Contents manager %s does not support require_hash",
-                    type(self._contents_manager).__name__,
-                )
-                model = await ensure_async(
-                    self._contents_manager.get(
-                        self.path, format=format, type=file_type, content=True
-                    )
-                )
+            )
             if (
                 file_type == "file"
                 and "content" in model
