@@ -16,10 +16,13 @@ import asyncio
 import json
 import sys
 from asyncio import Event, sleep
+from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 import pytest
 from httpx_ws import WebSocketDisconnect, aconnect_ws
+from jupyter_events.logger import EventLogger
 from jupyter_ydoc import YUnicode
 from pycrdt import Provider
 from pycrdt.websocket.websocket import HttpxWebsocket
@@ -41,7 +44,7 @@ def rtc_document_cleanup_delay():
     return ROOM_EVICTION_DELAY
 
 
-async def _fetch_document_session(rtc_fetch_session, path: str) -> dict:
+async def _fetch_document_session(rtc_fetch_session: Callable[..., Any], path: str) -> dict:
     resp = await rtc_fetch_session("text", "file", path)
     return json.loads(resp.body.decode("utf-8"))
 
@@ -71,7 +74,7 @@ async def _evict_room() -> None:
     await sleep(ROOM_EVICTION_DELAY * 5)
 
 
-def _wipe_ystore(jp_root_dir) -> None:
+def _wipe_ystore(jp_root_dir: Path) -> None:
     """Drop the persisted Yjs history, as a periodic cleanup job would."""
     for db in jp_root_dir.glob(".rtc_test.db*"):
         db.unlink()
@@ -166,7 +169,7 @@ async def test_a_refused_client_reports_neither_joining_nor_leaving(
 
     events: list[dict] = []
 
-    async def _listener(logger, schema_id: str, data: dict) -> None:
+    async def _listener(logger: EventLogger, schema_id: str, data: dict) -> None:
         events.append(data)
 
     jp_serverapp.event_logger.add_listener(

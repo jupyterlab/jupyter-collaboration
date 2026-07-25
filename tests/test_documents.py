@@ -304,7 +304,7 @@ async def test_notebook_reconnect_sends_conflict_when_stale_update_is_incompatib
     """
 
     async def _pinned_rebuild(self, content, progressive=False, initialized=None, finish=None):
-        source_ydoc = Doc(client_id=42)
+        source_ydoc: Doc = Doc(client_id=42)
         source_document = jupyter_ydocs[self._file_type](source_ydoc)
         await source_document.aset(content)
         self.ydoc.apply_update(source_ydoc.get_update())

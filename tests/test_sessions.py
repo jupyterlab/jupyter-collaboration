@@ -317,7 +317,9 @@ async def test_restored_history_recovers_its_session_without_the_store(tmp_path)
     )
     try:
         assert room_b.session_id == session_a
-        assert empty_store.get(room_id).session_id == session_a
+        recovered = empty_store.get(room_id)
+        assert recovered is not None
+        assert recovered.session_id == session_a
     finally:
         await room_b.stop()
         await loader_b.clean()
@@ -373,5 +375,7 @@ def test_persist_failure_keeps_the_previous_store(tmp_path, monkeypatch):
     store.roll("room", "rebuild")
 
     # The store on disk is still the last complete one, not a truncated file.
-    assert DocumentSessionStore(path=path).get("room").session_id == session_id
+    reloaded = DocumentSessionStore(path=path).get("room")
+    assert reloaded is not None
+    assert reloaded.session_id == session_id
     assert [p.name for p in tmp_path.glob("*.tmp")] == []
