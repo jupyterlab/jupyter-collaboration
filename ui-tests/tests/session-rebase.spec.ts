@@ -130,6 +130,33 @@ async function evictRoomAndDeleteYStore(page: Page): Promise<void> {
   await Promise.all(YSTORE_FILES.map(file => rm(file, { force: true })));
 }
 
+/**
+ * The document session the server currently holds for a document.
+ *
+ * Tests assert on it to pin down *which* reconciliation path they exercise:
+ * the observable outcome (right content, no dialog, no duplicated cells) is
+ * the same whether the session was kept or rolled, so without this a test
+ * meant to cover the rebase would keep passing if the session silently
+ * stopped rolling.
+ */
+async function documentSessionId(
+  request: APIRequestContext,
+  baseURL: string,
+  notebookPath: string
+): Promise<string> {
+  const resp = await request.put(
+    `${baseURL}/api/collaboration/session/${notebookPath}`,
+    {
+      headers: { 'Content-Type': 'application/json' },
+      data: JSON.stringify({ format: 'json', type: 'notebook' })
+    }
+  );
+  expect(resp.ok()).toBeTruthy();
+  const model = await resp.json();
+  expect(model.documentSessionId).toBeTruthy();
+  return model.documentSessionId as string;
+}
+
 test.describe.serial('Document session reconciliation', () => {
   const notebookName = 'session_rebase_test.ipynb';
 
@@ -162,6 +189,11 @@ test.describe.serial('Document session reconciliation', () => {
       await waitForOnDisk(request, baseURL!, notebookPath, 'x = 1');
       // Let the save-related state (hash, dirty) sync back to the client.
       await page.waitForTimeout(1000);
+      const sessionBefore = await documentSessionId(
+        request,
+        baseURL!,
+        notebookPath
+      );
 
       await ws.sever();
       await evictRoomAndDeleteYStore(page);
@@ -178,6 +210,13 @@ test.describe.serial('Document session reconciliation', () => {
       await page.waitForTimeout(2000);
       await expect(conflictDialog(page)).toHaveCount(0);
       await expect(page.locator('.jp-Cell')).toHaveCount(1);
+
+      // The lineage advanced past its founding rebuild when the edit was
+      // saved, so the rebuild founds a new one and the client had to
+      // reconcile rather than resynchronize onto it.
+      expect(
+        await documentSessionId(request, baseURL!, notebookPath)
+      ).not.toEqual(sessionBefore);
 
       // The document is live again: further edits reach the disk.
       await typeInFirstCell(page, '\ny = 2');
@@ -231,6 +270,11 @@ test.describe.serial('Document session reconciliation', () => {
       );
       await page.waitForTimeout(2000);
       await expect(conflictDialog(page)).toHaveCount(0);
+      const foundingSession = await documentSessionId(
+        request,
+        baseURL!,
+        notebookPath
+      );
 
       // Cycle 2: the file does not change this time (no edits reach the
       // server before eviction), so the rebuilt history replays the
@@ -247,6 +291,13 @@ test.describe.serial('Document session reconciliation', () => {
       await page.waitForTimeout(2000);
       await expect(conflictDialog(page)).toHaveCount(0);
       await expect(page.locator('.jp-Cell')).toHaveCount(1);
+
+      // This is the zero-disruption path: the rebuild replayed the founding
+      // content, so the session was *kept* and the offline edit merged
+      // through plain synchronization, with no history discarded at all.
+      expect(await documentSessionId(request, baseURL!, notebookPath)).toEqual(
+        foundingSession
+      );
 
       // The reconnected session persists the edit to disk.
       await waitForOnDisk(
@@ -289,6 +340,11 @@ test.describe.serial('Document session reconciliation', () => {
       await typeInFirstCell(page, 'x = 1');
       await waitForOnDisk(request, baseURL!, notebookPath, 'x = 1');
       await page.waitForTimeout(1000);
+      const sessionBefore = await documentSessionId(
+        request,
+        baseURL!,
+        notebookPath
+      );
 
       await ws.sever();
       await typeInFirstCell(page, ' # offline');
@@ -303,6 +359,12 @@ test.describe.serial('Document session reconciliation', () => {
       await page.waitForTimeout(2000);
       await expect(conflictDialog(page)).toHaveCount(0);
       await expect(page.locator('.jp-Cell')).toHaveCount(1);
+
+      // The unsaved edit came back through the *rebase* path, not through a
+      // kept session: the saved edit had moved the lineage on.
+      expect(
+        await documentSessionId(request, baseURL!, notebookPath)
+      ).not.toEqual(sessionBefore);
 
       // The re-applied edit is autosaved through the new session.
       await waitForOnDisk(request, baseURL!, notebookPath, '# offline');

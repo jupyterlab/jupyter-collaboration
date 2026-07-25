@@ -21,6 +21,7 @@
 //
 
 import { expect, galata, test } from '@jupyterlab/galata';
+import type { IJupyterLabPageFixture } from '@jupyterlab/galata';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -101,7 +102,7 @@ const conflictDialog = (page: Page) =>
   page.locator('.jp-Dialog:has-text("Edit Conflict")');
 
 async function createNotebook(
-  page: Page,
+  page: IJupyterLabPageFixture,
   tmpPath: string,
   name: string
 ): Promise<void> {
@@ -122,7 +123,10 @@ async function createNotebook(
   await dismissKernelDialog(page);
 }
 
-async function typeInFirstCell(page: Page, text: string): Promise<void> {
+async function typeInFirstCell(
+  page: IJupyterLabPageFixture,
+  text: string
+): Promise<void> {
   await page.notebook.enterCellEditingMode(0);
   await page.keyboard.press('End');
   await page.keyboard.type(text);

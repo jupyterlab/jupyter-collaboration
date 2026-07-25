@@ -204,6 +204,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self._websocket_server = ywebsocket_server
         self._message_queue = asyncio.Queue()
         self._room_id = ""
+        # Whether this client was announced as having joined its room, so
+        # that a client refused before joining does not report leaving one.
+        self._joined = False
         self.room = None  # type:ignore
         self._room_locks = room_locks if room_locks is not None else {}
 
@@ -254,6 +257,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         if not isinstance(self.room, DocumentRoom):
             self.create_task(self._websocket_server.serve(self))
             if self._room_id != "JupyterLab:globalAwareness":
+                self._joined = True
                 self._emit_awareness_event(self.current_user.username, "join")
             return
 
@@ -301,7 +305,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             # Initialize the room
             async with self._room_lock(self._room_id):
                 await self.room.initialize()
-            self._emit_awareness_event(self.current_user.username, "join")
         except Exception as e:
             _, _, file_id = decode_file_path(self._room_id)
             file = self._file_loaders[file_id]
@@ -370,6 +373,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             )
             return
 
+        # Announced only now: a client refused above never joined the room.
+        self._joined = True
+        self._emit_awareness_event(self.current_user.username, "join")
         self.create_task(self._websocket_server.serve(self))
         self._emit(LogLevel.INFO, "initialize", "New client connected.")
 
@@ -446,7 +452,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             if self.room.cleaner is not None:
                 self.room.cleaner.cancel()
             self.room.cleaner = asyncio.create_task(self._clean_room())
-        if self._room_id != "JupyterLab:globalAwareness":
+        if self._joined:
             self._emit_awareness_event(self.current_user.username, "leave")
 
     def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:
@@ -488,6 +494,17 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         await asyncio.sleep(self._cleanup_delay)
 
         async with self._room_lock(self._room_id):
+            if self.room.clients:
+                # Someone joined while the deletion was pending (the cleanup
+                # may have been scheduled by a client which was refused
+                # before joining, and hence cancels no cleaner of its own).
+                self.log.info(
+                    "Keeping room %s: %s client(s) connected",
+                    self._room_id,
+                    len(self.room.clients),
+                )
+                return
+
             # Remove the room from the websocket server
             self.log.info("Deleting Y document from memory: %s", self._room_id)
             await self._websocket_server.delete_room(room=self.room)

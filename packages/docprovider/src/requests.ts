@@ -97,19 +97,33 @@ export async function requestDocumentContent(
     URLExt.join(settings.baseUrl, 'api/contents', URLExt.encodeParts(path)) +
     URLExt.objectToQueryString(params);
 
-  // This request typically runs right after a server restart was detected;
-  // the browser may then try to reuse a dead pooled connection, on which
-  // the request would hang indefinitely. Time out and retry (a retried
-  // request gets a fresh connection).
+  // This request typically runs right after a server restart was detected:
+  // the browser may try to reuse a dead pooled connection (on which the
+  // request would hang indefinitely), and the server may still be coming
+  // back up. Both are recoverable, and giving up early is costly - the
+  // caller can then no longer tell an out-of-band change from the user's
+  // own unsaved edits, and has to fall back to asking the user. So retry,
+  // on a dead connection as well as on a server-side error, backing off in
+  // between and granting each attempt more time than the last.
   let response: Response | null = null;
   let lastError: unknown = null;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (attempt > 0) {
+      await new Promise(resolve =>
+        setTimeout(resolve, 500 * 2 ** (attempt - 1))
+      );
+    }
     try {
       response = await ServerConnection.makeRequest(
         url,
-        { signal: AbortSignal.timeout(8000) },
+        { signal: AbortSignal.timeout(8000 * (attempt + 1)) },
         settings
       );
+      if (response.status >= 500) {
+        lastError = new Error(`Server responded with ${response.status}`);
+        response = null;
+        continue;
+      }
       break;
     } catch (error) {
       lastError = error;

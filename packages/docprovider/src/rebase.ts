@@ -315,41 +315,63 @@ export function applyNotebookContent(
       (notebook as any).nbformat_minor = target.nbformat_minor;
     }
 
-    const targetIds = new Set(targetCells.map(cell => cell.id));
-    // Delete local cells that are not part of the target content.
-    for (let index = notebook.cells.length - 1; index >= 0; index--) {
-      if (!targetIds.has(notebook.getCell(index).getId())) {
-        notebook.deleteCell(index);
+    // The shared notebook's cell list is a plain array refreshed by an
+    // observer which only runs once the transaction commits, so `cells`,
+    // `getCell` and `moveCell` (which reads a cell to clone it) all see the
+    // state as it was *before* this transaction. Everything below therefore
+    // reads the notebook exactly once, up front, and tracks the effect of
+    // its own operations in `order`; `_ycells` itself is live, so the
+    // indices computed from `order` address the right cells.
+    const existing = new Map<string, any>();
+    const order: string[] = [];
+    for (const cell of notebook.cells) {
+      const id = cell.getId();
+      existing.set(id, cell);
+      order.push(id);
+    }
+
+    // Update the cells the target keeps, while their indices still hold.
+    const retyped = new Set<string>();
+    for (const targetCell of targetCells) {
+      const cell = existing.get(targetCell.id);
+      if (cell && !updateCellInPlace(cell, targetCell)) {
+        // The cell type changed: it has to be replaced wholesale below.
+        retyped.add(targetCell.id);
       }
     }
-    // Bring remaining cells into target order and content, inserting the
+
+    const targetIds = new Set(targetCells.map(cell => cell.id));
+    // Delete local cells the target does not keep.
+    for (let index = order.length - 1; index >= 0; index--) {
+      const id = order[index];
+      if (!targetIds.has(id) || retyped.has(id)) {
+        notebook.deleteCell(index);
+        order.splice(index, 1);
+      }
+    }
+
+    // Bring the remaining cells into the target order, inserting the
     // missing ones at their final position.
     for (let index = 0; index < targetCells.length; index++) {
       const targetCell = targetCells[index];
-      let found = -1;
-      for (let j = index; j < notebook.cells.length; j++) {
-        if (notebook.getCell(j).getId() === targetCell.id) {
-          found = j;
-          break;
-        }
-      }
-      if (found === -1) {
-        notebook.insertCell(index, toCellModel(targetCell));
+      const found = order.indexOf(targetCell.id, index);
+      if (found === index) {
         continue;
       }
-      if (found !== index) {
-        notebook.moveCell(found, index);
+      if (found > index) {
+        // Moving a cell re-creates it anyway (`moveCells` clones), so this
+        // costs no identity that a move would have preserved.
+        notebook.deleteCell(found);
+        order.splice(found, 1);
       }
-      if (!updateCellInPlace(notebook.getCell(index), targetCell)) {
-        // Cell type changed: replace the cell wholesale.
-        notebook.deleteCell(index);
-        notebook.insertCell(index, toCellModel(targetCell));
-      }
+      notebook.insertCell(index, toCellModel(targetCell));
+      order.splice(index, 0, targetCell.id);
     }
+
     // Any trailing cells left beyond the target length would have been
     // deleted above (their ids are not in the target), but guard anyway.
-    if (notebook.cells.length > targetCells.length) {
-      notebook.deleteCellRange(targetCells.length, notebook.cells.length);
+    if (order.length > targetCells.length) {
+      notebook.deleteCellRange(targetCells.length, order.length);
     }
   }, false);
 }
@@ -379,16 +401,74 @@ export function applyContent(
 }
 
 /**
+ * Restore the values which {@link clearForAdoption} cannot carry over.
+ *
+ * @param sharedModel - The shared document which adopted a new session.
+ * @param target - The authoritative content (as loaded from the server).
+ * @param hash - The hash of the file the target content comes from.
+ * @param contentType - The document content type.
+ *
+ * #### Notes
+ * The adoption deliberately leaves `Y.Map` keys alone (see
+ * {@link clearOrderedSharedTypes}), so after resynchronizing, a key set in
+ * the discarded lineage still competes with the value of the new one, and
+ * Yjs resolves that by client id — a coin flip which the stale value wins
+ * half of the time, after which it is saved back to disk. Rewriting the
+ * authoritative values here settles it: a write made after synchronizing is
+ * causally later than both, so it wins for every client.
+ */
+export function reassertAuthoritativeState(
+  sharedModel: YDocument<DocumentChange>,
+  target: unknown,
+  hash: string | null,
+  contentType: string
+): void {
+  sharedModel.transact(() => {
+    if (hash) {
+      // A stale hash would misclassify the *next* reconciliation, making it
+      // treat an out-of-band change as this client's unsaved edits.
+      sharedModel.setState('hash', hash);
+    }
+    if (contentType !== 'notebook') {
+      return;
+    }
+    const notebook = sharedModel as unknown as ISharedNotebook;
+    const content = (target ?? {}) as nbformat.INotebookContent;
+    const metadata = content.metadata ?? {};
+    if (!JSONExt.deepEqual(notebook.getMetadata() ?? {}, metadata)) {
+      notebook.setMetadata(metadata);
+    }
+    if (content.nbformat && notebook.nbformat !== content.nbformat) {
+      (notebook as any).nbformat = content.nbformat;
+    }
+    if (
+      content.nbformat_minor !== undefined &&
+      content.nbformat_minor !== null &&
+      notebook.nbformat_minor !== content.nbformat_minor
+    ) {
+      (notebook as any).nbformat_minor = content.nbformat_minor;
+    }
+  }, false);
+}
+
+/**
  * The ids of the notebook cells of given content.
  *
  * @param content - The document content.
- * @returns The set of cell ids, or `null` for non-notebook content.
+ * @returns The set of cell ids, or `null` for non-notebook content and for
+ *   content whose cells are not all identifiable.
  */
 export function cellIdSet(content: any): Set<string> | null {
   if (!content || !Array.isArray(content.cells)) {
     return null;
   }
-  return new Set(content.cells.map((cell: any) => String(cell.id)));
+  const cells: any[] = content.cells;
+  if (cells.some(cell => !cell?.id)) {
+    // nbformat < 4.5: ids cannot identify cells, and collapsing them into a
+    // set would make unrelated notebooks look like the same one.
+    return null;
+  }
+  return new Set(cells.map((cell: any) => String(cell.id)));
 }
 
 /**

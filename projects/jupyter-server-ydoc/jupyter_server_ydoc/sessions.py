@@ -43,25 +43,38 @@ def document_session_store_path(
     return base.with_name(base.stem + "_documents.json")
 
 
-def content_hash(content: Any) -> str:
-    """Canonical hash of a document content model.
+def lineage_fingerprint(content: Any, procedure: str) -> str:
+    """Fingerprint of a deterministic rebuild of a document.
 
         Parameters:
             content (Any): The document content model.
+            procedure (str): An opaque description of *how* the content is
+                turned into Yjs items (see
+                ``DocumentRoom._rebuild_procedure``).
 
         Returns:
-            digest (str): The hexadecimal SHA-256 digest of the canonical
-                JSON serialization of the content.
+            digest (str): The hexadecimal SHA-256 digest identifying the
+                rebuild.
 
     ### Note:
-        Used both to decide whether a room rebuilt from disk replays the
-        same deterministic history as a previous rebuild, and to derive the
-        rebuild client id (see ``DocumentRoom._content_client_id``); the two
-        must stay in lockstep so a kept session always implies identical
-        Yjs coordinates.
+        Two rebuilds sharing a fingerprint must produce byte-identical Yjs
+        items, because the fingerprint decides both whether a room keeps
+        its document session and which client id the rebuild uses. Anything
+        the resulting items depend on must therefore be part of it:
+
+        - the content *including the order of its keys*: ``jupyter_ydoc``
+          inserts map entries in iteration order, and Yjs items record that
+          order, so a re-serialized file with reordered keys rebuilds to
+          different items (this is why the JSON is **not** sorted here);
+        - the procedure, which covers the loading mode and the version of
+          the library performing the load.
     """
-    serialized = json.dumps(content, sort_keys=True, default=str)
-    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+    serialized = json.dumps(content, sort_keys=False, default=str, ensure_ascii=False)
+    digest = hashlib.sha256()
+    digest.update(procedure.encode("utf-8"))
+    digest.update(b"\0")
+    digest.update(serialized.encode("utf-8"))
+    return digest.hexdigest()
 
 
 @dataclass
@@ -75,7 +88,12 @@ class DocumentSession:
       room initialization may adopt it regardless of how it loads content.
     - ``"store"``: the session covers a history lineage restored from a YStore.
     - ``"rebuild"``: the session started from a deterministic rebuild of the
-      on-disk content whose canonical hash is ``rebuild_hash``.
+      on-disk content whose fingerprint is ``rebuild_hash``.
+
+    ``rebuild_hash`` is cleared as soon as the lineage advances past that
+    founding rebuild (see ``DocumentSessionStore.invalidate_rebuild``), so a
+    later rebuild can only be recognized as replaying the lineage while the
+    lineage still *is* its founding rebuild.
     """
 
     session_id: str
@@ -135,14 +153,23 @@ class DocumentSessionStore:
     def _persist(self) -> None:
         if self._path is None:
             return
+        serialized = json.dumps(
+            {room_id: asdict(session) for room_id, session in self._sessions.items()},
+            indent=2,
+        )
         try:
             self._path.parent.mkdir(parents=True, exist_ok=True)
-            self._path.write_text(
-                json.dumps(
-                    {room_id: asdict(session) for room_id, session in self._sessions.items()},
-                    indent=2,
-                )
-            )
+            # Write through a temporary file in the same directory and rename
+            # it over the store: a crash (or a second server writing
+            # concurrently) then leaves the previous complete file in place
+            # rather than a truncated one, which would drop every session and
+            # make all connected clients re-validate their content.
+            tmp = self._path.with_name(f"{self._path.name}.{os.getpid()}.tmp")
+            try:
+                tmp.write_text(serialized)
+                os.replace(tmp, self._path)
+            finally:
+                tmp.unlink(missing_ok=True)
         except OSError as e:
             self._log.warning("Could not write document session store %s: %s", self._path, e)
 
@@ -195,6 +222,48 @@ class DocumentSessionStore:
         session.rebuild_hash = rebuild_hash
         self._persist()
         return session.session_id
+
+    def adopt(self, room_id: str, session_id: str, origin: SessionOrigin) -> str:
+        """Record a session ID recovered from outside the store.
+
+        Parameters:
+            room_id (str): Room ID.
+            session_id (str): The session ID to record.
+            origin (SessionOrigin): The origin of the session.
+
+        Returns:
+            session_id (str): The adopted session ID.
+
+        ### Note:
+            Used when a room recovers the session its restored history
+            belongs to, after this store lost its record of it.
+        """
+        self._sessions[room_id] = DocumentSession(session_id=session_id, origin=origin)
+        self._persist()
+        return session_id
+
+    def invalidate_rebuild(self, room_id: str) -> None:
+        """Record that the lineage advanced past its founding rebuild.
+
+        Parameters:
+            room_id (str): Room ID.
+
+        ### Note:
+            Keeping a session across a rebuild is only sound while the
+            lineage still holds exactly the content that founded it: the
+            rebuild then replays the very items the clients already have.
+            Once the room has written different content to disk (a save, or
+            adopting an out-of-band change), a future rebuild of the
+            *founding* content - e.g. the file being reverted by a version
+            control checkout - is a different lineage, and clients holding
+            the advanced one must not silently resynchronize onto it (they
+            would push the content the file was reverted away from back).
+        """
+        session = self._sessions.get(room_id)
+        if session is None or session.rebuild_hash is None:
+            return
+        session.rebuild_hash = None
+        self._persist()
 
     def roll(self, room_id: str, origin: SessionOrigin, rebuild_hash: str | None = None) -> str:
         """Mint a new session ID for a room, marking the previous lineage dead.

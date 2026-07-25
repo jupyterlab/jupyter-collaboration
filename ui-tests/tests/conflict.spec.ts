@@ -252,6 +252,38 @@ test.describe.serial('Conflict handling', () => {
     await expect(page.locator('.jp-ConflictIndicator')).toHaveCount(0);
   });
 
+  test('saving is refused while a conflict is unresolved', async ({
+    request,
+    tmpPath,
+    baseURL
+  }) => {
+    // While the conflict is pending the document is disconnected from the
+    // room, and saving goes *through* the room. Reporting a successful save
+    // here would tell the user their work is on disk when it never left the
+    // browser.
+    const dialog = await triggerConflict(
+      page,
+      ws,
+      request,
+      tmpPath,
+      baseURL!,
+      notebookName
+    );
+    await dialog.getByRole('button', { name: 'Dismiss' }).click();
+    await expect(page.locator('.jp-ConflictIndicator')).toBeVisible();
+
+    await page.keyboard.press('Control+s');
+    // The save must not silently succeed: the file on disk keeps the server
+    // content, without the local edit.
+    await page.waitForTimeout(3000);
+    const resp = await request.get(
+      `${baseURL}/api/contents/${tmpPath}/${notebookName}?content=1`
+    );
+    expect(resp.ok()).toBeTruthy();
+    const model = await resp.json();
+    expect(JSON.stringify(model.content.cells)).not.toContain('local edit');
+  });
+
   test('Revert button adopts the server version', async ({
     request,
     tmpPath,

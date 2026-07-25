@@ -155,7 +155,10 @@ def _notebook_model() -> dict:
 
 
 async def _create_notebook_room(
-    notebook: dict, room_id: str, session_store: DocumentSessionStore | None = None
+    notebook: dict,
+    room_id: str,
+    session_store: DocumentSessionStore | None = None,
+    document_load_progressively: bool = False,
 ) -> tuple[DocumentRoom, FileLoader]:
     file_id = f"file-{room_id}"
     loader = FileLoader(
@@ -172,7 +175,7 @@ async def _create_notebook_room(
         None,
         None,
         None,
-        document_load_progressively=False,
+        document_load_progressively=document_load_progressively,
         session_store=session_store,
     )
     await room.initialize()
@@ -186,8 +189,19 @@ def _sync_documents(client_doc: YNotebook, room: DocumentRoom) -> dict:
 
 
 async def test_notebook_reconnect_with_divergent_history_does_not_duplicate_initial_cell():
+    """A rebuild of unchanged content replays the very same Yjs items.
+
+    This is what lets a client whose session was kept resynchronize by plain
+    Yjs sync, with no reconciliation and nothing to re-render - historically
+    (issue #594) it duplicated every cell instead. The session store is
+    shared across both room incarnations because it is the same room, opened
+    again after the server lost its in-memory state.
+    """
     notebook = _notebook_model()
-    room, loader = await _create_notebook_room(notebook, "divergent-history-before")
+    session_store = DocumentSessionStore()
+    room, loader = await _create_notebook_room(
+        notebook, "divergent-history", session_store=session_store
+    )
     client_doc = YNotebook()
 
     try:
@@ -199,9 +213,11 @@ async def test_notebook_reconnect_with_divergent_history_does_not_duplicate_init
         await loader.clean()
 
     recreated_room, recreated_loader = await _create_notebook_room(
-        notebook, "divergent-history-after"
+        notebook, "divergent-history", session_store=session_store
     )
     try:
+        # The lineage continues, so the client may merge without reconciling.
+        assert recreated_room.session_id == room.session_id
         merged = _sync_documents(client_doc, recreated_room)
     finally:
         await recreated_room.stop()
@@ -286,9 +302,7 @@ async def test_notebook_reconnect_sends_conflict_when_stale_update_is_incompatib
     message back to the client so the frontend can offer a resolution dialog.
     """
     pinned_id = DocumentRoom._REBUILD_CLIENT_MARKER | 42
-    monkeypatch.setattr(
-        DocumentRoom, "_content_client_id", classmethod(lambda cls, content: pinned_id)
-    )
+    monkeypatch.setattr(DocumentRoom, "_rebuild_client_id", lambda self, content: pinned_id)
 
     notebook_before = _notebook_model()
     room_a, loader_a = await _create_notebook_room(notebook_before, "pinned-before")
@@ -332,7 +346,7 @@ async def test_notebook_reconnect_sends_conflict_when_stale_update_is_incompatib
         assert b'"type": "conflict"' in conflict_msg
         assert len(conflict_msg) > 1
 
-        # The room itself must remain coherent — still one cell.
+        # The room itself must remain coherent - still one cell.
         server_notebook = YNotebook()
         server_notebook.ydoc.apply_update(room_b.ydoc.get_update())
         assert len(server_notebook.get(deduplicate=False)["cells"]) == 1

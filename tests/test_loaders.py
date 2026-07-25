@@ -7,6 +7,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
 
+import pytest
 from jupyter_server_ydoc.loaders import FileLoader, FileLoaderMapping
 from jupyter_server_ydoc.test_utils import FakeContentsManager, FakeFileIDManager
 
@@ -132,6 +133,48 @@ async def test_FileLoader_without_watcher():
 
     try:
         assert triggered
+    finally:
+        await loader.clean()
+
+
+async def test_FileLoader_load_content_requests_the_hash():
+    cm = FakeContentsManager({"last_modified": datetime.now(timezone.utc)})
+    loader = FileLoader("file-hash", FakeFileIDManager({"file-hash": "myfile.txt"}), cm)
+    try:
+        model = await loader.load_content("text", "file")
+        # The room publishes this so clients can tell an out-of-band change
+        # from their own unsaved edits without prompting.
+        assert model["hash"] == "fake_hash"
+    finally:
+        await loader.clean()
+
+
+async def test_FileLoader_load_content_tolerates_a_manager_without_require_hash():
+    """Opening documents must keep working on older contents managers."""
+
+    class _LegacyContentsManager(FakeContentsManager):
+        def get(self, path, content=True, format=None, type=None):  # noqa: A002
+            return super().get(path, content=content, format=format, type=type)
+
+    cm = _LegacyContentsManager({"last_modified": datetime.now(timezone.utc)})
+    loader = FileLoader("file-legacy", FakeFileIDManager({"file-legacy": "myfile.txt"}), cm)
+    try:
+        model = await loader.load_content("text", "file")
+        assert "content" in model
+    finally:
+        await loader.clean()
+
+
+async def test_FileLoader_load_content_does_not_hide_unrelated_type_errors():
+    class _BrokenContentsManager(FakeContentsManager):
+        def get(self, *args, **kwargs):
+            raise TypeError("something else entirely")
+
+    cm = _BrokenContentsManager({"last_modified": datetime.now(timezone.utc)})
+    loader = FileLoader("file-broken", FakeFileIDManager({"file-broken": "myfile.txt"}), cm)
+    try:
+        with pytest.raises(TypeError, match="something else entirely"):
+            await loader.load_content("text", "file")
     finally:
         await loader.clean()
 

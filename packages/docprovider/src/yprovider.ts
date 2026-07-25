@@ -30,6 +30,7 @@ import {
   applyContent,
   clearForAdoption,
   contentsEqual,
+  reassertAuthoritativeState,
   removePlaceholderCell,
   settledOnBase
 } from './rebase';
@@ -51,6 +52,22 @@ const RAW_MESSAGE_TYPE = 2;
  * accommodate progressive loading of large documents).
  */
 const REBASE_SETTLE_TIMEOUT = 30 * 1000;
+
+/**
+ * How many times the reconciliation decision is re-taken when the room's
+ * document session keeps rolling under us (e.g. a file being rewritten
+ * repeatedly by an external tool) before handing the decision to the user.
+ */
+const MAX_REBASE_ATTEMPTS = 5;
+
+/**
+ * The outcome of an attempt to join a room on a new document session.
+ */
+type AdoptOutcome =
+  | { status: 'synced' }
+  | { status: 'rolled'; sessionId: string }
+  | { status: 'failed'; error?: unknown }
+  | { status: 'disposed' };
 
 /**
  * A class to provide Yjs synchronization over WebSocket.
@@ -122,7 +139,14 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     this._isDisposed = true;
     this._stopConvergenceWatch();
     this._setPendingConflict(null);
-    this._rebaseRefusal?.(null);
+    // Wake up anything waiting inside a reconciliation; `isDisposed` is
+    // already set, so each waiter reports a disposal rather than mistaking
+    // this for a successful synchronization.
+    this._pendingRoll = null;
+    for (const listener of Array.from(this._rollListeners)) {
+      listener();
+    }
+    this._rollListeners.clear();
     if (this._conflictWs) {
       this._conflictWs.removeEventListener(
         'message',
@@ -144,6 +168,17 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
 
   async save(): Promise<void> {
     const ws = this._yWebsocketProvider?.ws;
+    if (!ws && (this._pendingConflict !== null || this._rebasing)) {
+      // Saving goes through the room; while the document is held back from
+      // collaboration there is nothing to save through. Resolving here would
+      // report a successful save for content that never left the browser.
+      throw new Error(
+        this._trans.__(
+          'Cannot save %1 while the document conflict is unresolved.',
+          this._path
+        )
+      );
+    }
     if (ws) {
       const saveId = ++this._saveCounter;
       const delegate = new PromiseDelegate<void>();
@@ -345,13 +380,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         // The room's Yjs history diverged from the local document (e.g. the
         // room was rebuilt from a changed file, or the YStore was lost).
         // Never resynchronize blindly: reconcile the local content first.
-        if (this._rebaseRefusal) {
-          // A rebase is in flight and just got refused again: the session
-          // rolled once more while we were adopting it. Let it retry.
-          this._rebaseRefusal(payload.sessionId ?? '');
-        } else {
-          void this._onSessionChanged(payload.sessionId ?? '');
-        }
+        void this._onSessionChanged(payload.sessionId ?? '');
         return;
       }
 
@@ -499,7 +528,23 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
    * - anything else is a real conflict: show the "Edit Conflict" dialog.
    */
   private async _onSessionChanged(newSessionId: string): Promise<void> {
-    if (this._rebasing || this.isDisposed || !newSessionId) {
+    if (this.isDisposed) {
+      return;
+    }
+    if (!newSessionId) {
+      // The server always reports the session it moved to; without one there
+      // is nothing to claim, and reconnecting would only be refused again.
+      console.error(
+        `Document session of '${this._path}' changed but the server did not ` +
+          `report the new session: staying disconnected`
+      );
+      this._disconnect();
+      return;
+    }
+    if (this._rebasing) {
+      // A reconciliation is already running: make it re-take its decision
+      // against this newer session rather than racing a second one.
+      this._noteRoll(newSessionId);
       return;
     }
     this._rebasing = true;
@@ -519,16 +564,151 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         await this._connect();
         return;
       }
-      await this._rebase(newSessionId);
+      // Captured once: an attempt which gets refused mid-adoption has
+      // already emptied the document, so re-reading it per attempt would
+      // have the next decision taken on (and later applied as) nothing.
+      const snapshot = this._sharedModel.getSource();
+      let target: string | null = newSessionId;
+      let attempt = 0;
+      while (target !== null && attempt < MAX_REBASE_ATTEMPTS) {
+        attempt++;
+        this._pendingRoll = null;
+        const restart = await this._reconcile(target, snapshot);
+        target = restart ? this._pendingRoll : null;
+      }
+      if (target !== null) {
+        // The room's history kept moving while we reconciled; stop guessing
+        // and let the user decide what to keep.
+        console.warn(
+          `Document session of '${this._path}' rolled ${attempt} times ` +
+            `during reconciliation: asking the user to resolve`
+        );
+        await this._enterConflict(snapshot, target);
+      }
     } catch (error) {
       console.error('Failed to handle a document session change', error);
     } finally {
       this._rebasing = false;
+      this._pendingRoll = null;
     }
   }
 
-  private async _rebase(newSessionId: string): Promise<void> {
-    const localContent = this._sharedModel.getSource();
+  /**
+   * Whether content holds nothing worth preserving.
+   *
+   * @param content - The content to inspect.
+   * @returns Whether the content is empty.
+   */
+  private _isEmptyContent(content: JSONValue): boolean {
+    if (this._contentType === 'notebook') {
+      const cells = (content as any)?.cells;
+      return !Array.isArray(cells) || cells.length === 0;
+    }
+    return content === '' || content === null || content === undefined;
+  }
+
+  /**
+   * Adopt a session on the user's behalf, following the room if it rolls
+   * again, and putting the local content back if it cannot be joined.
+   *
+   * @param sessionId - The document session to adopt.
+   * @param fallback - The local content to restore on failure.
+   * @param server - The server content, to restore authoritative values.
+   * @returns Whether the document ended up joined to the room.
+   *
+   * #### Notes
+   * Used by the resolutions the user triggers directly ("Revert", and the
+   * automatic rejoin once the content converged), which - unlike
+   * {@link _reconcile} - do not re-take a decision: the user already made
+   * it. Owns the roll bookkeeping for those paths, so that a roll observed
+   * here can never leak into a later reconciliation.
+   */
+  private async _adoptFollowingRolls(
+    sessionId: string,
+    fallback: JSONValue,
+    server: IContentsModel | null
+  ): Promise<boolean> {
+    let target = sessionId;
+    try {
+      for (let attempt = 0; attempt < MAX_REBASE_ATTEMPTS; attempt++) {
+        this._pendingRoll = null;
+        const outcome = await this._adoptSession(target);
+        if (outcome.status === 'synced') {
+          if (server) {
+            reassertAuthoritativeState(
+              this._sharedModel,
+              server.content,
+              server.hash ?? null,
+              this._contentType
+            );
+          }
+          return true;
+        }
+        if (outcome.status === 'disposed' || this.isDisposed) {
+          return false;
+        }
+        if (outcome.status === 'failed') {
+          break;
+        }
+        target = outcome.sessionId;
+        applyContent(this._sharedModel, fallback, this._contentType);
+      }
+      console.error(
+        `Could not join '${this._path}' on session ${target}; restoring the ` +
+          `local content and leaving the conflict unresolved`
+      );
+      applyContent(this._sharedModel, fallback, this._contentType);
+      this._setPendingConflict({
+        localContent: fallback,
+        newSessionId: target,
+        server
+      });
+      return false;
+    } finally {
+      this._pendingRoll = null;
+    }
+  }
+
+  /**
+   * Record that the room moved to another document session while a
+   * reconciliation was in flight, and wake up whatever the reconciliation
+   * is currently waiting for.
+   *
+   * @param sessionId - The document session the room is now on.
+   */
+  private _noteRoll(sessionId: string): void {
+    this._pendingRoll = sessionId;
+    for (const listener of Array.from(this._rollListeners)) {
+      listener();
+    }
+  }
+
+  /**
+   * Take (or re-take) the reconciliation decision for a diverged session.
+   *
+   * @param newSessionId - The document session the room is on.
+   * @returns Whether the decision must be re-taken because the room moved
+   *   to yet another session in the meantime.
+   *
+   * #### Notes
+   * The decision matrix, in order (see
+   * https://github.com/jupyterlab/jupyter-collaboration/issues/597):
+   * - identical content: silently discard the local Yjs history and rejoin;
+   * - no unsaved local changes: likewise, catching up to the server content;
+   * - unsaved local changes on top of an unchanged file: rejoin and re-apply
+   *   the local content as fresh edits (semantic rebase);
+   * - anything else is a real conflict: let the user choose.
+   *
+   * Every step which can observe a stale premise re-checks it: the room may
+   * roll again, another client may edit the rebuilt room, and the user keeps
+   * typing throughout. Whenever a premise no longer holds, the flow either
+   * restarts or falls through to the conflict dialog - it never applies
+   * content decided on stale grounds.
+   */
+  private async _reconcile(
+    newSessionId: string,
+    localContent: JSONValue
+  ): Promise<boolean> {
     let server: IContentsModel;
     try {
       server = await requestDocumentContent(
@@ -542,9 +722,11 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         'Could not fetch the server content for conflict resolution',
         error
       );
-      this._setPendingConflict({ localContent, newSessionId });
-      await this.showConflictDialog();
-      return;
+      await this._enterConflict(localContent, newSessionId);
+      return false;
+    }
+    if (this._pendingRoll !== null) {
+      return true;
     }
 
     if (contentsEqual(localContent, server.content, this._contentType)) {
@@ -553,9 +735,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         `Document session of '${this._path}' changed but the content is ` +
           `identical: silently rejoining on session ${newSessionId}`
       );
-      await this._adoptSession(newSessionId);
-      this._sharedModel.dirty = false;
-      return;
+      return this._catchUp(newSessionId, server, localContent);
     }
 
     if (this._sharedModel.dirty !== true) {
@@ -566,9 +746,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
           `unsaved local changes: catching up to the server content on ` +
           `session ${newSessionId}`
       );
-      await this._adoptSession(newSessionId);
-      this._sharedModel.dirty = false;
-      return;
+      return this._catchUp(newSessionId, server, localContent);
     }
 
     const lastSavedHash = this._sharedModel.getState('hash');
@@ -585,15 +763,11 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
           `change since the last known save: rejoining on session ` +
           `${newSessionId} and re-applying unsaved local edits`
       );
-      await this._adoptSession(newSessionId);
-      await this._waitUntilSettled(server.content);
-      applyContent(this._sharedModel, localContent, this._contentType);
-      return;
+      return this._semanticRebase(newSessionId, server, localContent);
     }
 
     // (g) Both the file and the local document changed: a real conflict.
-    this._setPendingConflict({ localContent, newSessionId });
-    await this.showConflictDialog();
+    await this._enterConflict(localContent, newSessionId, server);
     if (this._pendingConflict) {
       // The conflict was left unresolved (Dismiss, Save As, or an unapplied
       // diff view): watch for the local content converging to the server
@@ -602,6 +776,144 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       // document can rejoin the new session without any data loss.
       this._watchForConvergence(server, newSessionId);
     }
+    return false;
+  }
+
+  /**
+   * Discard the local history and take the room content as it is.
+   *
+   * @param newSessionId - The document session to adopt.
+   * @param server - The server content, used to restore authoritative
+   *   values the adoption cannot carry over.
+   * @param fallback - The local content to restore if the adoption fails.
+   * @returns Whether the reconciliation decision must be re-taken.
+   */
+  private async _catchUp(
+    newSessionId: string,
+    server: IContentsModel,
+    fallback: JSONValue
+  ): Promise<boolean> {
+    const outcome = await this._adoptSession(newSessionId);
+    if (outcome.status !== 'synced') {
+      return this._handleFailedAdoption(outcome, fallback, newSessionId);
+    }
+    reassertAuthoritativeState(
+      this._sharedModel,
+      server.content,
+      server.hash ?? null,
+      this._contentType
+    );
+    this._sharedModel.dirty = false;
+    return false;
+  }
+
+  /**
+   * Rejoin the room and re-apply the unsaved local edits on top of it.
+   *
+   * @param newSessionId - The document session to adopt.
+   * @param server - The server content the room is expected to hold.
+   * @param fallback - The content to re-apply if the document turns out to
+   *   hold nothing to capture.
+   * @returns Whether the reconciliation decision must be re-taken.
+   */
+  private async _semanticRebase(
+    newSessionId: string,
+    server: IContentsModel,
+    fallback: JSONValue
+  ): Promise<boolean> {
+    // Captured on the statement before the adoption clears the document, so
+    // that edits typed while the server content was being fetched are part
+    // of what gets re-applied rather than silently dropped.
+    const captured = this._sharedModel.getSource();
+    const localContent = this._isEmptyContent(captured) ? fallback : captured;
+    const outcome = await this._adoptSession(newSessionId);
+    if (outcome.status !== 'synced') {
+      return this._handleFailedAdoption(outcome, localContent, newSessionId);
+    }
+
+    const settled = await this._waitUntilSettled(server.content);
+    if (settled === 'rolled') {
+      return true;
+    }
+    if (
+      settled === 'timeout' ||
+      !contentsEqual(
+        this._sharedModel.getSource(),
+        server.content,
+        this._contentType
+      )
+    ) {
+      // Either the room never finished delivering the content we expected,
+      // or it no longer holds it (another client edited the rebuilt room).
+      // Re-applying our snapshot wholesale would delete their work, so the
+      // user decides instead.
+      console.warn(
+        `Could not re-apply the unsaved edits of '${this._path}' on top of ` +
+          `session ${newSessionId} (${settled}): asking the user to resolve`
+      );
+      await this._enterConflict(localContent, newSessionId, server);
+      return false;
+    }
+    applyContent(this._sharedModel, localContent, this._contentType);
+    return false;
+  }
+
+  /**
+   * Deal with an adoption that did not end up synchronized.
+   *
+   * @param outcome - The outcome of the adoption.
+   * @param fallback - The local content captured before the adoption
+   *   cleared the document.
+   * @param sessionId - The document session which was being adopted.
+   * @returns Whether the reconciliation decision must be re-taken.
+   */
+  private async _handleFailedAdoption(
+    outcome: AdoptOutcome,
+    fallback: JSONValue,
+    sessionId: string
+  ): Promise<boolean> {
+    if (outcome.status === 'rolled') {
+      // The adoption already emptied the document. Put the content back
+      // before retrying, so the next decision is taken on the user's work
+      // rather than on the nothing this attempt left behind.
+      if (!this.isDisposed) {
+        applyContent(this._sharedModel, fallback, this._contentType);
+      }
+      this._noteRoll(outcome.sessionId);
+      return true;
+    }
+    if (outcome.status !== 'failed' || this.isDisposed) {
+      return false;
+    }
+    // The adoption cleared the document but never joined the room. Put the
+    // local content back so the user still sees (and can save) their work,
+    // and surface that collaboration is paused.
+    console.error(
+      `Could not join '${this._path}' on session ${sessionId}; restoring ` +
+        `the local content and pausing collaboration`,
+      outcome.error
+    );
+    applyContent(this._sharedModel, fallback, this._contentType);
+    await this._enterConflict(fallback, sessionId);
+    return false;
+  }
+
+  /**
+   * Enter the unresolved-conflict state and offer the user a resolution.
+   *
+   * @param localContent - The local content at conflict time.
+   * @param newSessionId - The document session to rejoin on resolution.
+   * @param server - The server content, when it is known, so that resolving
+   *   the conflict can restore the authoritative values which adopting a
+   *   session cannot carry over (see {@link reassertAuthoritativeState}).
+   */
+  private async _enterConflict(
+    localContent: JSONValue,
+    newSessionId: string,
+    server: IContentsModel | null = null
+  ): Promise<void> {
+    this._setPendingConflict({ localContent, newSessionId, server });
+    await this.showConflictDialog();
   }
 
   /**
@@ -633,9 +945,27 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       return;
     }
     await this._showConflictDialog(pending.localContent, async () => {
+      if (this._pendingConflict !== pending || this.isDisposed) {
+        // The conflict this dialog belongs to is gone (resolved by the
+        // convergence watch, superseded by a newer one, or the document was
+        // closed). Adopting now would clear a document which is once again
+        // live and shared, deleting the content for every collaborator.
+        return;
+      }
+      if (this._rebasing) {
+        // A reconciliation owns the connection; let it finish.
+        return;
+      }
       this._rebasing = true;
       try {
-        await this._adoptSession(pending.newSessionId);
+        const joined = await this._adoptFollowingRolls(
+          pending.newSessionId,
+          pending.localContent,
+          pending.server
+        );
+        if (!joined) {
+          return;
+        }
         this._sharedModel.dirty = false;
         this._stopConvergenceWatch();
         this._setPendingConflict(null);
@@ -646,7 +976,11 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   }
 
   private _setPendingConflict(
-    pending: { localContent: JSONValue; newSessionId: string } | null
+    pending: {
+      localContent: JSONValue;
+      newSessionId: string;
+      server: IContentsModel | null;
+    } | null
   ): void {
     const wasPending = this._pendingConflict !== null;
     this._pendingConflict = pending;
@@ -667,8 +1001,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
    *
    * @param newSessionId - The document session to adopt.
    */
-  private async _adoptSession(newSessionId: string): Promise<void> {
-    let targetSession = newSessionId;
+  private async _adoptSession(newSessionId: string): Promise<AdoptOutcome> {
     const placeholderId = clearForAdoption(
       this._sharedModel,
       this._contentType,
@@ -679,33 +1012,77 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     } catch {
       // The undo manager may not cover this document type.
     }
-    // The session may roll again while we are adopting it (e.g. further
-    // out-of-band changes): retry with the latest session a few times.
-    for (let attempt = 0; attempt < 5; attempt++) {
-      this._disconnect();
-      this._docSessionId = targetSession;
-      const refused = new Promise<string | null>(resolve => {
-        this._rebaseRefusal = resolve;
-      });
-      await this._connect();
-      const synced = new Promise<null>(resolve => {
-        this._yWebsocketProvider!.once('sync', () => resolve(null));
-      });
-      const outcome = await Promise.race([synced, refused]);
-      this._rebaseRefusal = null;
-      if (outcome === null) {
-        if (placeholderId) {
-          removePlaceholderCell(this._sharedModel, placeholderId);
-        }
-        return;
+    try {
+      return await this._joinSession(newSessionId);
+    } finally {
+      if (placeholderId) {
+        removePlaceholderCell(this._sharedModel, placeholderId);
       }
-      targetSession = outcome;
     }
-    console.error(
-      'Could not adopt the new document session %s for %s',
-      targetSession,
-      this._path
-    );
+  }
+
+  /**
+   * Connect claiming the given document session and wait for the outcome.
+   *
+   * @param newSessionId - The document session to claim.
+   * @returns How the attempt ended.
+   */
+  private async _joinSession(newSessionId: string): Promise<AdoptOutcome> {
+    this._disconnect();
+    this._docSessionId = newSessionId;
+    try {
+      await this._connect();
+    } catch (error) {
+      return { status: 'failed', error };
+    }
+    if (this.isDisposed) {
+      return { status: 'disposed' };
+    }
+    const provider = this._yWebsocketProvider;
+    if (!provider) {
+      return { status: 'failed' };
+    }
+    return await new Promise<AdoptOutcome>(resolve => {
+      // Hoisted so that the listeners below can settle the race, and it can
+      // unregister them in turn.
+      function settle(this: void, outcome: AdoptOutcome): void {
+        provider!.off('sync', onSync);
+        provider!.off('connection-close', onClose);
+        rollListeners.delete(onRoll);
+        resolve(isDisposed() ? { status: 'disposed' } : outcome);
+      }
+      const rollListeners = this._rollListeners;
+      const isDisposed = () => this.isDisposed;
+      const onSync = (isSynced: boolean) => {
+        if (isSynced) {
+          settle({ status: 'synced' });
+        }
+      };
+      const onClose = (event: CloseEvent) => {
+        // A refusal is reported through `_noteRoll`; these are the terminal
+        // closures, which would otherwise leave the race pending forever.
+        if ([4400, 4404, 4500].includes(event.code)) {
+          settle({ status: 'failed', error: event.reason });
+        }
+      };
+      const onRoll = () => {
+        const rolled = this._pendingRoll;
+        settle(
+          rolled !== null
+            ? { status: 'rolled', sessionId: rolled }
+            : { status: 'disposed' }
+        );
+      };
+      provider.on('sync', onSync);
+      provider.on('connection-close', onClose);
+      this._rollListeners.add(onRoll);
+      if (this.isDisposed) {
+        settle({ status: 'disposed' });
+      } else if (this._pendingRoll !== null) {
+        // The room rolled again between connecting and arming the listener.
+        onRoll();
+      }
+    });
   }
 
   /**
@@ -716,7 +1093,9 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
    *
    * @param baseContent - The content the document is expected to settle on.
    */
-  private async _waitUntilSettled(baseContent: unknown): Promise<void> {
+  private async _waitUntilSettled(
+    baseContent: unknown
+  ): Promise<'settled' | 'timeout' | 'rolled'> {
     if (
       settledOnBase(
         this._sharedModel.getSource(),
@@ -724,16 +1103,17 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         this._contentType
       )
     ) {
-      return;
+      return 'settled';
     }
-    await new Promise<void>(resolve => {
+    return await new Promise<'settled' | 'timeout' | 'rolled'>(resolve => {
       let timer: number | null = null;
-      const finish = () => {
+      const finish = (result: 'settled' | 'timeout' | 'rolled') => {
         this._sharedModel.changed.disconnect(onChange);
+        this._rollListeners.delete(onRoll);
         if (timer !== null) {
           clearTimeout(timer);
         }
-        resolve();
+        resolve(result);
       };
       const onChange = () => {
         if (
@@ -743,11 +1123,16 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
             this._contentType
           )
         ) {
-          finish();
+          finish('settled');
         }
       };
+      const onRoll = () => finish('rolled');
       this._sharedModel.changed.connect(onChange);
-      timer = window.setTimeout(finish, REBASE_SETTLE_TIMEOUT);
+      this._rollListeners.add(onRoll);
+      // The timeout is reported rather than treated as success: the caller
+      // must not apply content on top of a document which never finished
+      // loading (it would duplicate the cells still on their way).
+      timer = window.setTimeout(() => finish('timeout'), REBASE_SETTLE_TIMEOUT);
       onChange();
     });
   }
@@ -786,9 +1171,13 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
             `Local content of '${this._path}' converged to the server ` +
               `content: rejoining on session ${newSessionId}`
           );
+          const converged = this._sharedModel.getSource();
           this._rebasing = true;
-          void this._adoptSession(newSessionId)
-            .then(() => {
+          void this._adoptFollowingRolls(newSessionId, converged, server)
+            .then(joined => {
+              if (!joined) {
+                return;
+              }
               this._sharedModel.dirty = false;
               this._setPendingConflict(null);
             })
@@ -859,10 +1248,12 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _pendingConflict: {
     localContent: JSONValue;
     newSessionId: string;
+    server: IContentsModel | null;
   } | null = null;
   private _conflictStateChanged = new Signal<this, boolean>(this);
   private _rebasing = false;
-  private _rebaseRefusal: ((sessionId: string | null) => void) | null = null;
+  private _pendingRoll: string | null = null;
+  private _rollListeners = new Set<() => void>();
   private _stopConvergenceWatch: () => void = () => undefined;
   private _onConflictSaveAs?: () => Promise<void>;
   private _onConflictRevert?: () => Promise<void>;
