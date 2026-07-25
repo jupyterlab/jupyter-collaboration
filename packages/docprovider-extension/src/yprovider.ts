@@ -212,16 +212,16 @@ namespace Private {
     trans: TranslationBundle
   ): Widget {
     const node = document.createElement('div');
-    const span = document.createElement('span');
-    span.className = 'jp-ToolbarLabelComponent jp-ConflictIndicator';
-    span.textContent = trans.__('Edit conflict');
-    span.title = trans.__(
+    const button = document.createElement('button');
+    button.className = 'jp-ToolbarLabelComponent jp-ConflictIndicator';
+    button.textContent = trans.__('Edit conflict');
+    button.title = trans.__(
       'Collaboration is paused and local changes are not shared because ' +
         'the document changed while you were disconnected. ' +
-        'Click to resolve the conflict.'
+        'Activate to resolve the conflict.'
     );
-    node.appendChild(span);
-    node.addEventListener('click', () => {
+    node.appendChild(button);
+    button.addEventListener('click', () => {
       void provider.showConflictDialog();
     });
     const widget = new Widget({ node });
