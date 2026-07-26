@@ -50,13 +50,22 @@ export async function waitForServer(up: boolean, timeoutMs = 60000): Promise<voi
  * The process is detached into its own process group so the whole tree
  * (including kernels) can be killed together via {@link stopServer}.
  */
-export function startServer(rootDir: string): ChildProcess {
+export function startServer(
+  rootDir: string,
+  extraArgs: string[] = []
+): ChildProcess {
   // Append the server output to a log file inside the root dir, to ease
   // debugging of restart scenarios (the file survives the restarts).
   const log = fs.openSync(path.join(rootDir, 'server-log.txt'), 'a');
   return spawn(
     'jupyter',
-    ['lab', '--config', 'jupyter_server_test_config.py', '--no-browser'],
+    [
+      'lab',
+      '--config',
+      'jupyter_server_test_config.py',
+      '--no-browser',
+      ...extraArgs
+    ],
     {
       cwd: SERVER_CWD,
       env: { ...process.env, JUPYTERLAB_GALATA_ROOT_DIR: rootDir },

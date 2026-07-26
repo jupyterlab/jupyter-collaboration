@@ -114,12 +114,21 @@ export async function newInterceptedPage(options: {
     helpers: IJupyterLabPage
   ) => Promise<void>;
   mockUser?: boolean | Partial<User.IUser>;
+  /**
+   * Record a video of this context into the given directory.
+   *
+   * Needed because the context is created here rather than by Playwright,
+   * so the `video` setting in the config does not reach it.
+   */
+  recordVideo?: { dir: string; size?: { width: number; height: number } };
 }): Promise<{
   page: IJupyterLabPageFixture;
   ws: ICollabWSControl;
   context: BrowserContext;
 }> {
-  const context = await options.browser.newContext();
+  const context = await options.browser.newContext(
+    options.recordVideo ? { recordVideo: options.recordVideo } : {}
+  );
   const ws = await interceptCollabWS(context);
   // Proxy the REST endpoints used by the collaboration provider through the
   // Playwright (Node) network stack: after a server restart the browser may

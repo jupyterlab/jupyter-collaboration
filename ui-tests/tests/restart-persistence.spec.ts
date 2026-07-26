@@ -133,6 +133,19 @@ async function typeInFirstCell(
   await page.notebook.leaveCellEditingMode(0);
 }
 
+async function readCellsOnDisk(
+  page: Page,
+  tmpPath: string,
+  name: string
+): Promise<string> {
+  const resp = await page.request.get(
+    `http://localhost:8888/api/contents/${tmpPath}/${name}?content=1`
+  );
+  expect(resp.ok()).toBeTruthy();
+  const model = await resp.json();
+  return JSON.stringify(model.content.cells);
+}
+
 async function waitForOnDisk(
   page: Page,
   tmpPath: string,
@@ -382,6 +395,159 @@ test.describe.serial('Server restart persistence', () => {
         .catch(() => undefined);
       await page.close().catch(() => undefined);
       await context.close().catch(() => undefined);
+    }
+  });
+
+  test('reopened notebook is editable and tracks its dirty state (#601)', async ({
+    page,
+    tmpPath,
+    browser,
+    baseURL,
+    waitForApplication
+  }) => {
+    // Issue #601, following its reproduction exactly: put content in a cell,
+    // close JupyterLab, stop the server, start it again and reopen. The
+    // notebook came back empty, and typing into it did not mark the document
+    // dirty, so the user could not tell whether their work was being kept.
+    const name = 'restart_reopen.ipynb';
+    await createNotebook(page, tmpPath, name);
+    await typeInFirstCell(page, 'value = 601');
+    await waitForOnDisk(page, tmpPath, name, 'value = 601');
+    await page.close();
+
+    await stopServer(server);
+    server = startServer(ROOT_DIR);
+    await waitForServer(true);
+
+    const { page: newPage } = await galata.newPage({
+      baseURL: baseURL!,
+      browser,
+      mockUser: true,
+      tmpPath,
+      waitForApplication
+    });
+    try {
+      await newPage.filebrowser.refresh();
+      await newPage.notebook.open(name);
+      await dismissKernelDialog(newPage);
+
+      // Half one of the issue: the content is there rather than blank.
+      await expect(newPage.locator('.jp-Cell').first()).toContainText(
+        'value = 601',
+        { timeout: 20000 }
+      );
+      await expect(newPage.locator('.jp-Cell')).toHaveCount(1);
+
+      // Half two: the document still tracks its own dirty state. The tab
+      // gains `jp-mod-dirty` while there are unsaved changes and loses it
+      // once the room has written them out.
+      const tab = newPage.locator('.lm-TabBar-tab.jp-mod-dirty');
+      await expect(tab).toHaveCount(0);
+
+      await typeInFirstCell(newPage, '\nmore = True');
+      await expect(tab).toHaveCount(1, { timeout: 10000 });
+
+      // And the edit really does reach the file, which is what the dirty
+      // indicator is promising.
+      await waitForOnDisk(newPage, tmpPath, name, 'more = True');
+      await expect(tab).toHaveCount(0, { timeout: 15000 });
+    } finally {
+      await newPage.close();
+    }
+  });
+
+  // The notebook file is the source of truth whenever it disagrees with the
+  // YStore. If the server goes down before an edit has been written out, that
+  // edit exists only in the YStore, and on the next start
+  // `DocumentRoom.initialize` resolves the disagreement by taking the file and
+  // discarding the YStore content (the server log says "Content in file ... is
+  // out-of-sync with the ystore", then "loaded from file"). The edit is
+  // dropped, which is the intended outcome: the YStore is a cache of the
+  // editing history, not a second copy of the document, so it never gets to
+  // overrule what is on disk. This rule predates the branch and is unchanged
+  // by it, and the test is here to keep it deliberate.
+  //
+  // Not to be confused with the failure reported in #601, which the test above
+  // covers: that one came from a hole in the recorded update stream, left by a
+  // write made after the YStore snapshot but before the update observer was
+  // subscribed, and is fixed on main by #607.
+  test('the file wins over YStore edits that never reached it', async ({
+    page,
+    tmpPath,
+    browser,
+    baseURL,
+    waitForApplication
+  }) => {
+    const name = 'restart_pending_save.ipynb';
+    const onDisk = 'value_on_disk = 1';
+    const neverSaved = 'value_only_in_ystore = 2';
+
+    // Start from a state both sides agree on: an edit that does reach the file.
+    await createNotebook(page, tmpPath, name);
+    await typeInFirstCell(page, onDisk);
+    await waitForOnDisk(page, tmpPath, name, onDisk);
+    await page.close();
+
+    // Autosave is pushed out of the way so the next edit is deterministically
+    // still pending when the server goes down.
+    await stopServer(server);
+    server = startServer(ROOT_DIR, ['--YDocExtension.document_save_delay=120']);
+    await waitForServer(true);
+
+    const { page: editPage } = await galata.newPage({
+      baseURL: baseURL!,
+      browser,
+      mockUser: true,
+      tmpPath,
+      waitForApplication
+    });
+    try {
+      await editPage.filebrowser.refresh();
+      await editPage.notebook.open(name);
+      await dismissKernelDialog(editPage);
+      await expect(editPage.locator('.jp-Cell').first()).toContainText(onDisk, {
+        timeout: 20000
+      });
+
+      await typeInFirstCell(editPage, `\n${neverSaved}`);
+      // Long enough to reach the room, and so the YStore, but not the file.
+      await editPage.waitForTimeout(3000);
+
+      // The premise of the test: the two sides now disagree.
+      expect(await readCellsOnDisk(editPage, tmpPath, name)).not.toContain(
+        neverSaved
+      );
+    } finally {
+      await editPage.close();
+    }
+
+    await stopServer(server);
+    server = startServer(ROOT_DIR);
+    await waitForServer(true);
+
+    const { page: newPage } = await galata.newPage({
+      baseURL: baseURL!,
+      browser,
+      mockUser: true,
+      tmpPath,
+      waitForApplication
+    });
+    try {
+      await newPage.filebrowser.refresh();
+      await newPage.notebook.open(name);
+      await dismissKernelDialog(newPage);
+
+      const cell = newPage.locator('.jp-Cell').first();
+      await expect(cell).toContainText(onDisk, { timeout: 20000 });
+      // The unsaved edit is gone, and stays gone rather than arriving late.
+      await expect(cell).not.toContainText(neverSaved);
+      await newPage.waitForTimeout(2000);
+      await expect(cell).not.toContainText(neverSaved);
+      expect(await readCellsOnDisk(newPage, tmpPath, name)).not.toContain(
+        neverSaved
+      );
+    } finally {
+      await newPage.close();
     }
   });
 });
