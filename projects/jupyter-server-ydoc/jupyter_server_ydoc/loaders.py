@@ -130,8 +130,19 @@ class FileLoader:
                 model (dict): A dictionary with the metadata and content of the file.
         """
         async with self._lock:
+            # The hash is requested eagerly so that a room can publish the
+            # hash of the content it loaded, not only of the content it
+            # saved: clients compare it against the file to tell their own
+            # unsaved edits apart from an out-of-band change (see the
+            # rebase decision in the `docprovider` package).
             model = await ensure_async(
-                self._contents_manager.get(self.path, format=format, type=file_type, content=True)
+                self._contents_manager.get(
+                    self.path,
+                    format=format,
+                    type=file_type,
+                    content=True,
+                    require_hash=True,
+                )
             )
             if (
                 file_type == "file"

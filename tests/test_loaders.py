@@ -136,6 +136,18 @@ async def test_FileLoader_without_watcher():
         await loader.clean()
 
 
+async def test_FileLoader_load_content_requests_the_hash():
+    cm = FakeContentsManager({"last_modified": datetime.now(timezone.utc)})
+    loader = FileLoader("file-hash", FakeFileIDManager({"file-hash": "myfile.txt"}), cm)
+    try:
+        model = await loader.load_content("text", "file")
+        # The room publishes this so clients can tell an out-of-band change
+        # from their own unsaved edits without prompting.
+        assert model["hash"] == "fake_hash"
+    finally:
+        await loader.clean()
+
+
 async def test_FileLoaderMapping_with_watcher():
     id = "file-4567"
     path = "myfile.txt"

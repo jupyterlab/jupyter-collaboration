@@ -12,6 +12,10 @@ module.exports = {
   ...baseConfig,
   // Force one worker as global awareness will contaminate parallel tests.
   workers: 1,
+  // The restart suite owns the Jupyter Server lifecycle itself (it kills and
+  // respawns the process mid-test), so it must not run against the managed
+  // `webServer` below; run it with `jlpm test:restart` instead.
+  testIgnore: ['**/.ipynb_checkpoints/**', '**/restart-*.spec.ts'],
   webServer: {
     command: 'jlpm start',
     url: 'http://localhost:8888/lab',

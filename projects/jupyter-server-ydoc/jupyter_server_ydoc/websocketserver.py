@@ -76,7 +76,17 @@ class JupyterWebsocketServer(WebsocketServer):
         #         self.log.warning(msg)
         #         self.log.debug("Pending tasks: %r", pending)
 
-        await self.stop()
+        try:
+            await self.stop()
+        except RuntimeError:
+            # `WebsocketServer.stop` refuses a server that is not running,
+            # which is not a failure here: the extension is shutting down and
+            # the server may already have been stopped. Raising would leave an
+            # exception on a task nobody retrieves, and its traceback keeps
+            # every frame it captured alive, rooms and Yjs documents included,
+            # until the task is collected on whichever thread gets there.
+            self.log.debug("The WebSocket server was already stopped.")
+
         tasks = []
         if self.monitor_task is not None:
             self.monitor_task.cancel()

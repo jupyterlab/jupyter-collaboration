@@ -23,6 +23,7 @@ from .handlers import (
 )
 from .loaders import FileLoaderMapping
 from .rooms import DocumentRoom
+from .sessions import DocumentSessionStore, document_session_store_path
 from .stores import SQLiteYStore
 from .utils import (
     AWARENESS_EVENTS_SCHEMA_PATH,
@@ -171,6 +172,12 @@ class YDocExtension(ExtensionApp):
             file_stop_poll_on_errors_after=self.file_stop_poll_on_errors_after,
         )
 
+        self.doc_session_store = DocumentSessionStore(
+            path=document_session_store_path(self.serverapp.root_dir, self.session_store_path),
+            log=self.log,
+        )
+        self.serverapp.web_app.settings["collaborative_doc_session_store"] = self.doc_session_store
+
         self.handlers.extend(
             [
                 (
@@ -194,9 +201,16 @@ class YDocExtension(ExtensionApp):
                         "ystore_class": ystore_class,
                         "ywebsocket_server": self.ywebsocket_server,
                         "room_locks": self._room_locks,
+                        "doc_session_store": self.doc_session_store,
                     },
                 ),
-                (r"/api/collaboration/session/(.*)", DocSessionHandler),
+                (
+                    r"/api/collaboration/session/(.*)",
+                    DocSessionHandler,
+                    {
+                        "doc_session_store": self.doc_session_store,
+                    },
+                ),
                 (
                     r"/api/collaboration/timeline/(.*)",
                     TimelineHandler,
@@ -284,6 +298,7 @@ class YDocExtension(ExtensionApp):
                     save_delay=self.document_save_delay,
                     document_load_progressively=self.document_load_progressively,
                     notebook_output_delay_threshold_mb=self.notebook_output_delay_threshold_mb,
+                    session_store=self.doc_session_store,
                 )
                 try:
                     await self.ywebsocket_server.start_room(room)
@@ -320,10 +335,17 @@ class YDocExtension(ExtensionApp):
 
     async def stop_extension(self):
         # Cancel tasks and clean up
-        await asyncio.wait(
+        done, _ = await asyncio.wait(
             [
                 asyncio.create_task(self.ywebsocket_server.clean()),
                 asyncio.create_task(self.file_loaders.clear()),
             ],
             timeout=3,
         )
+        for task in done:
+            # Reported here rather than left sitting on the task: an exception
+            # nobody retrieves keeps its traceback, and everything the captured
+            # frames reference, alive until the task is garbage collected,
+            # which can happen on any thread and at any time.
+            if not task.cancelled() and (error := task.exception()) is not None:
+                self.log.warning("Error while stopping the extension: %r", error)
