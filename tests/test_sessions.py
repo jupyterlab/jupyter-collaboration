@@ -8,7 +8,11 @@ from copy import deepcopy
 
 from jupyter_server_ydoc.loaders import FileLoader
 from jupyter_server_ydoc.rooms import DocumentRoom
-from jupyter_server_ydoc.sessions import DocumentSessionStore, lineage_fingerprint
+from jupyter_server_ydoc.sessions import (
+    DocumentSession,
+    DocumentSessionStore,
+    lineage_fingerprint,
+)
 from jupyter_server_ydoc.stores import SQLiteYStore
 from jupyter_server_ydoc.test_utils import (
     FakeContentsManager,
@@ -22,6 +26,21 @@ from .test_documents import _create_notebook_room, _notebook_model
 
 def _is_uuid(value: str) -> bool:
     return bool(uuid.UUID(value))
+
+
+def _stored(store: DocumentSessionStore, room_id: str = "room") -> DocumentSession:
+    """The session recorded for ``room_id``, which the caller expects to exist.
+
+    Parameters:
+        store (DocumentSessionStore): The store to read from.
+        room_id (str): The room whose session to return.
+
+    Returns:
+        session (DocumentSession): The recorded session.
+    """
+    session = store.get(room_id)
+    assert session is not None, f"no document session recorded for {room_id!r}"
+    return session
 
 
 async def _create_notebook_room_with_ystore(
@@ -467,13 +486,13 @@ async def test_saving_prevents_a_later_identical_rebuild_from_keeping_the_sessio
     room_a, loader_a = await _create_notebook_room(notebook, "room", session_store=session_store)
     session_a = room_a.session_id
     try:
-        assert session_store.get("room").rebuild_hash is not None
+        assert _stored(session_store).rebuild_hash is not None
         # The room writes different content: the lineage advances past its
         # founding rebuild, even though the file may later be reverted to it.
         changed = deepcopy(notebook)
         changed["cells"][0]["source"] = "edited"
         room_a._note_content_written(changed)
-        assert session_store.get("room").rebuild_hash is None
+        assert _stored(session_store).rebuild_hash is None
     finally:
         await room_a.stop()
         await loader_a.clean()
@@ -492,10 +511,10 @@ async def test_saving_changed_content_marks_the_lineage_as_advanced():
     notebook = _notebook_model()
     room, loader = await _create_notebook_room(notebook, "room", session_store=session_store)
     try:
-        assert session_store.get("room").rebuild_hash is not None
+        assert _stored(session_store).rebuild_hash is not None
         room._document.set_cell(0, {"cell_type": "code", "id": "cell-1", "source": "edited"})
         await room._maybe_save_document(None, save_now=True)
-        assert session_store.get("room").rebuild_hash is None
+        assert _stored(session_store).rebuild_hash is None
     finally:
         await room.stop()
         await loader.clean()
@@ -508,9 +527,9 @@ async def test_saving_identical_content_keeps_the_lineage():
     notebook = _notebook_model()
     room, loader = await _create_notebook_room(notebook, "room", session_store=session_store)
     try:
-        founding_hash = session_store.get("room").rebuild_hash
+        founding_hash = _stored(session_store).rebuild_hash
         await room._maybe_save_document(None, save_now=True)
-        assert session_store.get("room").rebuild_hash == founding_hash
+        assert _stored(session_store).rebuild_hash == founding_hash
     finally:
         await room.stop()
         await loader.clean()
@@ -524,12 +543,12 @@ async def test_adopting_an_out_of_band_change_advances_the_lineage():
     notebook = _notebook_model()
     room, loader = await _create_notebook_room(notebook, "room", session_store=session_store)
     try:
-        assert session_store.get("room").rebuild_hash is not None
+        assert _stored(session_store).rebuild_hash is not None
         changed = deepcopy(notebook)
         changed["cells"][0]["source"] = "changed out of band"
         await room._adopt_file_content({"content": changed, "hash": "hash-after"})
 
-        assert session_store.get("room").rebuild_hash is None
+        assert _stored(session_store).rebuild_hash is None
         assert room._document.hash == "hash-after"
         assert room._document.dirty is False
     finally:
@@ -606,7 +625,7 @@ async def test_restored_history_recovers_its_session_without_the_store(tmp_path)
     )
     try:
         assert room_b.session_id == session_a
-        assert empty_store.get(room_id).session_id == session_a
+        assert _stored(empty_store, room_id).session_id == session_a
     finally:
         await room_b.stop()
         await loader_b.clean()
@@ -620,7 +639,7 @@ def test_invalidate_rebuild_is_persisted_and_idempotent(tmp_path):
     store.invalidate_rebuild("room")
     store.invalidate_rebuild("room")
     store.invalidate_rebuild("unknown-room")
-    assert DocumentSessionStore(path=path).get("room").rebuild_hash is None
+    assert _stored(DocumentSessionStore(path=path)).rebuild_hash is None
 
 
 def test_persist_is_atomic_and_leaves_no_temporary_files(tmp_path):
@@ -643,5 +662,5 @@ def test_persist_failure_keeps_the_previous_store(tmp_path, monkeypatch):
     store.roll("room", "rebuild", rebuild_hash="abc")
 
     # The store on disk is still the last complete one, not a truncated file.
-    assert DocumentSessionStore(path=path).get("room").session_id == session_id
+    assert _stored(DocumentSessionStore(path=path)).session_id == session_id
     assert [p.name for p in tmp_path.glob("*.tmp")] == []
