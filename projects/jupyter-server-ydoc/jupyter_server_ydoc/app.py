@@ -335,10 +335,17 @@ class YDocExtension(ExtensionApp):
 
     async def stop_extension(self):
         # Cancel tasks and clean up
-        await asyncio.wait(
+        done, _ = await asyncio.wait(
             [
                 asyncio.create_task(self.ywebsocket_server.clean()),
                 asyncio.create_task(self.file_loaders.clear()),
             ],
             timeout=3,
         )
+        for task in done:
+            # Reported here rather than left sitting on the task: an exception
+            # nobody retrieves keeps its traceback, and everything the captured
+            # frames reference, alive until the task is garbage collected,
+            # which can happen on any thread and at any time.
+            if not task.cancelled() and (error := task.exception()) is not None:
+                self.log.warning("Error while stopping the extension: %r", error)
