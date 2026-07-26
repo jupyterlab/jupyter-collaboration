@@ -66,10 +66,18 @@ async def _sync_once(url: str, room_name: str) -> str:
     doc = YUnicode()
     doc.observe(_on_document_change)
     async with aconnect_ws(url) as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
-        async with asyncio.timeout(10):
-            await event.wait()
+        await _wait_for_event(event)
         await sleep(0.1)
     return doc.source
+
+
+async def _wait_for_event(event: Event, timeout: float = 10.0) -> None:
+    """Wait for `event`, failing rather than hanging if it never fires.
+
+    `asyncio.wait_for` rather than the more readable `asyncio.timeout`, which
+    this project cannot use while it still supports Python 3.10.
+    """
+    await asyncio.wait_for(event.wait(), timeout=timeout)
 
 
 async def _wait_for_file(path: Path, expected: str, timeout: float = 30.0) -> None:
@@ -257,8 +265,7 @@ async def test_file_reverted_to_the_founding_content_rolls_the_session(
         # an empty document that is still being synchronized merges the two
         # sources into something neither side asked for, which on a slow
         # runner is exactly what used to happen.
-        async with asyncio.timeout(10):
-            await synchronized.wait()
+        await _wait_for_event(synchronized)
         assert doc.source == "original"
 
         doc.source = "edited"
