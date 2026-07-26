@@ -5,8 +5,10 @@
   "private": true,
   "scripts": {
     "start": "jupyter lab --config jupyter_server_test_config.py",
+    "start:conflict": "jupyter lab --config jupyter_server_test_config_noprogressive.py",
     "start:timeline": "jupyter lab --config jupyter_server_test_config.py --ServerApp.base_url=/api/collaboration/timeline/",
     "test": "npx playwright test --config=playwright.config.js",
+    "test:conflict": "npx playwright test --config=playwright.conflict.config.js",
     "test:timeline": "npx playwright test --config=playwright.timeline.config.js",
     "test:update": "npx playwright test --update-snapshots"
   },
