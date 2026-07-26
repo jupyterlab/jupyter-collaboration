@@ -14,9 +14,11 @@ from __future__ import annotations
 
 import asyncio
 import json
+import sqlite3
 import sys
 from asyncio import Event, sleep
 from collections.abc import Callable
+from contextlib import closing
 from pathlib import Path
 from typing import Any
 
@@ -70,14 +72,52 @@ async def _sync_once(url: str, room_name: str) -> str:
     return doc.source
 
 
+async def _wait_for_file(path: Path, expected: str, timeout: float = 30.0) -> None:
+    """Wait for the room to write `expected` to disk.
+
+    The room debounces saves, so this is never immediate, and a loaded CI
+    runner can take considerably longer than a local one; the budget is
+    generous because the cost of it being too tight is a flaky failure.
+    """
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + timeout
+    last = None
+    while loop.time() < deadline:
+        try:
+            last = path.read_text()
+        except OSError:
+            # Windows can refuse the read while the room is mid-write.
+            last = None
+        if last == expected:
+            return
+        await sleep(0.1)
+    pytest.fail(f"the room never saved {expected!r} to {path.name}, last saw {last!r}")
+
+
 async def _evict_room() -> None:
     await sleep(ROOM_EVICTION_DELAY * 5)
 
 
 def _wipe_ystore(jp_root_dir: Path) -> None:
-    """Drop the persisted Yjs history, as a periodic cleanup job would."""
-    for db in jp_root_dir.glob(".rtc_test.db*"):
-        db.unlink()
+    """Drop the persisted Yjs history, as a periodic cleanup job would.
+
+    The rows are deleted rather than the database file, because the server
+    holds its SQLite connection open for the lifetime of the process and
+    Windows refuses to unlink a file another handle still has open. An empty
+    table gives the room the same thing an absent file does: `apply_updates`
+    raises `YDocNotFound`, so the room rebuilds from disk with no history.
+    """
+    db_path = jp_root_dir.joinpath(".rtc_test.db")
+    if not db_path.exists():
+        return
+    with closing(sqlite3.connect(db_path, timeout=10)) as db:
+        for table in ("yupdates", "ycheckpoints"):
+            try:
+                db.execute(f"DELETE FROM {table}")
+            except sqlite3.OperationalError:
+                # The store has not created this table yet.
+                pass
+        db.commit()
 
 
 async def test_history_rebuilt_from_unchanged_file_still_rolls_the_session(
@@ -205,15 +245,24 @@ async def test_file_reverted_to_the_founding_content_rolls_the_session(
 
     # A client edits the document; the room saves the new content to disk.
     doc = YUnicode()
+    synchronized = Event()
+
+    def _on_document_change(target: str, e: Any) -> None:
+        if target == "source":
+            synchronized.set()
+
+    doc.observe(_on_document_change)
     async with aconnect_ws(url) as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
-        await sleep(0.2)
+        # The edit has to come after the initial synchronization. Writing to
+        # an empty document that is still being synchronized merges the two
+        # sources into something neither side asked for, which on a slow
+        # runner is exactly what used to happen.
+        async with asyncio.timeout(10):
+            await synchronized.wait()
+        assert doc.source == "original"
+
         doc.source = "edited"
-        for _ in range(40):
-            await sleep(0.1)
-            if jp_root_dir.joinpath(path).read_text() == "edited":
-                break
-        else:
-            pytest.fail("the room never saved the edited content")
+        await _wait_for_file(jp_root_dir.joinpath(path), "edited")
 
     await _evict_room()
     _wipe_ystore(jp_root_dir)
