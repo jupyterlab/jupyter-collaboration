@@ -259,7 +259,11 @@ export const IAwarenessProviderFactory = new Token<IAwarenessProviderFactory>(
 );
 
 export interface ISessionClosePayload {
-  reason: 'unknown_session' | 'version_mismatch' | 'initialization_error';
+  reason:
+    | 'unknown_session'
+    | 'version_mismatch'
+    | 'initialization_error'
+    | 'session_changed';
   sessionId?: string;
   reloadable?: boolean;
   errorReason?: string;

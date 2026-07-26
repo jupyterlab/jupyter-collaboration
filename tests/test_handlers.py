@@ -4,15 +4,23 @@
 from __future__ import annotations
 
 import json
+import sys
+import uuid
 from asyncio import Event, sleep
 from typing import Any
 
 import pytest
 from dirty_equals import IsStr
+from httpx_ws import WebSocketDisconnect, aconnect_ws
 from jupyter_events.logger import EventLogger
 from jupyter_ydoc import YUnicode
 from pycrdt import Provider, Text
 from pycrdt.websocket.websocket import HttpxWebsocket
+
+if sys.version_info < (3, 11):
+    # Backport of the Python 3.11 built-in; a dependency of httpx_ws (via
+    # anyio), which raises such groups on Python < 3.11 in the first place.
+    from exceptiongroup import BaseExceptionGroup
 
 
 async def test_session_handler_should_create_session_id(
@@ -434,3 +442,134 @@ async def test_fork_handler(
             "fork_info": expected_data[fork_roomid1],
             "action": "delete",
         }
+
+
+def _doc_room_ws_url(
+    jp_http_port: str, jp_base_url: str, session_data: dict, doc_session_id: str | None = None
+) -> tuple[str, str]:
+    """Websocket URL for a document room, optionally claiming a document session."""
+    room_name = f"{session_data['format']}:{session_data['type']}:{session_data['fileId']}"
+    url = (
+        f"http://127.0.0.1:{jp_http_port}{jp_base_url}api/collaboration/room/"
+        f"{room_name}?sessionId={session_data['sessionId']}"
+    )
+    if doc_session_id is not None:
+        url += f"&docSessionId={doc_session_id}"
+    return url, room_name
+
+
+def _extract_ws_disconnect(exc: BaseException) -> WebSocketDisconnect:
+    """Unwrap a server-initiated close raised by httpx_ws.
+
+    Depending on timing, the ``WebSocketDisconnect`` either propagates
+    directly from ``receive()`` or is re-raised inside the exception group
+    of the session's background task group.
+    """
+    if isinstance(exc, WebSocketDisconnect):
+        return exc
+    assert isinstance(exc, BaseExceptionGroup)
+    matched, _ = exc.split(WebSocketDisconnect)
+    assert matched is not None, f"no WebSocketDisconnect in {exc!r}"
+    leaf = matched.exceptions[0]
+    while isinstance(leaf, BaseExceptionGroup):
+        leaf = leaf.exceptions[0]
+    return leaf
+
+
+async def test_session_handler_should_return_stable_document_session_id(
+    rtc_create_file, rtc_fetch_session
+):
+    path, _ = await rtc_create_file("doc_session.txt", "test")
+
+    resp = await rtc_fetch_session("text", "file", path)
+    data = json.loads(resp.body.decode("utf-8"))
+    doc_session_id = data["documentSessionId"]
+    assert uuid.UUID(doc_session_id)
+
+    # Repeated calls return the very same document session ID.
+    resp = await rtc_fetch_session("text", "file", path)
+    data = json.loads(resp.body.decode("utf-8"))
+    assert data["documentSessionId"] == doc_session_id
+
+
+async def test_doc_client_with_current_doc_session_id_should_connect(
+    rtc_create_file, rtc_fetch_session, jp_http_port, jp_base_url
+):
+    path, content = await rtc_create_file("doc_session_ok.txt", "test")
+    resp = await rtc_fetch_session("text", "file", path)
+    session_data = json.loads(resp.body.decode("utf-8"))
+    doc_session_id = session_data["documentSessionId"]
+
+    event = Event()
+
+    def _on_document_change(target: str, e: Any) -> None:
+        if target == "source":
+            event.set()
+
+    doc = YUnicode()
+    doc.observe(_on_document_change)
+
+    url, room_name = _doc_room_ws_url(jp_http_port, jp_base_url, session_data, doc_session_id)
+    async with aconnect_ws(url) as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
+        await event.wait()
+        await sleep(0.1)
+
+    assert doc.source == content
+
+    # The initialized room adopted the REST-minted session, so a repeated
+    # PUT reports the same document session ID.
+    resp = await rtc_fetch_session("text", "file", path)
+    assert json.loads(resp.body.decode("utf-8"))["documentSessionId"] == doc_session_id
+
+
+async def test_doc_client_with_wrong_doc_session_id_should_be_refused(
+    rtc_create_file, rtc_fetch_session, jp_http_port, jp_base_url
+):
+    path, _ = await rtc_create_file("doc_session_wrong.txt", "test")
+    resp = await rtc_fetch_session("text", "file", path)
+    session_data = json.loads(resp.body.decode("utf-8"))
+    current_doc_session = session_data["documentSessionId"]
+
+    wrong_doc_session = str(uuid.uuid4())
+    assert wrong_doc_session != current_doc_session
+
+    url, _ = _doc_room_ws_url(jp_http_port, jp_base_url, session_data, wrong_doc_session)
+    # The server closes right after `open()`; receiving surfaces the close
+    # either directly or wrapped in the background task group of httpx_ws.
+    with pytest.raises((WebSocketDisconnect, BaseExceptionGroup)) as exc_info:
+        async with aconnect_ws(url) as ws:
+            await ws.receive()
+
+    disconnect = _extract_ws_disconnect(exc_info.value)
+    assert disconnect.code == 1003
+    payload = json.loads(disconnect.reason)
+    assert payload["reason"] == "session_changed"
+    assert payload["sessionId"]
+    assert payload["sessionId"] == current_doc_session
+
+
+async def test_doc_client_without_doc_session_id_should_connect_after_rebuild(
+    rtc_create_file, rtc_connect_doc_client
+):
+    path, content = await rtc_create_file("doc_session_absent.txt", "test")
+
+    async def connect_and_sync() -> str:
+        event = Event()
+
+        def _on_document_change(target: str, e: Any) -> None:
+            if target == "source":
+                event.set()
+
+        doc = YUnicode()
+        doc.observe(_on_document_change)
+
+        websocket, room_name = await rtc_connect_doc_client("text", "file", path)
+        async with websocket as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
+            await event.wait()
+            await sleep(0.1)
+        return doc.source
+
+    # The first connection triggers the room rebuild from disk; connecting
+    # without a docSessionId must be accepted both then and afterwards.
+    assert await connect_and_sync() == content
+    assert await connect_and_sync() == content

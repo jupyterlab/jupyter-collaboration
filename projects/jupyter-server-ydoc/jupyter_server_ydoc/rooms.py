@@ -20,6 +20,7 @@ from pycrdt.store import BaseYStore, YDocNotFound
 from pycrdt.websocket import YRoom
 
 from .loaders import FileLoader
+from .sessions import DocumentSessionStore
 from .utils import JUPYTER_COLLABORATION_EVENTS_URI, LogLevel, MessageType, OutOfBandChanges
 
 YFILE = YDOCS["file"]
@@ -43,6 +44,7 @@ class DocumentRoom(YRoom):
         document_load_progressively: bool = False,
         notebook_output_delay_threshold_mb: float | None = 100,
         exception_handler: Callable[[Exception, Logger], bool] | None = None,
+        session_store: DocumentSessionStore | None = None,
     ):
         super().__init__(ready=False, ystore=ystore, exception_handler=exception_handler, log=log)
 
@@ -63,6 +65,9 @@ class DocumentRoom(YRoom):
             and notebook_output_delay_threshold_mb < 0
         ):
             raise ValueError("notebook_output_delay_threshold_mb must be >=0 or None")
+
+        self._session_store = session_store if session_store is not None else DocumentSessionStore()
+        self.session_id: str | None = None
 
         self._update_lock = asyncio.Lock()
         self._cleaner: asyncio.Task | None = None
@@ -176,6 +181,12 @@ class DocumentRoom(YRoom):
                     )
                     read_from_source = True
 
+            # The document session must be assigned before the room is marked
+            # ready (including the progressive-loading early return below) so
+            # that the websocket handler can validate client claims against it
+            # before serving any Yjs synchronization.
+            self._assign_session(loaded_from_store)
+
             if read_from_source:
                 self._emit(LogLevel.INFO, "load", "Content loaded from disk.")
                 self.log.info(
@@ -199,30 +210,49 @@ class DocumentRoom(YRoom):
                             and (exc := self._document_progressively_loaded.exception()) is not None
                         ):
                             raise exc
+                        self._publish_loaded_hash(model)
                         self.ready = True
                         await self.ydoc_observed.wait()
                         finish.set()
                         self._emit(LogLevel.INFO, "initialize", "Room initialized")
                         return
                     else:
-                        await self._apply_deterministic_source_content(model["content"])
+                        await self._apply_source_content(model["content"])
                 else:
                     await self._document.aset(model["content"])
 
                 if self.ystore:
                     await self.ystore.encode_state_as_update(self.ydoc)
 
+            self._publish_loaded_hash(model)
             self.ready = True
             self._emit(LogLevel.INFO, "initialize", "Room initialized")
         finally:
             if release_update_lock:
                 self._update_lock.release()
 
+    def _publish_loaded_hash(self, model: dict[str, Any]) -> None:
+        """Publish the hash of the file content the room was loaded with.
+
+            Parameters:
+                model (dict): The content model the room loaded.
+
+        ### Note:
+            Without this a document only ever carries a hash once *this*
+            room incarnation saved it, and a client reconciling a diverged
+            session cannot prove that the file is unchanged since a known
+            save - it would have to treat its own unsaved edits as a
+            conflict and prompt the user for nothing.
+        """
+        file_hash = model.get("hash")
+        if file_hash and self._document.hash != file_hash:
+            self._document.hash = file_hash
+
     async def _finish_progressive_initialization(
         self, content: Any, initialized: asyncio.Event, finish: asyncio.Event
     ) -> None:
         try:
-            await self._apply_deterministic_source_content(
+            await self._apply_source_content(
                 content, progressive=True, initialized=initialized, finish=finish
             )
             if self.ystore:
@@ -242,23 +272,118 @@ class DocumentRoom(YRoom):
         finally:
             self._update_lock.release()
 
-    async def _apply_deterministic_source_content(
+    def _assign_session(self, loaded_from_store: bool) -> None:
+        """Assign the document session ID for this room incarnation.
+
+            Parameters:
+                loaded_from_store (bool): Whether the Yjs history was
+                    restored from the YStore.
+
+        ### Note:
+            The session identifies one Yjs history lineage, and there are
+            exactly two ways a room comes to hold one:
+
+            - restored from the YStore, which continues the lineage the
+              clients already hold, so the session is kept;
+            - rebuilt from the source file, which creates brand new Yjs
+              items under a fresh client id (see
+              ``_apply_source_content``) and therefore a new lineage, so
+              the session rolls. Clients holding the old one reconcile
+              their content before resynchronizing.
+
+            A rebuild always rolls, even when the file did not change: the
+            items it produces are new regardless, and pretending otherwise
+            is what makes tombstoning content unsafe.
+        """
+        store = self._session_store
+        session = store.get(self._room_id)
+        if loaded_from_store:
+            if session is not None:
+                # Downgrade a "rest" origin: the session now covers history.
+                self.session_id = store.update(self._room_id, "store")
+            elif carried := self._carried_session_id():
+                # The session store was lost (deleted, or never writable)
+                # but the history was not. Recover the identity the history
+                # carries instead of declaring a new lineage: the restored
+                # items are the very ones connected clients hold, so
+                # refusing them would have them tombstone content that is
+                # still live, deleting it for everyone.
+                self.session_id = store.adopt(self._room_id, carried, "store")
+                self.log.info(
+                    "Recovered document session %s of room %s from its restored history",
+                    self.session_id,
+                    self._room_id,
+                )
+            else:
+                self.session_id = store.roll(self._room_id, "store")
+            self._publish_session_id()
+            return
+
+        # Rebuilt from the source file: new items, hence a new lineage.
+        if session is not None and session.origin == "rest":
+            # No Yjs history ever existed under this session: it was minted
+            # by the REST handler for a client which has nothing to protect
+            # yet, so it can cover this first rebuild instead of costing that
+            # client a refusal round trip on the very first open.
+            self.session_id = store.update(self._room_id, "rebuild")
+        else:
+            self.session_id = store.roll(self._room_id, "rebuild")
+            self.log.info(
+                "Room %s rebuilt from disk; new document session %s",
+                self._room_id,
+                self.session_id,
+            )
+        self._publish_session_id()
+
+    def _carried_session_id(self) -> str | None:
+        """The document session recorded in the restored Yjs history, if any.
+
+        Returns:
+            session_id (str | None): The session the restored history
+                belongs to.
+        """
+        carried = self._document.ystate.get("document_session")
+        return carried if isinstance(carried, str) and carried else None
+
+    def _publish_session_id(self) -> None:
+        """Record the session in the document, so the history carries it.
+
+        ### Note:
+            The session store is a convenience: it is fast to read and
+            survives the document being evicted. The document itself is the
+            authority, because the identity of a history lineage has to
+            travel with that lineage - losing the store must not make a
+            restored history look like a new one (see ``_assign_session``).
+        """
+        if self.session_id and self._carried_session_id() != self.session_id:
+            self._document.ystate["document_session"] = self.session_id
+
+    async def _apply_source_content(
         self,
         content: Any,
         progressive: bool = False,
         initialized: asyncio.Event | None = None,
         finish: asyncio.Event | None = None,
     ) -> None:
-        """Load source content using a deterministic update.
+        """Build the room's Yjs items from the content of the source file.
 
-        Rooms rebuilt from disk must recreate the same Yjs history for identical
-        content, otherwise reconnecting clients can merge duplicate content from a
-        divergent history after server restart or room eviction.
+            Parameters:
+                content (Any): The document content to load.
+                progressive (bool): Whether to stream the content in.
+                initialized (asyncio.Event | None): Set once the document
+                    structure is in place, for progressive loading.
+                finish (asyncio.Event | None): Awaited before the remaining
+                    content is streamed, for progressive loading.
 
-        The client ID needs to be fixed to a deterministic value, see:
-        https://discuss.yjs.dev/t/initial-offline-value-of-a-shared-document/465
+        ### Note:
+            The items are built in a throwaway document with an ordinary
+            random client id, so a rebuild always produces a *new* Yjs
+            history lineage rather than pretending to continue an existing
+            one. Clients holding the previous lineage are told so by their
+            document session being refused, and reconcile their content
+            before resynchronizing (see ``_assign_session``).
         """
-        source_ydoc: Doc = Doc(client_id=0)
+        source_ydoc: Doc = Doc()
         source_document = YDOCS.get(self._file_type, YFILE)(source_ydoc)
         if progressive:
             subscription = source_ydoc.observe(lambda event: self.ydoc.apply_update(event.update))
@@ -354,10 +479,26 @@ class DocumentRoom(YRoom):
             self._emit(LogLevel.ERROR, None, msg)
             return
 
+        await self._adopt_file_content(model)
+
+    async def _adopt_file_content(self, model: dict[str, Any]) -> None:
+        """Take the content the file now holds into the room.
+
+            Parameters:
+                model (dict): The content model loaded from the file.
+
+        ### Note:
+            Reached both from the file watcher and from a save which found
+            the file changed underneath it; both leave the lineage holding
+            content it was not founded with, and both have to publish the
+            new hash so clients keep being able to tell an out-of-band
+            change from their own unsaved edits.
+        """
         async with self._update_lock:
             if await self._document.aget() != model["content"]:
                 await self._document.aset(model["content"])
             self._document.dirty = False
+            self._publish_loaded_hash(model)
 
     def _on_filepath_change(self) -> None:
         """
@@ -448,11 +589,12 @@ class DocumentRoom(YRoom):
                 await asyncio.sleep(self._save_delay)
 
             self.log.info("Saving the content from room %s", self._room_id)
+            content = await self._document.aget()
             saved_model = await self._file.maybe_save_content(
                 {
                     "format": self._file_format,
                     "type": self._file_type,
-                    "content": await self._document.aget(),
+                    "content": content,
                 }
             )
             if saved_model:
@@ -475,11 +617,7 @@ class DocumentRoom(YRoom):
                 self._emit(LogLevel.ERROR, None, msg)
                 return None
 
-            async with self._update_lock:
-                if await self._document.aget() != model["content"]:
-                    await self._document.aset(model["content"])
-                self._document.dirty = False
-
+            await self._adopt_file_content(model)
             self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes while saving.")
 
         except Exception as e:
