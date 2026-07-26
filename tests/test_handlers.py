@@ -93,6 +93,12 @@ async def test_room_handler_doc_client_should_connect(rtc_create_file, rtc_conne
         await event.wait()
         await sleep(0.1)
 
+    # Dropped here rather than left to the garbage collector: a pycrdt
+    # subscription is unsendable, so collecting one on a thread other than the
+    # one that created it raises, and pytest reports that as an unraisable
+    # exception blamed on whichever test happens to be running at the time.
+    doc.unobserve()
+
     assert doc.source == content
 
 
@@ -127,6 +133,8 @@ async def test_room_handler_doc_client_should_emit_awareness_event(
     websocket, room_name = await rtc_connect_doc_client("text", "file", path)
     async with websocket as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
         await event.wait()
+
+    doc.unobserve()
 
     await sleep(0.1)
     fim = jp_serverapp.web_app.settings["file_id_manager"]
@@ -170,6 +178,8 @@ async def test_room_handler_doc_client_should_stop_file_watcher(
         assert file_id in file_loaders
         file_loader = file_loaders[file_id]
         await sleep(0.1)
+
+    doc.unobserve()
 
     listener_was_called = False
     collected_data = []
@@ -225,6 +235,8 @@ async def test_room_handler_doc_client_should_cleanup_room_file(
     async with websocket as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
         await event.wait()
         await sleep(0.1)
+
+    doc.unobserve()
 
     # kill websocketserver to mimic task group inactive failure
     await jp_serverapp.web_app.settings["jupyter_server_ydoc"].ywebsocket_server.stop()
@@ -412,6 +424,8 @@ async def test_fork_handler(
             fork_text += " Hi!"
             await sleep(0.1)
 
+        fork_ydoc.unobserve()
+
         await sleep(0.1)
         assert str(root_text) == "Hello, World!"
 
@@ -442,6 +456,8 @@ async def test_fork_handler(
             "fork_info": expected_data[fork_roomid1],
             "action": "delete",
         }
+
+    root_ydoc.unobserve()
 
 
 def _doc_room_ws_url(
@@ -514,6 +530,8 @@ async def test_doc_client_with_current_doc_session_id_should_connect(
         await event.wait()
         await sleep(0.1)
 
+    doc.unobserve()
+
     assert doc.source == content
 
     # The initialized room adopted the REST-minted session, so a repeated
@@ -567,6 +585,8 @@ async def test_doc_client_without_doc_session_id_should_connect_after_rebuild(
         async with websocket as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
             await event.wait()
             await sleep(0.1)
+
+        doc.unobserve()
         return doc.source
 
     # The first connection triggers the room rebuild from disk; connecting

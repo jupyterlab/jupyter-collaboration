@@ -246,6 +246,8 @@ def rtc_add_doc_to_store(rtc_connect_doc_client):
             await event.wait()
             await sleep(0.1)
 
+        doc.unobserve()
+
     return _inner
 
 

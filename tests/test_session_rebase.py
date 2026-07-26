@@ -12,10 +12,13 @@ a history that diverged from its own without first reconciling the content.
 
 from __future__ import annotations
 
+import asyncio
 import json
+import sqlite3
 import sys
 from asyncio import Event, sleep
 from collections.abc import Callable
+from contextlib import closing
 from pathlib import Path
 from typing import Any
 
@@ -61,17 +64,76 @@ async def _sync_once(url: str, room_name: str) -> str:
     async with aconnect_ws(url) as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
         await event.wait()
         await sleep(0.1)
+
+    doc.unobserve()
     return doc.source
+
+
+async def _wait_for_event(event: Event, timeout: float = 10.0) -> None:
+    """Wait for `event`, failing rather than hanging if it never fires.
+
+    `asyncio.wait_for` rather than the more readable `asyncio.timeout`, which
+    this project cannot use while it still supports Python 3.10.
+    """
+    await asyncio.wait_for(event.wait(), timeout=timeout)
+
+
+async def _wait_for_file(path: Path, expected: str, timeout: float = 30.0) -> None:
+    """Wait for the room to write `expected` to disk.
+
+    The room debounces saves, so this is never immediate, and a loaded CI
+    runner can take considerably longer than a local one; the budget is
+    generous because the cost of it being too tight is a flaky failure.
+    """
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + timeout
+    last = None
+    while loop.time() < deadline:
+        try:
+            last = path.read_text()
+        except OSError:
+            # Windows can refuse the read while the room is mid-write.
+            last = None
+        if last == expected:
+            return
+        await sleep(0.1)
+    pytest.fail(f"the room never saved {expected!r} to {path.name}, last saw {last!r}")
 
 
 async def _evict_room() -> None:
     await sleep(ROOM_EVICTION_DELAY * 5)
 
 
-def _wipe_ystore(jp_root_dir: Path) -> None:
-    """Drop the persisted Yjs history, as a periodic cleanup job would."""
-    for db in jp_root_dir.glob(".rtc_test.db*"):
-        db.unlink()
+def _wipe_ystore(jp_root_dir: Path) -> int:
+    """Drop the persisted Yjs history, as a periodic cleanup job would.
+
+    The rows are deleted rather than the database file, because the server
+    holds its SQLite connection open for the lifetime of the process and
+    Windows refuses to unlink a file another handle still has open. An empty
+    table gives the room the same thing an absent file does: `apply_updates`
+    raises `YDocNotFound`, so the room rebuilds from disk with no history.
+
+    Returns:
+        deleted (int): How many recorded updates were dropped. Callers whose
+            premise is that the history is gone should check this is not
+            zero, since deleting rows, unlike deleting the file, can quietly
+            do nothing at all.
+    """
+    db_path = jp_root_dir.joinpath(".rtc_test.db")
+    if not db_path.exists():
+        return 0
+    with closing(sqlite3.connect(db_path, timeout=10)) as db:
+        tables = {
+            row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
+        }
+        # Not tolerated silently: were the store to rename this, every test
+        # here would keep passing while wiping nothing.
+        assert "yupdates" in tables, f"unexpected YStore schema: {sorted(tables)}"
+        deleted = db.execute("DELETE FROM yupdates").rowcount
+        if "ycheckpoints" in tables:
+            db.execute("DELETE FROM ycheckpoints")
+        db.commit()
+    return deleted
 
 
 async def test_history_rebuilt_from_unchanged_file_keeps_the_session(
@@ -86,7 +148,9 @@ async def test_history_rebuilt_from_unchanged_file_keeps_the_session(
     assert await _sync_once(url, room_name) == content
 
     await _evict_room()
-    _wipe_ystore(jp_root_dir)
+    # Checked, because a kept session is also what an intact YStore produces:
+    # without this the test would pass even if nothing had been wiped.
+    assert _wipe_ystore(jp_root_dir) > 0
 
     # The room is rebuilt from a file which never changed, replaying exactly
     # the history the client still holds: it may rejoin without reconciling.
@@ -186,15 +250,25 @@ async def test_file_reverted_to_the_founding_content_rolls_the_session(
 
     # A client edits the document; the room saves the new content to disk.
     doc = YUnicode()
+    synchronized = Event()
+
+    def _on_document_change(target: str, e: Any) -> None:
+        if target == "source":
+            synchronized.set()
+
+    doc.observe(_on_document_change)
     async with aconnect_ws(url) as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
-        await sleep(0.2)
+        # The edit has to come after the initial synchronization. Writing to
+        # an empty document that is still being synchronized merges the two
+        # sources into something neither side asked for, which on a slow
+        # runner is exactly what used to happen.
+        await _wait_for_event(synchronized)
+        assert doc.source == "original"
+
         doc.source = "edited"
-        for _ in range(40):
-            await sleep(0.1)
-            if jp_root_dir.joinpath(path).read_text() == "edited":
-                break
-        else:
-            pytest.fail("the room never saved the edited content")
+        await _wait_for_file(jp_root_dir.joinpath(path), "edited")
+
+    doc.unobserve()
 
     await _evict_room()
     _wipe_ystore(jp_root_dir)
