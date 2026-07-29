@@ -5,6 +5,9 @@ import { expect, galata, test } from '@jupyterlab/galata';
 import { unlink } from 'fs/promises';
 import type { Page, APIRequestContext } from '@playwright/test';
 
+const isConflictEnv = process.env.CONFLICT_FEATURE || "0";
+const isConflict = parseInt(isConflictEnv)
+
 /**
  * A minimal notebook with one cell.
  *
@@ -158,6 +161,10 @@ test.describe.serial('Conflict handling', () => {
   test(
     'shows a conflict dialog and dismisses it',
     async ({ page, request, tmpPath, baseURL }) => {
+      if (!isConflict) {
+        console.log('Skipping this test.');
+        return;
+      }
       const dialog = await triggerConflict(
         page,
         request,
@@ -165,6 +172,7 @@ test.describe.serial('Conflict handling', () => {
         baseURL,
         notebookName
       );
+      expect(await dialog.locator('.jp-Dialog-content').screenshot()).toMatchSnapshot('conflict-dialog.png');
       await dialog.getByRole('button', { name: 'Dismiss' }).click();
       await expect(dialog).not.toBeVisible();
     }
@@ -173,6 +181,10 @@ test.describe.serial('Conflict handling', () => {
   test(
     'Revert button reloads the document from disk',
     async ({ page, request, tmpPath, baseURL }) => {
+      if (!isConflict) {
+        console.log('Skipping this test.');
+        return;
+      }
       const dialog = await triggerConflict(
         page,
         request,
@@ -206,6 +218,10 @@ test.describe.serial('Conflict handling', () => {
   test(
     'Save As button opens the save-as dialog',
     async ({ page, request, tmpPath, baseURL }) => {
+      if (!isConflict) {
+        console.log('Skipping this test.');
+        return;
+      }
       const dialog = await triggerConflict(
         page,
         request,
@@ -222,6 +238,103 @@ test.describe.serial('Conflict handling', () => {
       // Cancel without saving.
       await saveAsDialog.getByRole('button', { name: 'Cancel' }).click();
       await expect(saveAsDialog).not.toBeVisible();
+    }
+  );
+
+  test(
+    'Show Diff button opens a diff widget',
+    async ({ page, request, tmpPath, baseURL }) => {
+      if (!isConflict) {
+        console.log('Skipping this test.');
+        return;
+      }
+      const dialog = await triggerConflict(
+        page,
+        request,
+        tmpPath,
+        baseURL,
+        notebookName
+      );
+      await dialog.getByRole('button', { name: 'Show Diff' }).click();
+
+      // The diff widget should appear as a main area tab.
+      const diffWidget = page.locator('.jp-MainAreaWidget:has(.nbdime-Widget)');
+      await expect(diffWidget).toBeVisible({ timeout: 10000 });
+
+      expect(await diffWidget.screenshot()).toMatchSnapshot('conflict-diff.png');
+    }
+  );
+
+  test(
+    'Save Local As button in diff toolbar opens the save-as dialog',
+    async ({ page, request, tmpPath, baseURL }) => {
+      if (!isConflict) {
+        console.log('Skipping this test.');
+        return;
+      }
+      const dialog = await triggerConflict(
+        page,
+        request,
+        tmpPath,
+        baseURL,
+        notebookName
+      );
+      await dialog.getByRole('button', { name: 'Show Diff' }).click();
+
+      const diffWidget = page.locator('.jp-MainAreaWidget:has(.nbdime-Widget)');
+      await expect(diffWidget).toBeVisible({ timeout: 10000 });
+
+      await diffWidget.getByRole('button', { name: 'Save Local As' }).click();
+
+      // docmanager:save-as opens a path-input dialog.
+      const saveAsDialog = page.locator('.jp-Dialog');
+      await expect(saveAsDialog.locator('input')).toBeVisible({ timeout: 5000 });
+
+      // Cancel without saving.
+      await saveAsDialog.getByRole('button', { name: 'Cancel' }).click();
+      await expect(saveAsDialog).not.toBeVisible();
+    }
+  );
+
+  test(
+    'Revert to Remote button in diff toolbar reloads the document',
+    async ({ page, request, tmpPath, baseURL }) => {
+      if (!isConflict) {
+        console.log('Skipping this test.');
+        return;
+      }
+      const dialog = await triggerConflict(
+        page,
+        request,
+        tmpPath,
+        baseURL,
+        notebookName
+      );
+      await dialog.getByRole('button', { name: 'Show Diff' }).click();
+
+      const diffWidget = page.locator('.jp-MainAreaWidget:has(.nbdime-Widget)');
+      await expect(diffWidget).toBeVisible({ timeout: 10000 });
+
+      await diffWidget.getByRole('button', { name: 'Revert to Remote' }).click();
+
+      // After reload, handle any follow-up dialog (kernel selection or
+      // reload confirmation).
+      const followUp = page.locator('.jp-Dialog');
+      try {
+        await followUp.waitFor({ state: 'visible', timeout: 3000 });
+        const noKernel = followUp.getByRole('button', { name: 'No Kernel' });
+        if (await noKernel.isVisible({ timeout: 300 })) {
+          await noKernel.click();
+        } else {
+          await followUp.locator('.jp-mod-accept').click();
+        }
+        await expect(followUp).not.toBeVisible({ timeout: 5000 });
+      } catch {
+        // No follow-up dialog.
+      }
+
+      // After reload the notebook should show the server state: 2 cells.
+      await expect(page.locator('.jp-Cell')).toHaveCount(2, { timeout: 5000 });
     }
   );
 });

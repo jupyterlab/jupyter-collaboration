@@ -28,10 +28,10 @@ authors = [
     { name = "Jupyter Development Team", email = "jupyter@googlegroups.com" },
 ]
 dependencies = [
-    "jupyter_server>=2.15.0,<3.0.0",
-    "jupyter_ydoc>=4.0.0b0,<5.0.0",
+    "jupyter_server>=2.19.0,<3.0.0",
+    "jupyter_ydoc >=4.1.1,<5.0.0",
     "pycrdt",
-    "pycrdt-websocket>=0.16.2,<0.17.0",
+    "pycrdt-websocket>=0.16.4,<0.17.0",
     "jupyter_events>=0.11.0",
     "jupyter_server_fileid>=0.7.0,<1",
     "jsonschema>=4.18.0"
@@ -49,7 +49,7 @@ Issues = "https://github.com/jupyterlab/jupyter-collaboration/issues/new/choose"
 test = [
     "coverage",
     "dirty-equals",
-    "jupyter_server[test]>=2.15.0",
+    "jupyter_server[test]>=2.19.0",
     "jupyter_server_fileid[test]",
     "pytest>=7.0",
     "pytest-cov",
@@ -71,3 +71,6 @@ exclude = ["/.github", "/binder", "node_modules"]
 
 [tool.check-wheel-contents]
 ignore = ["W002"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
