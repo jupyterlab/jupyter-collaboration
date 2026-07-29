@@ -137,6 +137,10 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                         self.log,
                         exception_handler=exception_logger,
                         save_delay=self._document_save_delay,
+                        document_load_progressively=self._document_load_progressively,
+                        notebook_output_delay_threshold_mb=(
+                            self._notebook_output_delay_threshold_mb
+                        ),
                     )
 
                 else:
@@ -181,6 +185,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         room_locks: dict[str, asyncio.Lock] | None = None,
         document_cleanup_delay: float | None = 60.0,
         document_save_delay: float | None = 1.0,
+        document_load_progressively: bool = False,
+        notebook_output_delay_threshold_mb: float | None = 100,
     ) -> None:
         self._background_tasks = set()
         # File ID manager cannot be passed as argument as the extension may load after this one
@@ -189,6 +195,8 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self._ystore_class = ystore_class
         self._cleanup_delay = document_cleanup_delay
         self._document_save_delay = document_save_delay
+        self._document_load_progressively = document_load_progressively
+        self._notebook_output_delay_threshold_mb = notebook_output_delay_threshold_mb
         self._websocket_server = ywebsocket_server
         self._message_queue = asyncio.Queue()
         self._room_id = ""
@@ -234,8 +242,6 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         On connection open.
         """
-        self.create_task(self._websocket_server.serve(self))
-
         if isinstance(self.room, DocumentRoom):
             # Close the connection if the document session expired
             session_id = self.get_query_argument("sessionId", "")
@@ -280,6 +286,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 # Initialize the room
                 async with self._room_lock(self._room_id):
                     await self.room.initialize()
+                self.create_task(self._websocket_server.serve(self))
                 self._emit_awareness_event(self.current_user.username, "join")
             except Exception as e:
                 _, _, file_id = decode_file_path(self._room_id)
@@ -327,6 +334,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
             self._emit(LogLevel.INFO, "initialize", "New client connected.")
         else:
+            self.create_task(self._websocket_server.serve(self))
             if self._room_id != "JupyterLab:globalAwareness":
                 self._emit_awareness_event(self.current_user.username, "join")
 

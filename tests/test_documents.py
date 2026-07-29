@@ -64,9 +64,14 @@ async def test_dirty(
 
     websocket, room_name = await rtc_connect_doc_client(file_format, file_type, file_path)
     async with websocket as ws, Provider(jupyter_ydoc.ydoc, HttpxWebsocket(ws, room_name)):
-        for _ in range(2):
+        for _ in range(3):
             jupyter_ydoc.dirty = True
             await sleep(rtc_document_save_delay * 1.5)
+            # the server might not be ready to receive updates from this client yet
+            # if it is, it should clear the dirty state
+            if not jupyter_ydoc.dirty:
+                return
+        else:
             assert not jupyter_ydoc.dirty
 
 
@@ -164,6 +169,7 @@ async def _create_notebook_room(notebook: dict, room_id: str) -> tuple[DocumentR
         None,
         None,
         None,
+        document_load_progressively=False,
     )
     await room.initialize()
     return room, loader

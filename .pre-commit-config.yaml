@@ -2,9 +2,6 @@ ci:
   # skip any check that needs internet access
   skip: [prettier, eslint, stylelint]
 
-default_language_version:
-  node: system
-
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
@@ -44,7 +41,7 @@ repos:
       - id: mypy
         exclude: "(^binder/jupyter_config\\.py$)|(^scripts/bump_version\\.py$)|(/setup\\.py$)"
         args: ["--config-file", "pyproject.toml"]
-        additional_dependencies: [tornado, pytest, 'pycrdt-websocket>=0.16.0,<0.17.0']
+        additional_dependencies: [tornado, pytest, 'pycrdt-websocket>=0.16.4,<0.17.0']
         stages: [manual]
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
@@ -58,15 +55,15 @@ repos:
       - id: prettier
         name: prettier
         entry: 'jlpm run prettier'
-        language: node
+        language: system
         types_or: [json, ts, tsx, javascript, jsx, css]
       - id: eslint
         name: eslint
         entry: 'jlpm run eslint'
-        language: node
+        language: system
         types_or: [ts, tsx, javascript, jsx]
       - id: stylelint
         name: stylelint
         entry: 'jlpm run stylelint'
-        language: node
+        language: system
         types: [css]
