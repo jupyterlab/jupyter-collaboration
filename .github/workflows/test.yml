@@ -163,7 +163,7 @@ jobs:
 
       - name: Run the unit tests
         run: |
-          pytest -vv -W default || pytest -vv -W default --lf
+          pytest -vv -W default
 
   test_prereleases:
     name: Test Prereleases
@@ -188,7 +188,7 @@ jobs:
 
       - name: Run the tests
         run: |
-          pytest -vv -W default || pytest -vv --lf
+          pytest -vv -W default
 
   make_sdist:
     name: Make SDist
