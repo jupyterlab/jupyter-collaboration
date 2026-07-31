@@ -7,6 +7,7 @@ import { YFile } from '@jupyter/ydoc';
 import { nullTranslator } from '@jupyterlab/translation';
 import {
   acceptDialog,
+  dangerDialog,
   dismissDialog,
   FakeUserManager,
   sleep,
@@ -161,6 +162,96 @@ describe('@jupyter/docprovider', () => {
         wsProvider.emit('sync', true);
 
         await expect(provider.ready).resolves.toBeUndefined();
+      });
+
+      it('should show loading dialog when load timeout fires before sync', async () => {
+        const provider = createProvider();
+        await waitForProviderConnect(provider);
+
+        // Fire timeout without awaiting (showDialog blocks)
+        (provider as any)._onLoadTimeout();
+
+        await expect(waitForDialog(undefined, 1000)).resolves.toBeUndefined();
+        await dismissDialog(undefined, 50);
+        await sleep(100);
+        provider.dispose();
+      });
+
+      it('should not show loading dialog if sync happened before timeout', async () => {
+        const provider = createProvider();
+        const wsProvider = await waitForProviderConnect(provider);
+
+        wsProvider.emit('sync', true);
+        await expect(provider.ready).resolves.toBeUndefined();
+
+        // Fire timeout without awaiting
+        (provider as any)._onLoadTimeout();
+
+        // Dialog should not have appeared since document was already synced
+        await expect(waitForDialog(undefined, 1000)).rejects.toThrow(
+          'Dialog not found'
+        );
+        provider.dispose();
+      });
+
+      it('should reject ready and dispose model when cancel is clicked', async () => {
+        const model = new YFile();
+        const disposeSpy = jest.spyOn(model, 'dispose');
+        const provider = createProvider({ model });
+        await waitForProviderConnect(provider);
+
+        // Fire timeout without awaiting
+        (provider as any)._onLoadTimeout();
+
+        await waitForDialog(undefined, 1000);
+        // Cancel button is the first button (accept=false)
+        await dismissDialog(undefined, 50);
+        await sleep(100);
+
+        await expect(provider.ready).rejects.toBe(
+          'The document failed to load. Please try opening it again.'
+        );
+        expect(disposeSpy).toHaveBeenCalled();
+        provider.dispose();
+      });
+
+      it('should retry loading when retry is clicked', async () => {
+        const reconnectSpy = jest.spyOn(
+          WebSocketProvider.prototype,
+          'reconnect'
+        );
+        const provider = createProvider();
+        await waitForProviderConnect(provider);
+
+        // Fire timeout without awaiting
+        (provider as any)._onLoadTimeout();
+
+        await waitForDialog(undefined, 1000);
+        await dangerDialog(undefined, 50);
+        await sleep(100);
+
+        expect(reconnectSpy).toHaveBeenCalled();
+        reconnectSpy.mockRestore();
+        provider.dispose();
+      });
+
+      it('should restart timeout when continue waiting is clicked', async () => {
+        const startLoadTimeoutSpy = jest.spyOn(
+          WebSocketProvider.prototype as any,
+          '_startLoadTimeout'
+        );
+        const provider = createProvider();
+        await waitForProviderConnect(provider);
+
+        (provider as any)._onLoadTimeout();
+
+        await waitForDialog(undefined, 1000);
+        await acceptDialog(undefined, 50);
+        await sleep(100);
+
+        expect(startLoadTimeoutSpy).toHaveBeenCalled();
+        startLoadTimeoutSpy.mockRestore();
+        provider.dispose();
       });
     });
   });
