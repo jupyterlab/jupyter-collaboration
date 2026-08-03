@@ -11,6 +11,7 @@ from typing import Any, cast
 from uuid import uuid4
 
 from jupyter_server.auth import authorized
+from jupyter_server.auth.decorator import ws_authenticated
 from jupyter_server.base.handlers import APIHandler, JupyterHandler
 from jupyter_server.utils import ensure_async
 from jupyter_ydoc import ydocs as YDOCS
@@ -64,6 +65,10 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
     - Although it's currently not used in ypy-websocket, ``recv()`` is an async method for
        receiving a message.
     """
+
+    # `JupyterHandler` does not define `auth_resource` (only `APIHandler` does),
+    # so it has to be set explicitly for `@authorized` to work
+    auth_resource = "contents"
 
     _message_queue: asyncio.Queue[Any]
     _background_tasks: set[asyncio.Task]
@@ -221,13 +226,13 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
             raise StopAsyncIteration()
         return message
 
+    @ws_authenticated
+    @authorized
     async def get(self, *args, **kwargs):
         """
-        Overrides default behavior to check whether the client is authenticated or not.
+        Overrides default behavior to check whether the client is authenticated
+        and authorized to read the document.
         """
-        if self.current_user is None:
-            self.log.warning("Couldn't authenticate WebSocket connection")
-            raise web.HTTPError(403)
         return await super().get(*args, **kwargs)
 
     async def open(self, room_id: str) -> None:  # type:ignore[override]
@@ -545,12 +550,16 @@ class DocSessionHandler(APIHandler):
 
 
 class TimelineHandler(APIHandler):
+    auth_resource = "contents"
+
     def initialize(
         self, ystore_class: type[BaseYStore], ywebsocket_server: JupyterWebsocketServer
     ) -> None:
         self.ystore_class = ystore_class
         self.ywebsocket_server = ywebsocket_server
 
+    @web.authenticated
+    @authorized
     async def get(self, path: str) -> None:
         idx = uuid4().hex
         file_id_manager = self.settings["file_id_manager"]
@@ -608,9 +617,13 @@ class TimelineHandler(APIHandler):
 
 
 class UndoRedoHandler(APIHandler):
+    auth_resource = "contents"
+
     def initialize(self, ywebsocket_server: JupyterWebsocketServer) -> None:
         self._websocket_server = ywebsocket_server
 
+    @web.authenticated
+    @authorized
     async def put(self, room_id):
         try:
             action = str(self.request.query_arguments.get("action")[0].decode("utf-8"))

@@ -126,6 +126,12 @@ jobs:
         run: |
           python -W ignore::ImportWarning -m pytest -vv --cov jupyter_server_ydoc --cov-branch --cov-report term-missing:skip-covered
 
+      - name: Check that all endpoints are authenticated
+        shell: bash
+        run: |
+          set -eux
+          python .github/scripts/check_auth.py
+
       - uses: jupyterlab/maintainer-tools/.github/actions/upload-coverage@v1
 
       - name: Build the extension
