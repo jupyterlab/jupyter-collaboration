@@ -570,7 +570,7 @@ class TimelineHandler(APIHandler):
         self.ywebsocket_server = ywebsocket_server
 
     @web.authenticated
-    @authorized
+    @authorized  # type: ignore[misc]
     async def get(self, path: str) -> None:
         idx = uuid4().hex
         file_id_manager = self.settings["file_id_manager"]
