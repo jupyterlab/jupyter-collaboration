@@ -36,8 +36,17 @@ def rtc_document_cleanup_delay():
 
 
 @pytest.fixture
+def rtc_disable_ystore():
+    return False
+
+
+@pytest.fixture
 def jp_server_config(
-    jp_root_dir, jp_server_config, rtc_document_save_delay, rtc_document_cleanup_delay
+    jp_root_dir,
+    jp_server_config,
+    rtc_document_save_delay,
+    rtc_document_cleanup_delay,
+    rtc_disable_ystore,
 ):
     return {
         "ServerApp": {
@@ -58,6 +67,7 @@ def jp_server_config(
         "YDocExtension": {
             "document_save_delay": rtc_document_save_delay,
             "document_cleanup_delay": rtc_document_cleanup_delay,
+            "disable_ystore": rtc_disable_ystore,
         },
     }
 

@@ -25,6 +25,18 @@ looses connection and goes offline for a while. You should never have to touch i
 fine to just ignore it, including in your version control system (don't commit this file). If
 you happen to delete it, there shouldn't be any serious consequence either.
 
+This store of document updates (the "YStore") can also be disabled entirely with
+`--YDocExtension.disable_ystore=True`. In that case, document updates are only kept in memory
+while a document is open on the server, no `.jupyter_ystore.db` file is created, and features
+relying on the persisted history (such as the document timeline) are not available. This can be
+useful on deployments where the database file would grow too large or where persisting it is
+impractical.
+
+> **Note**: The persisted history is also what allows merging document changes across a server
+> restart. With the YStore disabled, a client reconnecting after a server restart can run into
+> conflicts, which may lead to duplicated content or require reloading the document (see
+> [issue #594](https://github.com/jupyterlab/jupyter-collaboration/issues/594)).
+
 A second file, `collaboration_sessions.json`, is created inside a `.jupyter` directory under
 the server's root directory (`ServerApp.root_dir`, which defaults to the directory where
 JupyterLab was launched). It records recent collaboration session IDs so the backend can
@@ -58,6 +70,11 @@ jupyter lab --YDocExtension.document_load_progressively=True
 # Delay notebook outputs larger than this size in MB during progressive loading (default: 100).
 # If None, outputs are loaded with the inputs.
 jupyter lab --YDocExtension.notebook_output_delay_threshold_mb=50
+
+# To disable the YStore, which persists the history of document updates (default: False).
+# If True, no update history is stored: no '.jupyter_ystore.db' file is created and
+# the document timeline feature is not available.
+jupyter lab --YDocExtension.disable_ystore=True
 
 # The YStore class to use for storing Y updates (default: JupyterSQLiteYStore).
 jupyter lab --YDocExtension.ystore_class=pycrdt.store.TempFileYStore
