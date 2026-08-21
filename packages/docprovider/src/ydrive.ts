@@ -348,17 +348,16 @@ export class RtcContentProvider implements IContentProvider {
           change => change.name === 'path'
         );
         for (const pathChange of pathChanges) {
-          handlePathChange(pathChange);
-          // if (handlePathChange(pathChange)) {
-          //   // The drive emits a rename directly in the client that initiated
-          //   // it. Other clients learn about it through the shared model, so
-          //   // proxy that change to their ContentsManager/DocumentContext too.
-          //   this._providerFileChanged.emit({
-          //     type: 'rename',
-          //     oldValue: { path: pathChange.oldValue },
-          //     newValue: { path: pathChange.newValue }
-          //   });
-          // }
+          if (handlePathChange(pathChange)) {
+            // The drive emits a rename directly in the client that initiated
+            // it. Other clients learn about it through the shared model, so
+            // proxy that change to their ContentsManager/DocumentContext too.
+            this._providerFileChanged.emit({
+              type: 'rename',
+              oldValue: { path: pathChange.oldValue },
+              newValue: { path: pathChange.newValue }
+            });
+          }
         }
 
         const hashChanges = change.stateChange.filter(
