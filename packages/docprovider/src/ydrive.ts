@@ -257,13 +257,19 @@ export class RtcContentProvider implements IContentProvider {
 
       const handlePathChange = (
         pathChange: StateChange<string | undefined>
-      ) => {
+      ): boolean => {
         const oldPath = pathChange.oldValue;
         const newPath = pathChange.newValue;
         if (!oldPath || !newPath) {
           // This is expected when shared model initializes and the path is first populated
           console.debug('New or old path not given', pathChange);
-          return;
+          return false;
+        }
+
+        // A rename can be reported by both the drive and the shared model.
+        // Do not process the second notification again.
+        if (oldPath !== path && newPath === path) {
+          return false;
         }
 
         const oldKey = `${options.format}:${options.contentType}:${oldPath}`;
@@ -271,7 +277,7 @@ export class RtcContentProvider implements IContentProvider {
           console.error(
             'The computed old provider key is different from the current key'
           );
-          return;
+          return false;
         }
         const newKey = `${options.format}:${options.contentType}:${newPath}`;
 
@@ -281,7 +287,7 @@ export class RtcContentProvider implements IContentProvider {
           console.warn(
             `Could not find a provider to update after rename ${oldKey}, ${newKey}`
           );
-          return;
+          return false;
         }
 
         // Re-register the provider under the new key
@@ -301,6 +307,7 @@ export class RtcContentProvider implements IContentProvider {
           documents.push(newPath);
           this._globalAwareness?.setLocalStateField('documents', documents);
         }
+        return true;
       };
 
       // The information about file being renamed can come from two places:
@@ -342,6 +349,16 @@ export class RtcContentProvider implements IContentProvider {
         );
         for (const pathChange of pathChanges) {
           handlePathChange(pathChange);
+          // if (handlePathChange(pathChange)) {
+          //   // The drive emits a rename directly in the client that initiated
+          //   // it. Other clients learn about it through the shared model, so
+          //   // proxy that change to their ContentsManager/DocumentContext too.
+          //   this._providerFileChanged.emit({
+          //     type: 'rename',
+          //     oldValue: { path: pathChange.oldValue },
+          //     newValue: { path: pathChange.newValue }
+          //   });
+          // }
         }
 
         const hashChanges = change.stateChange.filter(

@@ -147,10 +147,14 @@ test.describe('Initialization', () => {
     await guestPage.notebook.close(true);
   });
 
-  test('Rename a notebook', async({ page, tmpPath }) => {
+  test('Rename a notebook', async ({ page, tmpPath }) => {
     await page.filebrowser.refresh();
     await page.notebook.open(exampleNotebook);
     await page.notebook.activate(exampleNotebook);
+
+    await guestPage.filebrowser.refresh();
+    await guestPage.notebook.open(exampleNotebook);
+    await guestPage.notebook.activate(exampleNotebook);
 
     // Enter edit mode on cell number three
     await page.notebook.enterCellEditingMode(3);
@@ -161,6 +165,13 @@ test.describe('Initialization', () => {
 
     // Rename notebook
     await page.contents.renameFile(oldPath, newPath);
+
+    // The document context in the other client should receive the rename too.
+    await expect(
+      guestPage.locator('.lm-TabBar-tabLabel', {
+        hasText: 'differentName.ipynb'
+      })
+    ).toBeVisible();
 
     // Intercept REST API save endpoint
     let savedUsingRestAPI = false;
