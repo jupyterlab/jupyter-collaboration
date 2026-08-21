@@ -376,8 +376,10 @@ export class RtcContentProvider implements IContentProvider {
         // A change in hash signifies that a save occurred on the server-side
         // (e.g. a collaborator performed the save) - we want to notify the
         // observers about this change so that they can store the new hash value.
-        const newPath = sharedModel.state.path ?? options.path;
-        const model = await this.get(newPath as string, { content: false });
+        // Use the path tracked by the provider. During a rename transaction,
+        // the state accessor may still expose the old path even though the
+        // path state change above has already been processed.
+        const model = await this.get(path, { content: false });
 
         this._providerFileChanged.emit({
           type: 'save',
