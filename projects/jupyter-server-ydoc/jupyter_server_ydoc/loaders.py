@@ -198,12 +198,18 @@ class FileLoader:
         try:
             try:
                 return await self._save_content_at_path(model, path)
-            except Exception:
+            except Exception as save_error:
                 # The file may have been renamed after the metadata check in
                 # maybe_save_content but before the save reached the contents
                 # manager. Retry only if the stable file ID now resolves to a
                 # different path; errors for deleted files must still surface.
-                new_path = self.path
+                try:
+                    new_path = self.path
+                except Exception:
+                    # Deleting a file also removes its file ID. Do not replace
+                    # the original contents manager error with the path lookup
+                    # failure in that case.
+                    raise save_error from None
                 if new_path == path:
                     raise
                 self._log.info("File moved while saving: %s -> %s; retrying", path, new_path)

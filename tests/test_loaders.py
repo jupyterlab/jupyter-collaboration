@@ -172,6 +172,8 @@ async def test_FileLoader_retries_save_after_rename():
 async def test_FileLoader_does_not_retry_save_after_delete():
     id = "file-4567"
     path = "myfile.txt"
+    file_id_manager = FakeFileIDManager({id: path})
+    save_error = HTTPError(404, f"File not found: {path}")
 
     class DeleteDuringSaveContentsManager(FakeContentsManager):
         def __init__(self):
@@ -180,15 +182,17 @@ async def test_FileLoader_does_not_retry_save_after_delete():
 
         def save(self, model, path):
             self.save_count += 1
-            raise HTTPError(404, f"File not found: {path}")
+            del file_id_manager.mapping[id]
+            raise save_error
 
     cm = DeleteDuringSaveContentsManager()
-    loader = FileLoader(id, FakeFileIDManager({id: path}), cm)
+    loader = FileLoader(id, file_id_manager, cm)
     await loader.load_content("text", "file")
 
-    with pytest.raises(HTTPError, match="File not found"):
+    with pytest.raises(HTTPError, match="File not found") as exc_info:
         await loader.maybe_save_content({"format": "text", "type": "file", "content": "content"})
 
+    assert exc_info.value is save_error
     assert cm.save_count == 1
 
 
