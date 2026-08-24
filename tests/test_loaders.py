@@ -8,10 +8,9 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from tornado.web import HTTPError
-
 from jupyter_server_ydoc.loaders import FileLoader, FileLoaderMapping
 from jupyter_server_ydoc.test_utils import FakeContentsManager, FakeFileIDManager
+from tornado.web import HTTPError
 
 
 async def test_FileLoader_with_watcher():
@@ -147,9 +146,7 @@ async def test_FileLoader_retries_save_after_rename():
 
     class RenameDuringSaveContentsManager(FakeContentsManager):
         def __init__(self):
-            super().__init__(
-                {"last_modified": datetime.now(timezone.utc), "writable": True}
-            )
+            super().__init__({"last_modified": datetime.now(timezone.utc), "writable": True})
             self.saved_paths: list[str] = []
 
         def save(self, model, path):
@@ -178,9 +175,7 @@ async def test_FileLoader_does_not_retry_save_after_delete():
 
     class DeleteDuringSaveContentsManager(FakeContentsManager):
         def __init__(self):
-            super().__init__(
-                {"last_modified": datetime.now(timezone.utc), "writable": True}
-            )
+            super().__init__({"last_modified": datetime.now(timezone.utc), "writable": True})
             self.save_count = 0
 
         def save(self, model, path):
@@ -192,9 +187,7 @@ async def test_FileLoader_does_not_retry_save_after_delete():
     await loader.load_content("text", "file")
 
     with pytest.raises(HTTPError, match="File not found"):
-        await loader.maybe_save_content(
-            {"format": "text", "type": "file", "content": "content"}
-        )
+        await loader.maybe_save_content({"format": "text", "type": "file", "content": "content"})
 
     assert cm.save_count == 1
 

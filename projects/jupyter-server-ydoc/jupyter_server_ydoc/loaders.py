@@ -206,16 +206,12 @@ class FileLoader:
                 new_path = self.path
                 if new_path == path:
                     raise
-                self._log.info(
-                    "File moved while saving: %s -> %s; retrying", path, new_path
-                )
+                self._log.info("File moved while saving: %s -> %s; retrying", path, new_path)
                 return await self._save_content_at_path(model, new_path)
         finally:
             done_saving.set()
 
-    async def _save_content_at_path(
-        self, model: dict[str, Any], path: str
-    ) -> dict[str, Any]:
+    async def _save_content_at_path(self, model: dict[str, Any], path: str) -> dict[str, Any]:
         m = await ensure_async(self._contents_manager.save(model, path))
         self.last_modified = m["last_modified"]
         # TODO, get rid of the extra `get` here once upstream issue:
