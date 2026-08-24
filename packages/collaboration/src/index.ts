@@ -7,6 +7,7 @@
 
 export * from './tokens';
 export * from './collaboratorspanel';
+export * from './components';
 export * from './cursors';
 export * from './menu';
 export * from './sharedlink';
