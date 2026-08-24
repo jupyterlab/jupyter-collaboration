@@ -307,6 +307,16 @@ export class RtcContentProvider implements IContentProvider {
           documents.push(newPath);
           this._globalAwareness?.setLocalStateField('documents', documents);
         }
+
+        // Notify the ContentsManager/DocumentContext regardless of whether
+        // the rename was first reported by the drive or the shared model.
+        // Emitting this also feeds back into the drive signal, but the path
+        // check above makes that notification idempotent.
+        this._providerFileChanged.emit({
+          type: 'rename',
+          oldValue: { path: oldPath },
+          newValue: { path: newPath }
+        });
         return true;
       };
 
@@ -348,16 +358,7 @@ export class RtcContentProvider implements IContentProvider {
           change => change.name === 'path'
         );
         for (const pathChange of pathChanges) {
-          if (handlePathChange(pathChange)) {
-            // The drive emits a rename directly in the client that initiated
-            // it. Other clients learn about it through the shared model, so
-            // proxy that change to their ContentsManager/DocumentContext too.
-            this._providerFileChanged.emit({
-              type: 'rename',
-              oldValue: { path: pathChange.oldValue },
-              newValue: { path: pathChange.newValue }
-            });
-          }
+          handlePathChange(pathChange);
         }
 
         const hashChanges = change.stateChange.filter(

@@ -179,7 +179,7 @@ class FileLoader:
                 # saving is shielded so that it cannot be cancelled
                 # otherwise it could corrupt the file
                 done_saving = asyncio.Event()
-                task = asyncio.create_task(self._save_content(model, done_saving))
+                task = asyncio.create_task(self._save_content(model, done_saving, path))
                 saved_model = None
                 try:
                     saved_model = await asyncio.shield(task)
@@ -193,23 +193,41 @@ class FileLoader:
                 raise OutOfBandChanges
 
     async def _save_content(
-        self, model: dict[str, Any], done_saving: asyncio.Event
+        self, model: dict[str, Any], done_saving: asyncio.Event, path: str
     ) -> dict[str, Any]:
         try:
-            m = await ensure_async(self._contents_manager.save(model, self.path))
-            self.last_modified = m["last_modified"]
-            # TODO, get rid of the extra `get` here once upstream issue:
-            # https://github.com/jupyter-server/jupyter_server/issues/1453 is resolved
-            model_with_hash = await ensure_async(
-                self._contents_manager.get(
-                    self.path,
-                    content=False,
-                    require_hash=True,
+            try:
+                return await self._save_content_at_path(model, path)
+            except Exception:
+                # The file may have been renamed after the metadata check in
+                # maybe_save_content but before the save reached the contents
+                # manager. Retry only if the stable file ID now resolves to a
+                # different path; errors for deleted files must still surface.
+                new_path = self.path
+                if new_path == path:
+                    raise
+                self._log.info(
+                    "File moved while saving: %s -> %s; retrying", path, new_path
                 )
-            )
-            return {**m, "hash": model_with_hash["hash"]}
+                return await self._save_content_at_path(model, new_path)
         finally:
             done_saving.set()
+
+    async def _save_content_at_path(
+        self, model: dict[str, Any], path: str
+    ) -> dict[str, Any]:
+        m = await ensure_async(self._contents_manager.save(model, path))
+        self.last_modified = m["last_modified"]
+        # TODO, get rid of the extra `get` here once upstream issue:
+        # https://github.com/jupyter-server/jupyter_server/issues/1453 is resolved
+        model_with_hash = await ensure_async(
+            self._contents_manager.get(
+                path,
+                content=False,
+                require_hash=True,
+            )
+        )
+        return {**m, "hash": model_with_hash["hash"]}
 
     async def _watch_file(self) -> None:
         """

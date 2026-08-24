@@ -7,6 +7,9 @@ import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
 
+import pytest
+from tornado.web import HTTPError
+
 from jupyter_server_ydoc.loaders import FileLoader, FileLoaderMapping
 from jupyter_server_ydoc.test_utils import FakeContentsManager, FakeFileIDManager
 
@@ -134,6 +137,66 @@ async def test_FileLoader_without_watcher():
         assert triggered
     finally:
         await loader.clean()
+
+
+async def test_FileLoader_retries_save_after_rename():
+    id = "file-4567"
+    old_path = "myfile.txt"
+    new_path = "renamed.txt"
+    file_id_manager = FakeFileIDManager({id: old_path})
+
+    class RenameDuringSaveContentsManager(FakeContentsManager):
+        def __init__(self):
+            super().__init__(
+                {"last_modified": datetime.now(timezone.utc), "writable": True}
+            )
+            self.saved_paths: list[str] = []
+
+        def save(self, model, path):
+            self.saved_paths.append(path)
+            if path == old_path:
+                file_id_manager.move(id, new_path)
+                raise HTTPError(404, f"File not found: {path}")
+            return self.model
+
+    cm = RenameDuringSaveContentsManager()
+    loader = FileLoader(id, file_id_manager, cm)
+    await loader.load_content("text", "file")
+
+    saved_model = await loader.maybe_save_content(
+        {"format": "text", "type": "file", "content": "content"}
+    )
+
+    assert saved_model is not None
+    assert saved_model["hash"] == "fake_hash"
+    assert cm.saved_paths == [old_path, new_path]
+
+
+async def test_FileLoader_does_not_retry_save_after_delete():
+    id = "file-4567"
+    path = "myfile.txt"
+
+    class DeleteDuringSaveContentsManager(FakeContentsManager):
+        def __init__(self):
+            super().__init__(
+                {"last_modified": datetime.now(timezone.utc), "writable": True}
+            )
+            self.save_count = 0
+
+        def save(self, model, path):
+            self.save_count += 1
+            raise HTTPError(404, f"File not found: {path}")
+
+    cm = DeleteDuringSaveContentsManager()
+    loader = FileLoader(id, FakeFileIDManager({id: path}), cm)
+    await loader.load_content("text", "file")
+
+    with pytest.raises(HTTPError, match="File not found"):
+        await loader.maybe_save_content(
+            {"format": "text", "type": "file", "content": "content"}
+        )
+
+    assert cm.save_count == 1
 
 
 async def test_FileLoaderMapping_with_watcher():
