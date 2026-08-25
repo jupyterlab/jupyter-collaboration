@@ -196,13 +196,25 @@ class FileLoader:
         self, model: dict[str, Any], done_saving: asyncio.Event, path: str
     ) -> dict[str, Any]:
         try:
+            # The file may have been renamed after the metadata check in
+            # maybe_save_content but before this task started. Prefer the path
+            # currently associated with its stable file ID. If the ID was
+            # removed (for example on deletion), let the save at the checked
+            # path produce the original contents manager error instead.
+            try:
+                current_path = self.path
+            except Exception:
+                current_path = path
+            if current_path != path:
+                self._log.info("File moved before saving: %s -> %s", path, current_path)
+                path = current_path
+
             try:
                 return await self._save_content_at_path(model, path)
             except Exception as save_error:
-                # The file may have been renamed after the metadata check in
-                # maybe_save_content but before the save reached the contents
-                # manager. Retry only if the stable file ID now resolves to a
-                # different path; errors for deleted files must still surface.
+                # The file may also be renamed while the save is in progress.
+                # Retry only if the stable file ID now resolves to a different
+                # path; errors for deleted files must still surface.
                 try:
                     new_path = self.path
                 except Exception:
