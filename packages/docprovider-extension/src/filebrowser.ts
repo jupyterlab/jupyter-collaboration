@@ -27,7 +27,11 @@ import {
   NotebookWidgetFactory
 } from '@jupyterlab/notebook';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
-import { ITranslator, nullTranslator } from '@jupyterlab/translation';
+import {
+  ITranslator,
+  nullTranslator,
+  TranslationBundle
+} from '@jupyterlab/translation';
 
 import { YFile, YNotebook } from '@jupyter/ydoc';
 
@@ -46,10 +50,16 @@ import { URLExt } from '@jupyterlab/coreutils';
 
 const DOCUMENT_TIMELINE_URL = 'api/collaboration/timeline';
 
-const TWO_SESSIONS_WARNING =
-  'The file %1 has been opened with two different views. ' +
-  'This is not supported. Please close this view; otherwise, ' +
-  'some of your edits may not be saved properly.';
+/**
+ * Build the warning shown when a file is opened with two different views.
+ */
+const twoSessionsWarning = (trans: TranslationBundle, path: unknown): string =>
+  trans.__(
+    'The file %1 has been opened with two different views. ' +
+      'This is not supported. Please close this view; otherwise, ' +
+      'some of your edits may not be saved properly.',
+    path
+  );
 
 export const rtcContentProvider: JupyterFrontEndPlugin<ICollaborativeContentProvider> =
   {
@@ -177,10 +187,12 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
   description: 'Plugin to add a timeline slider to the status bar',
   autoStart: true,
   requires: [IStatusBar, ICollaborativeContentProvider],
+  optional: [ITranslator],
   activate: async (
     app: JupyterFrontEnd,
     statusBar: IStatusBar,
-    contentProvider: ICollaborativeContentProvider
+    contentProvider: ICollaborativeContentProvider,
+    translator: ITranslator | null
   ): Promise<void> => {
     try {
       let sliderItem: Widget | null = null;
@@ -222,7 +234,8 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
           forkProvider.contentType,
           forkProvider.format,
           DOCUMENT_TIMELINE_URL,
-          app.serviceManager.serverSettings
+          app.serviceManager.serverSettings,
+          translator ?? nullTranslator
         );
 
         const elt = document.getElementById('jp-slider-status-bar');
@@ -307,7 +320,7 @@ export const logger: JupyterFrontEndPlugin<void> = {
           if (emission.level === 'WARNING') {
             showDialog({
               title: trans.__('Warning'),
-              body: trans.__(TWO_SESSIONS_WARNING, emission.path),
+              body: twoSessionsWarning(trans, emission.path),
               buttons: [Dialog.okButton()]
             });
           }
@@ -353,7 +366,7 @@ export const logger: JupyterFrontEndPlugin<void> = {
           if (emission.level === 'WARNING') {
             showDialog({
               title: trans.__('Warning'),
-              body: trans.__(TWO_SESSIONS_WARNING, emission.path),
+              body: twoSessionsWarning(trans, emission.path),
               buttons: [Dialog.warnButton({ label: trans.__('Ok') })]
             });
           }

@@ -154,7 +154,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         } | null = null;
         try {
           reply = JSON.parse(rawReply);
-        } catch (e) {
+        } catch {
           console.debug('The raw reply received was not a JSON reply');
         }
         if (
@@ -357,8 +357,10 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       default:
         return {
           title: trans.__('Session expired'),
+          // `errorReason` is supplied by the server and cannot be part of the
+          // client-side translation catalog, so it is used as-is.
           body: payload.errorReason
-            ? trans.__(payload.errorReason)
+            ? payload.errorReason
             : trans.__('Reload the browser tab to continue.')
         };
     }

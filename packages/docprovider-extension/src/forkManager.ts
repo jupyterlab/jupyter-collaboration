@@ -17,6 +17,7 @@ import {
 
 export const forkManagerPlugin: JupyterFrontEndPlugin<IForkManager> = {
   id: '@jupyter/docprovider-extension:forkManager',
+  description: 'Provides the fork manager for collaborative documents.',
   autoStart: true,
   requires: [ICollaborativeContentProvider],
   provides: IForkManagerToken,

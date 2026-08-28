@@ -77,8 +77,9 @@ async function waitForProviderConnect(
 function createProvider(
   options: { path?: string; model?: YFile } = {}
 ): WebSocketProvider {
+  // eslint-disable-next-line jupyter/require-disposable-ownership -- test-only model, torn down with the test process
   const { path = 'test.ipynb', model = new YFile() } = options;
-  const translator = nullTranslator.load('test');
+  const trans = nullTranslator.load('test');
   const identity = {
     username: 'Joe Doe',
     display_name: 'Joe Doe',
@@ -94,7 +95,7 @@ function createProvider(
     format: 'text',
     model,
     user,
-    translator
+    translator: trans
   });
 }
 
