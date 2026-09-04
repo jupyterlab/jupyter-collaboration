@@ -847,3 +847,42 @@ class DocForkHandler(APIHandler):
             "action": action,
         }
         self.event_logger.emit(schema_id=JUPYTER_COLLABORATION_FORK_EVENTS_URI, data=data)
+
+
+class DocumentSessionOverrideHandler(APIHandler):
+    """
+    Jupyter Server handler letting a client push its own content as a room's
+    new canonical state, when a reconnect was refused for a document_session
+    mismatch (see YDocWebSocketHandler.open) and the client chooses to keep
+    its local edits over the server's freshly rebuilt content.
+    """
+
+    auth_resource = "contents"
+
+    def initialize(self, ywebsocket_server: JupyterWebsocketServer) -> None:
+        self._websocket_server = ywebsocket_server
+
+    @web.authenticated
+    @authorized
+    async def put(self, room_id: str) -> None:
+        try:
+            room = await self._websocket_server.get_room(room_id)
+        except RoomNotFound:
+            self.set_status(404)
+            self.finish({"code": 404, "error": "Room not found"})
+            return
+
+        if not isinstance(room, DocumentRoom):
+            self.set_status(400)
+            self.finish({"code": 400, "error": "Not a document room"})
+            return
+
+        model = self.get_json_body() or {}
+        if "content" not in model:
+            self.set_status(400)
+            self.finish({"code": 400, "error": "Missing content"})
+            return
+
+        new_session = await room.override_content(model["content"])
+        self.set_status(200)
+        self.finish(json.dumps({"documentSessionId": new_session}))

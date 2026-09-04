@@ -556,3 +556,46 @@ async def test_room_handler_refuses_stale_session_after_genuine_store_loss(
     assert disconnect.code == 1003
     payload = json.loads(disconnect.reason)
     assert payload["reason"] == "document_session_mismatch"
+
+
+async def test_document_session_override_handler_accepts_client_content(
+    rtc_create_file, rtc_fetch_session, jp_http_port, jp_base_url, jp_fetch, jp_serverapp
+):
+    """A client choosing to keep its own version after a document_session
+    mismatch pushes it through this endpoint and gets back a session id it
+    can then reconnect with -- proving the whole keep-mine loop closes."""
+    path, _ = await rtc_create_file("test.txt", "test")
+
+    resp = await rtc_fetch_session("text", "file", path)
+    data = json.loads(resp.body.decode("utf-8"))
+    room_name = f"{data['format']}:{data['type']}:{data['fileId']}"
+    base_url = (
+        f"http://127.0.0.1:{jp_http_port}{jp_base_url}api/collaboration/room/{room_name}"
+        f"?sessionId={data['sessionId']}"
+    )
+
+    async with aconnect_ws(base_url) as ws:
+        await ws.receive()
+        ywebsocket_server = jp_serverapp.web_app.settings["jupyter_server_ydoc"].ywebsocket_server
+        room = ywebsocket_server.rooms[room_name]
+        original_session = room._document.ystate.get("document_session")
+        assert original_session
+
+    override_resp = await jp_fetch(
+        "api",
+        "collaboration",
+        "room_override",
+        room_name,
+        method="PUT",
+        body=json.dumps({"content": "overridden by client"}),
+    )
+    assert override_resp.code == 200
+    body = json.loads(override_resp.body.decode("utf-8"))
+    new_session = body["documentSessionId"]
+    assert new_session != original_session
+
+    # Reconnecting with the newly returned session must be accepted.
+    url = base_url + f"&docSessionId={new_session}"
+    async with aconnect_ws(url) as ws:
+        message = await ws.receive()
+    assert message is not None
