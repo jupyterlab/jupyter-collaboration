@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 from asyncio import Event, sleep
 from typing import Any
 
@@ -487,3 +488,71 @@ async def test_room_handler_connects_when_client_sends_no_document_session_id(
 
     # A SYNC message, not a disconnect: an unmodified client is never gated.
     assert message is not None
+
+
+async def test_room_handler_refuses_stale_session_after_genuine_store_loss(
+    rtc_create_file,
+    rtc_fetch_session,
+    jp_http_port,
+    jp_base_url,
+    jp_root_dir,
+    rtc_document_cleanup_delay,
+    jp_serverapp,
+):
+    """End-to-end: a client's remembered document_session from before the
+    store genuinely loses this room's history (a deleted/rekeyed row -- the
+    real-world trigger behind #621's reported duplication, not an arbitrary
+    stale value) must be refused, not silently merged into the fresh rebuild.
+    """
+    path, _ = await rtc_create_file("test.txt", "test")
+
+    resp = await rtc_fetch_session("text", "file", path)
+    data = json.loads(resp.body.decode("utf-8"))
+    file_id = data["fileId"]
+    room_name = f"{data['format']}:{data['type']}:{file_id}"
+    base_url = (
+        f"http://127.0.0.1:{jp_http_port}{jp_base_url}api/collaboration/room/{room_name}"
+        f"?sessionId={data['sessionId']}"
+    )
+
+    # First connection: room initializes fresh (empty store), assigning a
+    # document_session. Nothing sends it to the client yet -- capture it
+    # directly from the live room (that wiring is the client-side work still
+    # to come).
+    async with aconnect_ws(base_url) as ws:
+        await ws.receive()
+        ywebsocket_server = jp_serverapp.web_app.settings["jupyter_server_ydoc"].ywebsocket_server
+        room = ywebsocket_server.rooms[room_name]
+        original_session = room._document.ystate.get("document_session")
+        assert original_session
+
+    # Let the room genuinely evict through the real cleanup path.
+    await sleep(rtc_document_cleanup_delay + 0.5)
+
+    # The store genuinely loses this room's history for its path -- the
+    # real-world #594/hypothesis-2 trigger, not a contrived comparison.
+    db_path = jp_root_dir.joinpath(".rtc_test.db")
+    store_path_key = f".file:{file_id}.y"
+    conn = sqlite3.connect(str(db_path))
+    conn.execute("DELETE FROM yupdates WHERE path = ?", (store_path_key,))
+    conn.execute("DELETE FROM ycheckpoints WHERE path = ?", (store_path_key,))
+    conn.commit()
+    conn.close()
+
+    # Reconnect with the now-stale session: the room rebuilds fresh from disk
+    # (genuine YDocNotFound) under a new incarnation.
+    url = base_url + f"&docSessionId={original_session}"
+    disconnect = None
+    try:
+        async with aconnect_ws(url) as ws:
+            await ws.receive()
+    except WebSocketDisconnect as exc:
+        disconnect = exc
+    except Exception as exc:  # noqa: BLE001 -- anyio wraps it in an (Base)ExceptionGroup
+        sub_exceptions = getattr(exc, "exceptions", ())
+        disconnect = next((e for e in sub_exceptions if isinstance(e, WebSocketDisconnect)), None)
+
+    assert disconnect is not None, "expected the server to close with a WebSocketDisconnect"
+    assert disconnect.code == 1003
+    payload = json.loads(disconnect.reason)
+    assert payload["reason"] == "document_session_mismatch"
