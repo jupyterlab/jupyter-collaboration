@@ -12,6 +12,7 @@ from jupyter_server_ydoc.test_utils import FakeContentsManager, FakeEventLogger,
 from jupyter_server_ydoc.utils import MessageType
 from jupyter_ydoc import YNotebook
 from pycrdt import Channel, Provider, YMessageType, YSyncMessageType, write_message
+from pycrdt.store import SQLiteYStore
 from pycrdt.websocket.websocket import HttpxWebsocket
 
 jupyter_ydocs = {ep.name: ep.load() for ep in entry_points(group="jupyter_ydoc")}
@@ -292,4 +293,105 @@ async def test_notebook_reconnect_sends_conflict_when_cell_structure_changes_bet
         assert len(server_notebook.get(deduplicate=False)["cells"]) == 1
     finally:
         await room_b.stop()
+        await loader_b.clean()
+
+
+async def _create_notebook_room_with_store(
+    notebook: dict, room_id: str, store_path: str, db_path: str
+) -> tuple[DocumentRoom, FileLoader, SQLiteYStore]:
+    file_id = f"file-{room_id}"
+    loader = FileLoader(
+        file_id,
+        FakeFileIDManager({file_id: "test.ipynb"}),
+        FakeContentsManager({"content": deepcopy(notebook), "writable": True}),
+    )
+    ystore = SQLiteYStore(path=store_path)
+    ystore.db_path = db_path
+    room = DocumentRoom(
+        room_id,
+        "json",
+        "notebook",
+        loader,
+        FakeEventLogger(),
+        ystore,
+        None,
+        None,
+        document_load_progressively=False,
+    )
+    await room.initialize()
+    return room, loader, ystore
+
+
+async def _stop_room_and_store(room: DocumentRoom, ystore: SQLiteYStore) -> None:
+    try:
+        await room.stop()
+    except RuntimeError:
+        pass
+    try:
+        await ystore.stop()
+    except RuntimeError:
+        pass
+
+
+def _document_session(room: DocumentRoom) -> str | None:
+    return room._document.ystate.get("document_session")
+
+
+async def test_document_session_is_assigned_on_fresh_room_creation():
+    room, loader = await _create_notebook_room(_notebook_model(), "fresh-session")
+    try:
+        assert _document_session(room)
+    finally:
+        await room.stop()
+        await loader.clean()
+
+
+async def test_document_session_persists_across_store_backed_room_recreation(tmp_path):
+    """A room rebuilt from a store that still holds its history is the same
+    incarnation, so a reconnecting client's remembered session must still match."""
+    db_path = str(tmp_path / "ystore.db")
+
+    room_a, loader_a, ystore_a = await _create_notebook_room_with_store(
+        _notebook_model(), "persist-before", "test.ipynb.y", db_path
+    )
+    session_a = _document_session(room_a)
+    # Disk genuinely unchanged since room A's content was last established
+    # (including whatever defaults YNotebook filled in), so the store restore
+    # below finds no real mismatch and doesn't fall back to a fresh rebuild.
+    content_on_disk = await room_a._document.aget()
+    await _stop_room_and_store(room_a, ystore_a)
+    await loader_a.clean()
+
+    room_b, loader_b, ystore_b = await _create_notebook_room_with_store(
+        content_on_disk, "persist-after", "test.ipynb.y", db_path
+    )
+    try:
+        assert _document_session(room_b) == session_a
+    finally:
+        await _stop_room_and_store(room_b, ystore_b)
+        await loader_b.clean()
+
+
+async def test_document_session_changes_after_genuine_rebuild_from_disk(tmp_path):
+    """A room rebuilt with no store history for its path is a new incarnation
+    with no relation to whatever a reconnecting client remembers."""
+    notebook = _notebook_model()
+
+    room_a, loader_a, ystore_a = await _create_notebook_room_with_store(
+        notebook, "rebuild-before", "test.ipynb.y", str(tmp_path / "ystore-a.db")
+    )
+    session_a = _document_session(room_a)
+    await _stop_room_and_store(room_a, ystore_a)
+    await loader_a.clean()
+
+    # A different store (empty for this path) simulates a genuine YDocNotFound:
+    # a deleted/lost store, a rekeyed file id, or simply the first rebuild this
+    # document has ever had under this mechanism.
+    room_b, loader_b, ystore_b = await _create_notebook_room_with_store(
+        notebook, "rebuild-after", "test.ipynb.y", str(tmp_path / "ystore-b.db")
+    )
+    try:
+        assert _document_session(room_b) != session_a
+    finally:
+        await _stop_room_and_store(room_b, ystore_b)
         await loader_b.clean()

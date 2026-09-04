@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import uuid
 from collections.abc import Callable
 from logging import Logger
 from typing import Any
@@ -259,6 +260,13 @@ class DocumentRoom(YRoom):
 
         The client ID needs to be fixed to a deterministic value, see:
         https://discuss.yjs.dev/t/initial-offline-value-of-a-shared-document/465
+
+        This is only sufficient for rebuilds that happen after a server has
+        adopted this mechanism: a client holding content built any other way
+        (predating this fix, or from a divergent history) has no relation to
+        the rebuilt content and can still merge as duplicates. `document_session`
+        marks this as a new incarnation so callers can refuse such a client
+        instead of silently merging.
         """
         source_ydoc: Doc = Doc(client_id=0)
         source_document = YDOCS.get(self._file_type, YFILE)(source_ydoc)
@@ -276,6 +284,7 @@ class DocumentRoom(YRoom):
         else:
             await source_document.aset(content)
             self.ydoc.apply_update(source_ydoc.get_update())
+        self._document.ystate["document_session"] = str(uuid.uuid4())
 
     def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:
         data = {"level": level.value, "room": self._room_id, "path": self._file.path}
