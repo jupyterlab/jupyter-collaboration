@@ -9,6 +9,7 @@ from typing import Any
 
 import pytest
 from dirty_equals import IsStr
+from httpx_ws import WebSocketDisconnect, aconnect_ws
 from jupyter_events.logger import EventLogger
 from jupyter_ydoc import YUnicode
 from pycrdt import Provider, Text
@@ -434,3 +435,55 @@ async def test_fork_handler(
             "fork_info": expected_data[fork_roomid1],
             "action": "delete",
         }
+
+
+async def _room_ws_url(rtc_fetch_session, jp_http_port, jp_base_url, path, extra_query=""):
+    resp = await rtc_fetch_session("text", "file", path)
+    data = json.loads(resp.body.decode("utf-8"))
+    room_name = f"{data['format']}:{data['type']}:{data['fileId']}"
+    url = (
+        f"http://127.0.0.1:{jp_http_port}{jp_base_url}api/collaboration/room/{room_name}"
+        f"?sessionId={data['sessionId']}"
+    )
+    return url + extra_query
+
+
+async def test_room_handler_rejects_stale_document_session_id(
+    rtc_create_file, rtc_fetch_session, jp_http_port, jp_base_url
+):
+    path, _ = await rtc_create_file("test.txt", "test")
+    url = await _room_ws_url(
+        rtc_fetch_session,
+        jp_http_port,
+        jp_base_url,
+        path,
+        extra_query="&docSessionId=stale-session-from-a-different-incarnation",
+    )
+
+    disconnect = None
+    try:
+        async with aconnect_ws(url) as ws:
+            await ws.receive()
+    except WebSocketDisconnect as exc:
+        disconnect = exc
+    except Exception as exc:  # noqa: BLE001 -- anyio wraps it in an (Base)ExceptionGroup
+        sub_exceptions = getattr(exc, "exceptions", ())
+        disconnect = next((e for e in sub_exceptions if isinstance(e, WebSocketDisconnect)), None)
+
+    assert disconnect is not None, "expected the server to close with a WebSocketDisconnect"
+    assert disconnect.code == 1003
+    payload = json.loads(disconnect.reason)
+    assert payload["reason"] == "document_session_mismatch"
+
+
+async def test_room_handler_connects_when_client_sends_no_document_session_id(
+    rtc_create_file, rtc_fetch_session, jp_http_port, jp_base_url
+):
+    path, _ = await rtc_create_file("test.txt", "test")
+    url = await _room_ws_url(rtc_fetch_session, jp_http_port, jp_base_url, path)
+
+    async with aconnect_ws(url) as ws:
+        message = await ws.receive()
+
+    # A SYNC message, not a disconnect: an unmodified client is never gated.
+    assert message is not None

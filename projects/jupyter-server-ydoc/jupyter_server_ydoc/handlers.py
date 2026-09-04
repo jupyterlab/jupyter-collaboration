@@ -31,6 +31,7 @@ from .utils import (
     YDOC_SERVER_VERSION,
     LogLevel,
     MessageType,
+    check_document_session_compatibility,
     check_session_compatibility,
     decode_file_path,
     encode_file_path,
@@ -292,6 +293,29 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 # Initialize the room
                 async with self._room_lock(self._room_id):
                     await self.room.initialize()
+
+                # Refuse a client whose remembered content-history incarnation
+                # doesn't match this room's current one -- distinct from the
+                # sessionId check above, which only guards package version and
+                # root directory, not room content-history identity.
+                doc_session_id = self.get_query_argument("docSessionId", "")
+                document_session = self.room._document.ystate.get("document_session")
+                cannot_reconnect, reason = check_document_session_compatibility(
+                    document_session, doc_session_id
+                )
+                if cannot_reconnect:
+                    self.close(
+                        1003,
+                        json.dumps(
+                            {
+                                "reason": reason,
+                                "documentSessionId": document_session,
+                                "reloadable": True,
+                            }
+                        ),
+                    )
+                    return
+
                 self.create_task(self._websocket_server.serve(self))
                 self._emit_awareness_event(self.current_user.username, "join")
             except Exception as e:
