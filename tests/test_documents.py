@@ -372,6 +372,29 @@ async def test_document_session_persists_across_store_backed_room_recreation(tmp
         await loader_b.clean()
 
 
+async def test_override_content_rewrites_room_under_a_new_session(tmp_path):
+    """A client choosing to keep its own version after a document_session
+    mismatch pushes its content, which must land as a genuinely new
+    incarnation (not a continuation of either side's prior history) and
+    persist to disk."""
+    room, loader = await _create_notebook_room(_notebook_model(), "override-target")
+    try:
+        session_before = _document_session(room)
+        new_content = deepcopy(_notebook_model())
+        new_content["cells"][0]["source"] = "overridden by client"
+
+        new_session = await room.override_content(new_content)
+
+        assert new_session != session_before
+        assert _document_session(room) == new_session
+        current = await room._document.aget()
+        assert current["cells"][0]["source"] == "overridden by client"
+        assert "save" in loader._contents_manager.actions
+    finally:
+        await room.stop()
+        await loader.clean()
+
+
 async def test_document_session_changes_after_genuine_rebuild_from_disk(tmp_path):
     """A room rebuilt with no store history for its path is a new incarnation
     with no relation to whatever a reconnecting client remembers."""

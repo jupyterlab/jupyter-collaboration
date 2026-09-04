@@ -286,6 +286,44 @@ class DocumentRoom(YRoom):
             self.ydoc.apply_update(source_ydoc.get_update())
         self._document.ystate["document_session"] = str(uuid.uuid4())
 
+    async def override_content(self, content: Any) -> str:
+        """Explicitly rewrite this room's content with a client's own version.
+
+        Used when a client whose reconnect was refused for a document_session
+        mismatch chooses to keep its local edits rather than the server's
+        freshly rebuilt content. Always assigns a fresh document_session: an
+        explicit override is deliberately a new incarnation, not a
+        continuation of either side's prior history.
+
+        Deliberately does not reuse `_apply_deterministic_source_content`,
+        which builds a separate, unrelated `Doc` and merges its update in --
+        fine when nothing pre-exists to reconcile against, but here the room
+        already holds real content with the same cell ids, and merging a
+        second, disconnected copy of them in produces duplicate array
+        entries sharing an id instead of replacing anything. `aset()` on the
+        room's own already-connected document does an in-place, id-matched
+        reconciliation instead (the same mechanism `_on_outofband_change`'s
+        and `_maybe_save_document`'s comparable rewrites already use safely).
+
+        Returns:
+            The newly assigned document_session.
+        """
+        async with self._update_lock:
+            await self._document.aset(content)
+            self._document.ystate["document_session"] = str(uuid.uuid4())
+            if self.ystore:
+                await self.ystore.encode_state_as_update(self.ydoc)
+
+        await self._file.maybe_save_content(
+            {
+                "format": self._file_format,
+                "type": self._file_type,
+                "content": await self._document.aget(),
+            }
+        )
+
+        return self._document.ystate["document_session"]
+
     def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:
         data = {"level": level.value, "room": self._room_id, "path": self._file.path}
         if action:
