@@ -253,6 +253,9 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     );
     const token = this._serverSettings.token;
     const params: Record<string, string> = { sessionId: session.sessionId };
+    if (this._documentSessionId) {
+      params['docSessionId'] = this._documentSessionId;
+    }
     if (this._serverSettings.appendToken && token !== '') {
       params['token'] = token;
     }
@@ -579,6 +582,10 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         const state = this._sharedModel.ydoc.getMap('state');
         state.set('document_id', this._yWebsocketProvider.roomname);
       }
+      const documentSession = this._sharedModel.ystate.get('document_session');
+      if (documentSession) {
+        this._documentSessionId = documentSession;
+      }
       this._ready.resolve();
     }
   };
@@ -612,6 +619,14 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _serverSettings: ServerConnection.ISettings;
   private _trans: TranslationBundle;
   private _hasSynced = false;
+  /**
+   * The room's content-history incarnation as last seen from a synced
+   * ystate -- distinct from `sessionId` (server-process/version identity).
+   * Sent as `docSessionId` on the next connect so the server can refuse a
+   * reconnect whose remembered incarnation no longer matches, instead of
+   * silently merging unrelated content. Empty until the first sync.
+   */
+  private _documentSessionId = '';
   private _saveCounter = 0;
   private _conflictWs: WebSocket | null = null;
   private _onConflictSaveAs?: () => Promise<void>;

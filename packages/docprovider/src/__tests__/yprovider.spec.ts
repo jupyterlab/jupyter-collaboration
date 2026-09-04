@@ -24,15 +24,23 @@ jest.mock('../requests', () => ({
 
 interface IMockWsProvider {
   emit: (eventName: string, payload: any) => void;
+  params?: Record<string, string>;
 }
 
 jest.mock('y-websocket', () => ({
   WebsocketProvider: class {
     roomname: string;
+    params?: Record<string, string>;
     private _listeners = new Map<string, Set<(payload: any) => void>>();
 
-    constructor(_url: string, roomname: string) {
+    constructor(
+      _url: string,
+      roomname: string,
+      _doc: unknown,
+      options?: { params?: Record<string, string> }
+    ) {
       this.roomname = roomname;
+      this.params = options?.params;
     }
 
     on(eventName: string, listener: (payload: any) => void): void {
@@ -532,5 +540,48 @@ describe('session close handling', () => {
     await acceptDialog(undefined, 1000);
     await sleep(50);
     expect(window.location.reload).not.toHaveBeenCalled();
+  });
+});
+
+describe('document_session tracking', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (requestDocSession as jest.Mock).mockResolvedValue({
+      sessionId: 'session-id',
+      format: 'text',
+      type: 'file',
+      fileId: 'file-id'
+    });
+  });
+
+  it('should not send a docSessionId on the very first connect', async () => {
+    const provider = createProvider();
+    const wsProvider = (await waitForProviderConnect(
+      provider
+    )) as unknown as IMockWsProvider;
+
+    expect(wsProvider.params?.docSessionId).toBeFalsy();
+    provider.dispose();
+  });
+
+  it('should remember document_session from ystate once synced and send it on reconnect', async () => {
+    const model = new YFile();
+    const provider = createProvider({ model });
+    await waitForProviderConnect(provider);
+
+    model.ystate.set('document_session', 'incarnation-a');
+    const wsProvider = (await waitForProviderConnect(provider)) as unknown as {
+      emit: (eventName: string, payload: any) => void;
+    };
+    wsProvider.emit('sync', true);
+    await provider.ready;
+
+    await provider.reconnect();
+    const reconnectedWsProvider = (await waitForProviderConnect(
+      provider
+    )) as unknown as IMockWsProvider;
+
+    expect(reconnectedWsProvider.params?.docSessionId).toBe('incarnation-a');
+    provider.dispose();
   });
 });
