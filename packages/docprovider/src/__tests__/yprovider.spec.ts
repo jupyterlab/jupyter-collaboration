@@ -15,16 +15,18 @@ import {
   sleep,
   waitForDialog
 } from '@jupyterlab/testutils';
-import { requestDocSession } from '../requests';
+import { requestDocSession, requestDocumentSessionOverride } from '../requests';
 import { WebSocketProvider } from '../yprovider';
 
 jest.mock('../requests', () => ({
-  requestDocSession: jest.fn()
+  requestDocSession: jest.fn(),
+  requestDocumentSessionOverride: jest.fn()
 }));
 
 interface IMockWsProvider {
   emit: (eventName: string, payload: any) => void;
   params?: Record<string, string>;
+  roomname: string;
 }
 
 jest.mock('y-websocket', () => ({
@@ -583,5 +585,95 @@ describe('document_session tracking', () => {
 
     expect(reconnectedWsProvider.params?.docSessionId).toBe('incarnation-a');
     provider.dispose();
+  });
+});
+
+describe('document_session_mismatch handling', () => {
+  let provider: WebSocketProvider;
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    (requestDocSession as jest.Mock).mockResolvedValue({
+      sessionId: 'session-id',
+      format: 'text',
+      type: 'file',
+      fileId: 'file-id'
+    });
+    (requestDocumentSessionOverride as jest.Mock).mockResolvedValue({
+      documentSessionId: 'new-session-after-override'
+    });
+    provider = createProvider();
+  });
+
+  afterEach(async () => {
+    provider.dispose();
+    await dismissDialog(undefined, 50);
+  });
+
+  it('should show a 2-choice dialog distinguishing browser vs on-disk content', async () => {
+    const wsProvider = await waitForProviderConnect(provider);
+    wsProvider.emit('connection-close', {
+      code: 1003,
+      reason: JSON.stringify({
+        reason: 'document_session_mismatch',
+        documentSessionId: 'server-session-new',
+        reloadable: true
+      })
+    } as CloseEvent);
+
+    await waitForDialog(undefined, 1000);
+    expect(document.body.textContent).toContain('Keep browser version');
+    expect(document.body.textContent).toContain('Keep on-disk version');
+  });
+
+  it('should dispose the shared model without pushing content when keeping the on-disk version', async () => {
+    const model = new YFile();
+    const disposeSpy = jest.spyOn(model, 'dispose');
+    provider = createProvider({ model });
+    const wsProvider = await waitForProviderConnect(provider);
+
+    wsProvider.emit('connection-close', {
+      code: 1003,
+      reason: JSON.stringify({
+        reason: 'document_session_mismatch',
+        documentSessionId: 'server-session-new',
+        reloadable: true
+      })
+    } as CloseEvent);
+
+    await waitForDialog(undefined, 1000);
+    await acceptDialog(undefined, 1000);
+    await sleep(50);
+
+    expect(requestDocumentSessionOverride).not.toHaveBeenCalled();
+    expect(disposeSpy).toHaveBeenCalled();
+  });
+
+  it('should push the client content via the override endpoint then dispose when keeping the browser version', async () => {
+    const model = new YFile();
+    model.source = 'my local edits';
+    const disposeSpy = jest.spyOn(model, 'dispose');
+    provider = createProvider({ model });
+    const wsProvider = await waitForProviderConnect(provider);
+
+    wsProvider.emit('connection-close', {
+      code: 1003,
+      reason: JSON.stringify({
+        reason: 'document_session_mismatch',
+        documentSessionId: 'server-session-new',
+        reloadable: true
+      })
+    } as CloseEvent);
+
+    await waitForDialog(undefined, 1000);
+    await dangerDialog(undefined, 1000);
+    await sleep(50);
+
+    expect(requestDocumentSessionOverride).toHaveBeenCalledWith(
+      wsProvider.roomname,
+      'my local edits',
+      expect.anything()
+    );
+    expect(disposeSpy).toHaveBeenCalled();
   });
 });

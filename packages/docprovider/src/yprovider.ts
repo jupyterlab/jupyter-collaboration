@@ -21,7 +21,7 @@ import { TranslationBundle } from '@jupyterlab/translation';
 import { Dialog, showDialog } from '@jupyterlab/apputils';
 
 import { IForkProvider } from './ydrive';
-import { requestDocSession } from './requests';
+import { requestDocSession, requestDocumentSessionOverride } from './requests';
 import { ISessionClosePayload } from './tokens';
 
 import { ExternalChangeHandler } from './externalChange';
@@ -447,6 +447,11 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         };
       }
 
+      if (payload.reason === 'document_session_mismatch') {
+        await this._handleDocumentSessionMismatch();
+        return;
+      }
+
       const { title, body } = this._buildSessionExpiredMessage(
         payload,
         this._trans
@@ -471,6 +476,66 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       this._sharedModel.dispose();
     }
   };
+
+  /**
+   * Handle a reconnect refused because the room was rebuilt as a new,
+   * unrelated incarnation while this client held a different one (e.g. its
+   * remembered document_session predates a store loss or rekeying). Offers
+   * an explicit choice instead of a silent merge, which is what produces
+   * duplicated content.
+   *
+   * Always disposes the shared model afterwards -- as with the other 1003
+   * reasons, better to break the document model than risk reconnecting this
+   * same, already-diverged local Y.Doc against the server's rebuilt one.
+   * Keeping the browser version pushes its content over HTTP first, so nothing
+   * is lost; keeping the on-disk version needs no extra step; a dismissed
+   * dialog is treated the same as keeping the on-disk version, since that's
+   * the choice that can't lose data.
+   */
+  private async _handleDocumentSessionMismatch(): Promise<void> {
+    const result = await showDialog({
+      title: this._trans.__('Content diverged'),
+      body: this._trans.__(
+        'Your local edits and the version on disk have diverged (for ' +
+          'example, this document was reopened after being unavailable for ' +
+          'a while). Choose which version to keep.'
+      ),
+      buttons: [
+        // Dialog's default button (triggered by Enter) is the last one in
+        // this list -- keep-disk last so the safe, no-data-pushed choice is
+        // the default, not the one that overwrites the room's content.
+        Dialog.warnButton({
+          label: this._trans.__('Keep browser version'),
+          actions: ['keep-browser']
+        }),
+        Dialog.okButton({
+          label: this._trans.__('Keep on-disk version'),
+          actions: ['keep-disk']
+        })
+      ]
+    });
+
+    if (
+      result.button.actions.includes('keep-browser') &&
+      this._yWebsocketProvider
+    ) {
+      try {
+        await requestDocumentSessionOverride(
+          this._yWebsocketProvider.roomname,
+          this._sharedModel.getSource(),
+          this._serverSettings
+        );
+      } catch (e) {
+        console.error(
+          'Failed to push the browser version as the new canonical content',
+          e
+        );
+      }
+    }
+    // Either choice breaks this document model; the document manager will
+    // reopen it fresh, which is always ungated (no remembered session to send).
+    this._sharedModel.dispose();
+  }
 
   private _attachConflictListener(): void {
     if (this._conflictWs) {

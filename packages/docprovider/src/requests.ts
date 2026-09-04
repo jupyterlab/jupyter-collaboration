@@ -5,6 +5,7 @@
 
 import { URLExt } from '@jupyterlab/coreutils';
 import { ServerConnection, Contents } from '@jupyterlab/services';
+import { JSONValue } from '@lumino/coreutils';
 
 /**
  * Document session endpoint provided by `jupyter_collaboration`
@@ -13,6 +14,7 @@ import { ServerConnection, Contents } from '@jupyterlab/services';
 const DOC_SESSION_URL = 'api/collaboration/session';
 const DOC_FORK_URL = 'api/collaboration/undo_redo';
 const TIMELINE_URL = 'api/collaboration/timeline';
+const DOC_SESSION_OVERRIDE_URL = 'api/collaboration/room_override';
 
 export const ROOM_FORK_URL = 'api/collaboration/fork';
 
@@ -160,6 +162,55 @@ export async function requestUndoRedo(
   url = url.concat(`?action=${action}&&steps=${steps}&&forkRoom=${forkRoom}`);
 
   const body = { method: 'PUT' };
+
+  let response: Response;
+  try {
+    response = await ServerConnection.makeRequest(url, body, settings);
+  } catch (error) {
+    throw new ServerConnection.NetworkError(error as Error);
+  }
+
+  let data: any = await response.text();
+
+  if (data.length > 0) {
+    try {
+      data = JSON.parse(data);
+    } catch (error) {
+      console.log('Not a JSON response body.', response);
+    }
+  }
+
+  if (!response.ok) {
+    throw new ServerConnection.ResponseError(response, data.message || data);
+  }
+
+  return data;
+}
+
+/**
+ * Push a client's own content as a room's new canonical state, after a
+ * document_session mismatch refusal, when the client chooses to keep its
+ * local edits over the server's freshly rebuilt content.
+ *
+ * @param roomId Room id, e.g. `${format}:${type}:${fileId}`
+ * @param content The document's current content
+ * @returns The newly assigned document_session
+ */
+export async function requestDocumentSessionOverride(
+  roomId: string,
+  content: JSONValue | string,
+  serverSettings?: ServerConnection.ISettings
+): Promise<{ documentSessionId: string }> {
+  const settings = serverSettings ?? ServerConnection.makeSettings();
+  const url = URLExt.join(
+    settings.baseUrl,
+    DOC_SESSION_OVERRIDE_URL,
+    encodeURIComponent(roomId)
+  );
+  const body = {
+    method: 'PUT',
+    body: JSON.stringify({ content })
+  };
 
   let response: Response;
   try {
