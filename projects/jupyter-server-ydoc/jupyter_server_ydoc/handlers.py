@@ -327,6 +327,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                             {
                                 "reason": "initialization_error",
                                 "reloadable": False,
+                                "errorReason": str(e),
                             }
                         ),
                     )

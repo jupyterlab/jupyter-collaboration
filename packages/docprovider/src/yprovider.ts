@@ -349,9 +349,11 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       case 'initialization_error':
         return {
           title: trans.__('Document error'),
-          body: trans.__(
-            'Failed to initialize the document. Close this tab and reopen the file.'
-          )
+          body: payload.errorReason
+            ? trans.__(payload.errorReason)
+            : trans.__(
+                'Failed to initialize the document. Close this tab and reopen the file.'
+              )
         };
       case 'unknown_session':
       default:
