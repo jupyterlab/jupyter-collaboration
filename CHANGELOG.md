@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 5.0.3
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@5.0.2...32e84aa3363e3dd58b5d5a61a74542e34e967ad9))
+
+### Enhancements made
+
+- Make `errorReason` required to show exact reason to client [#622](https://github.com/jupyterlab/jupyter-collaboration/pull/622) ([@nakul-py](https://github.com/nakul-py), [@davidbrochart](https://github.com/davidbrochart), [@krassowski](https://github.com/krassowski), [@martinRenou](https://github.com/martinRenou))
+
+### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/use/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2026-08-25&to=2026-09-10&type=c))
+
+@davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2026-08-25..2026-09-10&type=Issues)) | @krassowski ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2026-08-25..2026-09-10&type=Issues)) | @martinRenou ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AmartinRenou+updated%3A2026-08-25..2026-09-10&type=Issues)) | @nakul-py ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Anakul-py+updated%3A2026-08-25..2026-09-10&type=Issues))
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 5.0.2
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@5.0.1...40e29c19bc77af2fafea63e57d1549b299aaf1a5))
@@ -24,8 +43,6 @@ See [our definition of contributors](https://github-activity.readthedocs.io/en/l
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2026-08-24&to=2026-08-25&type=c))
 
 @davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2026-08-24..2026-08-25&type=Issues)) | @djangoliv ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adjangoliv+updated%3A2026-08-24..2026-08-25&type=Issues)) | @martinRenou ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AmartinRenou+updated%3A2026-08-24..2026-08-25&type=Issues))
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 5.0.1
 
