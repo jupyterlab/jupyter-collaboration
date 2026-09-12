@@ -88,6 +88,101 @@ export interface IAwarenessState extends Record<string, any> {
 }
 
 /**
+ * Collaborator cursor lookup query.
+ */
+export interface ICollaboratorCursorQuery {
+  /**
+   * Collaborator awareness client id.
+   */
+  clientId?: number;
+  /**
+   * Collaborator username.
+   */
+  username?: string;
+}
+
+/**
+ * Collaborator cursor range.
+ */
+export interface ICollaboratorCursorRange {
+  /**
+   * Collaborator awareness client id.
+   */
+  clientId: number;
+  /**
+   * Cursor range start index.
+   */
+  start: number;
+  /**
+   * Cursor range end index.
+   */
+  end: number;
+}
+
+/**
+ * Find collaborator cursor range in a shared text document.
+ *
+ * @param awareness Shared awareness state
+ * @param ytext Shared text source
+ * @param query Collaborator query
+ * @returns Collaborator range or `null`
+ */
+export function getCollaboratorCursorRange(
+  awareness: Awareness,
+  ytext: Text,
+  query: ICollaboratorCursorQuery
+): ICollaboratorCursorRange | null {
+  const { clientId, username } = query;
+  if (clientId === undefined && !username) {
+    return null;
+  }
+
+  const ydoc = ytext.doc;
+  if (!ydoc) {
+    return null;
+  }
+
+  for (const [remoteClientId, state] of awareness.getStates()) {
+    if (remoteClientId === awareness.doc.clientID) {
+      continue;
+    }
+    if (clientId !== undefined && remoteClientId !== clientId) {
+      continue;
+    }
+    if (username && state.user?.username !== username) {
+      continue;
+    }
+
+    const cursor =
+      state.cursors?.find(
+        (cursor: ICursorState) => cursor?.primary !== false
+      ) ?? state.cursors?.[0];
+
+    if (!cursor?.anchor || !cursor?.head) {
+      continue;
+    }
+
+    const anchor = createAbsolutePositionFromRelativePosition(
+      cursor.anchor,
+      ydoc
+    );
+    const head = createAbsolutePositionFromRelativePosition(cursor.head, ydoc);
+
+    if (anchor?.type !== ytext || head?.type !== ytext) {
+      continue;
+    }
+
+    return {
+      clientId: remoteClientId,
+      start: Math.min(anchor.index, head.index),
+      end: Math.max(anchor.index, head.index)
+    };
+  }
+
+  return null;
+}
+
+/**
  * Facet storing the Yjs document objects
  */
 export const editorAwarenessFacet = Facet.define<
