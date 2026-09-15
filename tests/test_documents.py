@@ -466,3 +466,56 @@ async def test_document_session_backfilled_when_restoring_history_with_none(tmp_
     finally:
         await _stop_room_and_store(room2, ystore2)
         await loader2.clean()
+
+
+async def test_document_session_survives_out_of_band_resync():
+    """_on_outofband_change() rewrites content via aset(), which jupyter_ydoc's
+    _set() otherwise clears document_session as part of -- this is always a
+    safe, in-place resync (confirmed non-duplicating), never a new
+    incarnation, so the session must survive it."""
+    room, loader = await _create_notebook_room(_notebook_model(), "outofband-session")
+    try:
+        session_before = _document_session(room)
+        assert session_before is not None
+
+        changed = deepcopy(_notebook_model())
+        changed["cells"][0]["source"] = "changed out of band"
+        loader._contents_manager.model["content"] = changed
+
+        await room._on_outofband_change()
+
+        assert _document_session(room) == session_before
+        assert (await room._document.aget())["cells"][0]["source"] == "changed out of band"
+    finally:
+        await room.stop()
+        await loader.clean()
+
+
+async def test_document_session_survives_initialize_mismatch_resync(tmp_path):
+    """A genuine mismatch between stored history and disk still resyncs via
+    aset() in initialize() -- the session established by the stored history
+    must survive that resync too, not just a passive restore."""
+    db_path = str(tmp_path / "ystore.db")
+    store_path = "test.ipynb.y"
+    notebook = _notebook_model()
+
+    room_a, loader_a, ystore_a = await _create_notebook_room_with_store(
+        notebook, "mismatch-session-before", store_path, db_path
+    )
+    session_before = _document_session(room_a)
+    assert session_before is not None
+    await _stop_room_and_store(room_a, ystore_a)
+    await loader_a.clean()
+
+    changed = deepcopy(notebook)
+    changed["cells"][0]["source"] = "genuinely different on disk"
+    room_b, loader_b, ystore_b = await _create_notebook_room_with_store(
+        changed, "mismatch-session-after", store_path, db_path
+    )
+    try:
+        assert _document_session(room_b) == session_before
+        current = await room_b._document.aget()
+        assert current["cells"][0]["source"] == "genuinely different on disk"
+    finally:
+        await _stop_room_and_store(room_b, ystore_b)
+        await loader_b.clean()

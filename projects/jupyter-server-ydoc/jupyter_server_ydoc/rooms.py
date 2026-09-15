@@ -221,7 +221,7 @@ class DocumentRoom(YRoom):
                     else:
                         await self._apply_deterministic_source_content(model["content"])
                 else:
-                    await self._document.aset(model["content"])
+                    await self._aset_preserving_session(model["content"])
 
                 if self.ystore:
                     await self.ystore.encode_state_as_update(self.ydoc)
@@ -334,6 +334,20 @@ class DocumentRoom(YRoom):
         )
 
         return self._document.ystate["document_session"]
+
+    async def _aset_preserving_session(self, content: Any) -> None:
+        """Rewrite content via aset(), preserving document_session across it.
+
+        jupyter_ydoc's `_set()` clears every ystate key it doesn't recognize
+        (keeping only dirty/path/document_id), including document_session.
+        Every call site that uses this is a safe, in-place resync (confirmed
+        non-duplicating), never a new incarnation, so the session must
+        survive it rather than silently reverting this room to unprotected.
+        """
+        preserved_session = self._document.ystate.get("document_session")
+        await self._document.aset(content)
+        if preserved_session is not None:
+            self._document.ystate["document_session"] = preserved_session
 
     def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:
         data = {"level": level.value, "room": self._room_id, "path": self._file.path}
