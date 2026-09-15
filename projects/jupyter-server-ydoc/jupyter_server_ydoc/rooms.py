@@ -163,6 +163,17 @@ class DocumentRoom(YRoom):
                     # the source file (no change history)
                     pass
 
+            if loaded_from_store and self._document.ystate.get("document_session") is None:
+                # Real history restored with no recorded session: this predates
+                # document_session existing, or this room's own first genuine
+                # rebuild happened before the mechanism was active. Treat
+                # successfully restoring real history as establishing the
+                # baseline incarnation now, rather than requiring another
+                # rebuild before this document can be protected at all.
+                self._document.ystate["document_session"] = str(uuid.uuid4())
+                if self.ystore:
+                    await self.ystore.encode_state_as_update(self.ydoc)
+
             if not read_from_source:
                 # if YStore updates and source file are out-of-sync, resync updates with source
                 if await self._document.aget() != model["content"]:

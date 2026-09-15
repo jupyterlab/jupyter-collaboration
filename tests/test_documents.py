@@ -11,7 +11,7 @@ from jupyter_server_ydoc.rooms import DocumentRoom
 from jupyter_server_ydoc.test_utils import FakeContentsManager, FakeEventLogger, FakeFileIDManager
 from jupyter_server_ydoc.utils import MessageType
 from jupyter_ydoc import YNotebook
-from pycrdt import Channel, Provider, YMessageType, YSyncMessageType, write_message
+from pycrdt import Channel, Doc, Provider, YMessageType, YSyncMessageType, write_message
 from pycrdt.store import SQLiteYStore
 from pycrdt.websocket.websocket import HttpxWebsocket
 
@@ -418,3 +418,51 @@ async def test_document_session_changes_after_genuine_rebuild_from_disk(tmp_path
     finally:
         await _stop_room_and_store(room_b, ystore_b)
         await loader_b.clean()
+
+
+async def test_document_session_backfilled_when_restoring_history_with_none(tmp_path):
+    """A room whose real history predates document_session existing (or whose
+    own first genuine rebuild happened before the mechanism was active) gets a
+    baseline session assigned on its next successful restore, rather than
+    needing another full rebuild before it can be protected at all."""
+    db_path = str(tmp_path / "ystore.db")
+    store_path = "test.ipynb.y"
+    notebook = _notebook_model()
+
+    # Seed the store directly, bypassing DocumentRoom, to simulate real history
+    # that was written before document_session existed at all. Disk content
+    # matches the store's own round-tripped content exactly, so this only
+    # exercises the clean-restore path -- not the mismatch/resync branch,
+    # which is a separate concern tested below.
+    seed_store = SQLiteYStore(path=store_path)
+    seed_store.db_path = db_path
+    disk_content = None
+    async with create_task_group() as tg:
+        await tg.start(seed_store.start)
+        seed_doc = Doc()
+        seed_notebook = YNotebook(seed_doc)
+        await seed_notebook.aset(notebook)
+        disk_content = await seed_notebook.aget()
+        await seed_store.encode_state_as_update(seed_doc)
+        await seed_store.stop()
+
+    room, loader, ystore = await _create_notebook_room_with_store(
+        disk_content, "backfill-before", store_path, db_path
+    )
+    session_after_backfill = None
+    try:
+        session_after_backfill = _document_session(room)
+        assert session_after_backfill is not None
+    finally:
+        await _stop_room_and_store(room, ystore)
+        await loader.clean()
+
+    # Confirm it actually persisted -- not just held in this room's memory.
+    room2, loader2, ystore2 = await _create_notebook_room_with_store(
+        disk_content, "backfill-after", store_path, db_path
+    )
+    try:
+        assert _document_session(room2) == session_after_backfill
+    finally:
+        await _stop_room_and_store(room2, ystore2)
+        await loader2.clean()
