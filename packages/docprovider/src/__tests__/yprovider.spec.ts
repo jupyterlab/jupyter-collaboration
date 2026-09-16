@@ -586,6 +586,47 @@ describe('document_session tracking', () => {
     expect(reconnectedWsProvider.params?.docSessionId).toBe('incarnation-a');
     provider.dispose();
   });
+
+  it('should replace a plain disconnect with a fresh reconnect instead of the stale automatic retry', async () => {
+    jest.useFakeTimers();
+    try {
+      const model = new YFile();
+      const provider = createProvider({ model });
+      const wsProvider = (await waitForProviderConnect(
+        provider
+      )) as unknown as IMockWsProvider;
+      const destroySpy = jest.spyOn(wsProvider as any, 'destroy');
+
+      model.ystate.set('document_session', 'incarnation-a');
+      wsProvider.emit('sync', true);
+      await provider.ready;
+
+      // A plain disconnect (not 1003, not an error status code) -- e.g. a
+      // network drop or a server restart. y-websocket's own automatic retry
+      // would reuse this exact provider's frozen params forever; it must be
+      // torn down instead so a fresh _connect() (with the now-known session
+      // id) runs in its place.
+      (requestDocSession as jest.Mock).mockClear();
+      wsProvider.emit('connection-close', { code: 1006 });
+
+      expect(destroySpy).toHaveBeenCalled();
+
+      jest.advanceTimersByTime(500);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(requestDocSession).toHaveBeenCalledTimes(1);
+      const reconnectedWsProvider = (await waitForProviderConnect(
+        provider
+      )) as unknown as IMockWsProvider;
+      expect(reconnectedWsProvider).not.toBe(wsProvider);
+      expect(reconnectedWsProvider.params?.docSessionId).toBe('incarnation-a');
+
+      provider.dispose();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });
 
 describe('document_session_mismatch handling', () => {

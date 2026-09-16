@@ -134,6 +134,10 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       .getMap('state')
       .unobserve(this._onSharedStateChanged);
     this._clearLoadTimeout();
+    if (this._reconnectTimeoutId !== null) {
+      clearTimeout(this._reconnectTimeoutId);
+      this._reconnectTimeoutId = null;
+    }
     if (this._conflictWs) {
       this._conflictWs.removeEventListener(
         'message',
@@ -384,6 +388,30 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     this._yWebsocketProvider = null;
   }
 
+  /**
+   * Replace a plain disconnect (network drop, server restart, etc.) with a
+   * fresh reconnect of our own, on a short backoff.
+   *
+   * y-websocket's own automatic retry reuses the exact connection params
+   * (including docSessionId) frozen when that provider was constructed --
+   * it never rebuilds them, so it can never pick up a session id learned
+   * since. Tearing the stale provider down here (synchronously, before any
+   * `await`) cancels its pending retry (destroy() sets its `shouldConnect`
+   * to false), so our own `_connect()` -- which always reads the current
+   * `_documentSessionId` -- is what actually reconnects instead.
+   */
+  private _scheduleReconnect(): void {
+    if (this._isDisposed) {
+      return;
+    }
+    this._disconnect();
+    const delay = Math.min(2 ** this._reconnectAttempts * 100, 2500);
+    this._reconnectAttempts++;
+    this._reconnectTimeoutId = window.setTimeout(() => {
+      this._connect().catch(e => console.warn(e));
+    }, delay);
+  }
+
   private _onUserChanged(user: User.IManager): void {
     this._awareness.setLocalStateField('user', user.identity);
   }
@@ -474,6 +502,14 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       // Dispose shared model immediately. Better break the document model,
       // than overriding data on disk.
       this._sharedModel.dispose();
+      return;
+    }
+    if (
+      ![4400, 4404, 4500].includes(event.code) &&
+      event.code !== 1003 &&
+      !this._isDisposed
+    ) {
+      this._scheduleReconnect();
     }
   };
 
@@ -640,6 +676,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     if (isSynced) {
       this._onSharedStateChanged();
       this._hasSynced = true;
+      this._reconnectAttempts = 0;
       this._clearLoadTimeout();
       if (this._yWebsocketProvider) {
         this._yWebsocketProvider.off('sync', this._onSync);
@@ -701,6 +738,8 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _onConflictShowDiff?: (localContent: JSONValue) => Promise<void>;
   private _externalChanges: ExternalChangeHandler;
   private _contents: ContentsManager;
+  private _reconnectAttempts = 0;
+  private _reconnectTimeoutId: number | null = null;
 }
 
 /**
