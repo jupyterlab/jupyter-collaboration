@@ -31,3 +31,11 @@ def test_allows_reconnect_when_room_has_no_recorded_session():
     cannot_reconnect, reason = check_document_session_compatibility(None, "room-session-a")
     assert cannot_reconnect is False
     assert reason == ""
+
+
+def test_allows_reconnect_when_room_session_is_empty_string():
+    """An empty-string recorded session is treated the same as None: nothing
+    to compare a client's remembered session against."""
+    cannot_reconnect, reason = check_document_session_compatibility("", "room-session-a")
+    assert cannot_reconnect is False
+    assert reason == ""
