@@ -486,7 +486,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       }
 
       if (payload.reason === 'document_session_mismatch') {
-        await this._handleDocumentSessionMismatch();
+        await this._handleDocumentSessionMismatch(payload.documentSessionId);
         return;
       }
 
@@ -530,15 +530,26 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
    * an explicit choice instead of a silent merge, which is what produces
    * duplicated content.
    *
-   * Always disposes the shared model afterwards -- as with the other 1003
-   * reasons, better to break the document model than risk reconnecting this
-   * same, already-diverged local Y.Doc against the server's rebuilt one.
-   * Keeping the browser version pushes its content over HTTP first, so nothing
-   * is lost; keeping the on-disk version needs no extra step; a dismissed
-   * dialog is treated the same as keeping the on-disk version, since that's
-   * the choice that can't lose data.
+   * Disposes the shared model once a choice is safely carried out -- as with
+   * the other 1003 reasons, better to break the document model than risk
+   * reconnecting this same, already-diverged local Y.Doc against the
+   * server's rebuilt one. Keeping the on-disk version needs no extra step
+   * and is always safe to dispose after; keeping the browser version pushes
+   * its content over HTTP first, and is only disposed once that push
+   * actually succeeds -- if it fails, the edits the user explicitly chose to
+   * keep must not be silently discarded, so the model is left intact for a
+   * retry instead. A dismissed dialog is treated the same as keeping the
+   * on-disk version, since that's the choice that can't lose data.
    */
-  private async _handleDocumentSessionMismatch(): Promise<void> {
+  private async _handleDocumentSessionMismatch(
+    serverDocumentSessionId?: string
+  ): Promise<void> {
+    if (serverDocumentSessionId) {
+      console.debug(
+        `Content diverged from server document_session: ${serverDocumentSessionId}`
+      );
+    }
+
     const result = await showDialog({
       title: this._trans.__('Content diverged'),
       body: this._trans.__(
@@ -576,10 +587,21 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
           'Failed to push the browser version as the new canonical content',
           e
         );
+        await showDialog({
+          title: this._trans.__('Could not save your version'),
+          body: this._trans.__(
+            'Your edits could not be pushed to the server, so they have ' +
+              'not been discarded. Try again once the problem is resolved.'
+          ),
+          buttons: [Dialog.okButton({ label: this._trans.__('Ok') })]
+        });
+        return;
       }
     }
-    // Either choice breaks this document model; the document manager will
-    // reopen it fresh, which is always ungated (no remembered session to send).
+    // Either the on-disk choice, or a confirmed successful push of the
+    // browser version, breaks this document model; the document manager
+    // will reopen it fresh, which is always ungated (no remembered session
+    // to send).
     this._sharedModel.dispose();
   }
 

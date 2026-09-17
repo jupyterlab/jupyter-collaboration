@@ -834,4 +834,40 @@ describe('document_session_mismatch handling', () => {
     );
     expect(disposeSpy).toHaveBeenCalled();
   });
+
+  it('should show an error and keep the shared model intact when the override push fails', async () => {
+    const model = new YFile();
+    model.source = 'my local edits';
+    const disposeSpy = jest.spyOn(model, 'dispose');
+    provider = createProvider({ model });
+    const wsProvider = await waitForProviderConnect(provider);
+
+    (requestDocumentSessionOverride as jest.Mock).mockRejectedValueOnce(
+      new Error('network error')
+    );
+
+    wsProvider.emit('connection-close', {
+      code: 1003,
+      reason: JSON.stringify({
+        reason: 'document_session_mismatch',
+        documentSessionId: 'server-session-new',
+        reloadable: true
+      })
+    } as CloseEvent);
+
+    // First dialog: the keep-browser/keep-disk choice.
+    await waitForDialog(undefined, 1000);
+    await dangerDialog(undefined, 1000);
+    await sleep(50);
+
+    expect(requestDocumentSessionOverride).toHaveBeenCalled();
+
+    // The push failed: a second dialog reports it, and the user's edits
+    // must not have been silently discarded.
+    await waitForDialog(undefined, 1000);
+    await acceptDialog(undefined, 1000);
+    await sleep(50);
+
+    expect(disposeSpy).not.toHaveBeenCalled();
+  });
 });
