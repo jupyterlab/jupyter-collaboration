@@ -31,6 +31,7 @@ from .utils import (
     YDOC_SERVER_VERSION,
     LogLevel,
     MessageType,
+    OutOfBandChanges,
     check_document_session_compatibility,
     check_session_compatibility,
     decode_file_path,
@@ -283,6 +284,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                         }
                     )
                     self.close(1003, close_payload)
+                    return
                 # Else accept the old session, no reload needed.
 
             # cancel the deletion of the room if it was scheduled
@@ -869,20 +871,33 @@ class DocumentSessionOverrideHandler(APIHandler):
             room = await self._websocket_server.get_room(room_id)
         except RoomNotFound:
             self.set_status(404)
+            self.log.warning(f"Room {room_id} not found for document_session override")
             self.finish({"code": 404, "error": "Room not found"})
             return
 
         if not isinstance(room, DocumentRoom):
             self.set_status(400)
+            self.log.warning(f"Room {room_id} is not a document room, cannot override")
             self.finish({"code": 400, "error": "Not a document room"})
             return
 
         model = self.get_json_body() or {}
         if "content" not in model:
             self.set_status(400)
+            self.log.warning(f"Missing content in override request for room {room_id}")
             self.finish({"code": 400, "error": "Missing content"})
             return
 
-        new_session = await room.override_content(model["content"])
+        try:
+            new_session = await room.override_content(model["content"])
+        except OutOfBandChanges as e:
+            self.set_status(409)
+            self.log.error(f"Out-of-band changes while overriding room {room_id}: {e!r}")
+            self.finish({"code": 409, "error": "Out-of-band changes on disk, override refused"})
+            return
+
+        self.log.info(
+            f"Client override applied in room {room_id}, new document_session {new_session}"
+        )
         self.set_status(200)
         self.finish(json.dumps({"documentSessionId": new_session}))

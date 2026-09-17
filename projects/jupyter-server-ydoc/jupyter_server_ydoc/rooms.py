@@ -300,24 +300,24 @@ class DocumentRoom(YRoom):
     async def override_content(self, content: Any) -> str:
         """Explicitly rewrite this room's content with a client's own version.
 
-        Used when a client whose reconnect was refused for a document_session
-        mismatch chooses to keep its local edits rather than the server's
-        freshly rebuilt content. Always assigns a fresh document_session: an
-        explicit override is deliberately a new incarnation, not a
-        continuation of either side's prior history.
+        ### Note:
+            Used when a client whose reconnect was refused for a
+            document_session mismatch chooses to keep its local edits rather
+            than the server's freshly rebuilt content. Always assigns a fresh
+            document_session: an explicit override is deliberately a new
+            incarnation, not a continuation of either side's prior history.
+            Returns the newly assigned document_session.
 
-        Deliberately does not reuse `_apply_deterministic_source_content`,
-        which builds a separate, unrelated `Doc` and merges its update in --
-        fine when nothing pre-exists to reconcile against, but here the room
-        already holds real content with the same cell ids, and merging a
-        second, disconnected copy of them in produces duplicate array
-        entries sharing an id instead of replacing anything. `aset()` on the
-        room's own already-connected document does an in-place, id-matched
-        reconciliation instead (the same mechanism `_on_outofband_change`'s
-        and `_maybe_save_document`'s comparable rewrites already use safely).
-
-        Returns:
-            The newly assigned document_session.
+            Deliberately does not reuse `_apply_deterministic_source_content`,
+            which builds a separate, unrelated `Doc` and merges its update in
+            -- fine when nothing pre-exists to reconcile against, but here the
+            room already holds real content with the same cell ids, and
+            merging a second, disconnected copy of them in produces duplicate
+            array entries sharing an id instead of replacing anything.
+            `aset()` on the room's own already-connected document does an
+            in-place, id-matched reconciliation instead (the same mechanism
+            `_on_outofband_change`'s and `_maybe_save_document`'s comparable
+            rewrites already use safely).
         """
         async with self._update_lock:
             await self._document.aset(content)
@@ -325,24 +325,35 @@ class DocumentRoom(YRoom):
             if self.ystore:
                 await self.ystore.encode_state_as_update(self.ydoc)
 
-        await self._file.maybe_save_content(
-            {
-                "format": self._file_format,
-                "type": self._file_type,
-                "content": await self._document.aget(),
-            }
-        )
+        self._emit(LogLevel.INFO, "overwrite", "Client override applied. Overwriting the room.")
+
+        try:
+            await self._file.maybe_save_content(
+                {
+                    "format": self._file_format,
+                    "type": self._file_type,
+                    "content": await self._document.aget(),
+                }
+            )
+        except OutOfBandChanges as e:
+            msg = (
+                f"Out-of-band changes while saving client override in room {self._room_id}: {e!r}"
+            )
+            self._emit(LogLevel.ERROR, None, msg)
+            raise
 
         return self._document.ystate["document_session"]
 
     async def _aset_preserving_session(self, content: Any) -> None:
         """Rewrite content via aset(), preserving document_session across it.
 
-        jupyter_ydoc's `_set()` clears every ystate key it doesn't recognize
-        (keeping only dirty/path/document_id), including document_session.
-        Every call site that uses this is a safe, in-place resync (confirmed
-        non-duplicating), never a new incarnation, so the session must
-        survive it rather than silently reverting this room to unprotected.
+        ### Note:
+            jupyter_ydoc's `_set()` clears every ystate key it doesn't
+            recognize (keeping only dirty/path/document_id), including
+            document_session. Every call site that uses this is a safe,
+            in-place resync (confirmed non-duplicating), never a new
+            incarnation, so the session must survive it rather than silently
+            reverting this room to unprotected.
         """
         preserved_session = self._document.ystate.get("document_session")
         await self._document.aset(content)

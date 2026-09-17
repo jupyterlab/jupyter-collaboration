@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
+import time
 from asyncio import Event, sleep
 from typing import Any
 
@@ -15,6 +17,7 @@ from jupyter_events.logger import EventLogger
 from jupyter_ydoc import YUnicode
 from pycrdt import Provider, Text
 from pycrdt.websocket.websocket import HttpxWebsocket
+from tornado.httpclient import HTTPClientError
 
 
 async def test_session_handler_should_create_session_id(
@@ -490,6 +493,50 @@ async def test_room_handler_connects_when_client_sends_no_document_session_id(
     assert message is not None
 
 
+async def test_room_handler_returns_immediately_on_stale_server_session(
+    rtc_create_file, rtc_fetch_session, jp_http_port, jp_base_url, monkeypatch
+):
+    """A stale/unknown server sessionId must close and `return` immediately --
+    it must not fall through into room.initialize() (and the unrelated
+    document_session check) for a socket that was already told to close.
+    """
+    from jupyter_server_ydoc.rooms import DocumentRoom
+
+    path, _ = await rtc_create_file("test.txt", "test")
+    resp = await rtc_fetch_session("text", "file", path)
+    data = json.loads(resp.body.decode("utf-8"))
+    room_name = f"{data['format']}:{data['type']}:{data['fileId']}"
+    url = (
+        f"http://127.0.0.1:{jp_http_port}{jp_base_url}api/collaboration/room/{room_name}"
+        "?sessionId=stale-server-session-from-a-different-incarnation"
+    )
+
+    initialize_calls: list[DocumentRoom] = []
+    original_initialize = DocumentRoom.initialize
+
+    async def counting_initialize(self):
+        initialize_calls.append(self)
+        return await original_initialize(self)
+
+    monkeypatch.setattr(DocumentRoom, "initialize", counting_initialize)
+
+    disconnect = None
+    try:
+        async with aconnect_ws(url) as ws:
+            await ws.receive()
+    except WebSocketDisconnect as exc:
+        disconnect = exc
+    except Exception as exc:  # noqa: BLE001 -- anyio wraps it in an (Base)ExceptionGroup
+        sub_exceptions = getattr(exc, "exceptions", ())
+        disconnect = next((e for e in sub_exceptions if isinstance(e, WebSocketDisconnect)), None)
+
+    assert disconnect is not None, "expected the server to close with a WebSocketDisconnect"
+    assert disconnect.code == 1003
+    payload = json.loads(disconnect.reason)
+    assert payload["reason"] == "unknown_session"
+    assert initialize_calls == []
+
+
 async def test_room_handler_refuses_stale_session_after_genuine_store_loss(
     rtc_create_file,
     rtc_fetch_session,
@@ -599,3 +646,78 @@ async def test_document_session_override_handler_accepts_client_content(
     async with aconnect_ws(url) as ws:
         message = await ws.receive()
     assert message is not None
+
+
+async def test_document_session_override_handler_logs_on_success(
+    rtc_create_file, rtc_fetch_session, jp_http_port, jp_base_url, jp_fetch, caplog
+):
+    """A successful override should be auditable via the server logs, like
+    every sibling handler in this file (UndoRedoHandler, DocForkHandler)."""
+    path, _ = await rtc_create_file("test.txt", "test")
+
+    resp = await rtc_fetch_session("text", "file", path)
+    data = json.loads(resp.body.decode("utf-8"))
+    room_name = f"{data['format']}:{data['type']}:{data['fileId']}"
+    base_url = (
+        f"http://127.0.0.1:{jp_http_port}{jp_base_url}api/collaboration/room/{room_name}"
+        f"?sessionId={data['sessionId']}"
+    )
+
+    # The room only exists once a client has connected to it.
+    async with aconnect_ws(base_url) as ws:
+        await ws.receive()
+
+    with caplog.at_level("INFO"):
+        override_resp = await jp_fetch(
+            "api",
+            "collaboration",
+            "room_override",
+            room_name,
+            method="PUT",
+            body=json.dumps({"content": "overridden by client"}),
+        )
+    assert override_resp.code == 200
+    assert any(
+        "Client override applied" in record.message and room_name in record.message
+        for record in caplog.records
+    )
+
+
+async def test_document_session_override_handler_returns_409_on_out_of_band_change(
+    rtc_create_file, rtc_fetch_session, jp_http_port, jp_base_url, jp_fetch, jp_root_dir
+):
+    """override_content's disk save can race with a genuine out-of-band disk
+    change (something else wrote to the file after the room last read it);
+    the handler must surface a clean 409, not an unhandled 500."""
+    path, _ = await rtc_create_file("test.txt", "test")
+
+    resp = await rtc_fetch_session("text", "file", path)
+    data = json.loads(resp.body.decode("utf-8"))
+    room_name = f"{data['format']}:{data['type']}:{data['fileId']}"
+    base_url = (
+        f"http://127.0.0.1:{jp_http_port}{jp_base_url}api/collaboration/room/{room_name}"
+        f"?sessionId={data['sessionId']}"
+    )
+
+    # The room only exists, and only records its own last-known last_modified,
+    # once a client has connected to it.
+    async with aconnect_ws(base_url) as ws:
+        await ws.receive()
+
+    # Genuinely change the file on disk, out from under the room's own
+    # last-known last_modified, without going through the room at all.
+    disk_path = jp_root_dir.joinpath(path)
+    disk_path.write_text("changed directly on disk")
+    future = time.time() + 5
+    os.utime(disk_path, (future, future))
+
+    with pytest.raises(HTTPClientError) as exc_info:
+        await jp_fetch(
+            "api",
+            "collaboration",
+            "room_override",
+            room_name,
+            method="PUT",
+            body=json.dumps({"content": "overridden by client"}),
+        )
+    assert exc_info.value.code == 409
