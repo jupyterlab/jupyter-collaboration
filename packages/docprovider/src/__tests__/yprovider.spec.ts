@@ -27,12 +27,27 @@ interface IMockWsProvider {
   emit: (eventName: string, payload: any) => void;
   params?: Record<string, string>;
   roomname: string;
+  shouldConnect: boolean;
+  autoReconnectAttempts: number;
 }
+
+/**
+ * The real y-websocket schedules its own internal auto-reconnect `setTimeout`
+ * whenever the underlying websocket closes, and that scheduled callback only
+ * *checks* `shouldConnect` when it fires -- it does not cancel the timer
+ * itself. `destroy()` flips `shouldConnect` false, so a real pending retry
+ * becomes a no-op rather than actually reconnecting. This mock reproduces
+ * that exact shape (not just "destroy() was called") so the reconnect tests
+ * below pin the real contract our production code depends on.
+ */
+const MOCK_AUTO_RECONNECT_DELAY = 50;
 
 jest.mock('y-websocket', () => ({
   WebsocketProvider: class {
     roomname: string;
     params?: Record<string, string>;
+    shouldConnect = true;
+    autoReconnectAttempts = 0;
     private _listeners = new Map<string, Set<(payload: any) => void>>();
 
     constructor(
@@ -60,10 +75,18 @@ jest.mock('y-websocket', () => ({
     }
 
     destroy(): void {
+      this.shouldConnect = false;
       this._listeners.clear();
     }
 
     emit(eventName: string, payload: any): void {
+      if (eventName === 'connection-close') {
+        setTimeout(() => {
+          if (this.shouldConnect) {
+            this.autoReconnectAttempts++;
+          }
+        }, MOCK_AUTO_RECONNECT_DELAY);
+      }
       const listeners = this._listeners.get(eventName);
       if (!listeners) {
         return;
@@ -595,7 +618,6 @@ describe('document_session tracking', () => {
       const wsProvider = (await waitForProviderConnect(
         provider
       )) as unknown as IMockWsProvider;
-      const destroySpy = jest.spyOn(wsProvider as any, 'destroy');
 
       model.ystate.set('document_session', 'incarnation-a');
       wsProvider.emit('sync', true);
@@ -609,9 +631,24 @@ describe('document_session tracking', () => {
       (requestDocSession as jest.Mock).mockClear();
       wsProvider.emit('connection-close', { code: 1006 });
 
-      expect(destroySpy).toHaveBeenCalled();
+      expect(wsProvider.shouldConnect).toBe(false);
 
-      jest.advanceTimersByTime(500);
+      // The mock's own auto-reconnect (modeling y-websocket's real internal
+      // retry) must not go through: this is what actually pins the
+      // cancellation contract, not merely that destroy() was called. Checked
+      // at a point strictly before our own 2**0 * 100ms reconnect delay, so
+      // the two independent timers aren't conflated.
+      jest.advanceTimersByTime(MOCK_AUTO_RECONNECT_DELAY + 10);
+      expect(wsProvider.autoReconnectAttempts).toBe(0);
+      expect(requestDocSession).not.toHaveBeenCalled();
+
+      // Our own reconnect must not fire before its 2**0 * 100ms delay ...
+      jest.advanceTimersByTime(39);
+      await Promise.resolve();
+      expect(requestDocSession).not.toHaveBeenCalled();
+
+      // ... and must fire once that delay elapses.
+      jest.advanceTimersByTime(1);
       await Promise.resolve();
       await Promise.resolve();
 
@@ -621,6 +658,86 @@ describe('document_session tracking', () => {
       )) as unknown as IMockWsProvider;
       expect(reconnectedWsProvider).not.toBe(wsProvider);
       expect(reconnectedWsProvider.params?.docSessionId).toBe('incarnation-a');
+
+      // A second consecutive failure (no sync in between, so the attempt
+      // counter did not reset) must back off to 2**1 * 100ms, not repeat the
+      // first delay or grow unboundedly.
+      (requestDocSession as jest.Mock).mockClear();
+      reconnectedWsProvider.emit('connection-close', { code: 1006 });
+
+      jest.advanceTimersByTime(199);
+      await Promise.resolve();
+      expect(requestDocSession).not.toHaveBeenCalled();
+
+      jest.advanceTimersByTime(1);
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(requestDocSession).toHaveBeenCalledTimes(1);
+
+      provider.dispose();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('should not reconnect again if disposed while a reconnect is pending', async () => {
+    jest.useFakeTimers();
+    try {
+      const provider = createProvider();
+      const wsProvider = (await waitForProviderConnect(
+        provider
+      )) as unknown as IMockWsProvider;
+
+      (requestDocSession as jest.Mock).mockClear();
+      wsProvider.emit('connection-close', { code: 1006 });
+
+      provider.dispose();
+
+      jest.advanceTimersByTime(5000);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(requestDocSession).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('should not double-connect when a manual reconnect happens while an automatic reconnect is pending', async () => {
+    jest.useFakeTimers();
+    try {
+      const provider = createProvider();
+      const wsProvider = (await waitForProviderConnect(
+        provider
+      )) as unknown as IMockWsProvider;
+
+      (requestDocSession as jest.Mock).mockClear();
+      // Schedules an automatic reconnect (100ms out).
+      wsProvider.emit('connection-close', { code: 1006 });
+
+      // Something else (e.g. the user clicking "Retry" on the load-timeout
+      // dialog) triggers a manual reconnect before that timer fires. This
+      // must cancel the still-pending automatic one instead of letting both
+      // eventually fire and leave two overlapping providers.
+      await provider.reconnect();
+      expect(requestDocSession).toHaveBeenCalledTimes(1);
+
+      // Sync the reconnected provider so the load timeout it re-armed is a
+      // harmless no-op once we advance past it below, instead of opening an
+      // unrelated dialog neither this test nor any test after it expects.
+      const reconnectedWsProvider = (await waitForProviderConnect(
+        provider
+      )) as unknown as IMockWsProvider;
+      reconnectedWsProvider.emit('sync', true);
+      await provider.ready;
+
+      jest.advanceTimersByTime(5000);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      // If the original automatic-reconnect timer was still live, it would
+      // fire here and connect a second time.
+      expect(requestDocSession).toHaveBeenCalledTimes(1);
 
       provider.dispose();
     } finally {

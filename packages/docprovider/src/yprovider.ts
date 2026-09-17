@@ -134,10 +134,6 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       .getMap('state')
       .unobserve(this._onSharedStateChanged);
     this._clearLoadTimeout();
-    if (this._reconnectTimeoutId !== null) {
-      clearTimeout(this._reconnectTimeoutId);
-      this._reconnectTimeoutId = null;
-    }
     if (this._conflictWs) {
       this._conflictWs.removeEventListener(
         'message',
@@ -381,7 +377,21 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   get wsProvider() {
     return this._yWebsocketProvider;
   }
+  /**
+   * Tear down the current websocket provider and cancel any reconnect this
+   * provider itself has pending.
+   *
+   * Every deliberate reconnect path (`reconnect()`, `_scheduleReconnect()`,
+   * `dispose()`) funnels through here, so cancelling `_reconnectTimeoutId`
+   * in this one place means none of them can race a still-pending automatic
+   * reconnect into creating a second, overlapping `_yWebsocketProvider` --
+   * which would otherwise leak the first one's socket and event listeners.
+   */
   private _disconnect(): void {
+    if (this._reconnectTimeoutId !== null) {
+      clearTimeout(this._reconnectTimeoutId);
+      this._reconnectTimeoutId = null;
+    }
     this._yWebsocketProvider?.off('connection-close', this._onConnectionClosed);
     this._yWebsocketProvider?.off('sync', this._onSync);
     this._yWebsocketProvider?.destroy();
