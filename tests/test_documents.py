@@ -1,6 +1,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+import sqlite3
 from copy import deepcopy
 from importlib.metadata import entry_points
 
@@ -323,14 +324,23 @@ async def _create_notebook_room_with_store(
 
 
 async def _stop_room_and_store(room: DocumentRoom, ystore: SQLiteYStore) -> None:
+    """Stop a room and its store, tolerating a double-stop.
+
+    Some of these tests stop a room/store that a prior step already stopped;
+    pycrdt raises RuntimeError("YRoom not running") / RuntimeError("YStore not
+    running") in that case, which is safe to ignore. Anything else is a real
+    failure and must propagate.
+    """
     try:
         await room.stop()
-    except RuntimeError:
-        pass
+    except RuntimeError as e:
+        if "not running" not in str(e):
+            raise
     try:
         await ystore.stop()
-    except RuntimeError:
-        pass
+    except RuntimeError as e:
+        if "not running" not in str(e):
+            raise
 
 
 def _document_session(room: DocumentRoom) -> str | None:
@@ -397,21 +407,37 @@ async def test_override_content_rewrites_room_under_a_new_session(tmp_path):
 
 async def test_document_session_changes_after_genuine_rebuild_from_disk(tmp_path):
     """A room rebuilt with no store history for its path is a new incarnation
-    with no relation to whatever a reconnecting client remembers."""
+    with no relation to whatever a reconnecting client remembers.
+
+    Uses the same single store file for both rooms (like the
+    store-backed-recreation persistence test above), but genuinely deletes
+    this path's history from it in between -- the same real-world trigger the
+    e2e test `test_room_handler_refuses_stale_session_after_genuine_store_loss`
+    exercises over a websocket. A test that instead compared two independent,
+    never-populated store files would still pass even if the whole
+    preserve/backfill feature were reverted, since it never actually asks the
+    store to lose real history.
+    """
     notebook = _notebook_model()
+    db_path = str(tmp_path / "ystore.db")
+    store_path = "test.ipynb.y"
 
     room_a, loader_a, ystore_a = await _create_notebook_room_with_store(
-        notebook, "rebuild-before", "test.ipynb.y", str(tmp_path / "ystore-a.db")
+        notebook, "rebuild-before", store_path, db_path
     )
     session_a = _document_session(room_a)
     await _stop_room_and_store(room_a, ystore_a)
     await loader_a.clean()
 
-    # A different store (empty for this path) simulates a genuine YDocNotFound:
-    # a deleted/lost store, a rekeyed file id, or simply the first rebuild this
-    # document has ever had under this mechanism.
+    # The store genuinely loses this room's history for its path.
+    conn = sqlite3.connect(db_path)
+    conn.execute("DELETE FROM yupdates WHERE path = ?", (store_path,))
+    conn.execute("DELETE FROM ycheckpoints WHERE path = ?", (store_path,))
+    conn.commit()
+    conn.close()
+
     room_b, loader_b, ystore_b = await _create_notebook_room_with_store(
-        notebook, "rebuild-after", "test.ipynb.y", str(tmp_path / "ystore-b.db")
+        notebook, "rebuild-after", store_path, db_path
     )
     try:
         assert _document_session(room_b) != session_a
