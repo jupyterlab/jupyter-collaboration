@@ -4,17 +4,13 @@ channels:
   - nodefaults
 dependencies:
   - jupyterlab >=4.6.0
-  - nodejs >=18,<19
+  - nodejs >=24,<25
   - python >=3.11,<3.12
   - yarn >=3,<4
   # build
   - hatchling >=1.5.0
-  - hatch-jupyter-builder >=0.3.2
+  - hatch-jupyter-builder >=0.5
   - hatch-nodejs-version
+  - jupyter-builder >=1.2.0
   # dependencies
   - jupyter_server >=2.0.0
-  # Use pip to get the the latest version
-  - pip:
-    - jupyter_server_fileid >=0.7.0
-    - jupyter_ydoc >=1.0.0
-    - ypy-websocket >=0.12.0

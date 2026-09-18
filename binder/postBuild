@@ -10,7 +10,7 @@ set -euxo pipefail
 yarn || yarn
 
 python -m pip install -vv -e . --no-build-isolation
-jupyter server extension enable jupyter_collaboration
+jupyter server extension enable jupyter_server_ydoc
 
 mkdir -p ~/.jupyter/
 
