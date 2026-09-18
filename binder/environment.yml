@@ -5,7 +5,7 @@ channels:
 dependencies:
   - jupyterlab >=4.6.0
   - nodejs >=24,<25
-  - python >=3.11,<3.12
+  - python=3.11
   - yarn >=3,<4
   # build
   - hatchling >=1.5.0
