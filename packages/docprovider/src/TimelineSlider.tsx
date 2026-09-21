@@ -8,6 +8,7 @@ import { TimelineSliderComponent } from './component';
 import * as React from 'react';
 import { IForkProvider } from './ydrive';
 import { ServerConnection } from '@jupyterlab/services';
+import { ITranslator } from '@jupyterlab/translation';
 
 export class TimelineWidget extends ReactWidget {
   private apiURL: string;
@@ -16,6 +17,7 @@ export class TimelineWidget extends ReactWidget {
   private format: string;
   private documentTimelineUrl: string;
   private _serverSettings?: ServerConnection.ISettings;
+  private _translator?: ITranslator;
 
   constructor(
     apiURL: string,
@@ -23,7 +25,8 @@ export class TimelineWidget extends ReactWidget {
     contentType: string,
     format: string,
     documentTimelineUrl: string,
-    serverSettings?: ServerConnection.ISettings
+    serverSettings?: ServerConnection.ISettings,
+    translator?: ITranslator
   ) {
     super();
     this.apiURL = apiURL;
@@ -32,6 +35,7 @@ export class TimelineWidget extends ReactWidget {
     this.format = format;
     this.documentTimelineUrl = documentTimelineUrl;
     this._serverSettings = serverSettings;
+    this._translator = translator;
     this.addClass('jp-timelineSliderWrapper');
   }
 
@@ -45,6 +49,7 @@ export class TimelineWidget extends ReactWidget {
         format={this.format}
         documentTimelineUrl={this.documentTimelineUrl}
         serverSettings={this._serverSettings}
+        translator={this._translator}
       />
     );
   }

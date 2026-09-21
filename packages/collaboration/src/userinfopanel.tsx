@@ -96,7 +96,8 @@ export class UserInfoBody
     }
     showDialog({
       body: new UserDetailsBody({
-        userManager: this._userManager
+        userManager: this._userManager,
+        trans: this._trans
       }),
       title: this._trans.__('User Details')
     }).then(async result => {
