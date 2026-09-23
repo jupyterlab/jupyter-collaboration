@@ -73,6 +73,11 @@ export interface IUserMenu {
  */
 export interface ICollaboratorAwareness {
   /**
+   * Awareness client id for the collaborator.
+   */
+  clientId?: number;
+
+  /**
    * The User owning theses data.
    */
   user: User.IIdentity;
