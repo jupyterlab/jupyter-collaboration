@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, patch
 
 import nbformat
 import pytest
-from jupyter_server.services.contents.filemanager import AsyncFileContentsManager
+from jupyter_server.services.contents.filemanager import FileContentsManager
 from jupyter_server_ydoc.loaders import FileLoader
 from jupyter_server_ydoc.rooms import DocumentRoom
 from jupyter_server_ydoc.test_utils import FakeEventLogger
@@ -25,13 +25,15 @@ def document(jp_root_dir, arbitrary_fid_manager, request, jp_asyncio_loop):
             if notebook
             else "original"
         )
-        cm = AsyncFileContentsManager(root_dir=str(jp_root_dir))
+        # Keep disk operations on the event-loop thread: pycrdt subscriptions
+        # and events must not be garbage-collected by a file I/O worker thread.
+        cm = FileContentsManager(root_dir=str(jp_root_dir))
         model = {
             "type": "notebook" if notebook else "file",
             "format": "json" if notebook else "text",
             "content": content,
         }
-        await cm.save(model, path)
+        cm.save(model, path)
         file_id = arbitrary_fid_manager.index(path)
         loader = FileLoader(file_id, arbitrary_fid_manager, cm)
         room = DocumentRoom(
@@ -61,7 +63,7 @@ async def test_external_changes_wait_for_user_without_creating_files(document, d
             await room._document.aset(content)
     shared = await room._document.aget()
     external = "external version" if model["type"] == "file" else nbformat.v4.new_notebook()
-    await cm.save({**model, "content": external}, path)
+    cm.save({**model, "content": external}, path)
     if trigger == "poll":
         await loader.maybe_notify()
     elif trigger == "save":
@@ -70,20 +72,20 @@ async def test_external_changes_wait_for_user_without_creating_files(document, d
         await asyncio.gather(loader.maybe_notify(), room._maybe_save_document(None, save_now=True))
     assert loader.path == path
     assert await room._document.aget() == shared
-    assert (await cm.get(path))["content"] == external
-    assert len((await cm.get(""))["content"]) == 1
+    assert cm.get(path)["content"] == external
+    assert len(cm.get("")["content"]) == 1
     assert room._document.dirty
     assert room._document.ystate["outofband"] == {"originalPath": path}
     for _ in range(2):
         await loader.maybe_notify()
         with pytest.raises(OutOfBandChanges):
             await loader.maybe_save_content(model)
-    assert len((await cm.get(""))["content"]) == 1
+    assert len(cm.get("")["content"]) == 1
 
 
 async def test_identical_external_write_does_not_prompt(document):
     cm, loader, room, model, path = document
-    await cm.save(model, path)
+    cm.save(model, path)
     await loader.maybe_notify()
     assert loader.path == path
     assert "outofband" not in room._document.ystate
@@ -102,12 +104,12 @@ async def test_reopening_disk_version_leaves_other_clients_in_old_room(
         if model["type"] == "file"
         else nbformat.v4.new_notebook(cells=[nbformat.v4.new_code_cell("external")])
     )
-    await cm.save({**model, "content": external}, path)
-    external = (await cm.get(path))["content"]
+    cm.save({**model, "content": external}, path)
+    external = cm.get(path)["content"]
     await loader.maybe_notify()
     if action == "save-as":
         await room.save_as("saved-" + path, path)
-        assert (await cm.get("saved-" + path))["content"] == original
+        assert cm.get("saved-" + path)["content"] == original
     else:
         await room.open_disk_version(path)
     new_id = arbitrary_fid_manager.index(path)
@@ -128,7 +130,7 @@ async def test_reopening_disk_version_leaves_other_clients_in_old_room(
         await loader.maybe_notify()
         with pytest.raises(OutOfBandChanges):
             await loader.maybe_save_content(model)
-        assert (await cm.get(path))["content"] == external
+        assert cm.get(path)["content"] == external
     finally:
         await new_room.stop()
         await new_loader.clean()
@@ -139,7 +141,7 @@ async def test_save_as_is_personal_and_uses_chosen_name(document):
     cm, loader, room, model, path = document
     original = await room._document.aget()
     external = "external" if model["type"] == "file" else nbformat.v4.new_notebook()
-    await cm.save({**model, "content": external}, path)
+    cm.save({**model, "content": external}, path)
     await loader.maybe_notify()
     chosen = "chosen.ipynb" if model["type"] == "notebook" else "chosen.txt"
     await room.save_as(chosen, path)
@@ -147,19 +149,19 @@ async def test_save_as_is_personal_and_uses_chosen_name(document):
     assert room._document.path == path
     assert await room._document.aget() == original
     assert room._document.ystate["outofband"] == {"originalPath": path}
-    assert (await cm.get(chosen))["content"] == original
-    assert (await cm.get(path))["content"] == external
+    assert cm.get(chosen)["content"] == original
+    assert cm.get(path)["content"] == external
     # Other users can still open the original or save their own version.
     await room.open_disk_version(path)
     await room.save_as("another-" + chosen, path)
-    assert (await cm.get("another-" + chosen))["content"] == original
+    assert cm.get("another-" + chosen)["content"] == original
 
 
 async def test_save_as_failure_keeps_both_versions_and_allows_retry(
     document, arbitrary_fid_manager
 ):
     cm, loader, room, model, path = document
-    await cm.save({**model, "content": "external"}, path)
+    cm.save({**model, "content": "external"}, path)
     await loader.maybe_notify()
     with patch.object(cm, "save", new_callable=AsyncMock, side_effect=OSError("disk full")):
         with pytest.raises(OSError):
@@ -169,17 +171,17 @@ async def test_save_as_failure_keeps_both_versions_and_allows_retry(
     with pytest.raises(OutOfBandChanges):
         await loader.maybe_save_content(model)
     await room.save_as("chosen.txt", path)
-    assert (await cm.get("chosen.txt"))["content"] == "original"
-    assert (await cm.get(path))["content"] == "external"
+    assert cm.get("chosen.txt")["content"] == "original"
+    assert cm.get(path)["content"] == "external"
 
 
 async def test_save_as_rejects_original_and_existing_names(document):
     cm, loader, room, model, path = document
-    await cm.save({**model, "content": "external"}, path)
-    await cm.save({**model, "content": "other"}, "existing.txt")
+    cm.save({**model, "content": "external"}, path)
+    cm.save({**model, "content": "other"}, "existing.txt")
     await loader.maybe_notify()
     for chosen in [path, "existing.txt", ""]:
         with pytest.raises(Exception, match="Choose a new filename"):
             await room.save_as(chosen, path)
-    assert (await cm.get(path))["content"] == "external"
-    assert (await cm.get("existing.txt"))["content"] == "other"
+    assert cm.get(path)["content"] == "external"
+    assert cm.get("existing.txt")["content"] == "other"
