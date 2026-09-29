@@ -169,6 +169,38 @@ async def test_FileLoader_retries_save_after_rename():
     assert cm.saved_paths == [old_path, new_path]
 
 
+async def test_FileLoader_saves_to_new_path_when_renamed_before_save():
+    id = "file-4567"
+    old_path = "myfile.txt"
+    new_path = "renamed.txt"
+    file_id_manager = FakeFileIDManager({id: old_path})
+
+    class RenameBeforeSaveContentsManager(FakeContentsManager):
+        def __init__(self):
+            super().__init__({"last_modified": datetime.now(timezone.utc), "writable": True})
+            self.saved_paths: list[str] = []
+            self.renamed = False
+
+        def get(self, path, content=True, format=None, type=None, require_hash=None):
+            model = super().get(path, content, format, type, require_hash)
+            if not content and not self.renamed:
+                self.renamed = True
+                file_id_manager.move(id, new_path)
+            return model
+
+        def save(self, model, path):
+            self.saved_paths.append(path)
+            return self.model
+
+    cm = RenameBeforeSaveContentsManager()
+    loader = FileLoader(id, file_id_manager, cm)
+    await loader.load_content("text", "file")
+
+    await loader.maybe_save_content({"format": "text", "type": "file", "content": "content"})
+
+    assert cm.saved_paths == [new_path]
+
+
 async def test_FileLoader_does_not_retry_save_after_delete():
     id = "file-4567"
     path = "myfile.txt"
