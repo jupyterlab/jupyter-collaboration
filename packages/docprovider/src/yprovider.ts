@@ -15,14 +15,21 @@ import { JSONValue, PromiseDelegate } from '@lumino/coreutils';
 import { DocumentChange, YDocument } from '@jupyter/ydoc';
 import { IDocumentProvider } from '@jupyter/collaborative-drive';
 
-import { ServerConnection, User } from '@jupyterlab/services';
-import { URLExt } from '@jupyterlab/coreutils';
+import { ContentsManager, ServerConnection, User } from '@jupyterlab/services';
+import { PathExt, URLExt } from '@jupyterlab/coreutils';
 import { TranslationBundle } from '@jupyterlab/translation';
-import { Dialog, showDialog } from '@jupyterlab/apputils';
+import {
+  Dialog,
+  InputDialog,
+  showDialog,
+  showErrorMessage
+} from '@jupyterlab/apputils';
 
 import { IForkProvider } from './ydrive';
 import { requestDocSession } from './requests';
 import { ISessionClosePayload } from './tokens';
+
+import '../style/outofband.css';
 
 /**
  * The url for the default drive service.
@@ -67,6 +74,9 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     this._onConflictSaveAs = options.onConflictSaveAs;
     this._onConflictRevert = options.onConflictRevert;
     this._onConflictShowDiff = options.onConflictShowDiff;
+    this._onSwitchDocument = options.onSwitchDocument;
+    this._onCloseDocument = options.onCloseDocument;
+    this._sharedModel.ydoc.getMap('state').observe(this._onSharedStateChanged);
 
     const user = options.user;
 
@@ -109,6 +119,9 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       return;
     }
     this._isDisposed = true;
+    this._sharedModel.ydoc
+      .getMap('state')
+      .unobserve(this._onSharedStateChanged);
     this._clearLoadTimeout();
     if (this._conflictWs) {
       this._conflictWs.removeEventListener(
@@ -131,7 +144,35 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   }
 
   async save(): Promise<void> {
+    const notice = this._sharedModel.ydoc.getMap('state').get('outofband');
+    if (
+      notice &&
+      typeof notice === 'object' &&
+      'originalPath' in notice &&
+      typeof notice.originalPath === 'string'
+    ) {
+      await this._showOutOfBandDialog(notice.originalPath);
+      const error = new Error(
+        'Save cancelled while resolving an external change'
+      );
+      error.name = 'ModalCancelError';
+      throw error;
+    }
+    await this._requestDocumentAction('save');
+  }
+
+  private async _requestDocumentAction(
+    action: 'save' | 'save-as' | 'reload',
+    target?: { path?: string; originalPath: string }
+  ): Promise<void> {
     const ws = this._yWebsocketProvider?.ws;
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      throw new Error(
+        this._trans.__(
+          'The document is not connected. Please retry after reconnecting.'
+        )
+      );
+    }
     if (ws) {
       const saveId = ++this._saveCounter;
       const delegate = new PromiseDelegate<void>();
@@ -148,9 +189,10 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         }
         const rawReply = decoding.readVarString(decoder);
         let reply: {
-          type: 'save';
+          type: string;
+          message?: string;
           responseTo: number;
-          status: 'success' | 'skipped' | 'failed';
+          status: 'success' | 'skipped' | 'failed' | 'conflict';
         } | null = null;
         try {
           reply = JSON.parse(rawReply);
@@ -159,13 +201,19 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         }
         if (
           reply &&
-          reply['type'] === 'save' &&
+          reply['type'] === action &&
           reply['responseTo'] === saveId
         ) {
           if (reply.status === 'success') {
             delegate.resolve();
+          } else if (reply.status === 'conflict') {
+            const error = new Error(
+              'Resolve the external change before saving'
+            );
+            error.name = 'ModalCancelError';
+            delegate.reject(error);
           } else if (reply.status === 'failed') {
-            delegate.reject('Saving failed');
+            delegate.reject(new Error(reply.message ?? 'Saving failed'));
           } else if (reply.status === 'skipped') {
             delegate.reject('Saving already in progress');
           } else {
@@ -176,8 +224,11 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       ws.addEventListener('message', handler);
       const encoder = encoding.createEncoder();
       encoding.writeVarUint(encoder, RAW_MESSAGE_TYPE);
-      encoding.writeVarString(encoder, 'save');
+      encoding.writeVarString(encoder, action);
       encoding.writeVarUint(encoder, saveId);
+      if (target) {
+        encoding.writeVarString(encoder, JSON.stringify(target));
+      }
       const saveMessage = encoding.toUint8Array(encoder);
       ws.send(saveMessage);
       try {
@@ -502,8 +553,151 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     }
   };
 
+  private _onSharedStateChanged = (): void => {
+    const state = this._sharedModel.ydoc.getMap('state');
+    const path = state.get('path');
+    if (typeof path === 'string') {
+      this._path = path;
+    }
+    const change = state.get('outofband');
+    if (!change) {
+      this._lastOutOfBandChange = undefined;
+      return;
+    }
+    if (
+      typeof change !== 'object' ||
+      !('originalPath' in change) ||
+      typeof change.originalPath !== 'string'
+    ) {
+      return;
+    }
+    const key = JSON.stringify(change);
+    if (key === this._lastOutOfBandChange) {
+      return;
+    }
+    this._lastOutOfBandChange = key;
+    void this._showOutOfBandDialog(change.originalPath).catch(e =>
+      console.error(e)
+    );
+  };
+
+  private async _showOutOfBandDialog(originalPath: string): Promise<void> {
+    if (this._outOfBandDialogOpen) {
+      return;
+    }
+    this._outOfBandDialogOpen = true;
+    let resolved = false;
+    try {
+      const buttons: Dialog.IButton[] = [];
+      buttons.push(
+        Dialog.warnButton({
+          label: this._trans.__('Open original file'),
+          actions: ['open-original']
+        })
+      );
+      buttons.push(
+        Dialog.okButton({
+          label: this._trans.__('Save As…'),
+          actions: ['save-as']
+        })
+      );
+      buttons.push(
+        Dialog.okButton({
+          label: this._trans.__('Close tab'),
+          actions: ['close']
+        })
+      );
+      const dialog = new Dialog({
+        title: this._trans.__('The file was changed externally'),
+        body: this._trans.__(
+          'The file "%1" changed on disk. ' +
+            'Open the disk version in this tab, or save your current content under a new name.',
+          originalPath
+        ),
+        buttons,
+        defaultButton: 1,
+        hasClose: false
+      });
+      dialog.addClass('jp-CollaborationExternalChangeDialog');
+      const result = await dialog.launch();
+      if (
+        this.isDisposed ||
+        !this._sharedModel.ydoc.getMap('state').get('outofband')
+      ) {
+        return;
+      }
+      if (result.button.actions.includes('close')) {
+        // Release the original path from this session before leaving it, so a
+        // later open joins the disk version even while collaborators stay here.
+        await this._requestDocumentAction('reload', { originalPath });
+        this._onCloseDocument?.();
+        resolved = true;
+      } else if (result.button.actions.includes('open-original')) {
+        await this._requestDocumentAction('reload', { originalPath });
+        await this._onSwitchDocument?.(originalPath);
+        resolved = true;
+      } else if (result.button.actions.includes('save-as')) {
+        const suggestedPath = await this._suggestSaveAsPath(originalPath);
+        const name = await InputDialog.getText({
+          title: this._trans.__('Save shared document as'),
+          label: this._trans.__('New path:'),
+          text: suggestedPath,
+          okLabel: this._trans.__('Save')
+        });
+        if (name.button.accept && name.value && !this.isDisposed) {
+          await this._requestDocumentAction('save-as', {
+            path: name.value,
+            originalPath
+          });
+          await this._onSwitchDocument?.(name.value);
+          resolved = true;
+        }
+      }
+    } catch (error) {
+      await showErrorMessage(
+        this._trans.__('Could not resolve external change'),
+        error as Error
+      );
+    } finally {
+      this._outOfBandDialogOpen = false;
+    }
+    if (
+      !resolved &&
+      !this.isDisposed &&
+      this._sharedModel.ydoc.getMap('state').get('outofband')
+    ) {
+      await this._showOutOfBandDialog(originalPath);
+    }
+  }
+
+  private async _suggestSaveAsPath(originalPath: string): Promise<string> {
+    const directory = PathExt.dirname(originalPath);
+    const filename = PathExt.basename(originalPath);
+    const extension = PathExt.extname(filename);
+    const stem = filename.slice(0, filename.length - extension.length);
+    const base = `${stem}-Copy`;
+    const contents = new ContentsManager({
+      serverSettings: this._serverSettings
+    });
+    try {
+      const listing = await contents.get(directory, { type: 'directory' });
+      const names = new Set<string>(
+        listing.content.map((entry: { name: string }) => entry.name)
+      );
+      names.add(filename);
+      let number = 1;
+      while (names.has(`${base}${number}${extension}`)) {
+        number++;
+      }
+      return PathExt.join(directory, `${base}${number}${extension}`);
+    } finally {
+      contents.dispose();
+    }
+  }
+
   private _onSync = (isSynced: boolean) => {
     if (isSynced) {
+      this._onSharedStateChanged();
       this._hasSynced = true;
       this._clearLoadTimeout();
       if (this._yWebsocketProvider) {
@@ -552,6 +746,10 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _loadTimeoutId: number | null = null;
   private _isShowingDialog = false;
   private _onConflictShowDiff?: (localContent: JSONValue) => Promise<void>;
+  private _lastOutOfBandChange?: string;
+  private _outOfBandDialogOpen = false;
+  private _onSwitchDocument?: (path: string) => Promise<void>;
+  private _onCloseDocument?: () => void;
 }
 
 /**
@@ -601,6 +799,12 @@ export namespace WebSocketProvider {
      * The server settings.
      */
     serverSettings?: ServerConnection.ISettings;
+
+    /** Replace this client's document tab after resolving an external change. */
+    onSwitchDocument?: (path: string) => Promise<void>;
+
+    /** Close only this client’s tab without saving. */
+    onCloseDocument?: () => void;
 
     /**
      * Called when the user chooses "Save As" from the conflict dialog.

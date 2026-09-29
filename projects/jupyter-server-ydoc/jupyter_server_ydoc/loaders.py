@@ -51,6 +51,8 @@ class FileLoader:
 
         self._watcher = asyncio.create_task(self._watch_file()) if self._poll_interval else None
         self.last_modified = None
+        self._outofband = False
+        self._detached_path: str | None = None
         self._current_path = self.path
 
     @property
@@ -63,6 +65,8 @@ class FileLoader:
         """
         The file path.
         """
+        if self._detached_path is not None:
+            return self._detached_path
         path = self._file_id_manager.get_path(self.file_id)
         if path is None:
             raise RuntimeError(f"No path found for file ID '{self.file_id}'")
@@ -159,6 +163,8 @@ class FileLoader:
             If there is changes on disk, this method will raise an OutOfBandChanges exception.
         """
         async with self._lock:
+            if self._detached_path is not None:
+                raise OutOfBandChanges
             path = self.path
             if model["type"] not in {"directory", "file", "notebook"}:
                 # fall back to file if unknown type, the content manager only knows
@@ -174,7 +180,7 @@ class FileLoader:
             if not m["writable"]:
                 return None
 
-            if self.last_modified == m["last_modified"]:
+            if not self._outofband and self.last_modified == m["last_modified"]:
                 self._log.info("Saving file: %s", path)
                 # saving is shielded so that it cannot be cancelled
                 # otherwise it could corrupt the file
@@ -189,8 +195,53 @@ class FileLoader:
                 return saved_model
             else:
                 # file changed on disk, raise an error
-                self.last_modified = m["last_modified"]
+                self._outofband = True
                 raise OutOfBandChanges
+
+    async def has_outofband_content(self, model: dict[str, Any]) -> bool:
+        """Check disk content without applying it or creating another file."""
+        async with self._lock:
+            if self._detached_path is not None:
+                return True
+            self._outofband = True
+            disk = await ensure_async(
+                self._contents_manager.get(
+                    self.path, format=model["format"], type=model["type"], content=True
+                )
+            )
+            content = disk["content"]
+            if model["type"] == "file" and isinstance(content, str):
+                content = content.replace("\r\n", "\n")
+            if content == model["content"]:
+                self.last_modified = disk["last_modified"]
+                self._outofband = False
+                return False
+            return True
+
+    async def detach(self) -> None:
+        """Let new clients open the disk version without changing this session.
+
+        Existing clients retain their room ID and in-memory document. Removing
+        its path index gives the disk version a fresh ID on its next open.
+        """
+        async with self._lock:
+            if self._detached_path is None:
+                path = self.path
+                if self._file_id_manager.get_id(path) == self.file_id:
+                    self._file_id_manager.delete(path)
+                self._detached_path = path
+                self._outofband = True
+
+    async def save_as(self, model: dict[str, Any], new_path: str) -> None:
+        """Save an explicit snapshot without moving other users to a new file."""
+        async with self._lock:
+            if not self._outofband:
+                raise HTTPError(409, "The external change has already been resolved")
+            if not new_path or new_path == self.path:
+                raise HTTPError(409, "Choose a new filename to keep the original file intact")
+            if await ensure_async(self._contents_manager.exists(new_path)):
+                raise HTTPError(409, "That filename already exists. Choose a new filename")
+            await ensure_async(self._contents_manager.save(model, new_path))
 
     async def _save_content(
         self, model: dict[str, Any], done_saving: asyncio.Event, path: str
@@ -296,6 +347,8 @@ class FileLoader:
         """
         Notifies subscribed rooms about out-of-band file changes.
         """
+        if self._detached_path is not None:
+            return
         do_notify = False
         filepath_change = False
         async with self._lock:
@@ -307,10 +360,13 @@ class FileLoader:
             # Get model metadata; format and type are not need
             model = await ensure_async(self._contents_manager.get(path, content=False))
 
-            if self.last_modified is not None and self.last_modified < model["last_modified"]:
+            if self._outofband or (
+                self.last_modified is not None and self.last_modified != model["last_modified"]
+            ):
                 do_notify = True
-
-            self.last_modified = model["last_modified"]
+                self._outofband = True
+            else:
+                self.last_modified = model["last_modified"]
 
         if filepath_change:
             # Notify filepath change
@@ -320,7 +376,7 @@ class FileLoader:
         if do_notify:
             # Notify out-of-band change
             # callbacks will load the file content, thus release the lock before calling them
-            for callback in self._subscriptions.values():
+            for callback in tuple(self._subscriptions.values()):
                 await callback()
 
 

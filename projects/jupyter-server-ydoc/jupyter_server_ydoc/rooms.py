@@ -67,6 +67,7 @@ class DocumentRoom(YRoom):
         self._update_lock = asyncio.Lock()
         self._cleaner: asyncio.Task | None = None
         self._saving_document: asyncio.Task | None = None
+        self._checking_document: asyncio.Task | None = None
         self._messages: dict[str, asyncio.Lock] = {}
         self._background_tasks = set()
         self._document_progressively_loaded: asyncio.Future[None] = asyncio.Future()
@@ -298,6 +299,10 @@ class DocumentRoom(YRoom):
         if self._saving_document:
             self._saving_document.cancel()
 
+        # Finish any disk check already in progress before detaching the room.
+        if self._checking_document is not None:
+            await asyncio.shield(self._checking_document)
+
         self._document.unobserve()
         self._file.unobserve(self.room_id)
 
@@ -340,24 +345,58 @@ class DocumentRoom(YRoom):
         return True
 
     async def _on_outofband_change(self) -> None:
-        """
-        Called when the file got out-of-band changes.
-        """
-        self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
-        self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes. Overwriting the room.")
+        if self._checking_document is None or self._checking_document.done():
+            self._checking_document = asyncio.create_task(self._check_outofband_change())
+        await asyncio.shield(self._checking_document)
 
-        try:
-            model = await self._file.load_content(self._file_format, self._file_type)
-        except Exception as e:
-            msg = f"Error loading content from file: {self._file.path}\n{e!r}"
-            self.log.error(msg, exc_info=e)
-            self._emit(LogLevel.ERROR, None, msg)
-            return
-
+    async def _check_outofband_change(self) -> None:
         async with self._update_lock:
-            if await self._document.aget() != model["content"]:
-                await self._document.aset(model["content"])
-            self._document.dirty = False
+            content = await self._document.aget()
+            try:
+                changed = await self._file.has_outofband_content(
+                    {"format": self._file_format, "type": self._file_type, "content": content}
+                )
+            except Exception as e:
+                self.log.error(
+                    "Could not check external changes to %s", self._file.path, exc_info=e
+                )
+                # Keep saves blocked if the external version cannot be read.
+                changed = True
+            if changed:
+                notice = {"originalPath": self._file.path}
+                if self._document.ystate.get("outofband") != notice:
+                    self._document.ystate["outofband"] = notice
+                self._document.dirty = True
+            else:
+                if "outofband" in self._document.ystate:
+                    del self._document.ystate["outofband"]
+                self._document.dirty = await self._document.aget() != content
+
+    async def open_disk_version(self, original_path: str) -> None:
+        """Allow the requesting client to reopen the disk file in a new session."""
+        async with self._update_lock:
+            notice = self._document.ystate.get("outofband")
+            if not notice or notice["originalPath"] != original_path:
+                raise ValueError("The external change has already been resolved")
+            await self._file.detach()
+
+    async def save_as(self, new_path: str, original_path: str) -> None:
+        """Save a snapshot for the requesting client; leave other clients alone."""
+        async with self._update_lock:
+            notice = self._document.ystate.get("outofband")
+            if not notice or notice["originalPath"] != original_path:
+                raise ValueError("The external change has already been resolved")
+            await self._file.save_as(
+                {
+                    "format": self._file_format,
+                    "type": self._file_type,
+                    "content": await self._document.aget(),
+                },
+                new_path,
+            )
+            # A later open of the original must join the disk version, even
+            # while other collaborators remain in this preserved session.
+            await self._file.detach()
 
     def _on_filepath_change(self) -> None:
         """
@@ -394,7 +433,7 @@ class DocumentRoom(YRoom):
         # Enable autosave if at least one client has it turned on
         autosave = any(autosave_states)
 
-        if not autosave:
+        if not autosave or self._document.ystate.get("outofband"):
             return
         if self._update_lock.locked():
             return
@@ -448,39 +487,28 @@ class DocumentRoom(YRoom):
                 await asyncio.sleep(self._save_delay)
 
             self.log.info("Saving the content from room %s", self._room_id)
-            saved_model = await self._file.maybe_save_content(
-                {
-                    "format": self._file_format,
-                    "type": self._file_type,
-                    "content": await self._document.aget(),
-                }
-            )
-            if saved_model:
-                async with self._update_lock:
-                    self._document.dirty = False
+            async with self._update_lock:
+                content = await self._document.aget()
+                saved_model = await self._file.maybe_save_content(
+                    {
+                        "format": self._file_format,
+                        "type": self._file_type,
+                        "content": content,
+                    }
+                )
+                if saved_model:
+                    self._document.dirty = await self._document.aget() != content
                     self._document.hash = saved_model["hash"]
 
             self._emit(LogLevel.INFO, "save", "Content saved.")
+            if saved_model and self._document.dirty:
+                self._on_document_change("source", None)
 
         except asyncio.CancelledError:
             return
 
         except OutOfBandChanges:
-            self.log.info("Out-of-band changes. Overwriting the content in room %s", self._room_id)
-            try:
-                model = await self._file.load_content(self._file_format, self._file_type)
-            except Exception as e:
-                msg = f"Error loading content from file: {self._file.path}\n{e!r}"
-                self.log.error(msg, exc_info=e)
-                self._emit(LogLevel.ERROR, None, msg)
-                return None
-
-            async with self._update_lock:
-                if await self._document.aget() != model["content"]:
-                    await self._document.aset(model["content"])
-                self._document.dirty = False
-
-            self._emit(LogLevel.INFO, "overwrite", "Out-of-band changes while saving.")
+            await self._on_outofband_change()
 
         except Exception as e:
             msg = f"Error saving file: {self._file.path}\n{e!r}"
