@@ -680,7 +680,10 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       serverSettings: this._serverSettings
     });
     try {
-      const listing = await contents.get(directory, { type: 'directory' });
+      const listing = await contents.get(directory, {
+        type: 'directory',
+        content: true
+      });
       const names = new Set<string>(
         listing.content.map((entry: { name: string }) => entry.name)
       );

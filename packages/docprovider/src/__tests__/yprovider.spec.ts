@@ -128,9 +128,14 @@ describe('@jupyter/docprovider', () => {
       }
 
       async function setup() {
-        jest.spyOn(ContentsManager.prototype, 'get').mockResolvedValue({
-          content: [{ name: 'original.txt' }, { name: 'original-Copy1.txt' }]
-        } as any);
+        jest.spyOn(ContentsManager.prototype, 'get').mockImplementation(
+          async (_path, options) =>
+            ({
+              content: options?.content
+                ? [{ name: 'original.txt' }, { name: 'original-Copy1.txt' }]
+                : null
+            } as any)
+        );
         const model = new YFile();
         model.setSource('shared content');
         const onSwitchDocument = jest.fn().mockResolvedValue(undefined);
