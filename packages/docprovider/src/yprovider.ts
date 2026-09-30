@@ -144,14 +144,8 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   }
 
   async save(): Promise<void> {
-    const notice = this._sharedModel.ydoc.getMap('state').get('outofband');
-    if (
-      notice &&
-      typeof notice === 'object' &&
-      'originalPath' in notice &&
-      typeof notice.originalPath === 'string'
-    ) {
-      await this._showOutOfBandDialog(notice.originalPath);
+    if (this._externalChange) {
+      await this._showOutOfBandDialog(this._externalChange.originalPath);
       const error = new Error(
         'Save cancelled while resolving an external change'
       );
@@ -501,6 +495,26 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         return;
       }
       const payload = JSON.parse(decoding.readVarString(decoder));
+      if (payload?.type === 'external-change') {
+        if (payload.change === null) {
+          this._externalChange = undefined;
+          this._externalChangeDialog?.resolve(0);
+        } else if (typeof payload.change?.originalPath === 'string') {
+          const originalPath = payload.change.originalPath;
+          this._externalChange = { originalPath };
+          void this._ready.promise
+            .then(() => {
+              if (
+                !this.isDisposed &&
+                this._externalChange?.originalPath === originalPath
+              ) {
+                return this._showOutOfBandDialog(originalPath);
+              }
+            })
+            .catch(console.error);
+        }
+        return;
+      }
       if (!payload || payload.type !== 'conflict') {
         return;
       }
@@ -559,26 +573,6 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     if (typeof path === 'string') {
       this._path = path;
     }
-    const change = state.get('outofband');
-    if (!change) {
-      this._lastOutOfBandChange = undefined;
-      return;
-    }
-    if (
-      typeof change !== 'object' ||
-      !('originalPath' in change) ||
-      typeof change.originalPath !== 'string'
-    ) {
-      return;
-    }
-    const key = JSON.stringify(change);
-    if (key === this._lastOutOfBandChange) {
-      return;
-    }
-    this._lastOutOfBandChange = key;
-    void this._showOutOfBandDialog(change.originalPath).catch(e =>
-      console.error(e)
-    );
   };
 
   private async _showOutOfBandDialog(originalPath: string): Promise<void> {
@@ -619,11 +613,9 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         hasClose: false
       });
       dialog.addClass('jp-CollaborationExternalChangeDialog');
+      this._externalChangeDialog = dialog;
       const result = await dialog.launch();
-      if (
-        this.isDisposed ||
-        !this._sharedModel.ydoc.getMap('state').get('outofband')
-      ) {
+      if (this.isDisposed || !this._externalChange) {
         return;
       }
       if (result.button.actions.includes('close')) {
@@ -660,12 +652,9 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       );
     } finally {
       this._outOfBandDialogOpen = false;
+      this._externalChangeDialog = undefined;
     }
-    if (
-      !resolved &&
-      !this.isDisposed &&
-      this._sharedModel.ydoc.getMap('state').get('outofband')
-    ) {
+    if (!resolved && !this.isDisposed && this._externalChange) {
       await this._showOutOfBandDialog(originalPath);
     }
   }
@@ -749,7 +738,8 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _loadTimeoutId: number | null = null;
   private _isShowingDialog = false;
   private _onConflictShowDiff?: (localContent: JSONValue) => Promise<void>;
-  private _lastOutOfBandChange?: string;
+  private _externalChange?: { originalPath: string };
+  private _externalChangeDialog?: Dialog<unknown>;
   private _outOfBandDialogOpen = false;
   private _onSwitchDocument?: (path: string) => Promise<void>;
   private _onCloseDocument?: () => void;

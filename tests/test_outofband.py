@@ -4,7 +4,8 @@
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import AsyncMock, patch
+import json
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import nbformat
 import pytest
@@ -12,7 +13,9 @@ from jupyter_server.services.contents.filemanager import FileContentsManager
 from jupyter_server_ydoc.loaders import FileLoader
 from jupyter_server_ydoc.rooms import DocumentRoom
 from jupyter_server_ydoc.test_utils import FakeEventLogger
-from jupyter_server_ydoc.utils import OutOfBandChanges
+from jupyter_server_ydoc.utils import MessageType, OutOfBandChanges
+from pycrdt import Decoder
+from pycrdt.websocket import YRoom
 
 
 @pytest.fixture
@@ -75,7 +78,7 @@ async def test_external_changes_wait_for_user_without_creating_files(document, d
     assert cm.get(path)["content"] == external
     assert len(cm.get("")["content"]) == 1
     assert room._document.dirty
-    assert room._document.ystate["outofband"] == {"originalPath": path}
+    assert room.outofband == {"originalPath": path}
     for _ in range(2):
         await loader.maybe_notify()
         with pytest.raises(OutOfBandChanges):
@@ -88,7 +91,7 @@ async def test_identical_external_write_does_not_prompt(document):
     cm.save(model, path)
     await loader.maybe_notify()
     assert loader.path == path
-    assert "outofband" not in room._document.ystate
+    assert room.outofband is None
     assert not room._document.dirty
 
 
@@ -123,7 +126,7 @@ async def test_reopening_disk_version_leaves_other_clients_in_old_room(
         loaded = await new_room._document.aget()
         assert (loaded if model["type"] == "file" else loaded["cells"][0]["source"]) == "external"
         assert await room._document.aget() == original
-        assert room._document.ystate["outofband"] == {"originalPath": path}
+        assert room.outofband == {"originalPath": path}
         # A second user makes the same choice: do not detach the new disk session.
         await room.open_disk_version(path)
         assert arbitrary_fid_manager.get_id(path) == new_id
@@ -148,7 +151,7 @@ async def test_save_as_is_personal_and_uses_chosen_name(document):
     assert loader.path == path
     assert room._document.path == path
     assert await room._document.aget() == original
-    assert room._document.ystate["outofband"] == {"originalPath": path}
+    assert room.outofband == {"originalPath": path}
     assert cm.get(chosen)["content"] == original
     assert cm.get(path)["content"] == external
     # Other users can still open the original or save their own version.
@@ -185,3 +188,60 @@ async def test_save_as_rejects_original_and_existing_names(document):
             await room.save_as(chosen, path)
     assert cm.get(path)["content"] == "external"
     assert cm.get("existing.txt")["content"] == "other"
+
+
+def decode_status(message):
+    decoder = Decoder(message)
+    assert decoder.read_var_uint() == MessageType.RAW
+    return json.loads(decoder.read_var_string())
+
+
+async def test_external_change_status_broadcast_and_clear(document):
+    cm, loader, room, model, path = document
+    clients = [MagicMock(send=AsyncMock()), MagicMock(send=AsyncMock())]
+    room.clients.update(clients)
+    cm.save({**model, "content": "external"}, path)
+    await loader.maybe_notify()
+    for client in clients:
+        assert decode_status(client.send.call_args.args[0]) == {
+            "type": "external-change",
+            "change": {"originalPath": path},
+        }
+        client.send.assert_awaited_once()
+    assert "outofband" not in room._document.ystate
+    await loader.maybe_notify()
+    for client in clients:
+        client.send.assert_awaited_once()
+    cm.save(model, path)
+    await loader.maybe_notify()
+    assert room.outofband is None
+    for client in clients:
+        assert decode_status(client.send.call_args.args[0]) == {
+            "type": "external-change",
+            "change": None,
+        }
+        assert client.send.await_count == 2
+    room.clients.clear()
+
+
+async def test_external_change_status_replayed_on_each_connection(document):
+    cm, loader, room, model, path = document
+    cm.save({**model, "content": "external"}, path)
+    await loader.maybe_notify()
+    # Also replay after another frontend opens the disk version.
+    await room.open_disk_version(path)
+    for _ in range(2):
+        channel = MagicMock(send=AsyncMock())
+
+        async def serve(client):
+            assert client in room.clients
+            client.send.assert_awaited_once()
+
+        with patch.object(YRoom, "serve", side_effect=serve):
+            await room.serve(channel)
+        assert channel not in room.clients
+        assert decode_status(channel.send.call_args.args[0]) == {
+            "type": "external-change",
+            "change": {"originalPath": path},
+        }
+    assert "outofband" not in room._document.ystate

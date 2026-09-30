@@ -390,9 +390,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                         save_task = room._save_to_disc()
                         if save_task:
                             await save_task
-                            status = (
-                                "conflict" if room._document.ystate.get("outofband") else "success"
-                            )
+                            status = "conflict" if room.outofband else "success"
                         else:
                             status = "skipped"
                     await self.send(self._encode_json_message({**save_reply, "status": status}))

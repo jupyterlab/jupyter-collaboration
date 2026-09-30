@@ -264,7 +264,9 @@ async def test_notebook_reconnect_sends_conflict_when_cell_structure_changes_bet
         ), f"Expected a RAW conflict message, got types: {message_types}"
 
         # The RAW conflict message encodes a JSON payload with type=conflict.
-        conflict_msg = next(m for m in channel._sent if m[0] == MessageType.RAW)
+        conflict_msg = next(
+            m for m in channel._sent if m[0] == MessageType.RAW and b'"type": "conflict"' in m
+        )
         assert b'"type": "conflict"' in conflict_msg
         assert len(conflict_msg) > 1
 

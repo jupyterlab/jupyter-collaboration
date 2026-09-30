@@ -68,6 +68,7 @@ class DocumentRoom(YRoom):
         self._cleaner: asyncio.Task | None = None
         self._saving_document: asyncio.Task | None = None
         self._checking_document: asyncio.Task | None = None
+        self._outofband: dict[str, str] | None = None
         self._messages: dict[str, asyncio.Lock] = {}
         self._background_tasks = set()
         self._document_progressively_loaded: asyncio.Future[None] = asyncio.Future()
@@ -344,6 +345,27 @@ class DocumentRoom(YRoom):
         await channel.send(encoder.to_bytes())
         return True
 
+    @property
+    def outofband(self) -> dict[str, str] | None:
+        """Server-owned status of the session's backing file."""
+        return self._outofband.copy() if self._outofband is not None else None
+
+    def _external_change_message(self) -> bytes:
+        encoder = Encoder()
+        encoder.write_var_uint(MessageType.RAW)
+        encoder.write_var_string(json.dumps({"type": "external-change", "change": self.outofband}))
+        return encoder.to_bytes()
+
+    async def serve(self, channel: Channel):
+        # Subscribe before sending the snapshot so a concurrent change cannot
+        # fall between the snapshot and registration. Replay on every reconnect.
+        self.clients.add(channel)
+        try:
+            await channel.send(self._external_change_message())
+            await super().serve(channel)
+        finally:
+            self.clients.discard(channel)
+
     async def _on_outofband_change(self) -> None:
         if self._checking_document is None or self._checking_document.done():
             self._checking_document = asyncio.create_task(self._check_outofband_change())
@@ -364,18 +386,23 @@ class DocumentRoom(YRoom):
                 changed = True
             if changed:
                 notice = {"originalPath": self._file.path}
-                if self._document.ystate.get("outofband") != notice:
-                    self._document.ystate["outofband"] = notice
                 self._document.dirty = True
             else:
-                if "outofband" in self._document.ystate:
-                    del self._document.ystate["outofband"]
+                notice = None
                 self._document.dirty = await self._document.aget() != content
+            if self._outofband != notice:
+                self._outofband = notice
+                message = self._external_change_message()
+                for client in tuple(self.clients):
+                    try:
+                        await client.send(message)
+                    except Exception:
+                        self.log.warning("Could not send external-change status", exc_info=True)
 
     async def open_disk_version(self, original_path: str) -> None:
         """Allow the requesting client to reopen the disk file in a new session."""
         async with self._update_lock:
-            notice = self._document.ystate.get("outofband")
+            notice = self.outofband
             if not notice or notice["originalPath"] != original_path:
                 raise ValueError("The external change has already been resolved")
             await self._file.detach()
@@ -383,7 +410,7 @@ class DocumentRoom(YRoom):
     async def save_as(self, new_path: str, original_path: str) -> None:
         """Save a snapshot for the requesting client; leave other clients alone."""
         async with self._update_lock:
-            notice = self._document.ystate.get("outofband")
+            notice = self.outofband
             if not notice or notice["originalPath"] != original_path:
                 raise ValueError("The external change has already been resolved")
             await self._file.save_as(
@@ -433,7 +460,7 @@ class DocumentRoom(YRoom):
         # Enable autosave if at least one client has it turned on
         autosave = any(autosave_states)
 
-        if not autosave or self._document.ystate.get("outofband"):
+        if not autosave or self.outofband:
             return
         if self._update_lock.locked():
             return

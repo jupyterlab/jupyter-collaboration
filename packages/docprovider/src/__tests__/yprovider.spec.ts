@@ -3,6 +3,7 @@
 
 /// <reference types="jest" />
 
+import * as encoding from 'lib0/encoding';
 import { ContentsManager } from '@jupyterlab/services';
 import { YFile } from '@jupyter/ydoc';
 import { nullTranslator } from '@jupyterlab/translation';
@@ -127,7 +128,7 @@ describe('@jupyter/docprovider', () => {
           .click();
       }
 
-      async function setup() {
+      async function setup(syncBeforeStatus = true) {
         jest.spyOn(ContentsManager.prototype, 'get').mockImplementation(
           async (_path, options) =>
             ({
@@ -148,18 +149,45 @@ describe('@jupyter/docprovider', () => {
         const action = jest
           .spyOn(provider as any, '_requestDocumentAction')
           .mockResolvedValue(undefined);
-        (await waitForProviderConnect(provider)).emit('sync', true);
-        model.ydoc
-          .getMap('state')
-          .set('outofband', { originalPath: 'original.txt' });
+        const websocket = await waitForProviderConnect(provider);
+        if (syncBeforeStatus) {
+          websocket.emit('sync', true);
+        }
+        const sendStatus = async (change: { originalPath: string } | null) => {
+          const encoder = encoding.createEncoder();
+          encoding.writeVarUint(encoder, 2);
+          encoding.writeVarString(
+            encoder,
+            JSON.stringify({ type: 'external-change', change })
+          );
+          await (provider as any)._handleConflictMessage(
+            new MessageEvent('message', {
+              data: encoding.toUint8Array(encoder).buffer
+            })
+          );
+        };
+        await sendStatus({ originalPath: 'original.txt' });
+        if (!syncBeforeStatus) {
+          expect(
+            document.querySelector('.jp-CollaborationExternalChangeDialog')
+          ).toBeNull();
+          websocket.emit('sync', true);
+        }
         await waitForDialog();
-        return { model, provider, action, onSwitchDocument, onCloseDocument };
+        return {
+          model,
+          provider,
+          action,
+          onSwitchDocument,
+          onCloseDocument,
+          sendStatus
+        };
       }
 
       it('waits for a choice without automatically saving a copy', async () => {
         const { model, provider, action } = await setup();
         expect(document.querySelector('.jp-Dialog')?.textContent).toContain(
-          'The file was changed externally'
+          'changed on disk'
         );
         expect(action).not.toHaveBeenCalled();
         expect(document.querySelector('.jp-Dialog')?.textContent).not.toContain(
@@ -178,6 +206,38 @@ describe('@jupyter/docprovider', () => {
         expect(action).not.toHaveBeenCalled();
         clickButton('Close tab');
         await sleep(50);
+        provider.dispose();
+      });
+
+      it('handles repeated status and clears the dialog when the server resolves it', async () => {
+        const { model, provider, action, sendStatus } = await setup();
+        expect(model.ydoc.getMap('state').has('outofband')).toBe(false);
+        await sendStatus({ originalPath: 'original.txt' });
+        await sleep(50);
+        expect(
+          document.querySelectorAll('.jp-CollaborationExternalChangeDialog')
+        ).toHaveLength(1);
+        await sendStatus(null);
+        await sleep(50);
+        expect(
+          document.querySelector('.jp-CollaborationExternalChangeDialog')
+        ).toBeNull();
+        await provider.save();
+        expect(action).toHaveBeenCalledWith('save');
+        await sendStatus({ originalPath: 'original.txt' });
+        await waitForDialog();
+        clickButton('Close tab');
+        await sleep(50);
+        provider.dispose();
+      });
+
+      it('waits for document sync when the initial RAW status arrives first', async () => {
+        const { provider, action } = await setup(false);
+        clickButton('Close tab');
+        await sleep(50);
+        expect(action).toHaveBeenCalledWith('reload', {
+          originalPath: 'original.txt'
+        });
         provider.dispose();
       });
 
