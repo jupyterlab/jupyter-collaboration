@@ -356,7 +356,7 @@ class DocumentRoom(YRoom):
         encoder.write_var_string(json.dumps({"type": "external-change", "change": self.outofband}))
         return encoder.to_bytes()
 
-    async def serve(self, channel: Channel):
+    async def serve(self, channel: Channel) -> None:
         # Subscribe before sending the snapshot so a concurrent change cannot
         # fall between the snapshot and registration. Replay on every reconnect.
         self.clients.add(channel)
