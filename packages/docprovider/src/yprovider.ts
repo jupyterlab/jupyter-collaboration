@@ -16,20 +16,15 @@ import { DocumentChange, YDocument } from '@jupyter/ydoc';
 import { IDocumentProvider } from '@jupyter/collaborative-drive';
 
 import { ContentsManager, ServerConnection, User } from '@jupyterlab/services';
-import { PathExt, URLExt } from '@jupyterlab/coreutils';
+import { URLExt } from '@jupyterlab/coreutils';
 import { TranslationBundle } from '@jupyterlab/translation';
-import {
-  Dialog,
-  InputDialog,
-  showDialog,
-  showErrorMessage
-} from '@jupyterlab/apputils';
+import { Dialog, showDialog } from '@jupyterlab/apputils';
 
 import { IForkProvider } from './ydrive';
 import { requestDocSession } from './requests';
 import { ISessionClosePayload } from './tokens';
 
-import '../style/outofband.css';
+import { ExternalChangeHandler } from './externalChange';
 
 /**
  * The url for the default drive service.
@@ -74,8 +69,22 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     this._onConflictSaveAs = options.onConflictSaveAs;
     this._onConflictRevert = options.onConflictRevert;
     this._onConflictShowDiff = options.onConflictShowDiff;
-    this._onSwitchDocument = options.onSwitchDocument;
-    this._onCloseDocument = options.onCloseDocument;
+    this._contents = new ContentsManager({
+      serverSettings: this._serverSettings
+    });
+    this._externalChanges = new ExternalChangeHandler({
+      ready: this.ready,
+      translator: this._trans,
+      contents: this._contents,
+      actions: {
+        openOriginal: originalPath =>
+          this._requestDocumentAction('reload', { originalPath }),
+        saveAs: (path, originalPath) =>
+          this._requestDocumentAction('save-as', { path, originalPath })
+      },
+      onSwitchDocument: options.onSwitchDocument,
+      onCloseDocument: options.onCloseDocument
+    });
     this._sharedModel.ydoc.getMap('state').observe(this._onSharedStateChanged);
 
     const user = options.user;
@@ -119,6 +128,8 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       return;
     }
     this._isDisposed = true;
+    this._externalChanges.dispose();
+    this._contents.dispose();
     this._sharedModel.ydoc
       .getMap('state')
       .unobserve(this._onSharedStateChanged);
@@ -144,14 +155,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   }
 
   async save(): Promise<void> {
-    if (this._externalChange) {
-      await this._showOutOfBandDialog(this._externalChange.originalPath);
-      const error = new Error(
-        'Save cancelled while resolving an external change'
-      );
-      error.name = 'ModalCancelError';
-      throw error;
-    }
+    await this._externalChanges.ensureCanSave();
     await this._requestDocumentAction('save');
   }
 
@@ -496,22 +500,11 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       }
       const payload = JSON.parse(decoding.readVarString(decoder));
       if (payload?.type === 'external-change') {
-        if (payload.change === null) {
-          this._externalChange = undefined;
-          this._externalChangeDialog?.resolve(0);
-        } else if (typeof payload.change?.originalPath === 'string') {
-          const originalPath = payload.change.originalPath;
-          this._externalChange = { originalPath };
-          void this._ready.promise
-            .then(() => {
-              if (
-                !this.isDisposed &&
-                this._externalChange?.originalPath === originalPath
-              ) {
-                return this._showOutOfBandDialog(originalPath);
-              }
-            })
-            .catch(console.error);
+        if (
+          payload.change === null ||
+          typeof payload.change?.originalPath === 'string'
+        ) {
+          this._externalChanges.updateStatus(payload.change);
         }
         return;
       }
@@ -575,118 +568,6 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     }
   };
 
-  private async _showOutOfBandDialog(originalPath: string): Promise<void> {
-    if (this._outOfBandDialogOpen) {
-      return;
-    }
-    this._outOfBandDialogOpen = true;
-    let resolved = false;
-    try {
-      const buttons: Dialog.IButton[] = [];
-      buttons.push(
-        Dialog.warnButton({
-          label: this._trans.__('Open original file'),
-          actions: ['open-original']
-        })
-      );
-      buttons.push(
-        Dialog.okButton({
-          label: this._trans.__('Save As…'),
-          actions: ['save-as']
-        })
-      );
-      buttons.push(
-        Dialog.okButton({
-          label: this._trans.__('Close tab'),
-          actions: ['close']
-        })
-      );
-      const dialog = new Dialog({
-        title: this._trans.__('The file was changed externally'),
-        body: this._trans.__(
-          'The file "%1" changed on disk. ' +
-            'Open the disk version in this tab, or save your current content under a new name.',
-          originalPath
-        ),
-        buttons,
-        defaultButton: 1,
-        hasClose: false
-      });
-      dialog.addClass('jp-CollaborationExternalChangeDialog');
-      this._externalChangeDialog = dialog;
-      const result = await dialog.launch();
-      if (this.isDisposed || !this._externalChange) {
-        return;
-      }
-      if (result.button.actions.includes('close')) {
-        // Release the original path from this session before leaving it, so a
-        // later open joins the disk version even while collaborators stay here.
-        await this._requestDocumentAction('reload', { originalPath });
-        this._onCloseDocument?.();
-        resolved = true;
-      } else if (result.button.actions.includes('open-original')) {
-        await this._requestDocumentAction('reload', { originalPath });
-        await this._onSwitchDocument?.(originalPath);
-        resolved = true;
-      } else if (result.button.actions.includes('save-as')) {
-        const suggestedPath = await this._suggestSaveAsPath(originalPath);
-        const name = await InputDialog.getText({
-          title: this._trans.__('Save shared document as'),
-          label: this._trans.__('New path:'),
-          text: suggestedPath,
-          okLabel: this._trans.__('Save')
-        });
-        if (name.button.accept && name.value && !this.isDisposed) {
-          await this._requestDocumentAction('save-as', {
-            path: name.value,
-            originalPath
-          });
-          await this._onSwitchDocument?.(name.value);
-          resolved = true;
-        }
-      }
-    } catch (error) {
-      await showErrorMessage(
-        this._trans.__('Could not resolve external change'),
-        error as Error
-      );
-    } finally {
-      this._outOfBandDialogOpen = false;
-      this._externalChangeDialog = undefined;
-    }
-    if (!resolved && !this.isDisposed && this._externalChange) {
-      await this._showOutOfBandDialog(originalPath);
-    }
-  }
-
-  private async _suggestSaveAsPath(originalPath: string): Promise<string> {
-    const directory = PathExt.dirname(originalPath);
-    const filename = PathExt.basename(originalPath);
-    const extension = PathExt.extname(filename);
-    const stem = filename.slice(0, filename.length - extension.length);
-    const base = `${stem}-Copy`;
-    const contents = new ContentsManager({
-      serverSettings: this._serverSettings
-    });
-    try {
-      const listing = await contents.get(directory, {
-        type: 'directory',
-        content: true
-      });
-      const names = new Set<string>(
-        listing.content.map((entry: { name: string }) => entry.name)
-      );
-      names.add(filename);
-      let number = 1;
-      while (names.has(`${base}${number}${extension}`)) {
-        number++;
-      }
-      return PathExt.join(directory, `${base}${number}${extension}`);
-    } finally {
-      contents.dispose();
-    }
-  }
-
   private _onSync = (isSynced: boolean) => {
     if (isSynced) {
       this._onSharedStateChanged();
@@ -738,11 +619,8 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _loadTimeoutId: number | null = null;
   private _isShowingDialog = false;
   private _onConflictShowDiff?: (localContent: JSONValue) => Promise<void>;
-  private _externalChange?: { originalPath: string };
-  private _externalChangeDialog?: Dialog<unknown>;
-  private _outOfBandDialogOpen = false;
-  private _onSwitchDocument?: (path: string) => Promise<void>;
-  private _onCloseDocument?: () => void;
+  private _externalChanges: ExternalChangeHandler;
+  private _contents: ContentsManager;
 }
 
 /**
