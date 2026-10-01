@@ -386,6 +386,8 @@ class DocumentRoom(YRoom):
                 changed = True
             if changed:
                 notice = {"originalPath": self._file.path}
+                if self._file.deleted:
+                    notice["reason"] = "deleted"
                 self._document.dirty = True
             else:
                 notice = None

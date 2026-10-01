@@ -53,32 +53,35 @@ describe('ExternalChangeHandler without a document transport', () => {
     handler.dispose();
   });
 
-  it('saves the selected copy using injected contents and server operations', async () => {
-    const { handler, actions, onSwitchDocument, get } = setup();
-    handler.updateStatus({ originalPath: 'folder/Untitled.ipynb' });
-    await waitForDialog();
-    click('Save As…');
-    await sleep(50);
-    await waitForDialog();
-    expect(get).toHaveBeenCalledWith('folder', {
-      type: 'directory',
-      content: true
-    });
-    expect(
-      document.querySelector<HTMLInputElement>('.jp-Dialog input')!.value
-    ).toBe('folder/Untitled-Copy2.ipynb');
-    expect(actions.saveAs).not.toHaveBeenCalled();
-    await acceptDialog();
-    await sleep(50);
-    expect(actions.saveAs).toHaveBeenCalledWith(
-      'folder/Untitled-Copy2.ipynb',
-      'folder/Untitled.ipynb'
-    );
-    expect(onSwitchDocument).toHaveBeenCalledWith(
-      'folder/Untitled-Copy2.ipynb'
-    );
-    handler.dispose();
-  });
+  it.each([undefined, 'deleted'] as const)(
+    'saves the selected copy for status %s',
+    async reason => {
+      const { handler, actions, onSwitchDocument, get } = setup();
+      handler.updateStatus({ originalPath: 'folder/Untitled.ipynb', reason });
+      await waitForDialog();
+      click('Save As…');
+      await sleep(50);
+      await waitForDialog();
+      expect(get).toHaveBeenCalledWith('folder', {
+        type: 'directory',
+        content: true
+      });
+      expect(
+        document.querySelector<HTMLInputElement>('.jp-Dialog input')!.value
+      ).toBe('folder/Untitled-Copy2.ipynb');
+      expect(actions.saveAs).not.toHaveBeenCalled();
+      await acceptDialog();
+      await sleep(50);
+      expect(actions.saveAs).toHaveBeenCalledWith(
+        'folder/Untitled-Copy2.ipynb',
+        'folder/Untitled.ipynb'
+      );
+      expect(onSwitchDocument).toHaveBeenCalledWith(
+        'folder/Untitled-Copy2.ipynb'
+      );
+      handler.dispose();
+    }
+  );
 
   it('blocks saving while status is unresolved and closes the dialog on disposal', async () => {
     const { handler, actions } = setup();
@@ -100,5 +103,25 @@ describe('ExternalChangeHandler without a document transport', () => {
     ).toBeNull();
     expect(actions.openOriginal).not.toHaveBeenCalled();
     expect(actions.saveAs).not.toHaveBeenCalled();
+  });
+  it('updates an existing prompt when the file is deleted and allows closing', async () => {
+    const { handler, actions, onCloseDocument } = setup();
+    handler.updateStatus({ originalPath: 'Untitled.ipynb' });
+    await waitForDialog();
+    handler.updateStatus({ originalPath: 'Untitled.ipynb', reason: 'deleted' });
+    await sleep(50);
+    await waitForDialog();
+    expect(document.querySelector('.jp-Dialog')!.textContent).toContain(
+      'The file was deleted'
+    );
+    expect(document.querySelector('.jp-Dialog')!.textContent).not.toContain(
+      'Open original file'
+    );
+    expect(actions.openOriginal).not.toHaveBeenCalled();
+    click('Close tab');
+    await sleep(50);
+    expect(actions.openOriginal).toHaveBeenCalledWith('Untitled.ipynb');
+    expect(onCloseDocument).toHaveBeenCalled();
+    handler.dispose();
   });
 });

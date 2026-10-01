@@ -224,9 +224,15 @@ async def test_external_change_status_broadcast_and_clear(document):
     room.clients.clear()
 
 
-async def test_external_change_status_replayed_on_each_connection(document):
+@pytest.mark.parametrize("deleted", [False, True])
+async def test_external_change_status_replayed_on_each_connection(document, jp_root_dir, deleted):
     cm, loader, room, model, path = document
-    cm.save({**model, "content": "external"}, path)
+    notice = {"originalPath": path}
+    if deleted:
+        (jp_root_dir / path).unlink()
+        notice["reason"] = "deleted"
+    else:
+        cm.save({**model, "content": "external"}, path)
     await loader.maybe_notify()
     # Also replay after another frontend opens the disk version.
     await room.open_disk_version(path)
@@ -242,6 +248,53 @@ async def test_external_change_status_replayed_on_each_connection(document):
         assert channel not in room.clients
         assert decode_status(channel.send.call_args.args[0]) == {
             "type": "external-change",
-            "change": {"originalPath": path},
+            "change": notice,
         }
     assert "outofband" not in room._document.ystate
+
+
+@pytest.mark.parametrize("document", [False, True], indirect=True)
+@pytest.mark.parametrize("trigger", ["poll", "save"])
+@pytest.mark.parametrize("remove_mapping", [False, True])
+async def test_external_deletion_preserves_content_and_notifies(
+    document, jp_root_dir, arbitrary_fid_manager, trigger, remove_mapping
+):
+    cm, loader, room, model, path = document
+    shared = await room._document.aget()
+    client = MagicMock(send=AsyncMock())
+    room.clients.add(client)
+    (jp_root_dir / path).unlink()
+    if remove_mapping:
+        arbitrary_fid_manager.delete(path)
+    try:
+        if trigger == "poll":
+            await loader.maybe_notify()
+        else:
+            await room._maybe_save_document(None, save_now=True)
+        notice = {"originalPath": path, "reason": "deleted"}
+        assert room.outofband == notice
+        assert decode_status(client.send.call_args.args[0])["change"] == notice
+        assert await room._document.aget() == shared
+        assert room._document.dirty
+        assert not cm.exists(path)
+        await loader.maybe_notify()
+        client.send.assert_awaited_once()
+        with pytest.raises(OutOfBandChanges):
+            await loader.maybe_save_content(model)
+        await room.save_as("saved-" + path, path)
+        assert cm.get("saved-" + path)["content"] == shared
+        assert not cm.exists(path)
+        await room.open_disk_version(path)
+    finally:
+        room.clients.clear()
+
+
+async def test_deleted_file_restored_clears_status(document, jp_root_dir):
+    cm, loader, room, model, path = document
+    (jp_root_dir / path).unlink()
+    await loader.maybe_notify()
+    assert room.outofband["reason"] == "deleted"
+    cm.save(model, path)
+    await loader.maybe_notify()
+    assert room.outofband is None
+    assert not loader.deleted

@@ -14,6 +14,7 @@ import '../style/outofband.css';
 /** Server-owned status of a document whose backing file changed externally. */
 export interface IExternalChangeStatus {
   originalPath: string;
+  reason?: 'deleted';
 }
 
 /** Server operations needed to resolve an external change, regardless of transport. */
@@ -44,7 +45,11 @@ export class ExternalChangeHandler implements IDisposable {
     if (this.isDisposed) {
       return;
     }
+    const reasonChanged = this._externalChange?.reason !== change?.reason;
     this._externalChange = change ? { ...change } : undefined;
+    if (reasonChanged) {
+      this._externalChangeDialog?.resolve(0);
+    }
     if (!change) {
       this._externalChangeDialog?.resolve(0);
       return;
@@ -91,12 +96,15 @@ export class ExternalChangeHandler implements IDisposable {
     let resolved = false;
     try {
       const buttons: Dialog.IButton[] = [];
-      buttons.push(
-        Dialog.warnButton({
-          label: this._options.translator.__('Open original file'),
-          actions: ['open-original']
-        })
-      );
+      const deleted = this._externalChange?.reason === 'deleted';
+      if (!deleted) {
+        buttons.push(
+          Dialog.warnButton({
+            label: this._options.translator.__('Open original file'),
+            actions: ['open-original']
+          })
+        );
+      }
       buttons.push(
         Dialog.okButton({
           label: this._options.translator.__('Save As…'),
@@ -110,14 +118,21 @@ export class ExternalChangeHandler implements IDisposable {
         })
       );
       const dialog = new Dialog({
-        title: this._options.translator.__('The file was changed externally'),
-        body: this._options.translator.__(
-          'The file "%1" changed on disk. ' +
-            'Open the disk version in this tab, or save your current content under a new name.',
-          originalPath
-        ),
+        title: deleted
+          ? this._options.translator.__('The file was deleted')
+          : this._options.translator.__('The file was changed externally'),
+        body: deleted
+          ? this._options.translator.__(
+              'The file "%1" was deleted from disk. Save your current content under a new name, or close this tab.',
+              originalPath
+            )
+          : this._options.translator.__(
+              'The file "%1" changed on disk. ' +
+                'Open the disk version in this tab, or save your current content under a new name.',
+              originalPath
+            ),
         buttons,
-        defaultButton: 1,
+        defaultButton: deleted ? 0 : 1,
         hasClose: false
       });
       dialog.addClass('jp-CollaborationExternalChangeDialog');
@@ -126,7 +141,9 @@ export class ExternalChangeHandler implements IDisposable {
       if (this.isDisposed || !this._externalChange) {
         return;
       }
-      if (result.button.actions.includes('close')) {
+      if (deleted !== (this._externalChange.reason === 'deleted')) {
+        // Reopen below with the latest status and available actions.
+      } else if (result.button.actions.includes('close')) {
         // Release the original path from this session before leaving it, so a
         // later open joins the disk version even while collaborators stay here.
         await this._options.actions.openOriginal(originalPath);
