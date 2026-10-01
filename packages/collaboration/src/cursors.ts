@@ -67,6 +67,12 @@ export interface ICursorState {
    */
   head: RelativePosition;
   /**
+   * Which side of the position the cursor is associated with, as
+   * reported by CodeMirror. Disambiguates a position sitting on a
+   * line wrap point.
+   */
+  assoc?: number;
+  /**
    * Whether the cursor is an empty range or not.
    *
    * Default `true`
@@ -431,7 +437,7 @@ const remoteCursorsLayer = layer({
             : 'jp-remote-cursor';
         const cursor_ = EditorSelection.cursor(
           head.index,
-          head.index > anchor.index ? -1 : 1
+          cursor.assoc || (head.index > anchor.index ? -1 : 1)
         );
         for (const piece of RectangleMarker.forRange(
           view,
@@ -653,12 +659,22 @@ const showCollaborators = ViewPlugin.fromClass(
         if (hasFocus && selection) {
           for (const r of selection.ranges) {
             const primary = r === selection.main;
-            const anchor = createRelativePositionFromTypeIndex(ytext, r.anchor);
-            const head = createRelativePositionFromTypeIndex(ytext, r.head);
+            const assoc = r.empty ? -1 : 0;
+            const anchor = createRelativePositionFromTypeIndex(
+              ytext,
+              r.anchor,
+              assoc
+            );
+            const head = createRelativePositionFromTypeIndex(
+              ytext,
+              r.head,
+              assoc
+            );
 
             cursors.push({
               anchor,
               head,
+              assoc: r.assoc,
               primary,
               empty: r.empty
             });
