@@ -3,10 +3,9 @@
 
 from copy import deepcopy
 from importlib.metadata import entry_points
-from time import time
 
 import pytest
-from anyio import create_task_group, sleep
+from anyio import Event, create_task_group, fail_after, sleep
 from jupyter_server_ydoc.loaders import FileLoader
 from jupyter_server_ydoc.rooms import DocumentRoom
 from jupyter_server_ydoc.test_utils import FakeContentsManager, FakeEventLogger, FakeFileIDManager
@@ -59,20 +58,20 @@ async def test_dirty(
     file_format = "text"
     file_type = "file"
     file_path = "dummy.txt"
-    await rtc_create_file(file_path)
+    await rtc_create_file(file_path, "original")
     jupyter_ydoc = jupyter_ydocs[file_type]()
 
     websocket, room_name = await rtc_connect_doc_client(file_format, file_type, file_path)
     async with websocket as ws, Provider(jupyter_ydoc.ydoc, HttpxWebsocket(ws, room_name)):
-        for _ in range(3):
+        with fail_after(15):
+            # Wait for initial synchronization before making an edit. Repeatedly
+            # setting dirty can restart the server's autosave debounce timer.
+            while jupyter_ydoc.source != "original":
+                await sleep(0.01)
             jupyter_ydoc.dirty = True
-            await sleep(rtc_document_save_delay * 1.5)
-            # the server might not be ready to receive updates from this client yet
-            # if it is, it should clear the dirty state
-            if not jupyter_ydoc.dirty:
-                return
-        else:
-            assert not jupyter_ydoc.dirty
+            jupyter_ydoc.source = "edited"
+            while jupyter_ydoc.dirty:
+                await sleep(0.01)
 
 
 async def cleanup(jp_serverapp):
@@ -91,22 +90,32 @@ async def test_room_concurrent_initialization(
     file_format = "text"
     file_type = "file"
     file_path = "dummy.txt"
-    await rtc_create_file(file_path)
+    await rtc_create_file(file_path, "original")
+    server = jp_serverapp.web_app.settings["jupyter_server_ydoc"].ywebsocket_server
+    rooms = []
+    connected = Event()
 
-    async def connect(file_format, file_type, file_path):
+    async def connect():
         websocket, room_name = await rtc_connect_doc_client(file_format, file_type, file_path)
-        async with websocket:
-            pass
+        doc = jupyter_ydocs[file_type]()
+        async with websocket as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
+            while doc.source != "original":
+                await sleep(0.01)
+            rooms.append(server.rooms[room_name])
+            if len(rooms) == 2:
+                connected.set()
+            await connected.wait()
 
-    t0 = time()
-    async with create_task_group() as tg:
-        tg.start_soon(connect, file_format, file_type, file_path)
-        tg.start_soon(connect, file_format, file_type, file_path)
-    t1 = time()
-    delta = t1 - t0
-    assert delta < 0.6
-
-    await cleanup(jp_serverapp)
+    try:
+        with fail_after(15):
+            async with create_task_group() as tg:
+                tg.start_soon(connect)
+                tg.start_soon(connect)
+        assert len(rooms) == 2
+        assert rooms[0] is rooms[1]
+        assert rooms[0].ready
+    finally:
+        await cleanup(jp_serverapp)
 
 
 async def test_room_sequential_opening(
@@ -117,22 +126,29 @@ async def test_room_sequential_opening(
     file_format = "text"
     file_type = "file"
     file_path = "dummy.txt"
-    await rtc_create_file(file_path)
+    await rtc_create_file(file_path, "original")
+    server = jp_serverapp.web_app.settings["jupyter_server_ydoc"].ywebsocket_server
 
-    async def connect(file_format, file_type, file_path):
-        t0 = time()
+    async def connect(expected, edit=None):
         websocket, room_name = await rtc_connect_doc_client(file_format, file_type, file_path)
-        async with websocket:
-            pass
-        t1 = time()
-        return t1 - t0
+        doc = jupyter_ydocs[file_type]()
+        async with websocket as ws, Provider(doc.ydoc, HttpxWebsocket(ws, room_name)):
+            while doc.source != expected:
+                await sleep(0.01)
+            room = server.rooms[room_name]
+            if edit is not None:
+                doc.source = edit
+                while room._document.source != edit:
+                    await sleep(0.01)
+            return room
 
-    dt = await connect(file_format, file_type, file_path)
-    assert dt < 1
-    dt = await connect(file_format, file_type, file_path)
-    assert dt < 1
-
-    await cleanup(jp_serverapp)
+    try:
+        with fail_after(15):
+            first = await connect("original", "edited")
+            second = await connect("edited")
+        assert first is second
+    finally:
+        await cleanup(jp_serverapp)
 
 
 def _notebook_model() -> dict:
@@ -259,9 +275,9 @@ async def test_notebook_reconnect_sends_conflict_when_cell_structure_changes_bet
 
         # The room must have sent at least a SYNC_STEP2 and a RAW conflict message.
         message_types = [msg[0] for msg in channel._sent]
-        assert (
-            MessageType.RAW in message_types
-        ), f"Expected a RAW conflict message, got types: {message_types}"
+        assert MessageType.RAW in message_types, (
+            f"Expected a RAW conflict message, got types: {message_types}"
+        )
 
         # The RAW conflict message encodes a JSON payload with type=conflict.
         conflict_msg = next(
