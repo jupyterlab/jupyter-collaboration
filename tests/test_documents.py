@@ -275,9 +275,9 @@ async def test_notebook_reconnect_sends_conflict_when_cell_structure_changes_bet
 
         # The room must have sent at least a SYNC_STEP2 and a RAW conflict message.
         message_types = [msg[0] for msg in channel._sent]
-        assert MessageType.RAW in message_types, (
-            f"Expected a RAW conflict message, got types: {message_types}"
-        )
+        assert (
+            MessageType.RAW in message_types
+        ), f"Expected a RAW conflict message, got types: {message_types}"
 
         # The RAW conflict message encodes a JSON payload with type=conflict.
         conflict_msg = next(
