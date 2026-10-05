@@ -14,6 +14,7 @@ import {
   hoverTooltip,
   layer,
   LayerMarker,
+  Rect,
   RectangleMarker,
   showTooltip,
   Tooltip,
@@ -193,7 +194,8 @@ const FLAG_IDLE_MS = 2000;
 type Collaborator = {
   at: number;
   user?: User.IIdentity;
-  create?: () => TooltipView;
+  assoc?: number;
+  create?: (view: EditorView) => TooltipView;
 };
 
 const collaborators = new WeakMap<Awareness, Map<number, Collaborator>>();
@@ -291,7 +293,37 @@ function renderPill(dom: HTMLElement, user: User.IIdentity | undefined): void {
   dom.append(avatar, name);
 }
 
-function drawFlag(awareness: Awareness, clientID: number): TooltipView {
+/**
+ * Document index of a remote cursor head, with the side of that index it is
+ * drawn on - which is what disambiguates a line wrap point.
+ */
+function remoteCursorPosition(
+  cursor: ICursorState,
+  ytext: Text,
+  ydoc: Doc
+): { index: number; assoc: number } | null {
+  const head = createAbsolutePositionFromRelativePosition(cursor.head, ydoc);
+  if (head?.type !== ytext) {
+    return null;
+  }
+  const anchor = cursor.anchor
+    ? createAbsolutePositionFromRelativePosition(cursor.anchor, ydoc)
+    : null;
+  const assoc =
+    cursor.assoc ||
+    (anchor?.type === ytext && head.index > anchor.index ? -1 : 1);
+  return { index: head.index, assoc };
+}
+
+function cursorCoords(view: EditorView, pos: number, assoc?: number): Rect {
+  return view.coordsAtPos(pos, assoc && assoc < 0 ? -1 : 1) as Rect;
+}
+
+function drawFlag(
+  view: EditorView,
+  awareness: Awareness,
+  clientID: number
+): TooltipView {
   const entry = collaborator(awareness, clientID);
   const dom = collaboratorPill(entry.user);
   let shown = entry.user;
@@ -303,15 +335,19 @@ function drawFlag(awareness: Awareness, clientID: number): TooltipView {
     dom.classList.toggle('jp-mod-idle', !isFlagVisible(awareness, clientID));
   };
   sync();
-  return { dom, update: sync };
+  return {
+    dom,
+    update: sync,
+    getCoords: pos => cursorCoords(view, pos, entry.assoc)
+  };
 }
 
 function flagCreator(
   awareness: Awareness,
   clientID: number
-): () => TooltipView {
+): (view: EditorView) => TooltipView {
   const entry = collaborator(awareness, clientID);
-  return (entry.create ??= () => drawFlag(awareness, clientID));
+  return (entry.create ??= view => drawFlag(view, awareness, clientID));
 }
 
 function collaboratorFlags(state: EditorState): readonly Tooltip[] {
@@ -329,11 +365,13 @@ function collaboratorFlags(state: EditorState): readonly Tooltip[] {
     if (!cursor?.head) {
       return;
     }
-    const head = createAbsolutePositionFromRelativePosition(cursor.head, ydoc);
-    if (head?.type !== ytext) {
+    const head = remoteCursorPosition(cursor, ytext, ydoc);
+    if (!head) {
       return;
     }
-    collaborator(awareness, clientID).user = remote.user;
+    const entry = collaborator(awareness, clientID);
+    entry.user = remote.user;
+    entry.assoc = head.assoc;
     flags.push({
       pos: Math.min(head.index, state.doc.length),
       above: true,
@@ -419,15 +457,8 @@ const remoteCursorsLayer = layer({
           return;
         }
 
-        const anchor = createAbsolutePositionFromRelativePosition(
-          cursor.anchor,
-          ydoc
-        );
-        const head = createAbsolutePositionFromRelativePosition(
-          cursor.head,
-          ydoc
-        );
-        if (anchor?.type !== ytext || head?.type !== ytext) {
+        const head = remoteCursorPosition(cursor, ytext, ydoc);
+        if (!head) {
           return;
         }
 
@@ -435,10 +466,7 @@ const remoteCursorsLayer = layer({
           cursor.primary ?? true
             ? 'jp-remote-cursor jp-mod-primary'
             : 'jp-remote-cursor';
-        const cursor_ = EditorSelection.cursor(
-          head.index,
-          cursor.assoc || (head.index > anchor.index ? -1 : 1)
-        );
+        const cursor_ = EditorSelection.cursor(head.index, head.assoc);
         for (const piece of RectangleMarker.forRange(
           view,
           className,
@@ -488,11 +516,8 @@ const userHover = hoverTooltip(
         if (!cursor?.head) {
           continue;
         }
-        const head = createAbsolutePositionFromRelativePosition(
-          cursor.head,
-          ydoc
-        );
-        if (head?.type !== ytext) {
+        const head = remoteCursorPosition(cursor, ytext, ydoc);
+        if (!head) {
           continue;
         }
         // Use some margin around the cursor to display the user.
@@ -506,6 +531,7 @@ const userHover = hoverTooltip(
               return {
                 dom,
                 overlap: true,
+                getCoords: at => cursorCoords(view, at, head.assoc),
                 mount: () =>
                   dom.parentElement?.classList.add('jp-remote-userFlag-host')
               };
@@ -659,7 +685,7 @@ const showCollaborators = ViewPlugin.fromClass(
         if (hasFocus && selection) {
           for (const r of selection.ranges) {
             const primary = r === selection.main;
-            const assoc = r.empty ? -1 : 0;
+            const assoc = r.assoc < 0 ? -1 : 0;
             const anchor = createRelativePositionFromTypeIndex(
               ytext,
               r.anchor,
