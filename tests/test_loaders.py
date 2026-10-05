@@ -6,6 +6,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
 
 import pytest
 from jupyter_server_ydoc.loaders import FileLoader, FileLoaderMapping
@@ -64,13 +65,14 @@ async def test_FileLoader_with_watcher_errors(caplog):
     )
     await loader.load_content("text", "file")
 
+    error = patch.object(cm, "get", side_effect=HTTPError(401, "Unauthorized"))
+    error.start()
     try:
-        cm.model = {}
         await asyncio.sleep(0.5)
         logs = [r.getMessage() for r in caplog.records]
         assert logs == [
-            "Error watching file myfile.txt: HTTP 404: Not Found (File not found: myfile.txt)",
-            "Error watching file myfile.txt: HTTP 404: Not Found (File not found: myfile.txt)",
+            "Error watching file myfile.txt: HTTP 401: Unauthorized (Unauthorized)",
+            "Error watching file myfile.txt: HTTP 401: Unauthorized (Unauthorized)",
             "Too many errors while watching myfile.txt - suppressing further logs.",
         ]
 
@@ -82,6 +84,7 @@ async def test_FileLoader_with_watcher_errors(caplog):
             == "Stopping watching file due to consecutive errors over 1 seconds: myfile.txt"
         )
     finally:
+        error.stop()
         await loader.clean()
 
 

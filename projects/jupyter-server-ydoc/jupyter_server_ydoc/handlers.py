@@ -205,6 +205,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self._websocket_server = ywebsocket_server
         self._message_queue = asyncio.Queue()
         self._room_id = ""
+        self._event_path: str | None = None
         self.room = None  # type:ignore
         self._room_locks = room_locks if room_locks is not None else {}
 
@@ -369,28 +370,37 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         header = decoder.read_var_uint()
         if header == MessageType.RAW:
             msg = decoder.read_var_string()
-            if msg == "save":
+            if msg in {"save", "save-as", "reload"}:
                 save_id = decoder.read_var_uint()
-                save_reply = {
-                    "type": "save",
-                    "responseTo": save_id,
-                }
+                save_reply = {"type": msg, "responseTo": save_id}
                 try:
                     room = cast(DocumentRoom, self.room)
-                    save_task = room._save_to_disc()
-                    # task may be missing if save was already in progress
-                    if save_task:
-                        await save_task
-                        await self.send(
-                            self._encode_json_message({**save_reply, "status": "success"})
-                        )
+                    if msg in {"save-as", "reload"}:
+                        target = json.loads(decoder.read_var_string())
+                        if not isinstance(target.get("originalPath"), str) or (
+                            msg == "save-as" and not isinstance(target.get("path"), str)
+                        ):
+                            raise ValueError("A new path and original path are required")
+                        if msg == "save-as":
+                            await room.save_as(target["path"], target["originalPath"])
+                        else:
+                            await room.open_disk_version(target["originalPath"])
+                        status = "success"
                     else:
-                        await self.send(
-                            self._encode_json_message({**save_reply, "status": "skipped"})
-                        )
-                except Exception:
+                        save_task = room._save_to_disc()
+                        if save_task:
+                            await save_task
+                            status = "conflict" if room.outofband else "success"
+                        else:
+                            status = "skipped"
+                    await self.send(self._encode_json_message({**save_reply, "status": status}))
+                except Exception as e:
                     self.log.error("Couldn't save content from room: %s", self._room_id)
-                    await self.send(self._encode_json_message({**save_reply, "status": "failed"}))
+                    await self.send(
+                        self._encode_json_message(
+                            {**save_reply, "status": "failed", "message": str(e)}
+                        )
+                    )
             return
 
         self._message_queue.put_nowait(message)
@@ -418,8 +428,13 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
 
     def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:
         _, _, file_id = decode_file_path(self._room_id)
-        path = self._file_id_manager.get_path(file_id)
+        path = (
+            self._file_loaders[file_id].path
+            if file_id in self._file_loaders
+            else self._file_id_manager.get_path(file_id) or self._event_path
+        )
 
+        self._event_path = path
         data = {"level": level.value, "room": self._room_id, "path": path}
         if action:
             data["action"] = action

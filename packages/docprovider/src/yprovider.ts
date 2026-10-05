@@ -15,7 +15,7 @@ import { JSONValue, PromiseDelegate } from '@lumino/coreutils';
 import { DocumentChange, YDocument } from '@jupyter/ydoc';
 import { IDocumentProvider } from '@jupyter/collaborative-drive';
 
-import { ServerConnection, User } from '@jupyterlab/services';
+import { ContentsManager, ServerConnection, User } from '@jupyterlab/services';
 import { URLExt } from '@jupyterlab/coreutils';
 import { TranslationBundle } from '@jupyterlab/translation';
 import { Dialog, showDialog } from '@jupyterlab/apputils';
@@ -23,6 +23,8 @@ import { Dialog, showDialog } from '@jupyterlab/apputils';
 import { IForkProvider } from './ydrive';
 import { requestDocSession } from './requests';
 import { ISessionClosePayload } from './tokens';
+
+import { ExternalChangeHandler } from './externalChange';
 
 /**
  * The url for the default drive service.
@@ -67,6 +69,23 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     this._onConflictSaveAs = options.onConflictSaveAs;
     this._onConflictRevert = options.onConflictRevert;
     this._onConflictShowDiff = options.onConflictShowDiff;
+    this._contents = new ContentsManager({
+      serverSettings: this._serverSettings
+    });
+    this._externalChanges = new ExternalChangeHandler({
+      ready: this.ready,
+      translator: this._trans,
+      contents: this._contents,
+      actions: {
+        openOriginal: originalPath =>
+          this._requestDocumentAction('reload', { originalPath }),
+        saveAs: (path, originalPath) =>
+          this._requestDocumentAction('save-as', { path, originalPath })
+      },
+      onSwitchDocument: options.onSwitchDocument,
+      onCloseDocument: options.onCloseDocument
+    });
+    this._sharedModel.ydoc.getMap('state').observe(this._onSharedStateChanged);
 
     const user = options.user;
 
@@ -109,6 +128,11 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       return;
     }
     this._isDisposed = true;
+    this._externalChanges.dispose();
+    this._contents.dispose();
+    this._sharedModel.ydoc
+      .getMap('state')
+      .unobserve(this._onSharedStateChanged);
     this._clearLoadTimeout();
     if (this._conflictWs) {
       this._conflictWs.removeEventListener(
@@ -131,7 +155,22 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   }
 
   async save(): Promise<void> {
+    await this._externalChanges.ensureCanSave();
+    await this._requestDocumentAction('save');
+  }
+
+  private async _requestDocumentAction(
+    action: 'save' | 'save-as' | 'reload',
+    target?: { path?: string; originalPath: string }
+  ): Promise<void> {
     const ws = this._yWebsocketProvider?.ws;
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      throw new Error(
+        this._trans.__(
+          'The document is not connected. Please retry after reconnecting.'
+        )
+      );
+    }
     if (ws) {
       const saveId = ++this._saveCounter;
       const delegate = new PromiseDelegate<void>();
@@ -148,9 +187,10 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         }
         const rawReply = decoding.readVarString(decoder);
         let reply: {
-          type: 'save';
+          type: string;
+          message?: string;
           responseTo: number;
-          status: 'success' | 'skipped' | 'failed';
+          status: 'success' | 'skipped' | 'failed' | 'conflict';
         } | null = null;
         try {
           reply = JSON.parse(rawReply);
@@ -159,13 +199,19 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         }
         if (
           reply &&
-          reply['type'] === 'save' &&
+          reply['type'] === action &&
           reply['responseTo'] === saveId
         ) {
           if (reply.status === 'success') {
             delegate.resolve();
+          } else if (reply.status === 'conflict') {
+            const error = new Error(
+              'Resolve the external change before saving'
+            );
+            error.name = 'ModalCancelError';
+            delegate.reject(error);
           } else if (reply.status === 'failed') {
-            delegate.reject('Saving failed');
+            delegate.reject(new Error(reply.message ?? 'Saving failed'));
           } else if (reply.status === 'skipped') {
             delegate.reject('Saving already in progress');
           } else {
@@ -176,8 +222,11 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       ws.addEventListener('message', handler);
       const encoder = encoding.createEncoder();
       encoding.writeVarUint(encoder, RAW_MESSAGE_TYPE);
-      encoding.writeVarString(encoder, 'save');
+      encoding.writeVarString(encoder, action);
       encoding.writeVarUint(encoder, saveId);
+      if (target) {
+        encoding.writeVarString(encoder, JSON.stringify(target));
+      }
       const saveMessage = encoding.toUint8Array(encoder);
       ws.send(saveMessage);
       try {
@@ -450,6 +499,15 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         return;
       }
       const payload = JSON.parse(decoding.readVarString(decoder));
+      if (payload?.type === 'external-change') {
+        if (
+          payload.change === null ||
+          typeof payload.change?.originalPath === 'string'
+        ) {
+          this._externalChanges.updateStatus(payload.change);
+        }
+        return;
+      }
       if (!payload || payload.type !== 'conflict') {
         return;
       }
@@ -502,8 +560,17 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     }
   };
 
+  private _onSharedStateChanged = (): void => {
+    const state = this._sharedModel.ydoc.getMap('state');
+    const path = state.get('path');
+    if (typeof path === 'string') {
+      this._path = path;
+    }
+  };
+
   private _onSync = (isSynced: boolean) => {
     if (isSynced) {
+      this._onSharedStateChanged();
       this._hasSynced = true;
       this._clearLoadTimeout();
       if (this._yWebsocketProvider) {
@@ -552,6 +619,8 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _loadTimeoutId: number | null = null;
   private _isShowingDialog = false;
   private _onConflictShowDiff?: (localContent: JSONValue) => Promise<void>;
+  private _externalChanges: ExternalChangeHandler;
+  private _contents: ContentsManager;
 }
 
 /**
@@ -601,6 +670,12 @@ export namespace WebSocketProvider {
      * The server settings.
      */
     serverSettings?: ServerConnection.ISettings;
+
+    /** Replace this client's document tab after resolving an external change. */
+    onSwitchDocument?: (path: string) => Promise<void>;
+
+    /** Close only this client’s tab without saving. */
+    onCloseDocument?: () => void;
 
     /**
      * Called when the user chooses "Save As" from the conflict dialog.
