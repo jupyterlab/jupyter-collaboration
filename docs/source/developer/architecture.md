@@ -16,7 +16,7 @@ Jupyter Collaboration consists of several Python packages and frontend extension
   WebSocket provider library used by the collaboration layer. It runs an async WebSocket server that synchronizes pycrdt documents by managing CRDT updates between clients and the shared server YDoc.
 
 - **pycrdt-store**:
-  Persistence layer for CRDT documents. Uses an SQLite-backed store (`.jupyter_ystore.db`) by default to checkpoint document history. Enables autosave and document state recovery after restarts or offline periods.
+  Persistence layer for CRDT documents. Uses an SQLite-backed store (`.jupyter_ystore.db`) by default to checkpoint document history. Enables autosave and document state recovery after restarts or offline periods. This layer is optional: it can be turned off with the `YDocExtension.disable_ystore` setting (documents are then still saved to disk, but their update history is not persisted).
 
 <div align="center">
 

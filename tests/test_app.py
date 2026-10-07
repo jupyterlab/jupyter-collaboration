@@ -18,6 +18,7 @@ def test_default_settings(jp_serverapp):
     assert settings["document_save_delay"] == 1
     assert settings["document_load_progressively"] is False
     assert settings["notebook_output_delay_threshold_mb"] == 100
+    assert settings["disable_ystore"] is False
     assert settings["ystore_class"] == SQLiteYStore
 
 
@@ -82,6 +83,15 @@ def test_settings_should_change_ystore_class(jp_configurable_serverapp):
     settings = app.web_app.settings["jupyter_server_ydoc_config"]
 
     assert settings["ystore_class"] == TempFileYStore
+
+
+def test_settings_should_disable_ystore(jp_configurable_serverapp):
+    argv = ["--YDocExtension.disable_ystore=True"]
+
+    app = jp_configurable_serverapp(argv=argv)
+    settings = app.web_app.settings["jupyter_server_ydoc_config"]
+
+    assert settings["disable_ystore"] is True
 
 
 async def test_document_ttl_from_settings(rtc_create_mock_document_room, jp_configurable_serverapp):
