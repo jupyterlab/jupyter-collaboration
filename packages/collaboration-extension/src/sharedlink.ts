@@ -23,6 +23,8 @@ namespace CommandIDs {
  */
 export const sharedLink: JupyterFrontEndPlugin<void> = {
   id: '@jupyter/collaboration-extension:shared-link',
+  description:
+    'Adds a command to copy a shareable link to the running Jupyter Server.',
   autoStart: true,
   optional: [ICommandPalette, ITranslator],
   activate: async (
@@ -35,6 +37,7 @@ export const sharedLink: JupyterFrontEndPlugin<void> = {
 
     commands.addCommand(CommandIDs.share, {
       label: trans.__('Generate a Shared Link'),
+      describedBy: { args: null },
       icon: shareIcon,
       execute: async () => {
         const result = await showSharedLinkDialog({

@@ -66,7 +66,7 @@ export async function requestAPI<T = any>(
   if (data.length > 0) {
     try {
       data = JSON.parse(data);
-    } catch (error) {
+    } catch {
       console.error('Not a JSON response body.', response);
     }
   }
@@ -107,7 +107,7 @@ export async function requestDocSession(
   if (data.length > 0) {
     try {
       data = JSON.parse(data);
-    } catch (error) {
+    } catch {
       console.log('Not a JSON response body.', response);
     }
   }
@@ -173,7 +173,7 @@ export async function requestUndoRedo(
   if (data.length > 0) {
     try {
       data = JSON.parse(data);
-    } catch (error) {
+    } catch {
       console.log('Not a JSON response body.', response);
     }
   }

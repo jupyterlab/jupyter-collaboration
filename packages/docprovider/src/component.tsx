@@ -14,6 +14,7 @@ import { historyIcon } from '@jupyterlab/ui-components';
 import { Notification } from '@jupyterlab/apputils';
 import { IForkProvider } from './ydrive';
 import { ServerConnection } from '@jupyterlab/services';
+import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 
 type Props = {
   apiURL: string;
@@ -22,6 +23,7 @@ type Props = {
   format: string;
   documentTimelineUrl: string;
   serverSettings?: ServerConnection.ISettings;
+  translator?: ITranslator;
 };
 
 export const TimelineSliderComponent: React.FC<Props> = ({
@@ -30,8 +32,10 @@ export const TimelineSliderComponent: React.FC<Props> = ({
   contentType,
   format,
   documentTimelineUrl,
-  serverSettings
+  serverSettings,
+  translator
 }) => {
+  const trans = (translator ?? nullTranslator).load('jupyter_collaboration');
   const [data, setData] = useState({
     roomId: '',
     timestamps: [],
@@ -193,7 +197,7 @@ export const TimelineSliderComponent: React.FC<Props> = ({
           fetchTimeline(extractFilenameFromURL(apiURL));
         }}
         className="jp-mod-highlighted"
-        title="Document Timeline"
+        title={trans.__('Document Timeline')}
       >
         <historyIcon.react marginRight="4px" />
       </div>
@@ -216,7 +220,7 @@ export const TimelineSliderComponent: React.FC<Props> = ({
                 onClick={handleRestore}
                 className="jp-ToolbarButtonComponent jp-restoreBtn"
               >
-                Restore version{' '}
+                {trans.__('Restore version')}{' '}
                 {formatTimestamp(data.timestamps[currentTimestampIndex])}
               </button>
             </div>

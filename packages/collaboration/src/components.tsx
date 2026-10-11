@@ -1,7 +1,9 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
+import { IRenderMime } from '@jupyterlab/rendermime-interfaces';
 import { User } from '@jupyterlab/services';
+import { nullTranslator } from '@jupyterlab/translation';
 import { ReactWidget } from '@jupyterlab/ui-components';
 
 import React, { useEffect, useState } from 'react';
@@ -88,6 +90,10 @@ type UserDetailsBodyProps = {
    * The user manager instance.
    **/
   userManager: User.IManager;
+  /**
+   * The translation bundle.
+   **/
+  trans?: IRenderMime.TranslationBundle;
 };
 
 /**
@@ -100,6 +106,7 @@ export class UserDetailsBody extends ReactWidget {
   constructor(props: UserDetailsBodyProps) {
     super();
     this._userManager = props.userManager;
+    this._trans = props.trans ?? nullTranslator.load('jupyter_collaboration');
   }
 
   /**
@@ -130,7 +137,11 @@ export class UserDetailsBody extends ReactWidget {
   render() {
     const identity = this._userManager.identity;
     if (!identity) {
-      return <div className="jp-UserInfo-Details">Error loading user info</div>;
+      return (
+        <div className="jp-UserInfo-Details">
+          {this._trans.__('Error loading user info')}
+        </div>
+      );
     }
     const updatableFields = (this._userManager.permissions?.[
       'updatable_fields'
@@ -161,6 +172,7 @@ export class UserDetailsBody extends ReactWidget {
   }
 
   private _userManager: User.IManager;
+  private _trans: IRenderMime.TranslationBundle;
   private _userUpdate: UserUpdate = {};
 }
 
