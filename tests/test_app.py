@@ -5,8 +5,18 @@ from __future__ import annotations
 
 import nbformat
 import pytest
+from jupyter_server.services.contents.filemanager import FileContentsManager
 from jupyter_server_ydoc.pytest_plugin import rtc_create_SQLite_store_factory
 from jupyter_server_ydoc.stores import SQLiteYStore, TempFileYStore
+
+
+@pytest.fixture
+def jp_server_config(jp_server_config, request):
+    # Avoid collecting thread-affine pycrdt events in contents I/O workers.
+    # This is a test workaround for pycrdt's cross-thread GC failure.
+    if request.node.originalname == "test_get_document_notebook":
+        jp_server_config["ServerApp"]["contents_manager_class"] = FileContentsManager
+    return jp_server_config
 
 
 def test_default_settings(jp_serverapp):
@@ -142,6 +152,11 @@ async def test_get_document_create_room(rtc_create_file, jp_serverapp):
     await collaboration.stop_extension()
 
 
+# Only ignore the expected warning for the explicit synchronous test manager;
+# pycrdt unraisable exceptions must still fail the test.
+@pytest.mark.filterwarnings(
+    "ignore:The synchronous ContentsManager classes are deprecated:DeprecationWarning"
+)
 @pytest.mark.parametrize("copy", [True, False])
 async def test_get_document_notebook(rtc_create_notebook, jp_serverapp, copy):
     nb = nbformat.v4.new_notebook(

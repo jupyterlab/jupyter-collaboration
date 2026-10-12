@@ -39,10 +39,15 @@ for what is essential, the document's content.
 A nice improvement from Real Time Collaboration (RTC) is that you don't need to worry
 about saving a document anymore. It is automatically taken care of: each change made by
 any user to a document is saved after one second by default. You can see it with the dirty indicator
-being set after a change, and cleared after saving. This even works if the file is modified
-outside of JupyterLab's editor, for instance in the back-end with a third-party editor or
-after changing branch in a version control system such as `git`. In this case, the file is
-watched and any change will trigger the document update within the next second, by default.
+being set after a change, and cleared after saving.
+
+If a file changes outside the shared session, for example through a third-party editor or
+a Git branch switch, each user can choose independently to:
+
+- **Open original file**: replace the current shared session with the disk version.
+- **Save As…**: enter a new filename, save the current shared content there, and continue
+  with this session.
+- **Close tab**: close the current shared document.
 
 Something you need to be aware of is that not all editors in JupyterLab support RTC
 synchronization. Additionally, opening the same underlying document using different editor
@@ -51,13 +56,11 @@ For example, in JupyterLab, you can open a Notebook using the Notebook
 editor or a plain text editor, the so-called Editor. Those editors are
 not synchronized through RTC because, under the hood, they use a different model to
 represent the document's content, what we call `DocumentModel`. If you
-modify a Notebook with one editor, it will update the content in the other editor within
-one second, going through the file change detection mentioned above.
+modify and save a Notebook with one editor, the other session detects an external change
+and prompts its users to choose how to proceed as described above.
 
-Overall, document write access is much more streamlined with RTC. You will never see any warning
-message indicating that the file was modified by someone else, and asking if you want to keep
-your changes or revert to the saved content. There cannot be any conflict, everyone works in sync
-on the same document.
+Edits within the same collaborative session synchronize automatically. External changes
+are handled separately so they cannot silently replace the content collaborators are viewing.
 
 Sharing Notebooks
 -----------------

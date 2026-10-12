@@ -3,6 +3,8 @@
 
 /// <reference types="jest" />
 
+import * as encoding from 'lib0/encoding';
+import { ContentsManager } from '@jupyterlab/services';
 import { YFile } from '@jupyter/ydoc';
 import { nullTranslator } from '@jupyterlab/translation';
 import {
@@ -75,7 +77,12 @@ async function waitForProviderConnect(
 }
 
 function createProvider(
-  options: { path?: string; model?: YFile } = {}
+  options: {
+    path?: string;
+    model?: YFile;
+    onSwitchDocument?: (path: string) => Promise<void>;
+    onCloseDocument?: () => void;
+  } = {}
 ): WebSocketProvider {
   const { path = 'test.ipynb', model = new YFile() } = options;
   const translator = nullTranslator.load('test');
@@ -94,7 +101,9 @@ function createProvider(
     format: 'text',
     model,
     user,
-    translator
+    translator,
+    onSwitchDocument: options.onSwitchDocument,
+    onCloseDocument: options.onCloseDocument
   });
 }
 
@@ -110,6 +119,200 @@ describe('@jupyter/docprovider', () => {
   });
 
   describe('WebSocketProvider', () => {
+    describe('external changes', () => {
+      function clickButton(label: string): void {
+        Array.from(
+          document.querySelectorAll<HTMLButtonElement>('.jp-Dialog button')
+        )
+          .find(button => button.textContent === label)!
+          .click();
+      }
+
+      async function setup(syncBeforeStatus = true) {
+        jest.spyOn(ContentsManager.prototype, 'get').mockImplementation(
+          async (_path, options) =>
+            ({
+              content: options?.content
+                ? [{ name: 'original.txt' }, { name: 'original-Copy1.txt' }]
+                : null
+            } as any)
+        );
+        const model = new YFile();
+        model.setSource('shared content');
+        const onSwitchDocument = jest.fn().mockResolvedValue(undefined);
+        const onCloseDocument = jest.fn();
+        const provider = createProvider({
+          model,
+          onSwitchDocument,
+          onCloseDocument
+        });
+        const action = jest
+          .spyOn(provider as any, '_requestDocumentAction')
+          .mockResolvedValue(undefined);
+        const websocket = await waitForProviderConnect(provider);
+        if (syncBeforeStatus) {
+          websocket.emit('sync', true);
+        }
+        const sendStatus = async (change: { originalPath: string } | null) => {
+          const encoder = encoding.createEncoder();
+          encoding.writeVarUint(encoder, 2);
+          encoding.writeVarString(
+            encoder,
+            JSON.stringify({ type: 'external-change', change })
+          );
+          await (provider as any)._handleConflictMessage(
+            new MessageEvent('message', {
+              data: encoding.toUint8Array(encoder).buffer
+            })
+          );
+        };
+        await sendStatus({ originalPath: 'original.txt' });
+        if (!syncBeforeStatus) {
+          expect(
+            document.querySelector('.jp-CollaborationExternalChangeDialog')
+          ).toBeNull();
+          websocket.emit('sync', true);
+        }
+        await waitForDialog();
+        return {
+          model,
+          provider,
+          action,
+          onSwitchDocument,
+          onCloseDocument,
+          sendStatus
+        };
+      }
+
+      it('waits for a choice without automatically saving a copy', async () => {
+        const { model, provider, action } = await setup();
+        expect(document.querySelector('.jp-Dialog')?.textContent).toContain(
+          'changed on disk'
+        );
+        expect(action).not.toHaveBeenCalled();
+        expect(document.querySelector('.jp-Dialog')?.textContent).not.toContain(
+          'Not now'
+        );
+        document.querySelector('.jp-Dialog')!.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'Escape',
+            keyCode: 27,
+            bubbles: true
+          })
+        );
+        await sleep(50);
+        expect(document.querySelector('.jp-Dialog')).not.toBeNull();
+        expect(model.getSource()).toBe('shared content');
+        expect(action).not.toHaveBeenCalled();
+        clickButton('Close tab');
+        await sleep(50);
+        provider.dispose();
+      });
+
+      it('handles repeated status and clears the dialog when the server resolves it', async () => {
+        const { model, provider, action, sendStatus } = await setup();
+        expect(model.ydoc.getMap('state').has('outofband')).toBe(false);
+        await sendStatus({ originalPath: 'original.txt' });
+        await sleep(50);
+        expect(
+          document.querySelectorAll('.jp-CollaborationExternalChangeDialog')
+        ).toHaveLength(1);
+        await sendStatus(null);
+        await sleep(50);
+        expect(
+          document.querySelector('.jp-CollaborationExternalChangeDialog')
+        ).toBeNull();
+        await provider.save();
+        expect(action).toHaveBeenCalledWith('save');
+        await sendStatus({ originalPath: 'original.txt' });
+        await waitForDialog();
+        clickButton('Close tab');
+        await sleep(50);
+        provider.dispose();
+      });
+
+      it('waits for document sync when the initial RAW status arrives first', async () => {
+        const { provider, action } = await setup(false);
+        clickButton('Close tab');
+        await sleep(50);
+        expect(action).toHaveBeenCalledWith('reload', {
+          originalPath: 'original.txt'
+        });
+        provider.dispose();
+      });
+
+      it('switches only this client when opening the original', async () => {
+        const { model, provider, action, onSwitchDocument } = await setup();
+        clickButton('Open original file');
+        await sleep(50);
+        expect(action).toHaveBeenCalledWith('reload', {
+          originalPath: 'original.txt'
+        });
+        expect(onSwitchDocument).toHaveBeenCalledWith('original.txt');
+        expect(model.getSource()).toBe('shared content');
+        provider.dispose();
+      });
+
+      it('saves only after a new name has been accepted', async () => {
+        const { provider, action, onSwitchDocument } = await setup();
+        clickButton('Save As…');
+        await sleep(50);
+        await waitForDialog();
+        const input =
+          document.querySelector<HTMLInputElement>('.jp-Dialog input')!;
+        expect(input.value).toBe('original-Copy2.txt');
+        input.value = 'chosen.txt';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        expect(action).not.toHaveBeenCalled();
+        await acceptDialog();
+        await sleep(50);
+        expect(action).toHaveBeenCalledWith('save-as', {
+          path: 'chosen.txt',
+          originalPath: 'original.txt'
+        });
+        expect(onSwitchDocument).toHaveBeenCalledWith('chosen.txt');
+        provider.dispose();
+      });
+
+      it('releases the original path before closing, without replacing shared content', async () => {
+        const { model, provider, action, onCloseDocument, onSwitchDocument } =
+          await setup();
+        let releasePath!: () => void;
+        action.mockImplementationOnce(
+          () => new Promise<void>(resolve => (releasePath = resolve))
+        );
+        clickButton('Close tab');
+        await sleep(50);
+        expect(onCloseDocument).not.toHaveBeenCalled();
+        expect(action).toHaveBeenCalledWith('reload', {
+          originalPath: 'original.txt'
+        });
+        releasePath();
+        await sleep(50);
+        expect(onCloseDocument).toHaveBeenCalledTimes(1);
+        expect(onSwitchDocument).not.toHaveBeenCalled();
+        expect(model.getSource()).toBe('shared content');
+        provider.dispose();
+      });
+
+      it('returns to the choices when Save As is canceled', async () => {
+        const { provider, action } = await setup();
+        clickButton('Save As…');
+        await sleep(50);
+        await waitForDialog();
+        await dismissDialog();
+        await sleep(50);
+        await waitForDialog();
+        expect(document.querySelector('.jp-Dialog')?.textContent).toContain(
+          'The file was changed externally'
+        );
+        expect(action).not.toHaveBeenCalled();
+        clickButton('Close tab');
+        await sleep(50);
+        provider.dispose();
+      });
+    });
+
     it('should have a type', () => {
       expect(WebSocketProvider).not.toBeUndefined();
     });

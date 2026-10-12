@@ -24,12 +24,13 @@ import { IDocumentManager } from '@jupyterlab/docmanager';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { Contents } from '@jupyterlab/services';
 
-import { JSONValue } from '@lumino/coreutils';
+import { JSONValue, UUID } from '@lumino/coreutils';
 
 import type * as nbformat from '@jupyterlab/nbformat';
 
 import { ConflictDiffWidget } from './conflictDiffWidget';
 import { CommandRegistry } from '@lumino/commands';
+import { Widget } from '@lumino/widgets';
 
 /**
  * The plugin ID for settings.
@@ -113,6 +114,51 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
       user: options.user,
       translator: this._trans,
       serverSettings: options.serverSettings,
+      onCloseDocument: () => {
+        const views = Array.from(shell.widgets('main')).filter(
+          widget =>
+            this._docManager.contextForWidget(widget)?.model.sharedModel ===
+            options.model
+        );
+        const current = shell.currentWidget;
+        const view = views.find(widget => widget === current) ?? views[0];
+        view?.dispose();
+      },
+      onSwitchDocument: async newPath => {
+        const views = Array.from(shell.widgets('main')).filter(
+          widget =>
+            this._docManager.contextForWidget(widget)?.model.sharedModel ===
+            options.model
+        );
+        const current = shell.currentWidget;
+        const view = views.find(widget => widget === current) ?? views[0];
+        if (!view) {
+          return;
+        }
+        // Keep the replacement at this tab's position. Dispose this client's
+        // context before opening the same path, so it cannot reuse the old room.
+        const placeholder = new Widget();
+        placeholder.id = `jp-external-change-${UUID.uuid4()}`;
+        placeholder.title.label = view.title.label;
+        shell.add(placeholder, 'main', { mode: 'tab-before', ref: view.id });
+        const context = this._docManager.contextForWidget(view);
+        context?.dispose();
+        views.forEach(widget => widget.dispose());
+        try {
+          const replacement = this._docManager.open(
+            newPath,
+            options.contentType === 'notebook' ? 'Notebook' : 'Editor',
+            undefined,
+            { mode: 'tab-after', ref: placeholder.id }
+          );
+          if (!replacement) {
+            throw new Error(this._trans.__('Could not open %1', newPath));
+          }
+          await replacement.context.ready;
+        } finally {
+          placeholder.dispose();
+        }
+      },
       onConflictSaveAs: () => this._commands.execute('docmanager:save-as'),
       onConflictRevert: () => this._commands.execute('docmanager:reload'),
       // The diff view is notebook-specific (uses nbdime), so only offer it
