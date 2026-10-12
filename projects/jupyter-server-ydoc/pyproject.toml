@@ -9,7 +9,7 @@ requires = ["hatchling>=1.4.0"]
 name = "jupyter-server-ydoc"
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 description = "jupyter-server extension integrating collaborative shared models."
 classifiers = [
     "Intended Audience :: Developers",
@@ -17,11 +17,11 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Framework :: Jupyter"
 ]
 authors = [
