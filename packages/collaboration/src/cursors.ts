@@ -124,52 +124,8 @@ const remoteSelectionTheme = EditorView.baseTheme({
   '.cm-tooltip': {
     border: 'none'
   },
-  '.jp-remote-userFlag': {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-    maxWidth: '140px',
-    padding: '2px 6px 2px 2px',
-    background: 'var(--jp-layout-color1)',
-    color: 'var(--jp-ui-font-color1)',
-    border: '1px solid',
-    borderRadius: '10px',
-    fontSize: '11px',
-    lineHeight: '1.2',
-    whiteSpace: 'nowrap',
-    boxShadow: 'var(--jp-elevation-z2)',
-    pointerEvents: 'none',
-    userSelect: 'none',
-    opacity: '1',
-    transition: 'opacity 300ms ease'
-  },
-  '.jp-remote-userFlag.jp-mod-idle': {
-    opacity: '0'
-  },
   '.cm-tooltip.jp-remote-userFlag-host': {
     background: 'none'
-  },
-  '.jp-remote-userFlag-avatar': {
-    width: '16px',
-    height: '16px',
-    flex: '0 0 auto',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    borderRadius: '100%',
-    color: 'var(--jp-ui-inverse-font-color1)',
-    fontSize: '8px'
-  },
-  '.jp-remote-userFlag-avatar img': {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover'
-  },
-  '.jp-remote-userFlag-name': {
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap'
   }
 });
 
