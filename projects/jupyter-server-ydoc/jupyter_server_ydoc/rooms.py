@@ -43,6 +43,7 @@ class DocumentRoom(YRoom):
         document_load_progressively: bool = False,
         notebook_output_delay_threshold_mb: float | None = 100,
         exception_handler: Callable[[Exception, Logger], bool] | None = None,
+        preserve_content_on_external_change: bool = False,
     ):
         super().__init__(ready=False, ystore=ystore, exception_handler=exception_handler, log=log)
 
@@ -54,6 +55,7 @@ class DocumentRoom(YRoom):
         self._document.path = self._file.path
 
         self._logger = logger
+        self._preserve_content_on_external_change = preserve_content_on_external_change
         self._save_delay = save_delay
         self._document_load_progressively = document_load_progressively
         self._notebook_output_delay_threshold_mb = notebook_output_delay_threshold_mb
@@ -384,14 +386,37 @@ class DocumentRoom(YRoom):
                 )
                 # Keep saves blocked if the external version cannot be read.
                 changed = True
+            reloaded = False
+            if changed and not self._preserve_content_on_external_change and not self._file.deleted:
+                try:
+                    model = await self._file.load_content(
+                        self._file_format, self._file_type, require_hash=True
+                    )
+                    if await self._document.aget() != model["content"]:
+                        await self._document.aset(model["content"])
+                    # Notebook loading can normalize metadata; these changes
+                    # belong to the reload, rather than unsaved user edits.
+                    self._document.dirty = False
+                    self._document.hash = model["hash"]
+                    await self._file.acknowledge_reload()
+                    reloaded = True
+                    changed = False
+                    self._emit(LogLevel.INFO, "overwrite", "Disk content reloaded into the room.")
+                except Exception as e:
+                    self.log.error("Could not reload file %s", self._file.path, exc_info=e)
             if changed:
+                # Preserve mode separates new opens from the current session.
+                # Reload mode retains the ID even when disk content is unavailable.
+                if self._preserve_content_on_external_change:
+                    await self._file.detach()
                 notice = {"originalPath": self._file.path}
                 if self._file.deleted:
                     notice["reason"] = "deleted"
                 self._document.dirty = True
             else:
                 notice = None
-                self._document.dirty = await self._document.aget() != content
+                if not reloaded:
+                    self._document.dirty = await self._document.aget() != content
             if self._outofband != notice:
                 self._outofband = notice
                 message = self._external_change_message()
@@ -401,31 +426,20 @@ class DocumentRoom(YRoom):
                     except Exception:
                         self.log.warning("Could not send external-change status", exc_info=True)
 
-    async def open_disk_version(self, original_path: str) -> None:
-        """Allow the requesting client to reopen the disk file in a new session."""
+    async def overwrite(self, original_path: str) -> None:
+        """Overwrite disk only at the requesting user's explicit direction."""
         async with self._update_lock:
             notice = self.outofband
             if not notice or notice["originalPath"] != original_path:
                 raise ValueError("The external change has already been resolved")
-            await self._file.detach()
-
-    async def save_as(self, new_path: str, original_path: str) -> None:
-        """Save a snapshot for the requesting client; leave other clients alone."""
-        async with self._update_lock:
-            notice = self.outofband
-            if not notice or notice["originalPath"] != original_path:
-                raise ValueError("The external change has already been resolved")
-            await self._file.save_as(
+            await self._file.overwrite(
                 {
                     "format": self._file_format,
                     "type": self._file_type,
                     "content": await self._document.aget(),
                 },
-                new_path,
+                original_path,
             )
-            # A later open of the original must join the disk version, even
-            # while other collaborators remain in this preserved session.
-            await self._file.detach()
 
     def _on_filepath_change(self) -> None:
         """

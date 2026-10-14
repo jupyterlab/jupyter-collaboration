@@ -16,12 +16,15 @@ def jp_server_config(jp_server_config, request):
     # This is a test workaround for pycrdt's cross-thread GC failure.
     if request.node.originalname == "test_get_document_notebook":
         jp_server_config["ServerApp"]["contents_manager_class"] = FileContentsManager
+    if request.node.originalname == "test_get_document_reloads_external_changes_in_place":
+        jp_server_config["YDocExtension"]["file_poll_interval"] = 0
     return jp_server_config
 
 
 def test_default_settings(jp_serverapp):
     settings = jp_serverapp.web_app.settings["jupyter_server_ydoc_config"]
 
+    assert settings["preserve_content_on_external_change"] is False
     assert settings["disable_rtc"] is False
     assert settings["file_poll_interval"] == 1
     assert settings["document_cleanup_delay"] == 60
@@ -29,6 +32,16 @@ def test_default_settings(jp_serverapp):
     assert settings["document_load_progressively"] is False
     assert settings["notebook_output_delay_threshold_mb"] == 100
     assert settings["ystore_class"] == SQLiteYStore
+
+
+@pytest.mark.parametrize("preserve", [False, True])
+def test_settings_should_configure_external_changes(jp_configurable_serverapp, preserve):
+    app = jp_configurable_serverapp(
+        argv=[f"--YDocExtension.preserve_content_on_external_change={preserve}"]
+    )
+    settings = app.web_app.settings["jupyter_server_ydoc_config"]
+    assert settings["preserve_content_on_external_change"] is preserve
+    assert app.web_app.settings["collaborative_preserve_content_on_external_change"] is preserve
 
 
 def test_settings_should_disable_rtc(jp_configurable_serverapp):
@@ -190,3 +203,33 @@ async def test_get_document_file_copy_is_independent(
     )
     assert fresh_copy.get() == "test"
     await collaboration.stop_extension()
+
+
+@pytest.mark.parametrize("create_via_websocket", [False, True])
+async def test_get_document_reloads_external_changes_in_place(
+    rtc_create_file, jp_serverapp, create_via_websocket
+):
+    path, _ = await rtc_create_file(
+        "reload.txt", "original", index=True, store=create_via_websocket
+    )
+    collaboration = jp_serverapp.web_app.settings["jupyter_server_ydoc"]
+    document = await collaboration.get_document(
+        path=path, content_type="file", file_format="text", copy=False, create=True
+    )
+    file_ids = jp_serverapp.web_app.settings["file_id_manager"]
+    file_id = file_ids.get_id(path)
+    try:
+        document.source = "unsaved edits"
+        await jp_serverapp.contents_manager.save(
+            {"type": "file", "format": "text", "content": "disk version"}, path
+        )
+        await collaboration.file_loaders[file_id].maybe_notify()
+        assert await document.aget() == "disk version"
+        assert not document.dirty
+        assert file_ids.get_id(path) == file_id
+        reopened = await collaboration.get_document(
+            path=path, content_type="file", file_format="text", copy=False
+        )
+        assert reopened is document
+    finally:
+        await collaboration.stop_extension()

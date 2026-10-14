@@ -23,6 +23,7 @@ import { CodeEditor, IEditorServices } from '@jupyterlab/codeeditor';
 import { IDocumentManager } from '@jupyterlab/docmanager';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { Contents } from '@jupyterlab/services';
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
 import { JSONValue, UUID } from '@lumino/coreutils';
 
@@ -42,6 +43,7 @@ const PLUGIN_ID = '@jupyter/docprovider-extension:websocket-provider';
  */
 class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
   constructor(options: WebSocketDocumentProviderFactory.IOptions) {
+    this._settings = options.settings;
     this._trans = options.translator;
     this._commands = options.commands;
     this._docManager = options.docManager;
@@ -114,6 +116,33 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
       user: options.user,
       translator: this._trans,
       serverSettings: options.serverSettings,
+      autoReload: () => this._settings?.get('autoReload').composite === true,
+      showNotice: (notice, beforeSave) => {
+        const views = Array.from(shell.widgets('main')).filter(
+          widget =>
+            this._docManager.contextForWidget(widget)?.model.sharedModel ===
+            options.model
+        );
+        const view =
+          views.find(widget => widget === shell.currentWidget) ?? views[0];
+        if (view instanceof MainAreaWidget) {
+          const context = this._docManager.contextForWidget(view)!;
+          const originalSave = context.save;
+          // Resolve the known external change before JupyterLab's generic
+          // conflict check, which would otherwise show a second set of choices.
+          const save = async () => {
+            await beforeSave();
+            await originalSave.call(context);
+          };
+          context.save = save;
+          notice.disposed.connect(() => {
+            if (context.save === save) {
+              context.save = originalSave;
+            }
+          });
+          view.contentHeader.addWidget(notice);
+        }
+      },
       onCloseDocument: () => {
         const views = Array.from(shell.widgets('main')).filter(
           widget =>
@@ -169,6 +198,7 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
           : undefined
     });
   }
+  private _settings: ISettingRegistry.ISettings | null;
   private _trans: TranslationBundle;
   private _commands: CommandRegistry;
   private _docManager: IDocumentManager;
@@ -180,6 +210,7 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
 
 namespace WebSocketDocumentProviderFactory {
   export interface IOptions {
+    settings: ISettingRegistry.ISettings | null;
     translator: TranslationBundle;
     commands: CommandRegistry;
     docManager: IDocumentManager;
@@ -221,17 +252,22 @@ export const documentProviderFactoryPlugin: JupyterFrontEndPlugin<IDocumentProvi
       IRenderMimeRegistry,
       IDocumentManager
     ],
-    optional: [],
+    optional: [ISettingRegistry],
     provides: IDocumentProviderFactory,
     activate: async (
       app: JupyterFrontEnd,
       translator: ITranslator,
       editorServices: IEditorServices,
       rendermime: IRenderMimeRegistry,
-      docManager: IDocumentManager
+      docManager: IDocumentManager,
+      settingRegistry: ISettingRegistry | null
     ) => {
       const trans = translator.load('jupyter_collaboration');
+      const settings = settingRegistry
+        ? await settingRegistry.load(PLUGIN_ID + '-document-factory')
+        : null;
       return new WebSocketDocumentProviderFactory({
+        settings,
         translator: trans,
         commands: app.commands,
         docManager,

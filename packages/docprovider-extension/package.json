@@ -132,6 +132,7 @@
         "bundled": false,
         "singleton": true
       }
-    }
+    },
+    "schemaDir": "schema"
   }
 }

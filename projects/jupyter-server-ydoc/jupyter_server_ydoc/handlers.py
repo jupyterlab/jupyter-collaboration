@@ -142,6 +142,9 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                         self.log,
                         exception_handler=exception_logger,
                         save_delay=self._document_save_delay,
+                        preserve_content_on_external_change=(
+                            self._preserve_content_on_external_change
+                        ),
                         document_load_progressively=self._document_load_progressively,
                         notebook_output_delay_threshold_mb=(
                             self._notebook_output_delay_threshold_mb
@@ -192,6 +195,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         document_save_delay: float | None = 1.0,
         document_load_progressively: bool = False,
         notebook_output_delay_threshold_mb: float | None = 100,
+        preserve_content_on_external_change: bool = False,
     ) -> None:
         self._background_tasks = set()
         # File ID manager cannot be passed as argument as the extension may load after this one
@@ -200,6 +204,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self._ystore_class = ystore_class
         self._cleanup_delay = document_cleanup_delay
         self._document_save_delay = document_save_delay
+        self._preserve_content_on_external_change = preserve_content_on_external_change
         self._document_load_progressively = document_load_progressively
         self._notebook_output_delay_threshold_mb = notebook_output_delay_threshold_mb
         self._websocket_server = ywebsocket_server
@@ -370,21 +375,16 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         header = decoder.read_var_uint()
         if header == MessageType.RAW:
             msg = decoder.read_var_string()
-            if msg in {"save", "save-as", "reload"}:
+            if msg in {"save", "overwrite"}:
                 save_id = decoder.read_var_uint()
                 save_reply = {"type": msg, "responseTo": save_id}
                 try:
                     room = cast(DocumentRoom, self.room)
-                    if msg in {"save-as", "reload"}:
+                    if msg == "overwrite":
                         target = json.loads(decoder.read_var_string())
-                        if not isinstance(target.get("originalPath"), str) or (
-                            msg == "save-as" and not isinstance(target.get("path"), str)
-                        ):
-                            raise ValueError("A new path and original path are required")
-                        if msg == "save-as":
-                            await room.save_as(target["path"], target["originalPath"])
-                        else:
-                            await room.open_disk_version(target["originalPath"])
+                        if not isinstance(target.get("originalPath"), str):
+                            raise ValueError("The original path is required")
+                        await room.overwrite(target["originalPath"])
                         status = "success"
                     else:
                         save_task = room._save_to_disc()

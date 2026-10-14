@@ -44,6 +44,16 @@ class YDocExtension(ExtensionApp):
 
     disable_rtc = Bool(False, config=True, help="Whether to disable real time collaboration.")
 
+    preserve_content_on_external_change = Bool(
+        False,
+        config=True,
+        help="""Whether to preserve the current shared content when a file changes on disk.
+        When True, the disk version gets a new file ID and users choose how to resolve
+        the change. When False, reload disk content into the existing shared document
+        for all collaborators without changing its file ID, replacing unsaved edits.
+        Deleted or unreadable files still preserve current content.""",
+    )
+
     file_poll_interval = Float(
         1,
         config=True,
@@ -131,6 +141,9 @@ class YDocExtension(ExtensionApp):
     def initialize_settings(self):
         self.settings.update(
             {
+                "collaborative_preserve_content_on_external_change": (
+                    self.preserve_content_on_external_change
+                ),
                 "collaborative_file_poll_interval": self.file_poll_interval,
                 "collaborative_document_cleanup_delay": self.document_cleanup_delay,
                 "collaborative_document_save_delay": self.document_save_delay,
@@ -186,6 +199,9 @@ class YDocExtension(ExtensionApp):
                     {
                         "document_cleanup_delay": self.document_cleanup_delay,
                         "document_save_delay": self.document_save_delay,
+                        "preserve_content_on_external_change": (
+                            self.preserve_content_on_external_change
+                        ),
                         "document_load_progressively": self.document_load_progressively,
                         "notebook_output_delay_threshold_mb": (
                             self.notebook_output_delay_threshold_mb
@@ -282,6 +298,7 @@ class YDocExtension(ExtensionApp):
                     self.log,
                     exception_handler=exception_logger,
                     save_delay=self.document_save_delay,
+                    preserve_content_on_external_change=self.preserve_content_on_external_change,
                     document_load_progressively=self.document_load_progressively,
                     notebook_output_delay_threshold_mb=self.notebook_output_delay_threshold_mb,
                 )

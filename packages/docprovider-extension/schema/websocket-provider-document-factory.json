@@ -1,0 +1,14 @@
+{
+  "title": "Collaborative documents",
+  "description": "Settings for external changes to collaborative documents.",
+  "type": "object",
+  "properties": {
+    "autoReload": {
+      "title": "Automatically load files changed on disk",
+      "description": "Replace current editor content with the disk version without asking when a file changes externally.",
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "additionalProperties": false
+}

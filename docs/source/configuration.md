@@ -87,3 +87,45 @@ pip install "jupyterlab>=4.2.0b0"
 pip install "jupyverse[jupyterlab, auth]>=0.4.2"
 jupyverse --set kernels.require_yjs=true --set jupyterlab.server_side_execution=true
 ```
+
+## Files changed on disk
+
+The server-wide setting `YDocExtension.preserve_content_on_external_change` controls
+how external changes are handled. It defaults to `False`, reloading disk content
+into the existing shared document while keeping its file ID. Set it to `True` to
+preserve each existing session's content and give the disk version a new file ID.
+
+To enable content preservation and resolution choices for every collaborator, configure
+`jupyter_server_config.py` and restart the server:
+
+```python
+c.YDocExtension.preserve_content_on_external_change = True
+```
+
+Or start the server with:
+
+```bash
+jupyter lab --YDocExtension.preserve_content_on_external_change=True
+```
+
+With `False`, the file keeps its ID and disk content replaces the content in the
+existing shared document, including unsaved edits, without a notice or tab reload.
+Deleted or unreadable files still preserve current content and show a notice;
+there is no disk content to reload. This server policy is independent of the
+per-user `autoReload` setting, which only applies in content-preserving mode.
+
+The following choices apply when content is preserved:
+
+When an external program changes an open collaborative file, a notice appears
+above the editor. You can continue editing while deciding whether to **Load from
+disk**, **Save to original file**, **Save As…**, or **Close tab**. **Save to original
+file** replaces the disk content with your current content. Saving with Ctrl-S asks whether to replace
+the original file's disk content or save your current content under a new name.
+Canceling keeps the notice and your current content.
+
+Choosing **Load from disk** immediately replaces your current content with the
+disk version. To reload automatically on future external changes, open the Settings
+Editor under **Collaborative documents**, using **Automatically load files changed on
+disk** (`autoReload`, disabled by default). Enabling it replaces your current
+content on future external changes. Deleted files still show a notice, since
+there is no disk version to load.
