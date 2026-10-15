@@ -88,7 +88,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.14t"]
+        python-version: ["3.11", "3.12", "3.13", "3.14", "3.14t", "3.15", "3.15t"]
         # PyPy is not supported because we use the file_id_manager. See:
         # https://github.com/jupyter-server/jupyter_server_fileid/issues/44
         #include:
@@ -160,7 +160,7 @@ jobs:
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
-          python_version: "3.10"
+          python_version: "3.11"
           dependency_type: minimum
 
       - name: Install the Python dependencies
