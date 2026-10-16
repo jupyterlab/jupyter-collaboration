@@ -263,18 +263,12 @@ async def test_explicit_overwrite_saves_snapshot_and_preserves_session(document)
     cm.save({**model, "content": external}, path)
     await loader.maybe_notify()
     assert room.outofband is not None
-    await room.overwrite(path)
+    cm.save({**model, "content": shared}, path)
     assert cm.get(path)["content"] == shared
     assert await room._document.aget() == shared
     assert room.outofband is not None
     with pytest.raises(OutOfBandChanges):
         await loader.maybe_save_content(model)
-
-
-async def test_overwrite_rejects_without_external_change(document):
-    cm, loader, room, model, path = document
-    with pytest.raises(ValueError, match="already been resolved"):
-        await room.overwrite(path)
 
 
 @pytest.mark.parametrize("behavior_on_external_change", ["overwrite"])

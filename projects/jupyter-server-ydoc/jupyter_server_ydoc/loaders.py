@@ -264,13 +264,6 @@ class FileLoader:
                 self._detached_path = path
                 self._outofband = True
 
-    async def overwrite(self, model: dict[str, Any], original_path: str) -> None:
-        """Write an explicitly chosen snapshot to the original path."""
-        async with self._lock:
-            if not self._outofband or original_path != self.path:
-                raise HTTPError(409, "The external change has already been resolved")
-            await ensure_async(self._contents_manager.save(model, original_path))
-
     async def _save_content(
         self, model: dict[str, Any], done_saving: asyncio.Event, path: str
     ) -> dict[str, Any]:

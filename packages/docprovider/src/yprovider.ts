@@ -83,8 +83,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       contents: this._contents,
       actions: {
         saveAs: (path, originalPath) => this._saveAs(path, originalPath),
-        overwrite: originalPath =>
-          this._requestDocumentAction('overwrite', { originalPath })
+        overwrite: originalPath => this._saveContent(originalPath)
       },
       showNotice: options.showNotice,
       autoReload: options.autoReload,
@@ -162,43 +161,6 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
 
   async save(): Promise<void> {
     await this._externalChanges.ensureCanSave();
-    await this._requestDocumentAction('save');
-  }
-
-  private async _saveAs(path: string, originalPath: string): Promise<void> {
-    if (!path || PathExt.normalize(path) === PathExt.normalize(originalPath)) {
-      throw new Error(
-        this._trans.__('Choose a new filename to keep the original file intact')
-      );
-    }
-    let exists = true;
-    try {
-      await this._contents.get(path, { content: false });
-    } catch (error) {
-      if (
-        !(error instanceof ServerConnection.ResponseError) ||
-        error.response.status !== 404
-      ) {
-        throw error;
-      }
-      exists = false;
-    }
-    if (exists) {
-      throw new Error(
-        this._trans.__('That filename already exists. Choose a new filename')
-      );
-    }
-    await this._contents.save(path, {
-      type: this._contentType as Contents.ContentType,
-      format: this._format as Contents.FileFormat,
-      content: this._sharedModel.getSource()
-    });
-  }
-
-  private async _requestDocumentAction(
-    action: 'save' | 'overwrite',
-    target?: { originalPath: string }
-  ): Promise<void> {
     const ws = this._yWebsocketProvider?.ws;
     if (!ws || ws.readyState !== WebSocket.OPEN) {
       throw new Error(
@@ -235,7 +197,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         }
         if (
           reply &&
-          reply['type'] === action &&
+          reply['type'] === 'save' &&
           reply['responseTo'] === saveId
         ) {
           if (reply.status === 'success') {
@@ -258,11 +220,8 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       ws.addEventListener('message', handler);
       const encoder = encoding.createEncoder();
       encoding.writeVarUint(encoder, RAW_MESSAGE_TYPE);
-      encoding.writeVarString(encoder, action);
+      encoding.writeVarString(encoder, 'save');
       encoding.writeVarUint(encoder, saveId);
-      if (target) {
-        encoding.writeVarString(encoder, JSON.stringify(target));
-      }
       const saveMessage = encoding.toUint8Array(encoder);
       ws.send(saveMessage);
       try {
@@ -271,6 +230,40 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         ws.removeEventListener('message', handler);
       }
     }
+  }
+
+  private async _saveAs(path: string, originalPath: string): Promise<void> {
+    if (!path || PathExt.normalize(path) === PathExt.normalize(originalPath)) {
+      throw new Error(
+        this._trans.__('Choose a new filename to keep the original file intact')
+      );
+    }
+    let exists = true;
+    try {
+      await this._contents.get(path, { content: false });
+    } catch (error) {
+      if (
+        !(error instanceof ServerConnection.ResponseError) ||
+        error.response.status !== 404
+      ) {
+        throw error;
+      }
+      exists = false;
+    }
+    if (exists) {
+      throw new Error(
+        this._trans.__('That filename already exists. Choose a new filename')
+      );
+    }
+    await this._saveContent(path);
+  }
+
+  private async _saveContent(path: string): Promise<void> {
+    await this._contents.save(path, {
+      type: this._contentType as Contents.ContentType,
+      format: this._format as Contents.FileFormat,
+      content: this._sharedModel.getSource()
+    });
   }
 
   private get _serverUrl() {

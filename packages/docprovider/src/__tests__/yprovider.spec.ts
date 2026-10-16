@@ -5,6 +5,7 @@ import { Widget } from '@lumino/widgets';
 /// <reference types="jest" />
 
 import * as encoding from 'lib0/encoding';
+import * as decoding from 'lib0/decoding';
 import { ContentsManager, ServerConnection } from '@jupyterlab/services';
 import { YFile } from '@jupyter/ydoc';
 import { nullTranslator } from '@jupyterlab/translation';
@@ -155,10 +156,31 @@ describe('@jupyter/docprovider', () => {
           onSwitchDocument,
           onCloseDocument
         });
-        const action = jest
-          .spyOn(provider as any, '_requestDocumentAction')
-          .mockResolvedValue(undefined);
         const websocket = await waitForProviderConnect(provider);
+        const socket = new EventTarget();
+        const action = jest.fn((message: Uint8Array) => {
+          const decoder = decoding.createDecoder(message);
+          expect(decoding.readVarUint(decoder)).toBe(2);
+          expect(decoding.readVarString(decoder)).toBe('save');
+          const responseTo = decoding.readVarUint(decoder);
+          queueMicrotask(() => {
+            const encoder = encoding.createEncoder();
+            encoding.writeVarUint(encoder, 2);
+            encoding.writeVarString(
+              encoder,
+              JSON.stringify({ type: 'save', responseTo, status: 'success' })
+            );
+            socket.dispatchEvent(
+              new MessageEvent('message', {
+                data: encoding.toUint8Array(encoder).buffer
+              })
+            );
+          });
+        });
+        (websocket as any).ws = Object.assign(socket, {
+          readyState: WebSocket.OPEN,
+          send: action
+        });
         if (syncBeforeStatus) {
           websocket.emit('sync', true);
         }
@@ -239,7 +261,7 @@ describe('@jupyter/docprovider', () => {
           document.querySelector('.jp-CollaborationExternalChangeNotice')
         ).toBeNull();
         await provider.save();
-        expect(action).toHaveBeenCalledWith('save');
+        expect(action).toHaveBeenCalledTimes(1);
         await sendStatus({ originalPath: 'original.txt' });
         await sleep(20);
         clickButton('Close tab');
@@ -288,6 +310,53 @@ describe('@jupyter/docprovider', () => {
           content: 'latest edits'
         });
         expect(onSwitchDocument).toHaveBeenCalledWith('chosen.txt');
+        provider.dispose();
+      });
+
+      it('overwrites through Contents and switches only after the write succeeds', async () => {
+        const { model, provider, save, action, onSwitchDocument } =
+          await setup();
+        let finish!: () => void;
+        save.mockImplementationOnce(
+          () =>
+            new Promise(resolve => {
+              finish = () => resolve({} as any);
+            })
+        );
+        model.setSource('latest edits');
+        clickButton('Save to original file');
+        await sleep(20);
+        expect(save).toHaveBeenCalledWith('original.txt', {
+          type: 'file',
+          format: 'text',
+          content: 'latest edits'
+        });
+        expect(action).not.toHaveBeenCalled();
+        expect(onSwitchDocument).not.toHaveBeenCalled();
+        finish();
+        await sleep(20);
+        expect(onSwitchDocument).toHaveBeenCalledWith('original.txt');
+        expect(model.getSource()).toBe('latest edits');
+        provider.dispose();
+      });
+
+      it('keeps the notice and current document when overwrite fails', async () => {
+        const { provider, save, onSwitchDocument } = await setup();
+        save.mockRejectedValueOnce(new Error('disk full'));
+        clickButton('Save to original file');
+        await waitForDialog();
+        expect(document.querySelector('.jp-Dialog')!.textContent).toContain(
+          'disk full'
+        );
+        expect(onSwitchDocument).not.toHaveBeenCalled();
+        await acceptDialog();
+        await sleep(20);
+        expect(
+          document.querySelector('.jp-CollaborationExternalChangeNotice')
+        ).not.toBeNull();
+        clickButton('Save to original file');
+        await sleep(20);
+        expect(onSwitchDocument).toHaveBeenCalledWith('original.txt');
         provider.dispose();
       });
 

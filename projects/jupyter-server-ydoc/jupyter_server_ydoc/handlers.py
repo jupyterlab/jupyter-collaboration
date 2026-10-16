@@ -373,24 +373,17 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         header = decoder.read_var_uint()
         if header == MessageType.RAW:
             msg = decoder.read_var_string()
-            if msg in {"save", "overwrite"}:
+            if msg == "save":
                 save_id = decoder.read_var_uint()
                 save_reply = {"type": msg, "responseTo": save_id}
                 try:
                     room = cast(DocumentRoom, self.room)
-                    if msg == "overwrite":
-                        target = json.loads(decoder.read_var_string())
-                        if not isinstance(target.get("originalPath"), str):
-                            raise ValueError("The original path is required")
-                        await room.overwrite(target["originalPath"])
-                        status = "success"
+                    save_task = room._save_to_disc()
+                    if save_task:
+                        await save_task
+                        status = "conflict" if room.outofband else "success"
                     else:
-                        save_task = room._save_to_disc()
-                        if save_task:
-                            await save_task
-                            status = "conflict" if room.outofband else "success"
-                        else:
-                            status = "skipped"
+                        status = "skipped"
                     await self.send(self._encode_json_message({**save_reply, "status": status}))
                 except Exception as e:
                     self.log.error("Couldn't save content from room: %s", self._room_id)

@@ -432,21 +432,6 @@ class DocumentRoom(YRoom):
                     except Exception:
                         self.log.warning("Could not send external-change status", exc_info=True)
 
-    async def overwrite(self, original_path: str) -> None:
-        """Overwrite disk only at the requesting user's explicit direction."""
-        async with self._update_lock:
-            notice = self.outofband
-            if not notice or notice["originalPath"] != original_path:
-                raise ValueError("The external change has already been resolved")
-            await self._file.overwrite(
-                {
-                    "format": self._file_format,
-                    "type": self._file_type,
-                    "content": await self._document.aget(),
-                },
-                original_path,
-            )
-
     def _on_filepath_change(self) -> None:
         """
         Update the document path property.
