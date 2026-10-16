@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 import pytest
@@ -20,7 +20,7 @@ async def test_FileLoader_with_watcher():
     paths = {}
     paths[id] = path
 
-    cm = FakeContentsManager({"last_modified": datetime.now(timezone.utc)})
+    cm = FakeContentsManager({"last_modified": datetime.now(UTC)})
     loader = FileLoader(
         id,
         FakeFileIDManager(paths),
@@ -37,7 +37,7 @@ async def test_FileLoader_with_watcher():
 
     loader.observe("test", trigger)
 
-    cm.model["last_modified"] = datetime.now(timezone.utc) + timedelta(seconds=1)
+    cm.model["last_modified"] = datetime.now(UTC) + timedelta(seconds=1)
 
     await asyncio.sleep(0.15)
 
@@ -53,7 +53,7 @@ async def test_FileLoader_with_watcher_errors(caplog):
     paths = {}
     paths[id] = path
 
-    cm = FakeContentsManager({"last_modified": datetime.now(timezone.utc)})
+    cm = FakeContentsManager({"last_modified": datetime.now(UTC)})
 
     loader = FileLoader(
         id,
@@ -93,7 +93,7 @@ async def test_FileLoader_clean_logs_cancellation(caplog):
     path = "myfile.txt"
     paths = {id: path}
 
-    cm = FakeContentsManager({"last_modified": datetime.now(timezone.utc)})
+    cm = FakeContentsManager({"last_modified": datetime.now(UTC)})
     loader = FileLoader(
         id,
         FakeFileIDManager(paths),
@@ -115,7 +115,7 @@ async def test_FileLoader_without_watcher():
     paths = {}
     paths[id] = path
 
-    cm = FakeContentsManager({"last_modified": datetime.now(timezone.utc)})
+    cm = FakeContentsManager({"last_modified": datetime.now(UTC)})
     loader = FileLoader(
         id,
         FakeFileIDManager(paths),
@@ -131,7 +131,7 @@ async def test_FileLoader_without_watcher():
 
     loader.observe("test", trigger)
 
-    cm.model["last_modified"] = datetime.now(timezone.utc) + timedelta(seconds=1)
+    cm.model["last_modified"] = datetime.now(UTC) + timedelta(seconds=1)
 
     await loader.maybe_notify()
 
@@ -149,7 +149,7 @@ async def test_FileLoader_retries_save_after_rename():
 
     class RenameDuringSaveContentsManager(FakeContentsManager):
         def __init__(self):
-            super().__init__({"last_modified": datetime.now(timezone.utc), "writable": True})
+            super().__init__({"last_modified": datetime.now(UTC), "writable": True})
             self.saved_paths: list[str] = []
 
         def save(self, model, path):
@@ -180,7 +180,7 @@ async def test_FileLoader_does_not_retry_save_after_delete():
 
     class DeleteDuringSaveContentsManager(FakeContentsManager):
         def __init__(self):
-            super().__init__({"last_modified": datetime.now(timezone.utc), "writable": True})
+            super().__init__({"last_modified": datetime.now(UTC), "writable": True})
             self.save_count = 0
 
         def save(self, model, path):
@@ -205,7 +205,7 @@ async def test_FileLoaderMapping_with_watcher():
     paths = {}
     paths[id] = path
 
-    cm = FakeContentsManager({"last_modified": datetime.now(timezone.utc)})
+    cm = FakeContentsManager({"last_modified": datetime.now(UTC)})
 
     map = FileLoaderMapping(
         {"contents_manager": cm, "file_id_manager": FakeFileIDManager(paths)},
@@ -225,7 +225,7 @@ async def test_FileLoaderMapping_with_watcher():
 
     # Clear map (and its loader) before updating => triggered should be False
     await map.clear()
-    cm.model["last_modified"] = datetime.now(timezone.utc)
+    cm.model["last_modified"] = datetime.now(UTC)
 
     await asyncio.sleep(0.15)
 

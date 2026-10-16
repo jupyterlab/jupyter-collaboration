@@ -4,7 +4,7 @@ import asyncio
 import json
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum, IntEnum
 from pathlib import Path
 
@@ -150,7 +150,7 @@ async def save_current_session(
 
         sessions[session_id] = {
             "version": version,
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
         }
         if document_version is not None:
             sessions[session_id]["document_version"] = document_version
