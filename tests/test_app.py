@@ -6,8 +6,10 @@ from __future__ import annotations
 import nbformat
 import pytest
 from jupyter_server.services.contents.filemanager import FileContentsManager
+from jupyter_server_ydoc.app import YDocExtension
 from jupyter_server_ydoc.pytest_plugin import rtc_create_SQLite_store_factory
 from jupyter_server_ydoc.stores import SQLiteYStore, TempFileYStore
+from traitlets import TraitError
 
 
 @pytest.fixture
@@ -18,13 +20,14 @@ def jp_server_config(jp_server_config, request):
         jp_server_config["ServerApp"]["contents_manager_class"] = FileContentsManager
     if request.node.originalname == "test_get_document_reloads_external_changes_in_place":
         jp_server_config["YDocExtension"]["file_poll_interval"] = 0
+        jp_server_config["YDocExtension"]["behavior_on_external_change"] = "overwrite"
     return jp_server_config
 
 
 def test_default_settings(jp_serverapp):
     settings = jp_serverapp.web_app.settings["jupyter_server_ydoc_config"]
 
-    assert settings["preserve_content_on_external_change"] is False
+    assert settings["behavior_on_external_change"] == "overwrite"
     assert settings["disable_rtc"] is False
     assert settings["file_poll_interval"] == 1
     assert settings["document_cleanup_delay"] == 60
@@ -34,14 +37,20 @@ def test_default_settings(jp_serverapp):
     assert settings["ystore_class"] == SQLiteYStore
 
 
-@pytest.mark.parametrize("preserve", [False, True])
-def test_settings_should_configure_external_changes(jp_configurable_serverapp, preserve):
+@pytest.mark.parametrize("behavior", ["ask", "overwrite"])
+def test_settings_should_configure_external_changes(jp_configurable_serverapp, behavior):
     app = jp_configurable_serverapp(
-        argv=[f"--YDocExtension.preserve_content_on_external_change={preserve}"]
+        argv=[f"--YDocExtension.behavior_on_external_change={behavior}"]
     )
     settings = app.web_app.settings["jupyter_server_ydoc_config"]
-    assert settings["preserve_content_on_external_change"] is preserve
-    assert app.web_app.settings["collaborative_preserve_content_on_external_change"] is preserve
+    assert settings["behavior_on_external_change"] == behavior
+    assert app.web_app.settings["collaborative_behavior_on_external_change"] == behavior
+
+
+@pytest.mark.parametrize("behavior", ["auto", "invalid", True])
+def test_settings_reject_unsupported_external_change_behavior(behavior):
+    with pytest.raises(TraitError, match="behavior_on_external_change"):
+        YDocExtension(behavior_on_external_change=behavior)
 
 
 def test_settings_should_disable_rtc(jp_configurable_serverapp):

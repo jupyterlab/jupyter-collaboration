@@ -90,29 +90,31 @@ jupyverse --set kernels.require_yjs=true --set jupyterlab.server_side_execution=
 
 ## Files changed on disk
 
-The server-wide setting `YDocExtension.preserve_content_on_external_change` controls
-how external changes are handled. It defaults to `False`, reloading disk content
-into the existing shared document while keeping its file ID. Set it to `True` to
-preserve each existing session's content and give the disk version a new file ID.
+The server-wide setting `YDocExtension.behavior_on_external_change` controls how
+external changes are handled. It accepts:
 
-To enable content preservation and resolution choices for every collaborator, configure
+- `"overwrite"` (default): replace the shared **in-memory content with disk content**
+  for all collaborators. The file keeps its ID, and the
+  editor updates without a notice.
+- `"ask"`: preserve each existing session's content, give the disk version a new
+  file ID, and show a notice with resolution choices.
+
+To enable resolution choices for every collaborator, configure
 `jupyter_server_config.py` and restart the server:
 
 ```python
-c.YDocExtension.preserve_content_on_external_change = True
+c.YDocExtension.behavior_on_external_change = "ask"
 ```
 
 Or start the server with:
 
 ```bash
-jupyter lab --YDocExtension.preserve_content_on_external_change=True
+jupyter lab --YDocExtension.behavior_on_external_change=ask
 ```
 
-With `False`, the file keeps its ID and disk content replaces the content in the
-existing shared document, including unsaved edits, without a notice or tab reload.
-Deleted or unreadable files still preserve current content and show a notice;
-there is no disk content to reload. This server policy is independent of the
-per-user `autoReload` setting, which only applies in content-preserving mode.
+Deleted or unreadable files preserve current content and show a notice in either
+mode, since there is no disk content to reload. This server policy is independent
+of the per-user `autoReload` setting, which only applies in `"ask"` mode.
 
 The following choices apply when content is preserved:
 

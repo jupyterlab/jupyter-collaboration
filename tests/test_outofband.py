@@ -19,8 +19,8 @@ from pycrdt.websocket import YRoom
 
 
 @pytest.fixture
-def preserve_content_on_external_change():
-    return True
+def behavior_on_external_change():
+    return "ask"
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def document(
     arbitrary_fid_manager,
     request,
     jp_asyncio_loop,
-    preserve_content_on_external_change,
+    behavior_on_external_change,
 ):
     async def create():
         notebook = getattr(request, "param", False)
@@ -58,7 +58,7 @@ def document(
             FakeEventLogger(),
             None,
             None,
-            preserve_content_on_external_change=preserve_content_on_external_change,
+            behavior_on_external_change=behavior_on_external_change,
         )
         await room.initialize()
         room._document.dirty = False
@@ -277,12 +277,12 @@ async def test_overwrite_rejects_without_external_change(document):
         await room.overwrite(path)
 
 
-@pytest.mark.parametrize("preserve_content_on_external_change", [False])
+@pytest.mark.parametrize("behavior_on_external_change", ["overwrite"])
 @pytest.mark.parametrize("document", [False, True], indirect=True)
 @pytest.mark.parametrize("dirty", [False, True])
 @pytest.mark.parametrize("trigger", ["poll", "save"])
 async def test_reload_mode_updates_document_without_changing_id(
-    document, arbitrary_fid_manager, preserve_content_on_external_change, dirty, trigger
+    document, arbitrary_fid_manager, behavior_on_external_change, dirty, trigger
 ):
     cm, loader, room, model, path = document
     if dirty:
@@ -325,9 +325,9 @@ async def test_reload_mode_updates_document_without_changing_id(
         room.clients.clear()
 
 
-@pytest.mark.parametrize("preserve_content_on_external_change", [False])
+@pytest.mark.parametrize("behavior_on_external_change", ["overwrite"])
 async def test_reload_mode_preserves_deleted_file_and_recovers(
-    document, arbitrary_fid_manager, jp_root_dir, preserve_content_on_external_change
+    document, arbitrary_fid_manager, jp_root_dir, behavior_on_external_change
 ):
     cm, loader, room, model, path = document
     original = await room._document.aget()
@@ -346,10 +346,10 @@ async def test_reload_mode_preserves_deleted_file_and_recovers(
     assert arbitrary_fid_manager.index(path) == loader.file_id
 
 
-@pytest.mark.parametrize("preserve_content_on_external_change", [False])
+@pytest.mark.parametrize("behavior_on_external_change", ["overwrite"])
 @pytest.mark.parametrize("failure", ["read", "apply"])
 async def test_reload_mode_preserves_content_on_read_failure(
-    document, arbitrary_fid_manager, preserve_content_on_external_change, failure
+    document, arbitrary_fid_manager, behavior_on_external_change, failure
 ):
     cm, loader, room, model, path = document
     original = await room._document.aget()

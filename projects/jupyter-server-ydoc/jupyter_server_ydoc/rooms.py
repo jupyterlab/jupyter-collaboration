@@ -7,7 +7,7 @@ import asyncio
 import json
 from collections.abc import Callable
 from logging import Logger
-from typing import Any
+from typing import Any, Literal
 
 from jupyter_events import EventLogger
 from jupyter_ydoc import ydocs as YDOCS
@@ -43,7 +43,7 @@ class DocumentRoom(YRoom):
         document_load_progressively: bool = False,
         notebook_output_delay_threshold_mb: float | None = 100,
         exception_handler: Callable[[Exception, Logger], bool] | None = None,
-        preserve_content_on_external_change: bool = False,
+        behavior_on_external_change: Literal["ask", "overwrite"] = "overwrite",
     ):
         super().__init__(ready=False, ystore=ystore, exception_handler=exception_handler, log=log)
 
@@ -55,7 +55,9 @@ class DocumentRoom(YRoom):
         self._document.path = self._file.path
 
         self._logger = logger
-        self._preserve_content_on_external_change = preserve_content_on_external_change
+        if behavior_on_external_change not in ("ask", "overwrite"):
+            raise ValueError("behavior_on_external_change must be 'ask' or 'overwrite'")
+        self._behavior_on_external_change = behavior_on_external_change
         self._save_delay = save_delay
         self._document_load_progressively = document_load_progressively
         self._notebook_output_delay_threshold_mb = notebook_output_delay_threshold_mb
@@ -387,7 +389,11 @@ class DocumentRoom(YRoom):
                 # Keep saves blocked if the external version cannot be read.
                 changed = True
             reloaded = False
-            if changed and not self._preserve_content_on_external_change and not self._file.deleted:
+            if (
+                changed
+                and self._behavior_on_external_change == "overwrite"
+                and not self._file.deleted
+            ):
                 try:
                     model = await self._file.load_content(
                         self._file_format, self._file_type, require_hash=True
@@ -407,7 +413,7 @@ class DocumentRoom(YRoom):
             if changed:
                 # Preserve mode separates new opens from the current session.
                 # Reload mode retains the ID even when disk content is unavailable.
-                if self._preserve_content_on_external_change:
+                if self._behavior_on_external_change == "ask":
                     await self._file.detach()
                 notice = {"originalPath": self._file.path}
                 if self._file.deleted:

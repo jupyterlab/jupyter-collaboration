@@ -7,7 +7,7 @@ import asyncio
 import json
 import os
 from logging import Logger
-from typing import Any, cast
+from typing import Any, Literal, cast
 from uuid import uuid4
 
 from jupyter_server.auth import authorized
@@ -142,9 +142,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                         self.log,
                         exception_handler=exception_logger,
                         save_delay=self._document_save_delay,
-                        preserve_content_on_external_change=(
-                            self._preserve_content_on_external_change
-                        ),
+                        behavior_on_external_change=(self._behavior_on_external_change),
                         document_load_progressively=self._document_load_progressively,
                         notebook_output_delay_threshold_mb=(
                             self._notebook_output_delay_threshold_mb
@@ -195,7 +193,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         document_save_delay: float | None = 1.0,
         document_load_progressively: bool = False,
         notebook_output_delay_threshold_mb: float | None = 100,
-        preserve_content_on_external_change: bool = False,
+        behavior_on_external_change: Literal["ask", "overwrite"] = "overwrite",
     ) -> None:
         self._background_tasks = set()
         # File ID manager cannot be passed as argument as the extension may load after this one
@@ -204,7 +202,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         self._ystore_class = ystore_class
         self._cleanup_delay = document_cleanup_delay
         self._document_save_delay = document_save_delay
-        self._preserve_content_on_external_change = preserve_content_on_external_change
+        self._behavior_on_external_change = behavior_on_external_change
         self._document_load_progressively = document_load_progressively
         self._notebook_output_delay_threshold_mb = notebook_output_delay_threshold_mb
         self._websocket_server = ywebsocket_server
