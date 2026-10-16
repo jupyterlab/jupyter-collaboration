@@ -126,7 +126,9 @@ class FileLoader:
         if id in self._filepath_subscriptions.keys():
             del self._filepath_subscriptions[id]
 
-    async def load_content(self, format: str, file_type: str) -> dict[str, Any]:
+    async def load_content(
+        self, format: str, file_type: str, *, require_hash: bool = False
+    ) -> dict[str, Any]:
         """
         Load the content of the file.
 
@@ -140,7 +142,13 @@ class FileLoader:
         """
         async with self._lock:
             model = await ensure_async(
-                self._contents_manager.get(self.path, format=format, type=file_type, content=True)
+                self._contents_manager.get(
+                    self.path,
+                    format=format,
+                    type=file_type,
+                    content=True,
+                    require_hash=require_hash,
+                )
             )
             if (
                 file_type == "file"
@@ -152,6 +160,12 @@ class FileLoader:
                 self._log.debug("Normalizing line endings for %s file on content load", self.path)
             self.last_modified = model["last_modified"]
             return model
+
+    async def acknowledge_reload(self) -> None:
+        """Allow saves after disk content was successfully applied to the room."""
+        async with self._lock:
+            self._outofband = False
+            self.deleted = False
 
     async def maybe_save_content(self, model: dict[str, Any]) -> dict[str, Any] | None:
         """
@@ -249,17 +263,6 @@ class FileLoader:
                     self._file_id_manager.delete(path)
                 self._detached_path = path
                 self._outofband = True
-
-    async def save_as(self, model: dict[str, Any], new_path: str) -> None:
-        """Save an explicit snapshot without moving other users to a new file."""
-        async with self._lock:
-            if not self._outofband:
-                raise HTTPError(409, "The external change has already been resolved")
-            if not new_path or new_path == self.path:
-                raise HTTPError(409, "Choose a new filename to keep the original file intact")
-            if await ensure_async(self._contents_manager.exists(new_path)):
-                raise HTTPError(409, "That filename already exists. Choose a new filename")
-            await ensure_async(self._contents_manager.save(model, new_path))
 
     async def _save_content(
         self, model: dict[str, Any], done_saving: asyncio.Event, path: str

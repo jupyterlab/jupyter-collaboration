@@ -8,6 +8,7 @@ import { PathExt } from '@jupyterlab/coreutils';
 import { Contents } from '@jupyterlab/services';
 import { TranslationBundle } from '@jupyterlab/translation';
 import { IDisposable } from '@lumino/disposable';
+import { Widget } from '@lumino/widgets';
 
 import '../style/outofband.css';
 
@@ -19,9 +20,9 @@ export interface IExternalChangeStatus {
 
 /** Server operations needed to resolve an external change, regardless of transport. */
 export interface IExternalChangeActions {
-  /** Release the original path so reopening it joins the disk version. */
-  openOriginal(originalPath: string): Promise<void>;
-  /** Save the current session under a new path, preserving other clients. */
+  /** Explicitly overwrite the disk version with the current snapshot. */
+  overwrite?: (originalPath: string) => Promise<void>;
+  /** Save the current content under a new path, preserving other clients. */
   saveAs(path: string, originalPath: string): Promise<void>;
 }
 
@@ -30,8 +31,8 @@ export interface IExternalChangeActions {
  *
  * Providers forward server notifications and reconnect snapshots to updateStatus,
  * call ensureCanSave before saving, and dispose the handler when leaving the
- * document. The supplied actions must resolve after the server acknowledges the
- * operation, before this handler switches or closes the local document view.
+ * document. The supplied write actions must resolve after the save completes,
+ * before this handler switches the local document view.
  */
 export class ExternalChangeHandler implements IDisposable {
   constructor(private _options: ExternalChangeHandler.IOptions) {}
@@ -45,38 +46,84 @@ export class ExternalChangeHandler implements IDisposable {
     if (this.isDisposed) {
       return;
     }
-    const reasonChanged = this._externalChange?.reason !== change?.reason;
-    this._externalChange = change ? { ...change } : undefined;
-    if (reasonChanged) {
-      this._externalChangeDialog?.resolve(0);
-    }
-    if (!change) {
-      this._externalChangeDialog?.resolve(0);
+    if (
+      change &&
+      this._externalChange?.originalPath === change.originalPath &&
+      this._externalChange.reason === change.reason
+    ) {
       return;
     }
-    const originalPath = change.originalPath;
+
+    this._externalChangeDialog?.resolve(0);
+    this._externalChange = change ? { ...change } : undefined;
+    this._notice?.dispose();
+    this._notice = undefined;
+    if (!change) {
+      return;
+    }
+    const status = this._externalChange;
     void this._options.ready
-      .then(() => {
-        if (
-          !this.isDisposed &&
-          this._externalChange?.originalPath === originalPath
-        ) {
-          return this._showOutOfBandDialog(originalPath);
+      .then(async () => {
+        if (this.isDisposed || this._externalChange !== status) {
+          return;
+        }
+        this._showNotice();
+        if (!change.reason && this._options.autoReload?.()) {
+          await this._run('load');
         }
       })
       .catch(console.error);
   }
 
-  /** Resolve a pending change before saving; cancel this save if a choice was required. */
+  /** Prompt only when the user explicitly saves an unresolved document. */
   async ensureCanSave(): Promise<void> {
-    if (this._externalChange) {
-      await this._showOutOfBandDialog(this._externalChange.originalPath);
-      const error = new Error(
-        'Save cancelled while resolving an external change'
-      );
-      error.name = 'ModalCancelError';
-      throw error;
+    if (!this._externalChange) {
+      return;
     }
+    if (!this._busy) {
+      this._busy = true;
+      try {
+        const buttons = [Dialog.cancelButton()];
+        if (this._options.actions.overwrite) {
+          buttons.push(
+            Dialog.warnButton({
+              label: this._options.translator.__('Save to original file'),
+              actions: ['overwrite']
+            })
+          );
+        }
+        buttons.push(
+          Dialog.okButton({
+            label: this._options.translator.__('Save As…'),
+            actions: ['save-as']
+          })
+        );
+        const dialog = new Dialog({
+          title: this._options.translator.__('Save current content'),
+          body: this._options.translator.__(
+            'The file changed on disk. Saving to the original file will replace its disk content.'
+          ),
+          buttons
+        });
+        this._externalChangeDialog = dialog;
+        const result = await dialog.launch();
+        if (!this.isDisposed && this._externalChange) {
+          if (result.button.actions.includes('overwrite')) {
+            await this._resolve('overwrite');
+          } else if (result.button.actions.includes('save-as')) {
+            await this._resolve('save-as');
+          }
+        }
+      } finally {
+        this._busy = false;
+        this._externalChangeDialog = undefined;
+      }
+    }
+    const error = new Error(
+      'Save cancelled while resolving an external change'
+    );
+    error.name = 'ModalCancelError';
+    throw error;
   }
 
   dispose(): void {
@@ -85,102 +132,108 @@ export class ExternalChangeHandler implements IDisposable {
     }
     this._isDisposed = true;
     this._externalChange = undefined;
+    this._notice?.dispose();
     this._externalChangeDialog?.resolve(0);
   }
 
-  private async _showOutOfBandDialog(originalPath: string): Promise<void> {
-    if (this._outOfBandDialogOpen) {
+  private _showNotice(): void {
+    this._notice?.dispose();
+    const change = this._externalChange!;
+    const notice = new Widget();
+    notice.addClass('jp-CollaborationExternalChangeNotice');
+    notice.node.setAttribute('role', 'status');
+    const message = document.createElement('span');
+    message.textContent =
+      change.reason === 'deleted'
+        ? this._options.translator.__(
+            'The file "%1" was deleted from disk.',
+            change.originalPath
+          )
+        : this._options.translator.__(
+            'The file "%1" changed on disk.',
+            change.originalPath
+          );
+    notice.node.appendChild(message);
+    const add = (
+      label: string,
+      action: 'load' | 'save-as' | 'close' | 'overwrite'
+    ) => {
+      const button = document.createElement('button');
+      button.className = 'jp-mod-styled';
+      button.textContent = label;
+      button.onclick = () => {
+        void this._run(action);
+      };
+      notice.node.appendChild(button);
+    };
+    if (!change.reason) {
+      add(this._options.translator.__('Load from disk'), 'load');
+    }
+    if (this._options.actions.overwrite) {
+      add(this._options.translator.__('Save to original file'), 'overwrite');
+    }
+    add(this._options.translator.__('Save As…'), 'save-as');
+    add(this._options.translator.__('Close tab'), 'close');
+    this._notice = notice;
+    this._options.showNotice?.(notice, () => this.ensureCanSave());
+  }
+
+  private async _run(
+    action: 'load' | 'save-as' | 'close' | 'overwrite'
+  ): Promise<void> {
+    if (this._busy || this.isDisposed || !this._externalChange) {
       return;
     }
-    this._outOfBandDialogOpen = true;
-    let resolved = false;
+    this._busy = true;
     try {
-      const buttons: Dialog.IButton[] = [];
-      const deleted = this._externalChange?.reason === 'deleted';
-      if (!deleted) {
-        buttons.push(
-          Dialog.warnButton({
-            label: this._options.translator.__('Open original file'),
-            actions: ['open-original']
-          })
+      await this._resolve(action);
+    } catch (error) {
+      if (!this.isDisposed) {
+        await showErrorMessage(
+          this._options.translator.__('Could not resolve external change'),
+          error as Error
         );
       }
-      buttons.push(
-        Dialog.okButton({
-          label: this._options.translator.__('Save As…'),
-          actions: ['save-as']
-        })
-      );
-      buttons.push(
-        Dialog.okButton({
-          label: this._options.translator.__('Close tab'),
-          actions: ['close']
-        })
-      );
-      const dialog = new Dialog({
-        title: deleted
-          ? this._options.translator.__('The file was deleted')
-          : this._options.translator.__('The file was changed externally'),
-        body: deleted
-          ? this._options.translator.__(
-              'The file "%1" was deleted from disk. Save your current content under a new name, or close this tab.',
-              originalPath
-            )
-          : this._options.translator.__(
-              'The file "%1" changed on disk. ' +
-                'Open the disk version in this tab, or save your current content under a new name.',
-              originalPath
-            ),
-        buttons,
-        defaultButton: deleted ? 0 : 1,
-        hasClose: false
-      });
-      dialog.addClass('jp-CollaborationExternalChangeDialog');
-      this._externalChangeDialog = dialog;
-      const result = await dialog.launch();
-      if (this.isDisposed || !this._externalChange) {
-        return;
-      }
-      if (deleted !== (this._externalChange.reason === 'deleted')) {
-        // Reopen below with the latest status and available actions.
-      } else if (result.button.actions.includes('close')) {
-        // Release the original path from this session before leaving it, so a
-        // later open joins the disk version even while collaborators stay here.
-        await this._options.actions.openOriginal(originalPath);
-        this._options.onCloseDocument?.();
-        resolved = true;
-      } else if (result.button.actions.includes('open-original')) {
-        await this._options.actions.openOriginal(originalPath);
-        await this._options.onSwitchDocument?.(originalPath);
-        resolved = true;
-      } else if (result.button.actions.includes('save-as')) {
-        const suggestedPath = await this._suggestSaveAsPath(originalPath);
-        const name = await InputDialog.getText({
-          title: this._options.translator.__('Save shared document as'),
-          label: this._options.translator.__('New path:'),
-          text: suggestedPath,
-          okLabel: this._options.translator.__('Save')
-        });
-        if (name.button.accept && name.value && !this.isDisposed) {
-          await this._options.actions.saveAs(name.value, originalPath);
-          await this._options.onSwitchDocument?.(name.value);
-          resolved = true;
-        }
-      }
-    } catch (error) {
-      if (this.isDisposed) {
-        return;
-      }
-      await showErrorMessage(
-        this._options.translator.__('Could not resolve external change'),
-        error as Error
-      );
     } finally {
-      this._outOfBandDialogOpen = false;
-      this._externalChangeDialog = undefined;
+      this._busy = false;
     }
-    if (!resolved && !this.isDisposed && this._externalChange) {
-      await this._showOutOfBandDialog(originalPath);
+  }
+
+  private async _resolve(
+    action: 'load' | 'save-as' | 'close' | 'overwrite'
+  ): Promise<void> {
+    const change = this._externalChange;
+    if (!change || this.isDisposed) {
+      return;
+    }
+    const originalPath = change.originalPath;
+    if (action === 'load') {
+      await this._options.onSwitchDocument?.(originalPath);
+    } else if (action === 'close') {
+      this._options.onCloseDocument?.();
+    } else if (action === 'overwrite') {
+      await this._options.actions.overwrite?.(originalPath);
+      await this._options.onSwitchDocument?.(originalPath);
+    } else {
+      const name = await InputDialog.getText({
+        title: this._options.translator.__('Save shared document as'),
+        label: this._options.translator.__('New path:'),
+        text: await this._suggestSaveAsPath(originalPath),
+        okLabel: this._options.translator.__('Save')
+      });
+      if (
+        !name.button.accept ||
+        !name.value ||
+        this.isDisposed ||
+        this._externalChange !== change
+      ) {
+        return;
+      }
+      await this._options.actions.saveAs(name.value, originalPath);
+      await this._options.onSwitchDocument?.(name.value);
+    }
+    if (this._externalChange === change) {
+      this.updateStatus(null);
     }
   }
 
@@ -208,7 +261,8 @@ export class ExternalChangeHandler implements IDisposable {
   private _isDisposed = false;
   private _externalChange?: IExternalChangeStatus;
   private _externalChangeDialog?: Dialog<unknown>;
-  private _outOfBandDialogOpen = false;
+  private _notice?: Widget;
+  private _busy = false;
 }
 
 export namespace ExternalChangeHandler {
@@ -218,6 +272,12 @@ export namespace ExternalChangeHandler {
     translator: TranslationBundle;
     contents: Pick<Contents.IManager, 'get'>;
     actions: IExternalChangeActions;
+    /**
+     * Attach the notice and run beforeSave before the context's disk-conflict
+     * check. Restore the context's normal save method when the notice is disposed.
+     */
+    showNotice?: (notice: Widget, beforeSave: () => Promise<void>) => void;
+    autoReload?: () => boolean;
     onSwitchDocument?: (path: string) => Promise<void>;
     onCloseDocument?: () => void;
   }
