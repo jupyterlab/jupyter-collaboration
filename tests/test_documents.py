@@ -494,11 +494,13 @@ async def test_document_session_backfilled_when_restoring_history_with_none(tmp_
         await loader2.clean()
 
 
-async def test_document_session_survives_out_of_band_resync():
-    """_on_outofband_change() rewrites content via aset(), which jupyter_ydoc's
-    _set() otherwise clears document_session as part of -- this is always a
-    safe, in-place resync (confirmed non-duplicating), never a new
-    incarnation, so the session must survive it."""
+async def test_document_session_survives_out_of_band_notice():
+    """_on_outofband_change() no longer rewrites content at all (changed
+    upstream in #631: it now only flags self._outofband and waits for the
+    client to explicitly choose open_disk_version() or save_as()), so there's
+    no aset() here anymore to strip document_session -- confirm the session
+    is simply untouched, and the live document is left alone rather than
+    silently merged."""
     room, loader = await _create_notebook_room(_notebook_model(), "outofband-session")
     try:
         session_before = _document_session(room)
@@ -511,7 +513,8 @@ async def test_document_session_survives_out_of_band_resync():
         await room._on_outofband_change()
 
         assert _document_session(room) == session_before
-        assert (await room._document.aget())["cells"][0]["source"] == "changed out of band"
+        assert (await room._document.aget())["cells"][0]["source"] == ""
+        assert room.outofband is not None
     finally:
         await room.stop()
         await loader.clean()

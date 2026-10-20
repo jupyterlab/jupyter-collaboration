@@ -316,8 +316,9 @@ class DocumentRoom(YRoom):
             array entries sharing an id instead of replacing anything.
             `aset()` on the room's own already-connected document does an
             in-place, id-matched reconciliation instead (the same mechanism
-            `_on_outofband_change`'s and `_maybe_save_document`'s comparable
-            rewrites already use safely).
+            `initialize()`'s mismatch-branch resync already uses safely via
+            `_aset_preserving_session`, though this call deliberately does not
+            preserve the old session since the whole point here is a new one).
         """
         async with self._update_lock:
             await self._document.aset(content)
