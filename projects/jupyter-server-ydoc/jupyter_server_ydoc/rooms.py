@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import uuid
 from collections.abc import Callable
 from logging import Logger
 from typing import Any
@@ -162,6 +163,17 @@ class DocumentRoom(YRoom):
                     # the source file (no change history)
                     pass
 
+            if loaded_from_store and self._document.ystate.get("document_session") is None:
+                # Real history restored with no recorded session: this predates
+                # document_session existing, or this room's own first genuine
+                # rebuild happened before the mechanism was active. Treat
+                # successfully restoring real history as establishing the
+                # baseline incarnation now, rather than requiring another
+                # rebuild before this document can be protected at all.
+                self._document.ystate["document_session"] = str(uuid.uuid4())
+                if self.ystore:
+                    await self.ystore.encode_state_as_update(self.ydoc)
+
             if not read_from_source:
                 # if YStore updates and source file are out-of-sync, resync updates with source
                 if await self._document.aget() != model["content"]:
@@ -209,7 +221,7 @@ class DocumentRoom(YRoom):
                     else:
                         await self._apply_deterministic_source_content(model["content"])
                 else:
-                    await self._document.aset(model["content"])
+                    await self._aset_preserving_session(model["content"])
 
                 if self.ystore:
                     await self.ystore.encode_state_as_update(self.ydoc)
@@ -259,6 +271,13 @@ class DocumentRoom(YRoom):
 
         The client ID needs to be fixed to a deterministic value, see:
         https://discuss.yjs.dev/t/initial-offline-value-of-a-shared-document/465
+
+        This is only sufficient for rebuilds that happen after a server has
+        adopted this mechanism: a client holding content built any other way
+        (predating this fix, or from a divergent history) has no relation to
+        the rebuilt content and can still merge as duplicates. `document_session`
+        marks this as a new incarnation so callers can refuse such a client
+        instead of silently merging.
         """
         source_ydoc: Doc = Doc(client_id=0)
         source_document = YDOCS.get(self._file_type, YFILE)(source_ydoc)
@@ -276,6 +295,71 @@ class DocumentRoom(YRoom):
         else:
             await source_document.aset(content)
             self.ydoc.apply_update(source_ydoc.get_update())
+        self._document.ystate["document_session"] = str(uuid.uuid4())
+
+    async def override_content(self, content: Any) -> str:
+        """Explicitly rewrite this room's content with a client's own version.
+
+        ### Note:
+            Used when a client whose reconnect was refused for a
+            document_session mismatch chooses to keep its local edits rather
+            than the server's freshly rebuilt content. Always assigns a fresh
+            document_session: an explicit override is deliberately a new
+            incarnation, not a continuation of either side's prior history.
+            Returns the newly assigned document_session.
+
+            Deliberately does not reuse `_apply_deterministic_source_content`,
+            which builds a separate, unrelated `Doc` and merges its update in
+            -- fine when nothing pre-exists to reconcile against, but here the
+            room already holds real content with the same cell ids, and
+            merging a second, disconnected copy of them in produces duplicate
+            array entries sharing an id instead of replacing anything.
+            `aset()` on the room's own already-connected document does an
+            in-place, id-matched reconciliation instead (the same mechanism
+            `initialize()`'s mismatch-branch resync already uses safely via
+            `_aset_preserving_session`, though this call deliberately does not
+            preserve the old session since the whole point here is a new one).
+        """
+        async with self._update_lock:
+            await self._document.aset(content)
+            self._document.ystate["document_session"] = str(uuid.uuid4())
+            if self.ystore:
+                await self.ystore.encode_state_as_update(self.ydoc)
+
+        self._emit(LogLevel.INFO, "overwrite", "Client override applied. Overwriting the room.")
+
+        try:
+            await self._file.maybe_save_content(
+                {
+                    "format": self._file_format,
+                    "type": self._file_type,
+                    "content": await self._document.aget(),
+                }
+            )
+        except OutOfBandChanges as e:
+            msg = (
+                f"Out-of-band changes while saving client override in room {self._room_id}: {e!r}"
+            )
+            self._emit(LogLevel.ERROR, None, msg)
+            raise
+
+        return self._document.ystate["document_session"]
+
+    async def _aset_preserving_session(self, content: Any) -> None:
+        """Rewrite content via aset(), preserving document_session across it.
+
+        ### Note:
+            jupyter_ydoc's `_set()` clears every ystate key it doesn't
+            recognize (keeping only dirty/path/document_id), including
+            document_session. Every call site that uses this is a safe,
+            in-place resync (confirmed non-duplicating), never a new
+            incarnation, so the session must survive it rather than silently
+            reverting this room to unprotected.
+        """
+        preserved_session = self._document.ystate.get("document_session")
+        await self._document.aset(content)
+        if preserved_session is not None:
+            self._document.ystate["document_session"] = preserved_session
 
     def _emit(self, level: LogLevel, action: str | None = None, msg: str | None = None) -> None:
         data = {"level": level.value, "room": self._room_id, "path": self._file.path}

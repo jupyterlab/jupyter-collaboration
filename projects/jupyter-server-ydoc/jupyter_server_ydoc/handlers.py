@@ -31,6 +31,8 @@ from .utils import (
     YDOC_SERVER_VERSION,
     LogLevel,
     MessageType,
+    OutOfBandChanges,
+    check_document_session_compatibility,
     check_session_compatibility,
     decode_file_path,
     encode_file_path,
@@ -282,6 +284,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                         }
                     )
                     self.close(1003, close_payload)
+                    return
                 # Else accept the old session, no reload needed.
 
             # cancel the deletion of the room if it was scheduled
@@ -292,6 +295,29 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
                 # Initialize the room
                 async with self._room_lock(self._room_id):
                     await self.room.initialize()
+
+                # Refuse a client whose remembered content-history incarnation
+                # doesn't match this room's current one -- distinct from the
+                # sessionId check above, which only guards package version and
+                # root directory, not room content-history identity.
+                doc_session_id = self.get_query_argument("docSessionId", "")
+                document_session = self.room._document.ystate.get("document_session")
+                cannot_reconnect, reason = check_document_session_compatibility(
+                    document_session, doc_session_id
+                )
+                if cannot_reconnect:
+                    self.close(
+                        1003,
+                        json.dumps(
+                            {
+                                "reason": reason,
+                                "documentSessionId": document_session,
+                                "reloadable": True,
+                            }
+                        ),
+                    )
+                    return
+
                 self.create_task(self._websocket_server.serve(self))
                 self._emit_awareness_event(self.current_user.username, "join")
             except Exception as e:
@@ -823,3 +849,55 @@ class DocForkHandler(APIHandler):
             "action": action,
         }
         self.event_logger.emit(schema_id=JUPYTER_COLLABORATION_FORK_EVENTS_URI, data=data)
+
+
+class DocumentSessionOverrideHandler(APIHandler):
+    """
+    Jupyter Server handler letting a client push its own content as a room's
+    new canonical state, when a reconnect was refused for a document_session
+    mismatch (see YDocWebSocketHandler.open) and the client chooses to keep
+    its local edits over the server's freshly rebuilt content.
+    """
+
+    auth_resource = "contents"
+
+    def initialize(self, ywebsocket_server: JupyterWebsocketServer) -> None:
+        self._websocket_server = ywebsocket_server
+
+    @web.authenticated
+    @authorized
+    async def put(self, room_id: str) -> None:
+        try:
+            room = await self._websocket_server.get_room(room_id)
+        except RoomNotFound:
+            self.set_status(404)
+            self.log.warning(f"Room {room_id} not found for document_session override")
+            self.finish({"code": 404, "error": "Room not found"})
+            return
+
+        if not isinstance(room, DocumentRoom):
+            self.set_status(400)
+            self.log.warning(f"Room {room_id} is not a document room, cannot override")
+            self.finish({"code": 400, "error": "Not a document room"})
+            return
+
+        model = self.get_json_body() or {}
+        if "content" not in model:
+            self.set_status(400)
+            self.log.warning(f"Missing content in override request for room {room_id}")
+            self.finish({"code": 400, "error": "Missing content"})
+            return
+
+        try:
+            new_session = await room.override_content(model["content"])
+        except OutOfBandChanges as e:
+            self.set_status(409)
+            self.log.error(f"Out-of-band changes while overriding room {room_id}: {e!r}")
+            self.finish({"code": 409, "error": "Out-of-band changes on disk, override refused"})
+            return
+
+        self.log.info(
+            f"Client override applied in room {room_id}, new document_session {new_session}"
+        )
+        self.set_status(200)
+        self.finish(json.dumps({"documentSessionId": new_session}))

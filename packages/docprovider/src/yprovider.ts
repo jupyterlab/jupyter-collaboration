@@ -21,7 +21,7 @@ import { TranslationBundle } from '@jupyterlab/translation';
 import { Dialog, showDialog } from '@jupyterlab/apputils';
 
 import { IForkProvider } from './ydrive';
-import { requestDocSession } from './requests';
+import { requestDocSession, requestDocumentSessionOverride } from './requests';
 import { ISessionClosePayload } from './tokens';
 
 import { ExternalChangeHandler } from './externalChange';
@@ -253,6 +253,9 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     );
     const token = this._serverSettings.token;
     const params: Record<string, string> = { sessionId: session.sessionId };
+    if (this._documentSessionId) {
+      params['docSessionId'] = this._documentSessionId;
+    }
     if (this._serverSettings.appendToken && token !== '') {
       params['token'] = token;
     }
@@ -374,11 +377,49 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   get wsProvider() {
     return this._yWebsocketProvider;
   }
+  /**
+   * Tear down the current websocket provider and cancel any reconnect this
+   * provider itself has pending.
+   *
+   * Every deliberate reconnect path (`reconnect()`, `_scheduleReconnect()`,
+   * `dispose()`) funnels through here, so cancelling `_reconnectTimeoutId`
+   * in this one place means none of them can race a still-pending automatic
+   * reconnect into creating a second, overlapping `_yWebsocketProvider` --
+   * which would otherwise leak the first one's socket and event listeners.
+   */
   private _disconnect(): void {
+    if (this._reconnectTimeoutId !== null) {
+      clearTimeout(this._reconnectTimeoutId);
+      this._reconnectTimeoutId = null;
+    }
     this._yWebsocketProvider?.off('connection-close', this._onConnectionClosed);
     this._yWebsocketProvider?.off('sync', this._onSync);
     this._yWebsocketProvider?.destroy();
     this._yWebsocketProvider = null;
+  }
+
+  /**
+   * Replace a plain disconnect (network drop, server restart, etc.) with a
+   * fresh reconnect of our own, on a short backoff.
+   *
+   * y-websocket's own automatic retry reuses the exact connection params
+   * (including docSessionId) frozen when that provider was constructed --
+   * it never rebuilds them, so it can never pick up a session id learned
+   * since. Tearing the stale provider down here (synchronously, before any
+   * `await`) cancels its pending retry (destroy() sets its `shouldConnect`
+   * to false), so our own `_connect()` -- which always reads the current
+   * `_documentSessionId` -- is what actually reconnects instead.
+   */
+  private _scheduleReconnect(): void {
+    if (this._isDisposed) {
+      return;
+    }
+    this._disconnect();
+    const delay = Math.min(2 ** this._reconnectAttempts * 100, 2500);
+    this._reconnectAttempts++;
+    this._reconnectTimeoutId = window.setTimeout(() => {
+      this._connect().catch(e => console.warn(e));
+    }, delay);
   }
 
   private _onUserChanged(user: User.IManager): void {
@@ -444,6 +485,11 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         };
       }
 
+      if (payload.reason === 'document_session_mismatch') {
+        await this._handleDocumentSessionMismatch(payload.documentSessionId);
+        return;
+      }
+
       const { title, body } = this._buildSessionExpiredMessage(
         payload,
         this._trans
@@ -466,8 +512,98 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       // Dispose shared model immediately. Better break the document model,
       // than overriding data on disk.
       this._sharedModel.dispose();
+      return;
+    }
+    if (
+      ![4400, 4404, 4500].includes(event.code) &&
+      event.code !== 1003 &&
+      !this._isDisposed
+    ) {
+      this._scheduleReconnect();
     }
   };
+
+  /**
+   * Handle a reconnect refused because the room was rebuilt as a new,
+   * unrelated incarnation while this client held a different one (e.g. its
+   * remembered document_session predates a store loss or rekeying). Offers
+   * an explicit choice instead of a silent merge, which is what produces
+   * duplicated content.
+   *
+   * Disposes the shared model once a choice is safely carried out -- as with
+   * the other 1003 reasons, better to break the document model than risk
+   * reconnecting this same, already-diverged local Y.Doc against the
+   * server's rebuilt one. Keeping the on-disk version needs no extra step
+   * and is always safe to dispose after; keeping the browser version pushes
+   * its content over HTTP first, and is only disposed once that push
+   * actually succeeds -- if it fails, the edits the user explicitly chose to
+   * keep must not be silently discarded, so the model is left intact for a
+   * retry instead. A dismissed dialog is treated the same as keeping the
+   * on-disk version, since that's the choice that can't lose data.
+   */
+  private async _handleDocumentSessionMismatch(
+    serverDocumentSessionId?: string
+  ): Promise<void> {
+    if (serverDocumentSessionId) {
+      console.debug(
+        `Content diverged from server document_session: ${serverDocumentSessionId}`
+      );
+    }
+
+    const result = await showDialog({
+      title: this._trans.__('Content diverged'),
+      body: this._trans.__(
+        'Your local edits and the version on disk have diverged (for ' +
+          'example, this document was reopened after being unavailable for ' +
+          'a while). Choose which version to keep.'
+      ),
+      buttons: [
+        // Dialog's default button (triggered by Enter) is the last one in
+        // this list -- keep-disk last so the safe, no-data-pushed choice is
+        // the default, not the one that overwrites the room's content.
+        Dialog.warnButton({
+          label: this._trans.__('Keep browser version'),
+          actions: ['keep-browser']
+        }),
+        Dialog.okButton({
+          label: this._trans.__('Keep on-disk version'),
+          actions: ['keep-disk']
+        })
+      ]
+    });
+
+    if (
+      result.button.actions.includes('keep-browser') &&
+      this._yWebsocketProvider
+    ) {
+      try {
+        await requestDocumentSessionOverride(
+          this._yWebsocketProvider.roomname,
+          this._sharedModel.getSource(),
+          this._serverSettings
+        );
+      } catch (e) {
+        console.error(
+          'Failed to push the browser version as the new canonical content',
+          e
+        );
+        await showDialog({
+          title: this._trans.__('Could not save your version'),
+          body: this._trans.__(
+            'Your edits could not be pushed to the server, so they have ' +
+              'not been discarded. Try again once the problem is resolved.'
+          ),
+          buttons: [Dialog.okButton({ label: this._trans.__('Ok') })]
+        });
+        return;
+      }
+    }
+    // Either the on-disk choice, or a confirmed successful push of the
+    // browser version, breaks this document model; the document manager
+    // will reopen it fresh, which is always ungated (no remembered session
+    // to send).
+    this._sharedModel.dispose();
+  }
 
   private _attachConflictListener(): void {
     if (this._conflictWs) {
@@ -572,12 +708,17 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     if (isSynced) {
       this._onSharedStateChanged();
       this._hasSynced = true;
+      this._reconnectAttempts = 0;
       this._clearLoadTimeout();
       if (this._yWebsocketProvider) {
         this._yWebsocketProvider.off('sync', this._onSync);
 
         const state = this._sharedModel.ydoc.getMap('state');
         state.set('document_id', this._yWebsocketProvider.roomname);
+      }
+      const documentSession = this._sharedModel.ystate.get('document_session');
+      if (documentSession) {
+        this._documentSessionId = documentSession;
       }
       this._ready.resolve();
     }
@@ -612,6 +753,14 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _serverSettings: ServerConnection.ISettings;
   private _trans: TranslationBundle;
   private _hasSynced = false;
+  /**
+   * The room's content-history incarnation as last seen from a synced
+   * ystate -- distinct from `sessionId` (server-process/version identity).
+   * Sent as `docSessionId` on the next connect so the server can refuse a
+   * reconnect whose remembered incarnation no longer matches, instead of
+   * silently merging unrelated content. Empty until the first sync.
+   */
+  private _documentSessionId = '';
   private _saveCounter = 0;
   private _conflictWs: WebSocket | null = null;
   private _onConflictSaveAs?: () => Promise<void>;
@@ -621,6 +770,8 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _onConflictShowDiff?: (localContent: JSONValue) => Promise<void>;
   private _externalChanges: ExternalChangeHandler;
   private _contents: ContentsManager;
+  private _reconnectAttempts = 0;
+  private _reconnectTimeoutId: number | null = null;
 }
 
 /**

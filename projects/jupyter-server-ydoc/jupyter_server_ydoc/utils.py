@@ -205,3 +205,37 @@ def check_session_compatibility(
 
     # Same directory + same versions → safe to reconnect
     return False, ""
+
+
+def check_document_session_compatibility(
+    current_document_session: str | None,
+    client_document_session_id: str,
+) -> tuple[bool, str]:
+    """
+    Determine whether a client carrying a remembered per-room document session ID
+    may reconnect to the room's current incarnation, distinct from
+    :func:`check_session_compatibility`'s server-process/version gate: this checks
+    room content-history identity, not package version or root directory.
+
+    This protection is opt-in per client, by design: a client that never sends
+    a ``docSessionId`` at all (an older client build, or a browser tab still
+    running cached pre-upgrade JS) is always accepted here, with no gating.
+    During a mixed-version rollout, such a tab keeps whatever duplication
+    behavior it had before -- that isn't a regression of this check, just a
+    client that hasn't picked up the fix yet.
+
+    Returns:
+        (cannot_reconnect: bool, reason: str)
+    """
+    if not client_document_session_id:
+        # Unmodified client: never gated.
+        return False, ""
+
+    if not current_document_session:
+        # Legacy document predating this mechanism: nothing to compare against.
+        return False, ""
+
+    if client_document_session_id != current_document_session:
+        return True, "document_session_mismatch"
+
+    return False, ""
