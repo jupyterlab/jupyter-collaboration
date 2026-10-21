@@ -84,6 +84,7 @@ function createProvider(
     model?: YFile;
     onSwitchDocument?: (path: string) => Promise<void>;
     onCloseDocument?: () => void;
+    onConflictShowDiff?: WebSocketProvider.IOptions['onConflictShowDiff'];
   } = {}
 ): WebSocketProvider {
   const { path = 'test.ipynb', model = new YFile() } = options;
@@ -106,7 +107,8 @@ function createProvider(
     translator,
     showNotice: notice => Widget.attach(notice, document.body),
     onSwitchDocument: options.onSwitchDocument,
-    onCloseDocument: options.onCloseDocument
+    onCloseDocument: options.onCloseDocument,
+    onConflictShowDiff: options.onConflictShowDiff
   });
 }
 
@@ -129,7 +131,10 @@ describe('@jupyter/docprovider', () => {
           .click();
       }
 
-      async function setup(syncBeforeStatus = true) {
+      async function setup(
+        syncBeforeStatus = true,
+        onConflictShowDiff?: WebSocketProvider.IOptions['onConflictShowDiff']
+      ) {
         jest
           .spyOn(ContentsManager.prototype, 'get')
           .mockImplementation(async (_path, options) => {
@@ -154,7 +159,8 @@ describe('@jupyter/docprovider', () => {
         const provider = createProvider({
           model,
           onSwitchDocument,
-          onCloseDocument
+          onCloseDocument,
+          onConflictShowDiff
         });
         const websocket = await waitForProviderConnect(provider);
         const socket = new EventTarget();
@@ -215,6 +221,28 @@ describe('@jupyter/docprovider', () => {
           sendStatus
         };
       }
+
+      it('compares the latest shared content without resolving the external change', async () => {
+        const onShowDiff = jest.fn().mockResolvedValue(undefined);
+        const { model, provider, action, save, onSwitchDocument } = await setup(
+          true,
+          onShowDiff
+        );
+        model.setSource('continued editing');
+        clickButton('Show diff');
+        await sleep(20);
+        expect(onShowDiff).toHaveBeenCalledWith(
+          'continued editing',
+          'original.txt'
+        );
+        expect(
+          document.querySelector('.jp-CollaborationExternalChangeNotice')
+        ).not.toBeNull();
+        expect(action).not.toHaveBeenCalled();
+        expect(save).not.toHaveBeenCalled();
+        expect(onSwitchDocument).not.toHaveBeenCalled();
+        provider.dispose();
+      });
 
       it('waits for a choice without automatically saving a copy', async () => {
         const { model, provider, action } = await setup();

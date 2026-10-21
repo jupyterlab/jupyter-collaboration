@@ -18,7 +18,10 @@ function click(label: string): void {
 
 function setup(
   ready = Promise.resolve(),
-  preferences: Pick<ExternalChangeHandler.IOptions, 'autoReload'> = {}
+  preferences: Pick<
+    ExternalChangeHandler.IOptions,
+    'autoReload' | 'onShowDiff'
+  > = {}
 ) {
   const actions = {
     overwrite: jest.fn().mockResolvedValue(undefined),
@@ -238,6 +241,41 @@ describe('ExternalChangeHandler without a document transport', () => {
       expect(
         document.querySelector('.jp-CollaborationExternalChangeNotice')
       ).toBeNull();
+      handler.dispose();
+    }
+  );
+  it('shows a read-only diff without resolving the notice', async () => {
+    const onShowDiff = jest.fn().mockResolvedValue(undefined);
+    const { handler, actions, onSwitchDocument } = setup(Promise.resolve(), {
+      onShowDiff
+    });
+    handler.updateStatus({ originalPath: 'Untitled.ipynb' });
+    await sleep(20);
+    click('Show diff');
+    await sleep(20);
+    expect(onShowDiff).toHaveBeenCalledWith('Untitled.ipynb');
+    expect(
+      document.querySelector('.jp-CollaborationExternalChangeNotice')
+    ).not.toBeNull();
+    expect(document.querySelector('.jp-Dialog')).toBeNull();
+    expect(actions.overwrite).not.toHaveBeenCalled();
+    expect(actions.saveAs).not.toHaveBeenCalled();
+    expect(onSwitchDocument).not.toHaveBeenCalled();
+    handler.dispose();
+  });
+
+  it.each([undefined, 'deleted'] as const)(
+    'hides diff when unavailable for %s',
+    async reason => {
+      const { handler } = setup(Promise.resolve(), {
+        onShowDiff: reason === 'deleted' ? jest.fn() : undefined
+      });
+      handler.updateStatus({ originalPath: 'Untitled.ipynb', reason });
+      await sleep(20);
+      expect(
+        document.querySelector('.jp-CollaborationExternalChangeNotice')!
+          .textContent
+      ).not.toContain('Show diff');
       handler.dispose();
     }
   );

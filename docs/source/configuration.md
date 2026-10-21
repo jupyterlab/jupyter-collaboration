@@ -125,6 +125,10 @@ file** replaces the disk content with your current content. Saving with Ctrl-S a
 the original file's disk content or save your current content under a new name.
 Canceling keeps the notice and your current content.
 
+For notebooks, **Show diff** opens the existing notebook diff viewer to compare
+current editor content with the disk version. Diff is unavailable
+when the file was deleted.
+
 Choosing **Load from disk** immediately replaces your current content with the
 disk version. To reload automatically on future external changes, open the Settings
 Editor under **Collaborative documents**, using **Automatically load files changed on

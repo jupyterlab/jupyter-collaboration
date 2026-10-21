@@ -156,7 +156,7 @@ export class ExternalChangeHandler implements IDisposable {
     notice.node.appendChild(message);
     const add = (
       label: string,
-      action: 'load' | 'save-as' | 'close' | 'overwrite'
+      action: 'load' | 'save-as' | 'close' | 'overwrite' | 'show-diff'
     ) => {
       const button = document.createElement('button');
       button.className = 'jp-mod-styled';
@@ -168,6 +168,9 @@ export class ExternalChangeHandler implements IDisposable {
     };
     if (!change.reason) {
       add(this._options.translator.__('Load from disk'), 'load');
+      if (this._options.onShowDiff) {
+        add(this._options.translator.__('Show diff'), 'show-diff');
+      }
     }
     if (this._options.actions.overwrite) {
       add(this._options.translator.__('Save to original file'), 'overwrite');
@@ -179,7 +182,7 @@ export class ExternalChangeHandler implements IDisposable {
   }
 
   private async _run(
-    action: 'load' | 'save-as' | 'close' | 'overwrite'
+    action: 'load' | 'save-as' | 'close' | 'overwrite' | 'show-diff'
   ): Promise<void> {
     if (this._busy || this.isDisposed || !this._externalChange) {
       return;
@@ -200,14 +203,17 @@ export class ExternalChangeHandler implements IDisposable {
   }
 
   private async _resolve(
-    action: 'load' | 'save-as' | 'close' | 'overwrite'
+    action: 'load' | 'save-as' | 'close' | 'overwrite' | 'show-diff'
   ): Promise<void> {
     const change = this._externalChange;
     if (!change || this.isDisposed) {
       return;
     }
     const originalPath = change.originalPath;
-    if (action === 'load') {
+    if (action === 'show-diff') {
+      await this._options.onShowDiff?.(originalPath);
+      return;
+    } else if (action === 'load') {
       await this._options.onSwitchDocument?.(originalPath);
     } else if (action === 'close') {
       this._options.onCloseDocument?.();
@@ -278,6 +284,8 @@ export namespace ExternalChangeHandler {
      */
     showNotice?: (notice: Widget, beforeSave: () => Promise<void>) => void;
     autoReload?: () => boolean;
+    /** Compare the current shared content with disk. */
+    onShowDiff?: (originalPath: string) => Promise<void>;
     onSwitchDocument?: (path: string) => Promise<void>;
     onCloseDocument?: () => void;
   }

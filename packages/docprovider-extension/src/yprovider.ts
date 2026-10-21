@@ -60,8 +60,12 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
     const rendermime = this._rendermime;
     const path = options.path;
 
-    const onConflictShowNotebookDiff = async (localContent: JSONValue) => {
-      const serverModel = await contents.get(path, { content: true });
+    const onConflictShowNotebookDiff = async (
+      localContent: JSONValue,
+      originalPath?: string
+    ) => {
+      const diffPath = originalPath ?? path;
+      const serverModel = await contents.get(diffPath, { content: true });
       const widget = new ConflictDiffWidget({
         translator: this._trans,
         editorFactory,
@@ -72,38 +76,42 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
         remote: localContent as nbformat.INotebookContent
       });
       const main = new MainAreaWidget({ content: widget });
-      main.title.label = this._trans.__('Conflict diff: %1', path);
+      main.title.label = this._trans.__('Conflict diff: %1', diffPath);
       main.title.closable = true;
-      main.toolbar.addItem(
-        'revertToRemote',
-        new ToolbarButton({
-          icon: undoIcon,
-          label: this._trans.__('Revert to Remote'),
-          tooltip: this._trans.__(
-            'Discard local changes and reload the server version'
-          ),
-          onClick: () => {
-            const context = this._docManager.findWidget(path)?.context;
-            if (context && !context.isDisposed) {
-              void context.revert();
+      // External-change diffs are informational; ordinary conflicts retain
+      // their resolution actions.
+      if (originalPath === undefined) {
+        main.toolbar.addItem(
+          'revertToRemote',
+          new ToolbarButton({
+            icon: undoIcon,
+            label: this._trans.__('Revert to Remote'),
+            tooltip: this._trans.__(
+              'Discard local changes and reload the server version'
+            ),
+            onClick: () => {
+              const context = this._docManager.findWidget(path)?.context;
+              if (context && !context.isDisposed) {
+                void context.revert();
+              }
             }
-          }
-        })
-      );
-      main.toolbar.addItem(
-        'saveLocalAs',
-        new ToolbarButton({
-          icon: saveIcon,
-          label: this._trans.__('Save Local As'),
-          tooltip: this._trans.__('Save the local version with a new name'),
-          onClick: () => {
-            const context = this._docManager.findWidget(path)?.context;
-            if (context && !context.isDisposed) {
-              void context.saveAs();
+          })
+        );
+        main.toolbar.addItem(
+          'saveLocalAs',
+          new ToolbarButton({
+            icon: saveIcon,
+            label: this._trans.__('Save Local As'),
+            tooltip: this._trans.__('Save the local version with a new name'),
+            onClick: () => {
+              const context = this._docManager.findWidget(path)?.context;
+              if (context && !context.isDisposed) {
+                void context.saveAs();
+              }
             }
-          }
-        })
-      );
+          })
+        );
+      }
       shell.add(main, 'main');
       shell.activateById(main.id);
     };

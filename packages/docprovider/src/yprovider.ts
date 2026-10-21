@@ -87,6 +87,13 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       },
       showNotice: options.showNotice,
       autoReload: options.autoReload,
+      onShowDiff: options.onConflictShowDiff
+        ? originalPath =>
+            options.onConflictShowDiff!(
+              this._sharedModel.getSource(),
+              originalPath
+            )
+        : undefined,
       onSwitchDocument: options.onSwitchDocument,
       onCloseDocument: options.onCloseDocument
     });
@@ -647,7 +654,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _onConflictRevert?: () => Promise<void>;
   private _loadTimeoutId: number | null = null;
   private _isShowingDialog = false;
-  private _onConflictShowDiff?: (localContent: JSONValue) => Promise<void>;
+  private _onConflictShowDiff: WebSocketProvider.IOptions['onConflictShowDiff'];
   private _externalChanges: ExternalChangeHandler;
   private _contents: ContentsManager;
 }
@@ -719,9 +726,13 @@ export namespace WebSocketProvider {
     onConflictRevert?: () => Promise<void>;
 
     /**
-     * Called when the user chooses "Show Diff" from the conflict dialog.
-     * Receives the current local document content as JSON.
+     * Called when the user chooses to show a diff from the conflict dialog or
+     * external-change notice. Receives the current local content as JSON.
+     * The notice also supplies the original path. The diff is read-only.
      */
-    onConflictShowDiff?: (localContent: JSONValue) => Promise<void>;
+    onConflictShowDiff?: (
+      localContent: JSONValue,
+      originalPath?: string
+    ) => Promise<void>;
   }
 }
