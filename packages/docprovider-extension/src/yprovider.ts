@@ -7,10 +7,12 @@ import { ITranslator, TranslationBundle } from '@jupyterlab/translation';
 
 import {
   JupyterFrontEnd,
-  JupyterFrontEndPlugin
+  JupyterFrontEndPlugin,
+  ILabShell
 } from '@jupyterlab/application';
 import {
   WebSocketProvider,
+  ExternalChangeNoticePresenter,
   WebSocketAwarenessProvider,
   IAwarenessProviderFactory,
   IDocumentProviderFactory
@@ -32,6 +34,7 @@ import type * as nbformat from '@jupyterlab/nbformat';
 import { ConflictDiffWidget } from './conflictDiffWidget';
 import { CommandRegistry } from '@lumino/commands';
 import { Widget } from '@lumino/widgets';
+import { ISignal } from '@lumino/signaling';
 
 /**
  * The plugin ID for settings.
@@ -43,6 +46,13 @@ const PLUGIN_ID = '@jupyter/docprovider-extension:websocket-provider';
  */
 class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
   constructor(options: WebSocketDocumentProviderFactory.IOptions) {
+    this._viewSignals = [];
+    if (options.shell.currentChanged) {
+      this._viewSignals.push(options.shell.currentChanged);
+    }
+    if (options.labShell) {
+      this._viewSignals.push(options.labShell.layoutModified);
+    }
     this._settings = options.settings;
     this._trans = options.translator;
     this._commands = options.commands;
@@ -125,32 +135,20 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
       translator: this._trans,
       serverSettings: options.serverSettings,
       autoReload: () => this._settings?.get('autoReload').composite === true,
-      showNotice: (notice, beforeSave) => {
-        const views = Array.from(shell.widgets('main')).filter(
-          widget =>
-            this._docManager.contextForWidget(widget)?.model.sharedModel ===
-            options.model
-        );
-        const view =
-          views.find(widget => widget === shell.currentWidget) ?? views[0];
-        if (view instanceof MainAreaWidget) {
-          const context = this._docManager.contextForWidget(view)!;
-          const originalSave = context.save;
-          // Resolve the known external change before JupyterLab's generic
-          // conflict check, which would otherwise show a second set of choices.
-          const save = async () => {
-            await beforeSave();
-            await originalSave.call(context);
-          };
-          context.save = save;
-          notice.disposed.connect(() => {
-            if (context.save === save) {
-              context.save = originalSave;
-            }
-          });
-          view.contentHeader.addWidget(notice);
-        }
-      },
+      showNotice: (notice, beforeSave, createNotice) =>
+        new ExternalChangeNoticePresenter({
+          notice,
+          beforeSave,
+          createNotice,
+          views: () => shell.widgets('main'),
+          viewSignals: this._viewSignals,
+          contextForWidget: view => {
+            const context = this._docManager.contextForWidget(view);
+            return context?.model.sharedModel === options.model
+              ? context
+              : undefined;
+          }
+        }),
       onCloseDocument: () => {
         const views = Array.from(shell.widgets('main')).filter(
           widget =>
@@ -206,6 +204,7 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
           : undefined
     });
   }
+  private _viewSignals: ISignal<unknown, unknown>[];
   private _settings: ISettingRegistry.ISettings | null;
   private _trans: TranslationBundle;
   private _commands: CommandRegistry;
@@ -219,6 +218,7 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
 namespace WebSocketDocumentProviderFactory {
   export interface IOptions {
     settings: ISettingRegistry.ISettings | null;
+    labShell: ILabShell | null;
     translator: TranslationBundle;
     commands: CommandRegistry;
     docManager: IDocumentManager;
@@ -260,7 +260,7 @@ export const documentProviderFactoryPlugin: JupyterFrontEndPlugin<IDocumentProvi
       IRenderMimeRegistry,
       IDocumentManager
     ],
-    optional: [ISettingRegistry],
+    optional: [ISettingRegistry, ILabShell],
     provides: IDocumentProviderFactory,
     activate: async (
       app: JupyterFrontEnd,
@@ -268,13 +268,15 @@ export const documentProviderFactoryPlugin: JupyterFrontEndPlugin<IDocumentProvi
       editorServices: IEditorServices,
       rendermime: IRenderMimeRegistry,
       docManager: IDocumentManager,
-      settingRegistry: ISettingRegistry | null
+      settingRegistry: ISettingRegistry | null,
+      labShell: ILabShell | null
     ) => {
       const trans = translator.load('jupyter_collaboration');
       const settings = settingRegistry
         ? await settingRegistry.load(PLUGIN_ID + '-document-factory')
         : null;
       return new WebSocketDocumentProviderFactory({
+        labShell,
         settings,
         translator: trans,
         commands: app.commands,

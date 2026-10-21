@@ -3,12 +3,18 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { Dialog, InputDialog, showErrorMessage } from '@jupyterlab/apputils';
+import {
+  Dialog,
+  InputDialog,
+  showErrorMessage,
+  MainAreaWidget
+} from '@jupyterlab/apputils';
 import { PathExt } from '@jupyterlab/coreutils';
 import { Contents } from '@jupyterlab/services';
 import { TranslationBundle } from '@jupyterlab/translation';
 import { IDisposable } from '@lumino/disposable';
 import { Widget } from '@lumino/widgets';
+import { ISignal } from '@lumino/signaling';
 
 import '../style/outofband.css';
 
@@ -56,8 +62,7 @@ export class ExternalChangeHandler implements IDisposable {
 
     this._externalChangeDialog?.resolve(0);
     this._externalChange = change ? { ...change } : undefined;
-    this._notice?.dispose();
-    this._notice = undefined;
+    this._clearNotices();
     if (!change) {
       return;
     }
@@ -132,13 +137,32 @@ export class ExternalChangeHandler implements IDisposable {
     }
     this._isDisposed = true;
     this._externalChange = undefined;
-    this._notice?.dispose();
+    this._clearNotices();
     this._externalChangeDialog?.resolve(0);
   }
 
+  private _clearNotices(): void {
+    this._presentation?.dispose();
+    this._presentation = undefined;
+    for (const notice of this._notices) {
+      notice.dispose();
+    }
+    this._notices.clear();
+  }
+
   private _showNotice(): void {
-    this._notice?.dispose();
+    this._clearNotices();
     const change = this._externalChange!;
+    const createNotice = () => this._createNotice(change);
+    this._presentation =
+      this._options.showNotice?.(
+        createNotice(),
+        () => this.ensureCanSave(),
+        createNotice
+      ) || undefined;
+  }
+
+  private _createNotice(change: IExternalChangeStatus): Widget {
     const notice = new Widget();
     notice.addClass('jp-CollaborationExternalChangeNotice');
     notice.node.setAttribute('role', 'status');
@@ -177,8 +201,9 @@ export class ExternalChangeHandler implements IDisposable {
     }
     add(this._options.translator.__('Save As…'), 'save-as');
     add(this._options.translator.__('Close tab'), 'close');
-    this._notice = notice;
-    this._options.showNotice?.(notice, () => this.ensureCanSave());
+    this._notices.add(notice);
+    notice.disposed.connect(() => this._notices.delete(notice));
+    return notice;
   }
 
   private async _run(
@@ -217,6 +242,8 @@ export class ExternalChangeHandler implements IDisposable {
       await this._options.onSwitchDocument?.(originalPath);
     } else if (action === 'close') {
       this._options.onCloseDocument?.();
+      // Other views can still share this unresolved document context.
+      return;
     } else if (action === 'overwrite') {
       await this._options.actions.overwrite?.(originalPath);
       await this._options.onSwitchDocument?.(originalPath);
@@ -267,7 +294,8 @@ export class ExternalChangeHandler implements IDisposable {
   private _isDisposed = false;
   private _externalChange?: IExternalChangeStatus;
   private _externalChangeDialog?: Dialog<unknown>;
-  private _notice?: Widget;
+  private _notices = new Set<Widget>();
+  private _presentation?: IDisposable;
   private _busy = false;
 }
 
@@ -279,14 +307,128 @@ export namespace ExternalChangeHandler {
     contents: Pick<Contents.IManager, 'get'>;
     actions: IExternalChangeActions;
     /**
-     * Attach the notice and run beforeSave before the context's disk-conflict
-     * check. Restore the context's normal save method when the notice is disposed.
+     * Attach notices to document views, using createNotice for additional views.
+     * Run beforeSave before the context's disk-conflict check. Return a disposable
+     * to disconnect view listeners and restore normal saving when status clears.
      */
-    showNotice?: (notice: Widget, beforeSave: () => Promise<void>) => void;
+    showNotice?: (
+      notice: Widget,
+      beforeSave: () => Promise<void>,
+      createNotice: () => Widget
+    ) => IDisposable | void;
     autoReload?: () => boolean;
     /** Compare the current shared content with disk. */
     onShowDiff?: (originalPath: string) => Promise<void>;
     onSwitchDocument?: (path: string) => Promise<void>;
     onCloseDocument?: () => void;
+  }
+}
+
+/** Display an external-change notice in every view sharing a document context. */
+export class ExternalChangeNoticePresenter implements IDisposable {
+  constructor(private _options: ExternalChangeNoticePresenter.IOptions) {
+    this._initialNotice = _options.notice;
+    for (const signal of _options.viewSignals) {
+      signal.connect(this._onViewsChanged, this);
+    }
+    this._updateViews();
+  }
+
+  get isDisposed(): boolean {
+    return this._isDisposed;
+  }
+
+  dispose(): void {
+    if (this._isDisposed) {
+      return;
+    }
+    this._isDisposed = true;
+    for (const signal of this._options.viewSignals) {
+      signal.disconnect(this._onViewsChanged, this);
+    }
+    for (const [context, guard] of this._guards) {
+      if (context.save === guard.save) {
+        context.save = guard.originalSave;
+      }
+    }
+    this._guards.clear();
+    for (const notice of this._notices.values()) {
+      notice.dispose();
+    }
+    this._notices.clear();
+    this._initialNotice?.dispose();
+    this._initialNotice = undefined;
+  }
+
+  private _onViewsChanged(): void {
+    // Let the document manager finish adopting a newly created view first.
+    queueMicrotask(() => this._updateViews());
+  }
+
+  private _updateViews(): void {
+    if (this.isDisposed) {
+      return;
+    }
+    for (const view of this._options.views()) {
+      this._addView(view);
+    }
+  }
+
+  private _addView(view: Widget): void {
+    if (
+      this.isDisposed ||
+      view.isDisposed ||
+      !(view instanceof MainAreaWidget) ||
+      this._notices.has(view)
+    ) {
+      return;
+    }
+    const context = this._options.contextForWidget(view);
+    if (!context) {
+      return;
+    }
+    if (!this._guards.has(context)) {
+      const originalSave = context.save;
+      const save = async () => {
+        // Resolve the known external change before JupyterLab's generic
+        // conflict check, which would otherwise show another set of choices.
+        await this._options.beforeSave();
+        await originalSave.call(context);
+      };
+      this._guards.set(context, { originalSave, save });
+      context.save = save;
+    }
+    const notice = this._initialNotice ?? this._options.createNotice();
+    this._initialNotice = undefined;
+    this._notices.set(view, notice);
+    notice.disposed.connect(() => this._notices.delete(view));
+    view.contentHeader.addWidget(notice);
+  }
+
+  private _isDisposed = false;
+  private _initialNotice?: Widget;
+  private _notices = new Map<Widget, Widget>();
+  private _guards = new Map<
+    ExternalChangeNoticePresenter.ISaveContext,
+    {
+      originalSave: () => Promise<void>;
+      save: () => Promise<void>;
+    }
+  >();
+}
+
+export namespace ExternalChangeNoticePresenter {
+  export interface ISaveContext {
+    save(): Promise<void>;
+  }
+
+  export interface IOptions {
+    notice: Widget;
+    beforeSave: () => Promise<void>;
+    createNotice: () => Widget;
+    views: () => Iterable<Widget>;
+    viewSignals: ISignal<unknown, unknown>[];
+    /** Return the context only for views of this provider's shared document. */
+    contextForWidget: (view: Widget) => ISaveContext | undefined;
   }
 }

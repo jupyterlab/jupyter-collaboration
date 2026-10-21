@@ -7,7 +7,12 @@ import { Widget } from '@lumino/widgets';
 import { PromiseDelegate } from '@lumino/coreutils';
 import { nullTranslator } from '@jupyterlab/translation';
 import { acceptDialog, sleep, waitForDialog } from '@jupyterlab/testutils';
-import { ExternalChangeHandler } from '../externalChange';
+import {
+  ExternalChangeHandler,
+  ExternalChangeNoticePresenter
+} from '../externalChange';
+import { MainAreaWidget } from '@jupyterlab/apputils';
+import { Signal } from '@lumino/signaling';
 
 function click(label: string): void {
   const container = document.querySelector('.jp-Dialog') ?? document;
@@ -279,4 +284,159 @@ describe('ExternalChangeHandler without a document transport', () => {
       handler.dispose();
     }
   );
+});
+
+describe('external-change notices in multiple document views', () => {
+  function setupViews() {
+    const layoutChanged = new Signal<object, void>({});
+    const views: MainAreaWidget[] = [];
+    const contexts = new Map<
+      Widget,
+      ExternalChangeNoticePresenter.ISaveContext
+    >();
+    const originalSave = jest.fn().mockResolvedValue(undefined);
+    const context = { save: originalSave };
+    const createView = (belongsToDocument = true) => {
+      const view = new MainAreaWidget({ content: new Widget() });
+      views.push(view);
+      if (belongsToDocument) {
+        contexts.set(view, context);
+      }
+      layoutChanged.emit(undefined);
+      return view;
+    };
+    const handler = new ExternalChangeHandler({
+      ready: Promise.resolve(),
+      translator: nullTranslator.load('jupyter-collaboration'),
+      contents: { get: jest.fn() },
+      actions: { saveAs: jest.fn() },
+      onCloseDocument: () => views.find(view => !view.isDisposed)?.dispose(),
+      showNotice: (notice, beforeSave, createNotice) =>
+        new ExternalChangeNoticePresenter({
+          notice,
+          beforeSave,
+          createNotice,
+          views: () => views,
+          viewSignals: [layoutChanged],
+          contextForWidget: view => contexts.get(view)
+        })
+    });
+    const notices = (view: MainAreaWidget) =>
+      view.contentHeader.node.querySelectorAll(
+        '.jp-CollaborationExternalChangeNotice'
+      );
+    const dispose = () => {
+      handler.dispose();
+      views.forEach(view => view.dispose());
+    };
+    return {
+      handler,
+      context,
+      originalSave,
+      createView,
+      notices,
+      layoutChanged,
+      dispose
+    };
+  }
+
+  it('notifies existing and newly opened views without duplicating save guards', async () => {
+    const {
+      handler,
+      context,
+      originalSave,
+      createView,
+      notices,
+      layoutChanged,
+      dispose
+    } = setupViews();
+    const first = createView();
+    const second = createView();
+    const unrelated = createView(false);
+    handler.updateStatus({ originalPath: 'original.txt' });
+    await sleep(20);
+    const guardedSave = context.save;
+    expect(guardedSave).not.toBe(originalSave);
+    expect(notices(first)).toHaveLength(1);
+    expect(notices(second)).toHaveLength(1);
+    expect(notices(unrelated)).toHaveLength(0);
+    const third = createView();
+    layoutChanged.emit(undefined);
+    await sleep(20);
+    expect(notices(third)).toHaveLength(1);
+    expect(notices(first)).toHaveLength(1);
+    expect(context.save).toBe(guardedSave);
+    const saving = context.save();
+    const rejected = expect(saving).rejects.toHaveProperty(
+      'name',
+      'ModalCancelError'
+    );
+    await waitForDialog();
+    click('Cancel');
+    await rejected;
+    expect(originalSave).not.toHaveBeenCalled();
+    handler.updateStatus(null);
+    await sleep(20);
+    expect(notices(first)).toHaveLength(0);
+    expect(notices(second)).toHaveLength(0);
+    expect(notices(third)).toHaveLength(0);
+    expect(context.save).toBe(originalSave);
+    const fourth = createView();
+    await sleep(20);
+    expect(notices(fourth)).toHaveLength(0);
+    dispose();
+  });
+
+  it('keeps the notice and save guard when one view is closed', async () => {
+    const { handler, context, createView, notices, dispose } = setupViews();
+    const first = createView();
+    const second = createView();
+    handler.updateStatus({ originalPath: 'original.txt' });
+    await sleep(20);
+    const guardedSave = context.save;
+    Array.from(first.contentHeader.node.querySelectorAll('button'))
+      .find(button => button.textContent === 'Close tab')!
+      .click();
+    await sleep(20);
+    expect(first.isDisposed).toBe(true);
+    expect(notices(second)).toHaveLength(1);
+    expect(context.save).toBe(guardedSave);
+    const third = createView();
+    await sleep(20);
+    expect(notices(third)).toHaveLength(1);
+    dispose();
+  });
+
+  it('updates every view on deletion and removes all notices on disposal', async () => {
+    const {
+      handler,
+      context,
+      originalSave,
+      createView,
+      notices,
+      layoutChanged,
+      dispose
+    } = setupViews();
+    const first = createView();
+    const second = createView();
+    handler.updateStatus({ originalPath: 'original.txt' });
+    await sleep(20);
+    handler.updateStatus({ originalPath: 'original.txt', reason: 'deleted' });
+    await sleep(20);
+    for (const view of [first, second]) {
+      expect(notices(view)).toHaveLength(1);
+      expect(notices(view)[0].textContent).toContain('deleted');
+      expect(notices(view)[0].textContent).not.toContain('Load from disk');
+    }
+    layoutChanged.emit(undefined);
+    handler.dispose();
+    await sleep(20);
+    expect(notices(first)).toHaveLength(0);
+    expect(notices(second)).toHaveLength(0);
+    expect(context.save).toBe(originalSave);
+    const third = createView();
+    await sleep(20);
+    expect(notices(third)).toHaveLength(0);
+    dispose();
+  });
 });

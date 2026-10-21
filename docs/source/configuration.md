@@ -119,7 +119,8 @@ of the per-user `autoReload` setting, which only applies in `"ask"` mode.
 The following choices apply when content is preserved:
 
 When an external program changes an open collaborative file, a notice appears
-above the editor. You can continue editing while deciding whether to **Load from
+above every view of the document. You can
+continue editing while deciding whether to **Load from
 disk**, **Save to original file**, **Save As…**, or **Close tab**. **Save to original
 file** replaces the disk content with your current content. Saving with Ctrl-S asks whether to replace
 the original file's disk content or save your current content under a new name.
