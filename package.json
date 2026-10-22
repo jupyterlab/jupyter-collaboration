@@ -31,7 +31,7 @@
   "scripts": {
     "dev": "python scripts/dev_install.py",
     "build": "lerna run build",
-    "build:prod": "lerna run build:prod",
+    "build:prod": "lerna run build:prod --concurrency 1",
     "build:test": "lerna run build:test",
     "clean": "lerna run clean",
     "clean:lib": "lerna run clean:lib",
