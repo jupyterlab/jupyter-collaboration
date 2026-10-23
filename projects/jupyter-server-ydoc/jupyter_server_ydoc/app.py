@@ -12,7 +12,7 @@ from jupyter_ydoc import ydocs as YDOCS
 from jupyter_ydoc.ybasedoc import YBaseDoc
 from pycrdt import Doc
 from pycrdt.store import BaseYStore
-from traitlets import Bool, Float, Type, Unicode
+from traitlets import Bool, Enum, Float, Type, Unicode
 
 from .handlers import (
     DocForkHandler,
@@ -43,6 +43,17 @@ class YDocExtension(ExtensionApp):
     """
 
     disable_rtc = Bool(False, config=True, help="Whether to disable real time collaboration.")
+
+    behavior_on_external_change = Enum(
+        values=["ask", "overwrite"],
+        default_value="overwrite",
+        config=True,
+        help="""How to handle changes to a file on disk. 'ask' preserves the current shared
+        content, gives the disk version a new file ID, and lets users resolve the change.
+        'overwrite' (default) replaces the shared in-memory content with disk content for
+        all collaborators, keeping the file ID and replacing unsaved edits.
+        Deleted or unreadable files still preserve current content and show a notice.""",
+    )
 
     file_poll_interval = Float(
         1,
@@ -131,6 +142,7 @@ class YDocExtension(ExtensionApp):
     def initialize_settings(self):
         self.settings.update(
             {
+                "collaborative_behavior_on_external_change": self.behavior_on_external_change,
                 "collaborative_file_poll_interval": self.file_poll_interval,
                 "collaborative_document_cleanup_delay": self.document_cleanup_delay,
                 "collaborative_document_save_delay": self.document_save_delay,
@@ -186,6 +198,7 @@ class YDocExtension(ExtensionApp):
                     {
                         "document_cleanup_delay": self.document_cleanup_delay,
                         "document_save_delay": self.document_save_delay,
+                        "behavior_on_external_change": self.behavior_on_external_change,
                         "document_load_progressively": self.document_load_progressively,
                         "notebook_output_delay_threshold_mb": (
                             self.notebook_output_delay_threshold_mb
@@ -282,6 +295,7 @@ class YDocExtension(ExtensionApp):
                     self.log,
                     exception_handler=exception_logger,
                     save_delay=self.document_save_delay,
+                    behavior_on_external_change=self.behavior_on_external_change,
                     document_load_progressively=self.document_load_progressively,
                     notebook_output_delay_threshold_mb=self.notebook_output_delay_threshold_mb,
                 )

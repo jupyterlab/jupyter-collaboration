@@ -87,3 +87,52 @@ pip install "jupyterlab>=4.2.0b0"
 pip install "jupyverse[jupyterlab, auth]>=0.4.2"
 jupyverse --set kernels.require_yjs=true --set jupyterlab.server_side_execution=true
 ```
+
+## Files changed on disk
+
+The server-wide setting `YDocExtension.behavior_on_external_change` controls how
+external changes are handled. It accepts:
+
+- `"overwrite"` (default): replace the shared **in-memory content with disk content**
+  for all collaborators. The file keeps its ID, and the
+  editor updates without a notice.
+- `"ask"`: preserve each existing session's content, give the disk version a new
+  file ID, and show a notice with resolution choices.
+
+To enable resolution choices for every collaborator, configure
+`jupyter_server_config.py` and restart the server:
+
+```python
+c.YDocExtension.behavior_on_external_change = "ask"
+```
+
+Or start the server with:
+
+```bash
+jupyter lab --YDocExtension.behavior_on_external_change=ask
+```
+
+Deleted or unreadable files preserve current content and show a notice in either
+mode, since there is no disk content to reload. This server policy is independent
+of the per-user `autoReload` setting, which only applies in `"ask"` mode.
+
+The following choices apply when content is preserved:
+
+When an external program changes an open collaborative file, a notice appears
+above every view of the document. You can
+continue editing while deciding whether to **Load from
+disk**, **Save to original file**, **Save As…**, or **Close tab**. **Save to original
+file** replaces the disk content with your current content. Saving with Ctrl-S asks whether to replace
+the original file's disk content or save your current content under a new name.
+Canceling keeps the notice and your current content.
+
+For notebooks, **Show diff** opens the existing notebook diff viewer to compare
+current editor content with the disk version. Diff is unavailable
+when the file was deleted.
+
+Choosing **Load from disk** immediately replaces your current content with the
+disk version. To reload automatically on future external changes, open the Settings
+Editor under **Collaborative documents**, using **Automatically load files changed on
+disk** (`autoReload`, disabled by default). Enabling it replaces your current
+content on future external changes. Deleted files still show a notice, since
+there is no disk version to load.
