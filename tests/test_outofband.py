@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import nbformat
@@ -114,6 +115,30 @@ async def test_identical_external_write_does_not_prompt(document):
     assert loader.path == path
     assert room.outofband is None
     assert not room._document.dirty
+
+
+@pytest.mark.parametrize("document", [True], indirect=True)
+async def test_touch_notebook_without_optional_metadata_does_not_prompt(
+    document, jp_root_dir, arbitrary_fid_manager
+):
+    cm, loader, room, model, path = document
+    disk = cm.get(path)["content"]
+    assert "kernelspec" not in disk["metadata"]
+    assert "language_info" not in disk["metadata"]
+    shared = await room._document.aget()
+    file = jp_root_dir / path
+    original_bytes = file.read_bytes()
+    stat = file.stat()
+    # Change only the timestamp, without letting an initial save normalize disk metadata.
+    os.utime(file, ns=(stat.st_atime_ns, stat.st_mtime_ns + 2_000_000_000))
+
+    await loader.maybe_notify()
+
+    assert file.read_bytes() == original_bytes
+    assert await room._document.aget() == shared
+    assert room.outofband is None
+    assert not room._document.dirty
+    assert arbitrary_fid_manager.get_id(path) == loader.file_id
 
 
 @pytest.mark.parametrize("document", [False, True], indirect=True)
@@ -246,13 +271,19 @@ async def test_external_deletion_preserves_content_and_notifies(
 
 async def test_deleted_file_restored_preserves_old_session(document, jp_root_dir):
     cm, loader, room, model, path = document
+    shared = await room._document.aget()
     (jp_root_dir / path).unlink()
     await loader.maybe_notify()
     assert room.outofband["reason"] == "deleted"
-    cm.save(model, path)
+    cm.save({**model, "content": "restored with new content"}, path)
     await loader.maybe_notify()
-    assert room.outofband == {"originalPath": path, "reason": "deleted"}
-    assert loader.deleted
+    assert room.outofband == {"originalPath": path}
+    assert not loader.deleted
+    assert await room._document.aget() == shared
+    assert cm.get(path)["content"] == "restored with new content"
+    with pytest.raises(OutOfBandChanges):
+        await loader.maybe_save_content({**model, "content": shared})
+    assert cm.get(path)["content"] == "restored with new content"
 
 
 @pytest.mark.parametrize("document", [False, True], indirect=True)

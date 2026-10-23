@@ -13,6 +13,7 @@ import {
 } from '../externalChange';
 import { MainAreaWidget } from '@jupyterlab/apputils';
 import { Signal } from '@lumino/signaling';
+import { ServerConnection } from '@jupyterlab/services';
 
 function click(label: string): void {
   const container = document.querySelector('.jp-Dialog') ?? document;
@@ -234,7 +235,14 @@ describe('ExternalChangeHandler without a document transport', () => {
   it.each([undefined, 'deleted'] as const)(
     'saves directly to the original from the notice for status %s',
     async reason => {
-      const { handler, actions, onSwitchDocument } = setup();
+      const { handler, actions, onSwitchDocument, get } = setup();
+      if (reason === 'deleted') {
+        get.mockRejectedValue(
+          new ServerConnection.ResponseError(
+            new Response(null, { status: 404 })
+          )
+        );
+      }
       handler.updateStatus({ originalPath: 'Untitled.ipynb', reason });
       await sleep(20);
       click('Save to original file');
@@ -246,6 +254,32 @@ describe('ExternalChangeHandler without a document transport', () => {
       expect(
         document.querySelector('.jp-CollaborationExternalChangeNotice')
       ).toBeNull();
+      handler.dispose();
+    }
+  );
+  it.each([false, true])(
+    'asks before overwriting a restored file (accept: %s)',
+    async accept => {
+      const { handler, actions, onSwitchDocument } = setup();
+      handler.updateStatus({
+        originalPath: 'Untitled.ipynb',
+        reason: 'deleted'
+      });
+      await sleep(20);
+      click('Save to original file');
+      await waitForDialog();
+      expect(actions.overwrite).not.toHaveBeenCalled();
+      // The watcher can detect restoration while the confirmation is open.
+      const dialog = document.querySelector('.jp-Dialog');
+      handler.updateStatus({ originalPath: 'Untitled.ipynb' });
+      await sleep(20);
+      expect(document.querySelector('.jp-Dialog')).toBe(dialog);
+      expect(dialog?.textContent).toContain('Replace restored file?');
+      expect(actions.overwrite).not.toHaveBeenCalled();
+      click(accept ? 'Replace' : 'Cancel');
+      await sleep(20);
+      expect(actions.overwrite).toHaveBeenCalledTimes(accept ? 1 : 0);
+      expect(onSwitchDocument).toHaveBeenCalledTimes(accept ? 1 : 0);
       handler.dispose();
     }
   );

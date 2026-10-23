@@ -10,7 +10,7 @@ import {
   MainAreaWidget
 } from '@jupyterlab/apputils';
 import { PathExt } from '@jupyterlab/coreutils';
-import { Contents } from '@jupyterlab/services';
+import { Contents, ServerConnection } from '@jupyterlab/services';
 import { TranslationBundle } from '@jupyterlab/translation';
 import { IDisposable } from '@lumino/disposable';
 import { Widget } from '@lumino/widgets';
@@ -60,7 +60,14 @@ export class ExternalChangeHandler implements IDisposable {
       return;
     }
 
-    this._externalChangeDialog?.resolve(0);
+    const restored =
+      change &&
+      this._externalChange?.originalPath === change.originalPath &&
+      this._externalChange.reason === 'deleted' &&
+      !change.reason;
+    if (!restored) {
+      this._externalChangeDialog?.resolve(0);
+    }
     this._externalChange = change ? { ...change } : undefined;
     this._clearNotices();
     if (!change) {
@@ -245,6 +252,43 @@ export class ExternalChangeHandler implements IDisposable {
       // Other views can still share this unresolved document context.
       return;
     } else if (action === 'overwrite') {
+      if (change.reason === 'deleted') {
+        let restored = true;
+        try {
+          await this._options.contents.get(originalPath, { content: false });
+        } catch (error) {
+          if (
+            !(error instanceof ServerConnection.ResponseError) ||
+            error.response.status !== 404
+          ) {
+            throw error;
+          }
+          restored = false;
+        }
+        if (restored) {
+          const dialog = new Dialog({
+            title: this._options.translator.__('Replace restored file?'),
+            body: this._options.translator.__(
+              'The deleted file has been restored. Saving will replace its disk content.'
+            ),
+            buttons: [
+              Dialog.cancelButton(),
+              Dialog.warnButton({
+                label: this._options.translator.__('Replace')
+              })
+            ]
+          });
+          this._externalChangeDialog = dialog;
+          try {
+            const result = await dialog.launch();
+            if (!result.button.accept || this.isDisposed) {
+              return;
+            }
+          } finally {
+            this._externalChangeDialog = undefined;
+          }
+        }
+      }
       await this._options.actions.overwrite?.(originalPath);
       await this._options.onSwitchDocument?.(originalPath);
     } else {
