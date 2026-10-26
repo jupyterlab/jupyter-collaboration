@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 5.1.0alpha0
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@5.0.4...1b13e74319dba22984e704b39fe0c04af929fa42))
+
+### Enhancements made
+
+- Follow out-of-band changes by default, rework UI [#637](https://github.com/jupyterlab/jupyter-collaboration/pull/637) ([@davidbrochart](https://github.com/davidbrochart), [@krassowski](https://github.com/krassowski), [@martinRenou](https://github.com/martinRenou))
+- Allow saving current document when out-of-band changes [#631](https://github.com/jupyterlab/jupyter-collaboration/pull/631) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Maintenance and upkeep improvements
+
+- Drop Python 3.10 and add Python 3.15 [#634](https://github.com/jupyterlab/jupyter-collaboration/pull/634) ([@davidbrochart](https://github.com/davidbrochart))
+- Ship the cursor pill styles as plain CSS [#628](https://github.com/jupyterlab/jupyter-collaboration/pull/628) ([@arjxn-py](https://github.com/arjxn-py), [@davidbrochart](https://github.com/davidbrochart), [@krassowski](https://github.com/krassowski))
+- Fix binder build [#624](https://github.com/jupyterlab/jupyter-collaboration/pull/624) ([@krassowski](https://github.com/krassowski), [@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/use/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2026-09-20&to=2026-10-26&type=c))
+
+@arjxn-py ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aarjxn-py+updated%3A2026-09-20..2026-10-26&type=Issues)) | @davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2026-09-20..2026-10-26&type=Issues)) | @krassowski ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2026-09-20..2026-10-26&type=Issues)) | @martinRenou ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AmartinRenou+updated%3A2026-09-20..2026-10-26&type=Issues))
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 5.0.4
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@5.0.3...3a303205e9cbf7e11fd0a1af44f7263296335b40))
@@ -20,8 +46,6 @@ See [our definition of contributors](https://github-activity.readthedocs.io/en/l
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2026-09-10&to=2026-09-20&type=c))
 
 @arjxn-py ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aarjxn-py+updated%3A2026-09-10..2026-09-20&type=Issues)) | @davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2026-09-10..2026-09-20&type=Issues)) | @krassowski ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2026-09-10..2026-09-20&type=Issues)) | @martinRenou ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AmartinRenou+updated%3A2026-09-10..2026-09-20&type=Issues)) | @SylvainCorlay ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3ASylvainCorlay+updated%3A2026-09-10..2026-09-20&type=Issues))
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 5.0.3
 
