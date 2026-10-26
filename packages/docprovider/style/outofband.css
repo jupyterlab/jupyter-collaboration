@@ -7,7 +7,9 @@
   min-height: 44px;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
   gap: 8px;
   padding: 8px 12px;
   color: var(--jp-ui-font-color1);
@@ -25,6 +27,7 @@
 }
 
 .jp-CollaborationExternalChangeNotice button.jp-mod-styled {
+  flex: none;
   height: 26px;
   line-height: 24px;
   padding: 0 8px;
