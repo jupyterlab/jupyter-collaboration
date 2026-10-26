@@ -1,10 +1,12 @@
+import { Widget } from '@lumino/widgets';
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
 /// <reference types="jest" />
 
 import * as encoding from 'lib0/encoding';
-import { ContentsManager } from '@jupyterlab/services';
+import * as decoding from 'lib0/decoding';
+import { ContentsManager, ServerConnection } from '@jupyterlab/services';
 import { YFile } from '@jupyter/ydoc';
 import { nullTranslator } from '@jupyterlab/translation';
 import {
@@ -82,6 +84,7 @@ function createProvider(
     model?: YFile;
     onSwitchDocument?: (path: string) => Promise<void>;
     onCloseDocument?: () => void;
+    onConflictShowDiff?: WebSocketProvider.IOptions['onConflictShowDiff'];
   } = {}
 ): WebSocketProvider {
   const { path = 'test.ipynb', model = new YFile() } = options;
@@ -102,8 +105,10 @@ function createProvider(
     model,
     user,
     translator,
+    showNotice: notice => Widget.attach(notice, document.body),
     onSwitchDocument: options.onSwitchDocument,
-    onCloseDocument: options.onCloseDocument
+    onCloseDocument: options.onCloseDocument,
+    onConflictShowDiff: options.onConflictShowDiff
   });
 }
 
@@ -121,22 +126,32 @@ describe('@jupyter/docprovider', () => {
   describe('WebSocketProvider', () => {
     describe('external changes', () => {
       function clickButton(label: string): void {
-        Array.from(
-          document.querySelectorAll<HTMLButtonElement>('.jp-Dialog button')
-        )
+        Array.from(document.querySelectorAll<HTMLButtonElement>('button'))
           .find(button => button.textContent === label)!
           .click();
       }
 
-      async function setup(syncBeforeStatus = true) {
-        jest.spyOn(ContentsManager.prototype, 'get').mockImplementation(
-          async (_path, options) =>
-            ({
+      async function setup(
+        syncBeforeStatus = true,
+        onConflictShowDiff?: WebSocketProvider.IOptions['onConflictShowDiff']
+      ) {
+        jest
+          .spyOn(ContentsManager.prototype, 'get')
+          .mockImplementation(async (_path, options) => {
+            if (options?.content === false) {
+              throw new ServerConnection.ResponseError(
+                new Response(null, { status: 404 })
+              );
+            }
+            return {
               content: options?.content
                 ? [{ name: 'original.txt' }, { name: 'original-Copy1.txt' }]
                 : null
-            } as any)
-        );
+            } as any;
+          });
+        const save = jest
+          .spyOn(ContentsManager.prototype, 'save')
+          .mockResolvedValue({} as any);
         const model = new YFile();
         model.setSource('shared content');
         const onSwitchDocument = jest.fn().mockResolvedValue(undefined);
@@ -144,12 +159,34 @@ describe('@jupyter/docprovider', () => {
         const provider = createProvider({
           model,
           onSwitchDocument,
-          onCloseDocument
+          onCloseDocument,
+          onConflictShowDiff
         });
-        const action = jest
-          .spyOn(provider as any, '_requestDocumentAction')
-          .mockResolvedValue(undefined);
         const websocket = await waitForProviderConnect(provider);
+        const socket = new EventTarget();
+        const action = jest.fn((message: Uint8Array) => {
+          const decoder = decoding.createDecoder(message);
+          expect(decoding.readVarUint(decoder)).toBe(2);
+          expect(decoding.readVarString(decoder)).toBe('save');
+          const responseTo = decoding.readVarUint(decoder);
+          queueMicrotask(() => {
+            const encoder = encoding.createEncoder();
+            encoding.writeVarUint(encoder, 2);
+            encoding.writeVarString(
+              encoder,
+              JSON.stringify({ type: 'save', responseTo, status: 'success' })
+            );
+            socket.dispatchEvent(
+              new MessageEvent('message', {
+                data: encoding.toUint8Array(encoder).buffer
+              })
+            );
+          });
+        });
+        (websocket as any).ws = Object.assign(socket, {
+          readyState: WebSocket.OPEN,
+          send: action
+        });
         if (syncBeforeStatus) {
           websocket.emit('sync', true);
         }
@@ -169,14 +206,15 @@ describe('@jupyter/docprovider', () => {
         await sendStatus({ originalPath: 'original.txt' });
         if (!syncBeforeStatus) {
           expect(
-            document.querySelector('.jp-CollaborationExternalChangeDialog')
+            document.querySelector('.jp-CollaborationExternalChangeNotice')
           ).toBeNull();
           websocket.emit('sync', true);
         }
-        await waitForDialog();
+        await sleep(20);
         return {
           model,
           provider,
+          save,
           action,
           onSwitchDocument,
           onCloseDocument,
@@ -184,24 +222,52 @@ describe('@jupyter/docprovider', () => {
         };
       }
 
+      it('compares the latest shared content without resolving the external change', async () => {
+        const onShowDiff = jest.fn().mockResolvedValue(undefined);
+        const { model, provider, action, save, onSwitchDocument } = await setup(
+          true,
+          onShowDiff
+        );
+        model.setSource('continued editing');
+        clickButton('Show diff');
+        await sleep(20);
+        expect(onShowDiff).toHaveBeenCalledWith(
+          'continued editing',
+          'original.txt'
+        );
+        expect(
+          document.querySelector('.jp-CollaborationExternalChangeNotice')
+        ).not.toBeNull();
+        expect(action).not.toHaveBeenCalled();
+        expect(save).not.toHaveBeenCalled();
+        expect(onSwitchDocument).not.toHaveBeenCalled();
+        provider.dispose();
+      });
+
       it('waits for a choice without automatically saving a copy', async () => {
         const { model, provider, action } = await setup();
-        expect(document.querySelector('.jp-Dialog')?.textContent).toContain(
-          'changed on disk'
-        );
+        expect(
+          document.querySelector('.jp-CollaborationExternalChangeNotice')
+            ?.textContent
+        ).toContain('changed on disk');
         expect(action).not.toHaveBeenCalled();
-        expect(document.querySelector('.jp-Dialog')?.textContent).not.toContain(
-          'Not now'
-        );
-        document.querySelector('.jp-Dialog')!.dispatchEvent(
-          new KeyboardEvent('keydown', {
-            key: 'Escape',
-            keyCode: 27,
-            bubbles: true
-          })
-        );
+        expect(
+          document.querySelector('.jp-CollaborationExternalChangeNotice')
+            ?.textContent
+        ).not.toContain('Not now');
+        document
+          .querySelector('.jp-CollaborationExternalChangeNotice')!
+          .dispatchEvent(
+            new KeyboardEvent('keydown', {
+              key: 'Escape',
+              keyCode: 27,
+              bubbles: true
+            })
+          );
         await sleep(50);
-        expect(document.querySelector('.jp-Dialog')).not.toBeNull();
+        expect(
+          document.querySelector('.jp-CollaborationExternalChangeNotice')
+        ).not.toBeNull();
         expect(model.getSource()).toBe('shared content');
         expect(action).not.toHaveBeenCalled();
         clickButton('Close tab');
@@ -215,17 +281,17 @@ describe('@jupyter/docprovider', () => {
         await sendStatus({ originalPath: 'original.txt' });
         await sleep(50);
         expect(
-          document.querySelectorAll('.jp-CollaborationExternalChangeDialog')
+          document.querySelectorAll('.jp-CollaborationExternalChangeNotice')
         ).toHaveLength(1);
         await sendStatus(null);
         await sleep(50);
         expect(
-          document.querySelector('.jp-CollaborationExternalChangeDialog')
+          document.querySelector('.jp-CollaborationExternalChangeNotice')
         ).toBeNull();
         await provider.save();
-        expect(action).toHaveBeenCalledWith('save');
+        expect(action).toHaveBeenCalledTimes(1);
         await sendStatus({ originalPath: 'original.txt' });
-        await waitForDialog();
+        await sleep(20);
         clickButton('Close tab');
         await sleep(50);
         provider.dispose();
@@ -235,26 +301,23 @@ describe('@jupyter/docprovider', () => {
         const { provider, action } = await setup(false);
         clickButton('Close tab');
         await sleep(50);
-        expect(action).toHaveBeenCalledWith('reload', {
-          originalPath: 'original.txt'
-        });
+        expect(action).not.toHaveBeenCalled();
         provider.dispose();
       });
 
       it('switches only this client when opening the original', async () => {
         const { model, provider, action, onSwitchDocument } = await setup();
-        clickButton('Open original file');
+        clickButton('Load from disk');
         await sleep(50);
-        expect(action).toHaveBeenCalledWith('reload', {
-          originalPath: 'original.txt'
-        });
+        expect(action).not.toHaveBeenCalled();
         expect(onSwitchDocument).toHaveBeenCalledWith('original.txt');
         expect(model.getSource()).toBe('shared content');
         provider.dispose();
       });
 
       it('saves only after a new name has been accepted', async () => {
-        const { provider, action, onSwitchDocument } = await setup();
+        const { model, provider, action, save, onSwitchDocument } =
+          await setup();
         clickButton('Save As…');
         await sleep(50);
         await waitForDialog();
@@ -264,31 +327,102 @@ describe('@jupyter/docprovider', () => {
         input.value = 'chosen.txt';
         input.dispatchEvent(new Event('input', { bubbles: true }));
         expect(action).not.toHaveBeenCalled();
+        expect(save).not.toHaveBeenCalled();
+        model.setSource('latest edits');
         await acceptDialog();
         await sleep(50);
-        expect(action).toHaveBeenCalledWith('save-as', {
-          path: 'chosen.txt',
-          originalPath: 'original.txt'
+        expect(action).not.toHaveBeenCalled();
+        expect(save).toHaveBeenCalledWith('chosen.txt', {
+          type: 'file',
+          format: 'text',
+          content: 'latest edits'
         });
         expect(onSwitchDocument).toHaveBeenCalledWith('chosen.txt');
         provider.dispose();
       });
 
-      it('releases the original path before closing, without replacing shared content', async () => {
+      it('overwrites through Contents and switches only after the write succeeds', async () => {
+        const { model, provider, save, action, onSwitchDocument } =
+          await setup();
+        let finish!: () => void;
+        save.mockImplementationOnce(
+          () =>
+            new Promise(resolve => {
+              finish = () => resolve({} as any);
+            })
+        );
+        model.setSource('latest edits');
+        clickButton('Save to original file');
+        await sleep(20);
+        expect(save).toHaveBeenCalledWith('original.txt', {
+          type: 'file',
+          format: 'text',
+          content: 'latest edits'
+        });
+        expect(action).not.toHaveBeenCalled();
+        expect(onSwitchDocument).not.toHaveBeenCalled();
+        finish();
+        await sleep(20);
+        expect(onSwitchDocument).toHaveBeenCalledWith('original.txt');
+        expect(model.getSource()).toBe('latest edits');
+        provider.dispose();
+      });
+
+      it('keeps the notice and current document when overwrite fails', async () => {
+        const { provider, save, onSwitchDocument } = await setup();
+        save.mockRejectedValueOnce(new Error('disk full'));
+        clickButton('Save to original file');
+        await waitForDialog();
+        expect(document.querySelector('.jp-Dialog')!.textContent).toContain(
+          'disk full'
+        );
+        expect(onSwitchDocument).not.toHaveBeenCalled();
+        await acceptDialog();
+        await sleep(20);
+        expect(
+          document.querySelector('.jp-CollaborationExternalChangeNotice')
+        ).not.toBeNull();
+        clickButton('Save to original file');
+        await sleep(20);
+        expect(onSwitchDocument).toHaveBeenCalledWith('original.txt');
+        provider.dispose();
+      });
+
+      it('rejects original and existing destinations without writing', async () => {
+        const { provider, save } = await setup();
+        await expect(
+          (provider as any)._saveAs('original.txt', 'original.txt')
+        ).rejects.toThrow('Choose a new filename');
+        jest
+          .spyOn(ContentsManager.prototype, 'get')
+          .mockResolvedValue({} as any);
+        await expect(
+          (provider as any)._saveAs('existing.txt', 'original.txt')
+        ).rejects.toThrow('already exists');
+        expect(save).not.toHaveBeenCalled();
+        provider.dispose();
+      });
+
+      it('keeps the current document when a Contents API save fails and allows retry', async () => {
+        const { provider, model, save, onSwitchDocument } = await setup();
+        save.mockRejectedValueOnce(new Error('disk full'));
+        await expect(
+          (provider as any)._saveAs('chosen.txt', 'original.txt')
+        ).rejects.toThrow('disk full');
+        expect(onSwitchDocument).not.toHaveBeenCalled();
+        expect(model.getSource()).toBe('shared content');
+        await expect(
+          (provider as any)._saveAs('chosen.txt', 'original.txt')
+        ).resolves.toBeUndefined();
+        provider.dispose();
+      });
+
+      it('closes locally without replacing shared content', async () => {
         const { model, provider, action, onCloseDocument, onSwitchDocument } =
           await setup();
-        let releasePath!: () => void;
-        action.mockImplementationOnce(
-          () => new Promise<void>(resolve => (releasePath = resolve))
-        );
         clickButton('Close tab');
         await sleep(50);
-        expect(onCloseDocument).not.toHaveBeenCalled();
-        expect(action).toHaveBeenCalledWith('reload', {
-          originalPath: 'original.txt'
-        });
-        releasePath();
-        await sleep(50);
+        expect(action).not.toHaveBeenCalled();
         expect(onCloseDocument).toHaveBeenCalledTimes(1);
         expect(onSwitchDocument).not.toHaveBeenCalled();
         expect(model.getSource()).toBe('shared content');
@@ -302,10 +436,11 @@ describe('@jupyter/docprovider', () => {
         await waitForDialog();
         await dismissDialog();
         await sleep(50);
-        await waitForDialog();
-        expect(document.querySelector('.jp-Dialog')?.textContent).toContain(
-          'The file was changed externally'
-        );
+        await sleep(20);
+        expect(
+          document.querySelector('.jp-CollaborationExternalChangeNotice')
+            ?.textContent
+        ).toContain('changed on disk');
         expect(action).not.toHaveBeenCalled();
         clickButton('Close tab');
         await sleep(50);

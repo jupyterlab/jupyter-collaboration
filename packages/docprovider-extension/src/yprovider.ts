@@ -7,10 +7,12 @@ import { ITranslator, TranslationBundle } from '@jupyterlab/translation';
 
 import {
   JupyterFrontEnd,
-  JupyterFrontEndPlugin
+  JupyterFrontEndPlugin,
+  ILabShell
 } from '@jupyterlab/application';
 import {
   WebSocketProvider,
+  ExternalChangeNoticePresenter,
   WebSocketAwarenessProvider,
   IAwarenessProviderFactory,
   IDocumentProviderFactory
@@ -23,6 +25,7 @@ import { CodeEditor, IEditorServices } from '@jupyterlab/codeeditor';
 import { IDocumentManager } from '@jupyterlab/docmanager';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { Contents } from '@jupyterlab/services';
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
 import { JSONValue, UUID } from '@lumino/coreutils';
 
@@ -31,6 +34,7 @@ import type * as nbformat from '@jupyterlab/nbformat';
 import { ConflictDiffWidget } from './conflictDiffWidget';
 import { CommandRegistry } from '@lumino/commands';
 import { Widget } from '@lumino/widgets';
+import { ISignal } from '@lumino/signaling';
 
 /**
  * The plugin ID for settings.
@@ -42,6 +46,14 @@ const PLUGIN_ID = '@jupyter/docprovider-extension:websocket-provider';
  */
 class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
   constructor(options: WebSocketDocumentProviderFactory.IOptions) {
+    this._viewSignals = [];
+    if (options.shell.currentChanged) {
+      this._viewSignals.push(options.shell.currentChanged);
+    }
+    if (options.labShell) {
+      this._viewSignals.push(options.labShell.layoutModified);
+    }
+    this._settings = options.settings;
     this._trans = options.translator;
     this._commands = options.commands;
     this._docManager = options.docManager;
@@ -58,8 +70,12 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
     const rendermime = this._rendermime;
     const path = options.path;
 
-    const onConflictShowNotebookDiff = async (localContent: JSONValue) => {
-      const serverModel = await contents.get(path, { content: true });
+    const onConflictShowNotebookDiff = async (
+      localContent: JSONValue,
+      originalPath?: string
+    ) => {
+      const diffPath = originalPath ?? path;
+      const serverModel = await contents.get(diffPath, { content: true });
       const widget = new ConflictDiffWidget({
         translator: this._trans,
         editorFactory,
@@ -70,38 +86,42 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
         remote: localContent as nbformat.INotebookContent
       });
       const main = new MainAreaWidget({ content: widget });
-      main.title.label = this._trans.__('Conflict diff: %1', path);
+      main.title.label = this._trans.__('Conflict diff: %1', diffPath);
       main.title.closable = true;
-      main.toolbar.addItem(
-        'revertToRemote',
-        new ToolbarButton({
-          icon: undoIcon,
-          label: this._trans.__('Revert to Remote'),
-          tooltip: this._trans.__(
-            'Discard local changes and reload the server version'
-          ),
-          onClick: () => {
-            const context = this._docManager.findWidget(path)?.context;
-            if (context && !context.isDisposed) {
-              void context.revert();
+      // External-change diffs are informational; ordinary conflicts retain
+      // their resolution actions.
+      if (originalPath === undefined) {
+        main.toolbar.addItem(
+          'revertToRemote',
+          new ToolbarButton({
+            icon: undoIcon,
+            label: this._trans.__('Revert to Remote'),
+            tooltip: this._trans.__(
+              'Discard local changes and reload the server version'
+            ),
+            onClick: () => {
+              const context = this._docManager.findWidget(path)?.context;
+              if (context && !context.isDisposed) {
+                void context.revert();
+              }
             }
-          }
-        })
-      );
-      main.toolbar.addItem(
-        'saveLocalAs',
-        new ToolbarButton({
-          icon: saveIcon,
-          label: this._trans.__('Save Local As'),
-          tooltip: this._trans.__('Save the local version with a new name'),
-          onClick: () => {
-            const context = this._docManager.findWidget(path)?.context;
-            if (context && !context.isDisposed) {
-              void context.saveAs();
+          })
+        );
+        main.toolbar.addItem(
+          'saveLocalAs',
+          new ToolbarButton({
+            icon: saveIcon,
+            label: this._trans.__('Save Local As'),
+            tooltip: this._trans.__('Save the local version with a new name'),
+            onClick: () => {
+              const context = this._docManager.findWidget(path)?.context;
+              if (context && !context.isDisposed) {
+                void context.saveAs();
+              }
             }
-          }
-        })
-      );
+          })
+        );
+      }
       shell.add(main, 'main');
       shell.activateById(main.id);
     };
@@ -114,6 +134,21 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
       user: options.user,
       translator: this._trans,
       serverSettings: options.serverSettings,
+      autoReload: () => this._settings?.get('autoReload').composite === true,
+      showNotice: (notice, beforeSave, createNotice) =>
+        new ExternalChangeNoticePresenter({
+          notice,
+          beforeSave,
+          createNotice,
+          views: () => shell.widgets('main'),
+          viewSignals: this._viewSignals,
+          contextForWidget: view => {
+            const context = this._docManager.contextForWidget(view);
+            return context?.model.sharedModel === options.model
+              ? context
+              : undefined;
+          }
+        }),
       onCloseDocument: () => {
         const views = Array.from(shell.widgets('main')).filter(
           widget =>
@@ -169,6 +204,8 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
           : undefined
     });
   }
+  private _viewSignals: ISignal<unknown, unknown>[];
+  private _settings: ISettingRegistry.ISettings | null;
   private _trans: TranslationBundle;
   private _commands: CommandRegistry;
   private _docManager: IDocumentManager;
@@ -180,6 +217,8 @@ class WebSocketDocumentProviderFactory implements IDocumentProviderFactory {
 
 namespace WebSocketDocumentProviderFactory {
   export interface IOptions {
+    settings: ISettingRegistry.ISettings | null;
+    labShell: ILabShell | null;
     translator: TranslationBundle;
     commands: CommandRegistry;
     docManager: IDocumentManager;
@@ -221,17 +260,24 @@ export const documentProviderFactoryPlugin: JupyterFrontEndPlugin<IDocumentProvi
       IRenderMimeRegistry,
       IDocumentManager
     ],
-    optional: [],
+    optional: [ISettingRegistry, ILabShell],
     provides: IDocumentProviderFactory,
     activate: async (
       app: JupyterFrontEnd,
       translator: ITranslator,
       editorServices: IEditorServices,
       rendermime: IRenderMimeRegistry,
-      docManager: IDocumentManager
+      docManager: IDocumentManager,
+      settingRegistry: ISettingRegistry | null,
+      labShell: ILabShell | null
     ) => {
       const trans = translator.load('jupyter_collaboration');
+      const settings = settingRegistry
+        ? await settingRegistry.load(PLUGIN_ID + '-document-factory')
+        : null;
       return new WebSocketDocumentProviderFactory({
+        labShell,
+        settings,
         translator: trans,
         commands: app.commands,
         docManager,

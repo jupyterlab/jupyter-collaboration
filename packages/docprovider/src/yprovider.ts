@@ -15,8 +15,13 @@ import { JSONValue, PromiseDelegate } from '@lumino/coreutils';
 import { DocumentChange, YDocument } from '@jupyter/ydoc';
 import { IDocumentProvider } from '@jupyter/collaborative-drive';
 
-import { ContentsManager, ServerConnection, User } from '@jupyterlab/services';
-import { URLExt } from '@jupyterlab/coreutils';
+import {
+  Contents,
+  ContentsManager,
+  ServerConnection,
+  User
+} from '@jupyterlab/services';
+import { PathExt, URLExt } from '@jupyterlab/coreutils';
 import { TranslationBundle } from '@jupyterlab/translation';
 import { Dialog, showDialog } from '@jupyterlab/apputils';
 
@@ -77,11 +82,18 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       translator: this._trans,
       contents: this._contents,
       actions: {
-        openOriginal: originalPath =>
-          this._requestDocumentAction('reload', { originalPath }),
-        saveAs: (path, originalPath) =>
-          this._requestDocumentAction('save-as', { path, originalPath })
+        saveAs: (path, originalPath) => this._saveAs(path, originalPath),
+        overwrite: originalPath => this._saveContent(originalPath)
       },
+      showNotice: options.showNotice,
+      autoReload: options.autoReload,
+      onShowDiff: options.onConflictShowDiff
+        ? originalPath =>
+            options.onConflictShowDiff!(
+              this._sharedModel.getSource(),
+              originalPath
+            )
+        : undefined,
       onSwitchDocument: options.onSwitchDocument,
       onCloseDocument: options.onCloseDocument
     });
@@ -156,13 +168,6 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
 
   async save(): Promise<void> {
     await this._externalChanges.ensureCanSave();
-    await this._requestDocumentAction('save');
-  }
-
-  private async _requestDocumentAction(
-    action: 'save' | 'save-as' | 'reload',
-    target?: { path?: string; originalPath: string }
-  ): Promise<void> {
     const ws = this._yWebsocketProvider?.ws;
     if (!ws || ws.readyState !== WebSocket.OPEN) {
       throw new Error(
@@ -199,7 +204,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         }
         if (
           reply &&
-          reply['type'] === action &&
+          reply['type'] === 'save' &&
           reply['responseTo'] === saveId
         ) {
           if (reply.status === 'success') {
@@ -222,11 +227,8 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       ws.addEventListener('message', handler);
       const encoder = encoding.createEncoder();
       encoding.writeVarUint(encoder, RAW_MESSAGE_TYPE);
-      encoding.writeVarString(encoder, action);
+      encoding.writeVarString(encoder, 'save');
       encoding.writeVarUint(encoder, saveId);
-      if (target) {
-        encoding.writeVarString(encoder, JSON.stringify(target));
-      }
       const saveMessage = encoding.toUint8Array(encoder);
       ws.send(saveMessage);
       try {
@@ -235,6 +237,40 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         ws.removeEventListener('message', handler);
       }
     }
+  }
+
+  private async _saveAs(path: string, originalPath: string): Promise<void> {
+    if (!path || PathExt.normalize(path) === PathExt.normalize(originalPath)) {
+      throw new Error(
+        this._trans.__('Choose a new filename to keep the original file intact')
+      );
+    }
+    let exists = true;
+    try {
+      await this._contents.get(path, { content: false });
+    } catch (error) {
+      if (
+        !(error instanceof ServerConnection.ResponseError) ||
+        error.response.status !== 404
+      ) {
+        throw error;
+      }
+      exists = false;
+    }
+    if (exists) {
+      throw new Error(
+        this._trans.__('That filename already exists. Choose a new filename')
+      );
+    }
+    await this._saveContent(path);
+  }
+
+  private async _saveContent(path: string): Promise<void> {
+    await this._contents.save(path, {
+      type: this._contentType as Contents.ContentType,
+      format: this._format as Contents.FileFormat,
+      content: this._sharedModel.getSource()
+    });
   }
 
   private get _serverUrl() {
@@ -618,7 +654,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _onConflictRevert?: () => Promise<void>;
   private _loadTimeoutId: number | null = null;
   private _isShowingDialog = false;
-  private _onConflictShowDiff?: (localContent: JSONValue) => Promise<void>;
+  private _onConflictShowDiff: WebSocketProvider.IOptions['onConflictShowDiff'];
   private _externalChanges: ExternalChangeHandler;
   private _contents: ContentsManager;
 }
@@ -671,6 +707,8 @@ export namespace WebSocketProvider {
      */
     serverSettings?: ServerConnection.ISettings;
 
+    showNotice?: ExternalChangeHandler.IOptions['showNotice'];
+    autoReload?: ExternalChangeHandler.IOptions['autoReload'];
     /** Replace this client's document tab after resolving an external change. */
     onSwitchDocument?: (path: string) => Promise<void>;
 
@@ -688,9 +726,13 @@ export namespace WebSocketProvider {
     onConflictRevert?: () => Promise<void>;
 
     /**
-     * Called when the user chooses "Show Diff" from the conflict dialog.
-     * Receives the current local document content as JSON.
+     * Called when the user chooses to show a diff from the conflict dialog or
+     * external-change notice. Receives the current local content as JSON.
+     * The notice also supplies the original path. The diff is read-only.
      */
-    onConflictShowDiff?: (localContent: JSONValue) => Promise<void>;
+    onConflictShowDiff?: (
+      localContent: JSONValue,
+      originalPath?: string
+    ) => Promise<void>;
   }
 }

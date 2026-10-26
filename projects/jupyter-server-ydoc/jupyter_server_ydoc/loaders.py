@@ -126,7 +126,9 @@ class FileLoader:
         if id in self._filepath_subscriptions.keys():
             del self._filepath_subscriptions[id]
 
-    async def load_content(self, format: str, file_type: str) -> dict[str, Any]:
+    async def load_content(
+        self, format: str, file_type: str, *, require_hash: bool = False
+    ) -> dict[str, Any]:
         """
         Load the content of the file.
 
@@ -140,7 +142,13 @@ class FileLoader:
         """
         async with self._lock:
             model = await ensure_async(
-                self._contents_manager.get(self.path, format=format, type=file_type, content=True)
+                self._contents_manager.get(
+                    self.path,
+                    format=format,
+                    type=file_type,
+                    content=True,
+                    require_hash=require_hash,
+                )
             )
             if (
                 file_type == "file"
@@ -152,6 +160,12 @@ class FileLoader:
                 self._log.debug("Normalizing line endings for %s file on content load", self.path)
             self.last_modified = model["last_modified"]
             return model
+
+    async def acknowledge_reload(self) -> None:
+        """Allow saves after disk content was successfully applied to the room."""
+        async with self._lock:
+            self._outofband = False
+            self.deleted = False
 
     async def maybe_save_content(self, model: dict[str, Any]) -> dict[str, Any] | None:
         """
@@ -207,6 +221,8 @@ class FileLoader:
         """Check disk content without applying it or creating another file."""
         async with self._lock:
             if self._detached_path is not None:
+                # Preserve the session, but refresh whether its former path exists.
+                await self._get_disk_model(self.path, content=False)
                 return True
             self._outofband = True
             disk = await self._get_disk_model(
@@ -217,11 +233,26 @@ class FileLoader:
             content = disk["content"]
             if model["type"] == "file" and isinstance(content, str):
                 content = content.replace("\r\n", "\n")
+            if model["type"] == "notebook":
+                # YNotebook adds these defaults on load. Compare the same defaults
+                # without changing the disk content or the shared snapshot.
+                content = self._notebook_with_metadata_defaults(content)
+                model = {
+                    **model,
+                    "content": self._notebook_with_metadata_defaults(model["content"]),
+                }
             if content == model["content"]:
                 self.last_modified = disk["last_modified"]
                 self._outofband = False
                 return False
             return True
+
+    @staticmethod
+    def _notebook_with_metadata_defaults(content: dict[str, Any]) -> dict[str, Any]:
+        metadata = dict(content.get("metadata", {}))
+        metadata.setdefault("language_info", {"name": ""})
+        metadata.setdefault("kernelspec", {"name": "", "display_name": ""})
+        return {**content, "metadata": metadata}
 
     async def _get_disk_model(self, path: str, **kwargs: Any) -> dict[str, Any] | None:
         """Treat disappearance of a previously loaded file as an external change."""
@@ -249,17 +280,6 @@ class FileLoader:
                     self._file_id_manager.delete(path)
                 self._detached_path = path
                 self._outofband = True
-
-    async def save_as(self, model: dict[str, Any], new_path: str) -> None:
-        """Save an explicit snapshot without moving other users to a new file."""
-        async with self._lock:
-            if not self._outofband:
-                raise HTTPError(409, "The external change has already been resolved")
-            if not new_path or new_path == self.path:
-                raise HTTPError(409, "Choose a new filename to keep the original file intact")
-            if await ensure_async(self._contents_manager.exists(new_path)):
-                raise HTTPError(409, "That filename already exists. Choose a new filename")
-            await ensure_async(self._contents_manager.save(model, new_path))
 
     async def _save_content(
         self, model: dict[str, Any], done_saving: asyncio.Event, path: str
@@ -365,11 +385,17 @@ class FileLoader:
         """
         Notifies subscribed rooms about out-of-band file changes.
         """
-        if self._detached_path is not None:
-            return
         do_notify = False
         filepath_change = False
         async with self._lock:
+            if self._detached_path is not None:
+                was_deleted = self.deleted
+                await self._get_disk_model(self.path, content=False)
+                # Detached rooms never reload or detach the new disk session.
+                # Only existence changes need a new notification.
+                if self.deleted == was_deleted:
+                    return
+                do_notify = True
             path = self.path
             if self._current_path != path:
                 self._current_path = path

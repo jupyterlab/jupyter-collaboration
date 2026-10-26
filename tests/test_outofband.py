@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import nbformat
@@ -19,7 +20,18 @@ from pycrdt.websocket import YRoom
 
 
 @pytest.fixture
-def document(jp_root_dir, arbitrary_fid_manager, request, jp_asyncio_loop):
+def behavior_on_external_change():
+    return "ask"
+
+
+@pytest.fixture
+def document(
+    jp_root_dir,
+    arbitrary_fid_manager,
+    request,
+    jp_asyncio_loop,
+    behavior_on_external_change,
+):
     async def create():
         notebook = getattr(request, "param", False)
         path = "document.ipynb" if notebook else "document.txt"
@@ -40,7 +52,14 @@ def document(jp_root_dir, arbitrary_fid_manager, request, jp_asyncio_loop):
         file_id = arbitrary_fid_manager.index(path)
         loader = FileLoader(file_id, arbitrary_fid_manager, cm)
         room = DocumentRoom(
-            "test-room", model["format"], model["type"], loader, FakeEventLogger(), None, None
+            "test-room",
+            model["format"],
+            model["type"],
+            loader,
+            FakeEventLogger(),
+            None,
+            None,
+            behavior_on_external_change=behavior_on_external_change,
         )
         await room.initialize()
         room._document.dirty = False
@@ -55,7 +74,9 @@ def document(jp_root_dir, arbitrary_fid_manager, request, jp_asyncio_loop):
 @pytest.mark.parametrize("document", [False, True], indirect=True)
 @pytest.mark.parametrize("dirty", [False, True])
 @pytest.mark.parametrize("trigger", ["poll", "save", "both"])
-async def test_external_changes_wait_for_user_without_creating_files(document, dirty, trigger):
+async def test_external_changes_wait_for_user_without_creating_files(
+    document, dirty, trigger, arbitrary_fid_manager
+):
     cm, loader, room, model, path = document
     if dirty:
         if model["type"] == "file":
@@ -79,6 +100,7 @@ async def test_external_changes_wait_for_user_without_creating_files(document, d
     assert len(cm.get("")["content"]) == 1
     assert room._document.dirty
     assert room.outofband == {"originalPath": path}
+    assert arbitrary_fid_manager.index(path) != loader.file_id
     for _ in range(2):
         await loader.maybe_notify()
         with pytest.raises(OutOfBandChanges):
@@ -95,10 +117,33 @@ async def test_identical_external_write_does_not_prompt(document):
     assert not room._document.dirty
 
 
+@pytest.mark.parametrize("document", [True], indirect=True)
+async def test_touch_notebook_without_optional_metadata_does_not_prompt(
+    document, jp_root_dir, arbitrary_fid_manager
+):
+    cm, loader, room, model, path = document
+    disk = cm.get(path)["content"]
+    assert "kernelspec" not in disk["metadata"]
+    assert "language_info" not in disk["metadata"]
+    shared = await room._document.aget()
+    file = jp_root_dir / path
+    original_bytes = file.read_bytes()
+    stat = file.stat()
+    # Change only the timestamp, without letting an initial save normalize disk metadata.
+    os.utime(file, ns=(stat.st_atime_ns, stat.st_mtime_ns + 2_000_000_000))
+
+    await loader.maybe_notify()
+
+    assert file.read_bytes() == original_bytes
+    assert await room._document.aget() == shared
+    assert room.outofband is None
+    assert not room._document.dirty
+    assert arbitrary_fid_manager.get_id(path) == loader.file_id
+
+
 @pytest.mark.parametrize("document", [False, True], indirect=True)
-@pytest.mark.parametrize("action", ["open", "save-as"])
 async def test_reopening_disk_version_leaves_other_clients_in_old_room(
-    document, arbitrary_fid_manager, action
+    document, arbitrary_fid_manager
 ):
     cm, loader, room, model, path = document
     original = await room._document.aget()
@@ -110,11 +155,6 @@ async def test_reopening_disk_version_leaves_other_clients_in_old_room(
     cm.save({**model, "content": external}, path)
     external = cm.get(path)["content"]
     await loader.maybe_notify()
-    if action == "save-as":
-        await room.save_as("saved-" + path, path)
-        assert cm.get("saved-" + path)["content"] == original
-    else:
-        await room.open_disk_version(path)
     new_id = arbitrary_fid_manager.index(path)
     assert new_id != loader.file_id
     new_loader = FileLoader(new_id, arbitrary_fid_manager, cm)
@@ -127,10 +167,10 @@ async def test_reopening_disk_version_leaves_other_clients_in_old_room(
         assert (loaded if model["type"] == "file" else loaded["cells"][0]["source"]) == "external"
         assert await room._document.aget() == original
         assert room.outofband == {"originalPath": path}
-        # A second user makes the same choice: do not detach the new disk session.
-        await room.open_disk_version(path)
-        assert arbitrary_fid_manager.get_id(path) == new_id
+        # Notifications from the preserved room must not detach the new disk session.
         await loader.maybe_notify()
+        await room._on_outofband_change()
+        assert arbitrary_fid_manager.get_id(path) == new_id
         with pytest.raises(OutOfBandChanges):
             await loader.maybe_save_content(model)
         assert cm.get(path)["content"] == external
@@ -139,64 +179,13 @@ async def test_reopening_disk_version_leaves_other_clients_in_old_room(
         await new_loader.clean()
 
 
-@pytest.mark.parametrize("document", [False, True], indirect=True)
-async def test_save_as_is_personal_and_uses_chosen_name(document):
-    cm, loader, room, model, path = document
-    original = await room._document.aget()
-    external = "external" if model["type"] == "file" else nbformat.v4.new_notebook()
-    cm.save({**model, "content": external}, path)
-    await loader.maybe_notify()
-    chosen = "chosen.ipynb" if model["type"] == "notebook" else "chosen.txt"
-    await room.save_as(chosen, path)
-    assert loader.path == path
-    assert room._document.path == path
-    assert await room._document.aget() == original
-    assert room.outofband == {"originalPath": path}
-    assert cm.get(chosen)["content"] == original
-    assert cm.get(path)["content"] == external
-    # Other users can still open the original or save their own version.
-    await room.open_disk_version(path)
-    await room.save_as("another-" + chosen, path)
-    assert cm.get("another-" + chosen)["content"] == original
-
-
-async def test_save_as_failure_keeps_both_versions_and_allows_retry(
-    document, arbitrary_fid_manager
-):
-    cm, loader, room, model, path = document
-    cm.save({**model, "content": "external"}, path)
-    await loader.maybe_notify()
-    with patch.object(cm, "save", new_callable=AsyncMock, side_effect=OSError("disk full")):
-        with pytest.raises(OSError):
-            await room.save_as("chosen.txt", path)
-    assert room._document.source == "original"
-    assert arbitrary_fid_manager.get_id(path) == loader.file_id
-    with pytest.raises(OutOfBandChanges):
-        await loader.maybe_save_content(model)
-    await room.save_as("chosen.txt", path)
-    assert cm.get("chosen.txt")["content"] == "original"
-    assert cm.get(path)["content"] == "external"
-
-
-async def test_save_as_rejects_original_and_existing_names(document):
-    cm, loader, room, model, path = document
-    cm.save({**model, "content": "external"}, path)
-    cm.save({**model, "content": "other"}, "existing.txt")
-    await loader.maybe_notify()
-    for chosen in [path, "existing.txt", ""]:
-        with pytest.raises(Exception, match="Choose a new filename"):
-            await room.save_as(chosen, path)
-    assert cm.get(path)["content"] == "external"
-    assert cm.get("existing.txt")["content"] == "other"
-
-
 def decode_status(message):
     decoder = Decoder(message)
     assert decoder.read_var_uint() == MessageType.RAW
     return json.loads(decoder.read_var_string())
 
 
-async def test_external_change_status_broadcast_and_clear(document):
+async def test_external_change_status_broadcast_and_preserved(document):
     cm, loader, room, model, path = document
     clients = [MagicMock(send=AsyncMock()), MagicMock(send=AsyncMock())]
     room.clients.update(clients)
@@ -214,13 +203,9 @@ async def test_external_change_status_broadcast_and_clear(document):
         client.send.assert_awaited_once()
     cm.save(model, path)
     await loader.maybe_notify()
-    assert room.outofband is None
+    assert room.outofband == {"originalPath": path}
     for client in clients:
-        assert decode_status(client.send.call_args.args[0]) == {
-            "type": "external-change",
-            "change": None,
-        }
-        assert client.send.await_count == 2
+        client.send.assert_awaited_once()
     room.clients.clear()
 
 
@@ -234,8 +219,7 @@ async def test_external_change_status_replayed_on_each_connection(document, jp_r
     else:
         cm.save({**model, "content": "external"}, path)
     await loader.maybe_notify()
-    # Also replay after another frontend opens the disk version.
-    await room.open_disk_version(path)
+    # The detached session must still replay status on reconnection.
     for _ in range(2):
         channel = MagicMock(send=AsyncMock())
 
@@ -281,20 +265,125 @@ async def test_external_deletion_preserves_content_and_notifies(
         client.send.assert_awaited_once()
         with pytest.raises(OutOfBandChanges):
             await loader.maybe_save_content(model)
-        await room.save_as("saved-" + path, path)
-        assert cm.get("saved-" + path)["content"] == shared
-        assert not cm.exists(path)
-        await room.open_disk_version(path)
     finally:
         room.clients.clear()
 
 
-async def test_deleted_file_restored_clears_status(document, jp_root_dir):
+async def test_deleted_file_restored_preserves_old_session(document, jp_root_dir):
     cm, loader, room, model, path = document
+    shared = await room._document.aget()
     (jp_root_dir / path).unlink()
     await loader.maybe_notify()
     assert room.outofband["reason"] == "deleted"
-    cm.save(model, path)
+    cm.save({**model, "content": "restored with new content"}, path)
     await loader.maybe_notify()
-    assert room.outofband is None
+    assert room.outofband == {"originalPath": path}
     assert not loader.deleted
+    assert await room._document.aget() == shared
+    assert cm.get(path)["content"] == "restored with new content"
+    with pytest.raises(OutOfBandChanges):
+        await loader.maybe_save_content({**model, "content": shared})
+    assert cm.get(path)["content"] == "restored with new content"
+
+
+@pytest.mark.parametrize("document", [False, True], indirect=True)
+async def test_explicit_overwrite_saves_snapshot_and_preserves_session(document):
+    cm, loader, room, model, path = document
+    shared = await room._document.aget()
+    external = "disk content" if model["type"] == "file" else nbformat.v4.new_notebook()
+    cm.save({**model, "content": external}, path)
+    await loader.maybe_notify()
+    assert room.outofband is not None
+    cm.save({**model, "content": shared}, path)
+    assert cm.get(path)["content"] == shared
+    assert await room._document.aget() == shared
+    assert room.outofband is not None
+    with pytest.raises(OutOfBandChanges):
+        await loader.maybe_save_content(model)
+
+
+@pytest.mark.parametrize("behavior_on_external_change", ["overwrite"])
+@pytest.mark.parametrize("document", [False, True], indirect=True)
+@pytest.mark.parametrize("dirty", [False, True])
+@pytest.mark.parametrize("trigger", ["poll", "save"])
+async def test_reload_mode_updates_document_without_changing_id(
+    document, arbitrary_fid_manager, behavior_on_external_change, dirty, trigger
+):
+    cm, loader, room, model, path = document
+    if dirty:
+        if model["type"] == "file":
+            room._document.source = "unsaved edits"
+        else:
+            edits = await room._document.aget()
+            edits["cells"][0]["source"] = "unsaved edits"
+            await room._document.aset(edits)
+    external = (
+        "external version"
+        if model["type"] == "file"
+        else nbformat.v4.new_notebook(
+            cells=[nbformat.v4.new_code_cell("external")],
+            metadata={
+                "kernelspec": {"display_name": "Python 3", "name": "python3"},
+                "language_info": {"name": "python"},
+            },
+        )
+    )
+    cm.save({**model, "content": external}, path)
+    client = MagicMock(send=AsyncMock())
+    room.clients.add(client)
+    try:
+        if trigger == "poll":
+            await loader.maybe_notify()
+        else:
+            await room._maybe_save_document(None, save_now=True)
+        assert await room._document.aget() == cm.get(path)["content"]
+        assert room.outofband is None
+        assert not room._document.dirty
+        assert arbitrary_fid_manager.index(path) == loader.file_id
+        assert room._document.hash == cm.get(path, content=False, require_hash=True)["hash"]
+        client.send.assert_not_awaited()
+        # Further edits can be saved using the same file loader and ID.
+        saved = await loader.maybe_save_content({**model, "content": external})
+        assert saved is not None
+        assert arbitrary_fid_manager.index(path) == loader.file_id
+    finally:
+        room.clients.clear()
+
+
+@pytest.mark.parametrize("behavior_on_external_change", ["overwrite"])
+async def test_reload_mode_preserves_deleted_file_and_recovers(
+    document, arbitrary_fid_manager, jp_root_dir, behavior_on_external_change
+):
+    cm, loader, room, model, path = document
+    original = await room._document.aget()
+    (jp_root_dir / path).unlink()
+    await loader.maybe_notify()
+    assert room.outofband == {"originalPath": path, "reason": "deleted"}
+    assert await room._document.aget() == original
+    assert arbitrary_fid_manager.index(path) == loader.file_id
+    with pytest.raises(OutOfBandChanges):
+        await loader.maybe_save_content(model)
+    cm.save({**model, "content": "restored"}, path)
+    await loader.maybe_notify()
+    assert await room._document.aget() == "restored"
+    assert room.outofband is None
+    assert not room._document.dirty
+    assert arbitrary_fid_manager.index(path) == loader.file_id
+
+
+@pytest.mark.parametrize("behavior_on_external_change", ["overwrite"])
+@pytest.mark.parametrize("failure", ["read", "apply"])
+async def test_reload_mode_preserves_content_on_read_failure(
+    document, arbitrary_fid_manager, behavior_on_external_change, failure
+):
+    cm, loader, room, model, path = document
+    original = await room._document.aget()
+    cm.save({**model, "content": "external"}, path)
+    target, method = (loader, "load_content") if failure == "read" else (room._document, "aset")
+    with patch.object(target, method, side_effect=OSError("Cannot load file")):
+        await loader.maybe_notify()
+    assert await room._document.aget() == original
+    assert room.outofband == {"originalPath": path}
+    assert arbitrary_fid_manager.index(path) == loader.file_id
+    with pytest.raises(OutOfBandChanges):
+        await loader.maybe_save_content(model)

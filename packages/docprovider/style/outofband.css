@@ -2,13 +2,34 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-.jp-CollaborationExternalChangeDialog .jp-Dialog-content {
-  width: 650px;
-  max-width: 90vw;
+.jp-CollaborationExternalChangeNotice {
+  box-sizing: border-box;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 8px;
+  padding: 8px 12px;
+  color: var(--jp-ui-font-color1);
+  background: var(--jp-layout-color2);
+  border-bottom: 2px solid var(--jp-warn-color1);
+  font-size: var(--jp-ui-font-size1);
 }
 
-.jp-CollaborationExternalChangeDialog .jp-Dialog-footer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.jp-CollaborationExternalChangeNotice span {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jp-CollaborationExternalChangeNotice button.jp-mod-styled {
+  flex: none;
+  height: 26px;
+  line-height: 24px;
+  padding: 0 8px;
+  border: var(--jp-border-width) solid var(--jp-border-color1);
+  border-radius: var(--jp-border-radius);
 }
