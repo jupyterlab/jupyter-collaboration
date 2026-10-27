@@ -17,6 +17,7 @@ from traitlets import Bool, Enum, Float, Type, Unicode
 from .handlers import (
     DocForkHandler,
     DocSessionHandler,
+    DocumentSessionOverrideHandler,
     TimelineHandler,
     UndoRedoHandler,
     YDocWebSocketHandler,
@@ -210,6 +211,13 @@ class YDocExtension(ExtensionApp):
                     },
                 ),
                 (r"/api/collaboration/session/(.*)", DocSessionHandler),
+                (
+                    r"/api/collaboration/room_override/(.*)",
+                    DocumentSessionOverrideHandler,
+                    {
+                        "ywebsocket_server": self.ywebsocket_server,
+                    },
+                ),
                 (
                     r"/api/collaboration/timeline/(.*)",
                     TimelineHandler,
