@@ -4,6 +4,7 @@
  */
 
 import { Widget } from '@lumino/widgets';
+import { YFile } from '@jupyter/ydoc';
 import { PromiseDelegate } from '@lumino/coreutils';
 import { nullTranslator } from '@jupyterlab/translation';
 import { acceptDialog, sleep, waitForDialog } from '@jupyterlab/testutils';
@@ -321,21 +322,29 @@ describe('ExternalChangeHandler without a document transport', () => {
 });
 
 describe('external-change notices in multiple document views', () => {
-  function setupViews() {
+  function setupViews(signals: 'both' | 'current' | 'none' = 'both') {
     const layoutChanged = new Signal<object, void>({});
+    const currentChanged = new Signal<object, void>({});
+    const sharedModel = new YFile();
+    const unrelatedModel = new YFile();
     const views: MainAreaWidget[] = [];
     const contexts = new Map<
       Widget,
-      ExternalChangeNoticePresenter.ISaveContext
+      ExternalChangeNoticePresenter.ISaveContext & {
+        model: { sharedModel: YFile };
+      }
     >();
     const originalSave = jest.fn().mockResolvedValue(undefined);
-    const context = { save: originalSave };
+    const context = { save: originalSave, model: { sharedModel } };
     const createView = (belongsToDocument = true) => {
       const view = new MainAreaWidget({ content: new Widget() });
       views.push(view);
-      if (belongsToDocument) {
-        contexts.set(view, context);
-      }
+      contexts.set(
+        view,
+        belongsToDocument
+          ? context
+          : { save: jest.fn(), model: { sharedModel: unrelatedModel } }
+      );
       layoutChanged.emit(undefined);
       return view;
     };
@@ -346,13 +355,17 @@ describe('external-change notices in multiple document views', () => {
       actions: { saveAs: jest.fn() },
       onCloseDocument: () => views.find(view => !view.isDisposed)?.dispose(),
       showNotice: (notice, beforeSave, createNotice) =>
-        new ExternalChangeNoticePresenter({
+        ExternalChangeNoticePresenter.forDocument({
           notice,
           beforeSave,
           createNotice,
-          views: () => views,
-          viewSignals: [layoutChanged],
-          contextForWidget: view => contexts.get(view)
+          shell: {
+            widgets: () => views,
+            ...(signals !== 'none' ? { currentChanged } : {}),
+            ...(signals === 'both' ? { layoutModified: layoutChanged } : {})
+          },
+          docManager: { contextForWidget: view => contexts.get(view) },
+          model: sharedModel
         })
     });
     const notices = (view: MainAreaWidget) =>
@@ -362,6 +375,8 @@ describe('external-change notices in multiple document views', () => {
     const dispose = () => {
       handler.dispose();
       views.forEach(view => view.dispose());
+      sharedModel.dispose();
+      unrelatedModel.dispose();
     };
     return {
       handler,
@@ -370,9 +385,32 @@ describe('external-change notices in multiple document views', () => {
       createView,
       notices,
       layoutChanged,
+      currentChanged,
       dispose
     };
   }
+
+  it('finds a newly focused view when the shell has no layout signal', async () => {
+    const { handler, createView, notices, currentChanged, dispose } =
+      setupViews('current');
+    handler.updateStatus({ originalPath: 'original.txt' });
+    await sleep(20);
+    const view = createView();
+    expect(notices(view)).toHaveLength(0);
+    currentChanged.emit(undefined);
+    await sleep(20);
+    expect(notices(view)).toHaveLength(1);
+    dispose();
+  });
+
+  it('finds existing views even when the shell has no view-change signals', async () => {
+    const { handler, createView, notices, dispose } = setupViews('none');
+    const view = createView();
+    handler.updateStatus({ originalPath: 'original.txt' });
+    await sleep(20);
+    expect(notices(view)).toHaveLength(1);
+    dispose();
+  });
 
   it('notifies existing and newly opened views without duplicating save guards', async () => {
     const {

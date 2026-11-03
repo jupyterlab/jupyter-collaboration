@@ -10,6 +10,7 @@ import {
   MainAreaWidget
 } from '@jupyterlab/apputils';
 import { PathExt } from '@jupyterlab/coreutils';
+import type { ISharedDocument } from '@jupyter/ydoc';
 import { Contents, ServerConnection } from '@jupyterlab/services';
 import { TranslationBundle } from '@jupyterlab/translation';
 import { IDisposable } from '@lumino/disposable';
@@ -370,6 +371,26 @@ export namespace ExternalChangeHandler {
 
 /** Display an external-change notice in every view sharing a document context. */
 export class ExternalChangeNoticePresenter implements IDisposable {
+  /** Create notices for every application view of the shared document. */
+  static forDocument(
+    options: ExternalChangeNoticePresenter.IDocumentOptions
+  ): ExternalChangeNoticePresenter {
+    const { shell, docManager, model } = options;
+    return new ExternalChangeNoticePresenter({
+      notice: options.notice,
+      beforeSave: options.beforeSave,
+      createNotice: options.createNotice,
+      views: () => shell.widgets('main'),
+      viewSignals: [shell.currentChanged, shell.layoutModified].filter(
+        (signal): signal is ISignal<unknown, unknown> => signal !== undefined
+      ),
+      contextForWidget: view => {
+        const context = docManager.contextForWidget(view);
+        return context?.model.sharedModel === model ? context : undefined;
+      }
+    });
+  }
+
   constructor(private _options: ExternalChangeNoticePresenter.IOptions) {
     this._initialNotice = _options.notice;
     for (const signal of _options.viewSignals) {
@@ -462,6 +483,24 @@ export class ExternalChangeNoticePresenter implements IDisposable {
 }
 
 export namespace ExternalChangeNoticePresenter {
+  /** Application services used to discover views of one shared document. */
+  export interface IDocumentOptions
+    extends Pick<IOptions, 'notice' | 'beforeSave' | 'createNotice'> {
+    shell: {
+      widgets(area: 'main'): Iterable<Widget>;
+      currentChanged?: ISignal<unknown, unknown>;
+      layoutModified?: ISignal<unknown, unknown>;
+    };
+    docManager: {
+      contextForWidget(
+        view: Widget
+      ):
+        | (ISaveContext & { model: { sharedModel: ISharedDocument } })
+        | undefined;
+    };
+    model: ISharedDocument;
+  }
+
   export interface ISaveContext {
     save(): Promise<void>;
   }
