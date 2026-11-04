@@ -42,7 +42,7 @@ import {
   IDocumentProviderFactory
 } from '@jupyter/docprovider';
 import { Awareness } from 'y-protocols/awareness';
-import { URLExt } from '@jupyterlab/coreutils';
+import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 
 const DOCUMENT_TIMELINE_URL = 'api/collaboration/timeline';
 
@@ -182,6 +182,10 @@ export const statusBarTimeline: JupyterFrontEndPlugin<void> = {
     statusBar: IStatusBar,
     contentProvider: ICollaborativeContentProvider
   ): Promise<void> => {
+    if (PageConfig.getOption('disableYStore') === 'true') {
+      // The timeline requires the document history persisted by the YStore
+      return;
+    }
     try {
       let sliderItem: Widget | null = null;
       let timelineWidget: TimelineWidget | null = null;
