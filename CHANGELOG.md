@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 5.1.0alpha1
+
+([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@5.1.0-alpha.0...5128969d6032980c5fe1f08586d2c3ec5efae6de))
+
+### Enhancements made
+
+- refactor: share external-change document view integration [#638](https://github.com/jupyterlab/jupyter-collaboration/pull/638) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/use/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2026-10-26&to=2026-11-04&type=c))
+
+@davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2026-10-26..2026-11-04&type=Issues))
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 5.1.0alpha0
 
 ([Full Changelog](https://github.com/jupyterlab/jupyter-collaboration/compare/@jupyter/collaboration-extension@5.0.4...1b13e74319dba22984e704b39fe0c04af929fa42))
@@ -27,8 +46,6 @@ See [our definition of contributors](https://github-activity.readthedocs.io/en/l
 ([GitHub contributors page for this release](https://github.com/jupyterlab/jupyter-collaboration/graphs/contributors?from=2026-09-20&to=2026-10-26&type=c))
 
 @arjxn-py ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Aarjxn-py+updated%3A2026-09-20..2026-10-26&type=Issues)) | @davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Adavidbrochart+updated%3A2026-09-20..2026-10-26&type=Issues)) | @krassowski ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3Akrassowski+updated%3A2026-09-20..2026-10-26&type=Issues)) | @martinRenou ([activity](https://github.com/search?q=repo%3Ajupyterlab%2Fjupyter-collaboration+involves%3AmartinRenou+updated%3A2026-09-20..2026-10-26&type=Issues))
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 5.0.4
 
