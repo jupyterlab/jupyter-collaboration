@@ -1,6 +1,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+import sqlite3
 from copy import deepcopy
 from importlib.metadata import entry_points
 
@@ -11,7 +12,8 @@ from jupyter_server_ydoc.rooms import DocumentRoom
 from jupyter_server_ydoc.test_utils import FakeContentsManager, FakeEventLogger, FakeFileIDManager
 from jupyter_server_ydoc.utils import MessageType
 from jupyter_ydoc import YNotebook
-from pycrdt import Channel, Provider, YMessageType, YSyncMessageType, write_message
+from pycrdt import Channel, Doc, Provider, YMessageType, YSyncMessageType, write_message
+from pycrdt.store import SQLiteYStore
 from pycrdt.websocket.websocket import HttpxWebsocket
 
 jupyter_ydocs = {ep.name: ep.load() for ep in entry_points(group="jupyter_ydoc")}
@@ -292,4 +294,257 @@ async def test_notebook_reconnect_sends_conflict_when_cell_structure_changes_bet
         assert len(server_notebook.get(deduplicate=False)["cells"]) == 1
     finally:
         await room_b.stop()
+        await loader_b.clean()
+
+
+async def _create_notebook_room_with_store(
+    notebook: dict, room_id: str, store_path: str, db_path: str
+) -> tuple[DocumentRoom, FileLoader, SQLiteYStore]:
+    file_id = f"file-{room_id}"
+    loader = FileLoader(
+        file_id,
+        FakeFileIDManager({file_id: "test.ipynb"}),
+        FakeContentsManager({"content": deepcopy(notebook), "writable": True}),
+    )
+    ystore = SQLiteYStore(path=store_path)
+    ystore.db_path = db_path
+    room = DocumentRoom(
+        room_id,
+        "json",
+        "notebook",
+        loader,
+        FakeEventLogger(),
+        ystore,
+        None,
+        None,
+        document_load_progressively=False,
+    )
+    await room.initialize()
+    return room, loader, ystore
+
+
+async def _stop_room_and_store(room: DocumentRoom, ystore: SQLiteYStore) -> None:
+    """Stop a room and its store, tolerating a double-stop.
+
+    Some of these tests stop a room/store that a prior step already stopped;
+    pycrdt raises RuntimeError("YRoom not running") / RuntimeError("YStore not
+    running") in that case, which is safe to ignore. Anything else is a real
+    failure and must propagate.
+    """
+    try:
+        await room.stop()
+    except RuntimeError as e:
+        if "not running" not in str(e):
+            raise
+    try:
+        await ystore.stop()
+    except RuntimeError as e:
+        if "not running" not in str(e):
+            raise
+
+
+def _document_session(room: DocumentRoom) -> str | None:
+    return room._document.ystate.get("document_session")
+
+
+async def test_document_session_is_assigned_on_fresh_room_creation():
+    room, loader = await _create_notebook_room(_notebook_model(), "fresh-session")
+    try:
+        assert _document_session(room)
+    finally:
+        await room.stop()
+        await loader.clean()
+
+
+async def test_document_session_persists_across_store_backed_room_recreation(tmp_path):
+    """A room rebuilt from a store that still holds its history is the same
+    incarnation, so a reconnecting client's remembered session must still match."""
+    db_path = str(tmp_path / "ystore.db")
+
+    room_a, loader_a, ystore_a = await _create_notebook_room_with_store(
+        _notebook_model(), "persist-before", "test.ipynb.y", db_path
+    )
+    session_a = _document_session(room_a)
+    # Disk genuinely unchanged since room A's content was last established
+    # (including whatever defaults YNotebook filled in), so the store restore
+    # below finds no real mismatch and doesn't fall back to a fresh rebuild.
+    content_on_disk = await room_a._document.aget()
+    await _stop_room_and_store(room_a, ystore_a)
+    await loader_a.clean()
+
+    room_b, loader_b, ystore_b = await _create_notebook_room_with_store(
+        content_on_disk, "persist-after", "test.ipynb.y", db_path
+    )
+    try:
+        assert _document_session(room_b) == session_a
+    finally:
+        await _stop_room_and_store(room_b, ystore_b)
+        await loader_b.clean()
+
+
+async def test_override_content_rewrites_room_under_a_new_session(tmp_path):
+    """A client choosing to keep its own version after a document_session
+    mismatch pushes its content, which must land as a genuinely new
+    incarnation (not a continuation of either side's prior history) and
+    persist to disk."""
+    room, loader = await _create_notebook_room(_notebook_model(), "override-target")
+    try:
+        session_before = _document_session(room)
+        new_content = deepcopy(_notebook_model())
+        new_content["cells"][0]["source"] = "overridden by client"
+
+        new_session = await room.override_content(new_content)
+
+        assert new_session != session_before
+        assert _document_session(room) == new_session
+        current = await room._document.aget()
+        assert current["cells"][0]["source"] == "overridden by client"
+        assert "save" in loader._contents_manager.actions
+    finally:
+        await room.stop()
+        await loader.clean()
+
+
+async def test_document_session_changes_after_genuine_rebuild_from_disk(tmp_path):
+    """A room rebuilt with no store history for its path is a new incarnation
+    with no relation to whatever a reconnecting client remembers.
+
+    Uses the same single store file for both rooms (like the
+    store-backed-recreation persistence test above), but genuinely deletes
+    this path's history from it in between -- the same real-world trigger the
+    e2e test `test_room_handler_refuses_stale_session_after_genuine_store_loss`
+    exercises over a websocket. A test that instead compared two independent,
+    never-populated store files would still pass even if the whole
+    preserve/backfill feature were reverted, since it never actually asks the
+    store to lose real history.
+    """
+    notebook = _notebook_model()
+    db_path = str(tmp_path / "ystore.db")
+    store_path = "test.ipynb.y"
+
+    room_a, loader_a, ystore_a = await _create_notebook_room_with_store(
+        notebook, "rebuild-before", store_path, db_path
+    )
+    session_a = _document_session(room_a)
+    await _stop_room_and_store(room_a, ystore_a)
+    await loader_a.clean()
+
+    # The store genuinely loses this room's history for its path.
+    conn = sqlite3.connect(db_path)
+    conn.execute("DELETE FROM yupdates WHERE path = ?", (store_path,))
+    conn.execute("DELETE FROM ycheckpoints WHERE path = ?", (store_path,))
+    conn.commit()
+    conn.close()
+
+    room_b, loader_b, ystore_b = await _create_notebook_room_with_store(
+        notebook, "rebuild-after", store_path, db_path
+    )
+    try:
+        assert _document_session(room_b) != session_a
+    finally:
+        await _stop_room_and_store(room_b, ystore_b)
+        await loader_b.clean()
+
+
+async def test_document_session_backfilled_when_restoring_history_with_none(tmp_path):
+    """A room whose real history predates document_session existing (or whose
+    own first genuine rebuild happened before the mechanism was active) gets a
+    baseline session assigned on its next successful restore, rather than
+    needing another full rebuild before it can be protected at all."""
+    db_path = str(tmp_path / "ystore.db")
+    store_path = "test.ipynb.y"
+    notebook = _notebook_model()
+
+    # Seed the store directly, bypassing DocumentRoom, to simulate real history
+    # that was written before document_session existed at all. Disk content
+    # matches the store's own round-tripped content exactly, so this only
+    # exercises the clean-restore path -- not the mismatch/resync branch,
+    # which is a separate concern tested below.
+    seed_store = SQLiteYStore(path=store_path)
+    seed_store.db_path = db_path
+    disk_content = None
+    async with create_task_group() as tg:
+        await tg.start(seed_store.start)
+        seed_doc = Doc()
+        seed_notebook = YNotebook(seed_doc)
+        await seed_notebook.aset(notebook)
+        disk_content = await seed_notebook.aget()
+        await seed_store.encode_state_as_update(seed_doc)
+        await seed_store.stop()
+
+    room, loader, ystore = await _create_notebook_room_with_store(
+        disk_content, "backfill-before", store_path, db_path
+    )
+    session_after_backfill = None
+    try:
+        session_after_backfill = _document_session(room)
+        assert session_after_backfill is not None
+    finally:
+        await _stop_room_and_store(room, ystore)
+        await loader.clean()
+
+    # Confirm it actually persisted -- not just held in this room's memory.
+    room2, loader2, ystore2 = await _create_notebook_room_with_store(
+        disk_content, "backfill-after", store_path, db_path
+    )
+    try:
+        assert _document_session(room2) == session_after_backfill
+    finally:
+        await _stop_room_and_store(room2, ystore2)
+        await loader2.clean()
+
+
+async def test_document_session_survives_out_of_band_notice():
+    """_on_outofband_change() no longer rewrites content at all (changed
+    upstream in #631: it now only flags self._outofband and waits for the
+    client to explicitly choose open_disk_version() or save_as()), so there's
+    no aset() here anymore to strip document_session -- confirm the session
+    is simply untouched, and the live document is left alone rather than
+    silently merged."""
+    room, loader = await _create_notebook_room(_notebook_model(), "outofband-session")
+    try:
+        session_before = _document_session(room)
+        assert session_before is not None
+
+        changed = deepcopy(_notebook_model())
+        changed["cells"][0]["source"] = "changed out of band"
+        loader._contents_manager.model["content"] = changed
+
+        await room._on_outofband_change()
+
+        assert _document_session(room) == session_before
+        assert (await room._document.aget())["cells"][0]["source"] == ""
+        assert room.outofband is not None
+    finally:
+        await room.stop()
+        await loader.clean()
+
+
+async def test_document_session_survives_initialize_mismatch_resync(tmp_path):
+    """A genuine mismatch between stored history and disk still resyncs via
+    aset() in initialize() -- the session established by the stored history
+    must survive that resync too, not just a passive restore."""
+    db_path = str(tmp_path / "ystore.db")
+    store_path = "test.ipynb.y"
+    notebook = _notebook_model()
+
+    room_a, loader_a, ystore_a = await _create_notebook_room_with_store(
+        notebook, "mismatch-session-before", store_path, db_path
+    )
+    session_before = _document_session(room_a)
+    assert session_before is not None
+    await _stop_room_and_store(room_a, ystore_a)
+    await loader_a.clean()
+
+    changed = deepcopy(notebook)
+    changed["cells"][0]["source"] = "genuinely different on disk"
+    room_b, loader_b, ystore_b = await _create_notebook_room_with_store(
+        changed, "mismatch-session-after", store_path, db_path
+    )
+    try:
+        assert _document_session(room_b) == session_before
+        current = await room_b._document.aget()
+        assert current["cells"][0]["source"] == "genuinely different on disk"
+    finally:
+        await _stop_room_and_store(room_b, ystore_b)
         await loader_b.clean()

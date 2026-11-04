@@ -6,6 +6,7 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import AsyncMock, patch
 
+import pytest
 from jupyter_server_ydoc.utils import OutOfBandChanges
 from jupyter_ydoc import YUnicode
 
@@ -282,3 +283,28 @@ async def test_save_oob_skips_aset_when_content_unchanged(
         mock_aset.assert_not_called()
 
     assert not room._document.dirty
+
+
+async def test_override_content_raises_on_out_of_band_disk_change(
+    rtc_create_mock_document_room,
+):
+    """override_content must not silently swallow a failed disk save.
+
+    Unlike _maybe_save_document's autosave path (where an out-of-band disk
+    change is expected and safe to adopt), an override is a client explicitly
+    choosing to keep its own content -- silently falling back to whatever is
+    on disk would defeat the point of the override. The caller
+    (DocumentSessionOverrideHandler) needs a real error to surface instead of
+    an override that looks like it succeeded while the disk write failed.
+    """
+    content = "test"
+    _, loader, room = rtc_create_mock_document_room("test-id", "test.txt", content)
+    await room.initialize()
+
+    with (
+        patch.object(
+            loader, "maybe_save_content", new_callable=AsyncMock, side_effect=OutOfBandChanges
+        ),
+        pytest.raises(OutOfBandChanges),
+    ):
+        await room.override_content("client version")

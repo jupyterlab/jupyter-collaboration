@@ -259,8 +259,18 @@ export const IAwarenessProviderFactory = new Token<IAwarenessProviderFactory>(
 );
 
 export interface ISessionClosePayload {
-  reason: 'unknown_session' | 'version_mismatch' | 'initialization_error';
+  reason:
+    | 'unknown_session'
+    | 'version_mismatch'
+    | 'initialization_error'
+    | 'document_session_mismatch';
   sessionId?: string;
+  /**
+   * The room's current document_session, present on `document_session_mismatch`.
+   * A client keeping the on-disk version can reconnect fresh (no docSessionId
+   * sent) rather than needing to remember this explicitly.
+   */
+  documentSessionId?: string;
   reloadable?: boolean;
   errorReason?: string;
 }
