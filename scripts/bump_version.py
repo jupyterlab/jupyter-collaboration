@@ -130,6 +130,7 @@ def bump(force, skip_if_dirty, spec):
 
         with path.open(mode="w") as f:
             json.dump(data, f, indent=2)
+            f.write("\n")
 
     else:
         raise FileNotFoundError(f"Could not find package.json under dir {path!s}")
