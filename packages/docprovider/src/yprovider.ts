@@ -30,17 +30,12 @@ import { requestDocSession } from './requests';
 import { ISessionClosePayload } from './tokens';
 
 import { ExternalChangeHandler } from './externalChange';
+import { DocumentLoadingHandler } from './documentLoading';
 
 /**
  * The url for the default drive service.
  */
 const DOCUMENT_PROVIDER_URL = 'api/collaboration/room';
-
-/**
- * Timeout in milliseconds after which a loading dialog is shown
- * if the shared document has not yet been synchronized.
- */
-const LOAD_TIMEOUT = 5000;
 
 /**
  * The raw message type.
@@ -97,6 +92,16 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
       onSwitchDocument: options.onSwitchDocument,
       onCloseDocument: options.onCloseDocument
     });
+    this._loading = new DocumentLoadingHandler({
+      ready: this.ready,
+      translator: this._trans,
+      onRetry: () => this.reconnect(),
+      onCancel: message => {
+        this._disconnect();
+        this._ready.reject(message);
+        this._sharedModel.dispose();
+      }
+    });
     this._sharedModel.ydoc.getMap('state').observe(this._onSharedStateChanged);
 
     const user = options.user;
@@ -109,7 +114,6 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     user.userChanged.connect(this._onUserChanged, this);
 
     this._connect().catch(e => console.warn(e));
-    this._startLoadTimeout();
   }
 
   /**
@@ -145,7 +149,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     this._sharedModel.ydoc
       .getMap('state')
       .unobserve(this._onSharedStateChanged);
-    this._clearLoadTimeout();
+    this._loading.dispose();
     if (this._conflictWs) {
       this._conflictWs.removeEventListener(
         'message',
@@ -161,7 +165,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   }
 
   async reconnect(): Promise<void> {
-    this._clearLoadTimeout();
+    this._loading.start();
     this._disconnect();
     this._connect().catch(e => console.warn(e));
   }
@@ -312,80 +316,8 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         this._attachConflictListener();
       }
     });
-    this._startLoadTimeout();
+    this._loading.start();
   }
-
-  /**
-   * Start the load timeout that shows a retry dialog if the document
-   * hasn't synced within LOAD_TIMEOUT milliseconds.
-   */
-  private _startLoadTimeout(): void {
-    this._clearLoadTimeout();
-    if (!this._isDisposed) {
-      this._loadTimeoutId = window.setTimeout(() => {
-        this._onLoadTimeout();
-      }, LOAD_TIMEOUT);
-    }
-  }
-
-  /**
-   * Clear the load timeout.
-   */
-  private _clearLoadTimeout(): void {
-    if (this._loadTimeoutId !== null) {
-      clearTimeout(this._loadTimeoutId);
-      this._loadTimeoutId = null;
-    }
-  }
-
-  /**
-   * Callback when the load timeout fires.
-   * Shows a dialog asking the user if they want to retry loading.
-   */
-  private _onLoadTimeout = async (): Promise<void> => {
-    if (this._isDisposed || this._hasSynced || this._isShowingDialog) {
-      return;
-    }
-    this._isShowingDialog = true;
-
-    const result = await showDialog({
-      title: this._trans.__('Loading'),
-      body: this._trans.__(
-        'The document is taking some time to load. What would you like to do?'
-      ),
-      buttons: [
-        Dialog.cancelButton({ label: this._trans.__('Cancel') }),
-        Dialog.okButton({
-          label: this._trans.__('Continue waiting'),
-          actions: ['continue']
-        }),
-        Dialog.warnButton({
-          label: this._trans.__('Retry'),
-          actions: ['retry']
-        })
-      ]
-    });
-
-    this._isShowingDialog = false;
-
-    if (this._isDisposed || this._hasSynced) {
-      return;
-    }
-
-    if (result.button.actions.includes('continue')) {
-      this._startLoadTimeout();
-    } else if (result.button.actions.includes('retry')) {
-      await this.reconnect();
-    } else {
-      this._disconnect();
-      const msg = this._trans.__(
-        'The document failed to load. Please try opening it again.'
-      );
-      this._ready.reject(msg);
-      this._ready.promise.catch(() => undefined);
-      this._sharedModel.dispose();
-    }
-  };
 
   async connectToForkDoc(forkRoomId: string, sessionId: string): Promise<void> {
     const token = this._serverSettings.token;
@@ -608,7 +540,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
     if (isSynced) {
       this._onSharedStateChanged();
       this._hasSynced = true;
-      this._clearLoadTimeout();
+      this._loading.dispose();
       if (this._yWebsocketProvider) {
         this._yWebsocketProvider.off('sync', this._onSync);
 
@@ -652,8 +584,7 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
   private _conflictWs: WebSocket | null = null;
   private _onConflictSaveAs?: () => Promise<void>;
   private _onConflictRevert?: () => Promise<void>;
-  private _loadTimeoutId: number | null = null;
-  private _isShowingDialog = false;
+  private _loading: DocumentLoadingHandler;
   private _onConflictShowDiff: WebSocketProvider.IOptions['onConflictShowDiff'];
   private _externalChanges: ExternalChangeHandler;
   private _contents: ContentsManager;
