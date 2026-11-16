@@ -516,6 +516,49 @@ describe('@jupyter/docprovider', () => {
         provider.dispose();
       });
 
+      it.each([false, true])(
+        'keeps the loading dialog open after a late session response (retry: %s)',
+        async retry => {
+          let resolveSession!: (session: unknown) => void;
+          const pendingSession = new Promise(resolve => {
+            resolveSession = resolve;
+          });
+          if (!retry) {
+            (requestDocSession as jest.Mock).mockReturnValueOnce(
+              pendingSession
+            );
+          }
+          const provider = createProvider();
+          try {
+            if (retry) {
+              await waitForProviderConnect(provider);
+              (requestDocSession as jest.Mock).mockReturnValueOnce(
+                pendingSession
+              );
+              await provider.reconnect();
+            }
+            void (provider as any)._loading._showDialog();
+            await waitForDialog(undefined, 1000);
+            const dialog = document.querySelector('.jp-Dialog');
+            resolveSession({
+              sessionId: 'late-session',
+              format: 'text',
+              type: 'file',
+              fileId: 'file-id'
+            });
+            const websocket = await waitForProviderConnect(provider);
+            await sleep(20);
+            expect(document.querySelector('.jp-Dialog')).toBe(dialog);
+            websocket.emit('sync', true);
+            await provider.ready;
+            await sleep(20);
+            expect(document.querySelector('.jp-Dialog')).toBeNull();
+          } finally {
+            provider.dispose();
+          }
+        }
+      );
+
       it('should not show loading dialog if sync happened before timeout', async () => {
         const provider = createProvider();
         const wsProvider = await waitForProviderConnect(provider);

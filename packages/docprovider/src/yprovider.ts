@@ -316,7 +316,6 @@ export class WebSocketProvider implements IDocumentProvider, IForkProvider {
         this._attachConflictListener();
       }
     });
-    this._loading.start();
   }
 
   async connectToForkDoc(forkRoomId: string, sessionId: string): Promise<void> {
