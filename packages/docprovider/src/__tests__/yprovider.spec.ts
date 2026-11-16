@@ -19,6 +19,7 @@ import {
 } from '@jupyterlab/testutils';
 import { requestDocSession } from '../requests';
 import { WebSocketProvider } from '../yprovider';
+import { DocumentLoadingHandler } from '../documentLoading';
 
 jest.mock('../requests', () => ({
   requestDocSession: jest.fn()
@@ -507,13 +508,56 @@ describe('@jupyter/docprovider', () => {
         await waitForProviderConnect(provider);
 
         // Fire timeout without awaiting (showDialog blocks)
-        (provider as any)._onLoadTimeout();
+        (provider as any)._loading._showDialog();
 
         await expect(waitForDialog(undefined, 1000)).resolves.toBeUndefined();
         await dismissDialog(undefined, 50);
         await sleep(100);
         provider.dispose();
       });
+
+      it.each([false, true])(
+        'keeps the loading dialog open after a late session response (retry: %s)',
+        async retry => {
+          let resolveSession!: (session: unknown) => void;
+          const pendingSession = new Promise(resolve => {
+            resolveSession = resolve;
+          });
+          if (!retry) {
+            (requestDocSession as jest.Mock).mockReturnValueOnce(
+              pendingSession
+            );
+          }
+          const provider = createProvider();
+          try {
+            if (retry) {
+              await waitForProviderConnect(provider);
+              (requestDocSession as jest.Mock).mockReturnValueOnce(
+                pendingSession
+              );
+              await provider.reconnect();
+            }
+            void (provider as any)._loading._showDialog();
+            await waitForDialog(undefined, 1000);
+            const dialog = document.querySelector('.jp-Dialog');
+            resolveSession({
+              sessionId: 'late-session',
+              format: 'text',
+              type: 'file',
+              fileId: 'file-id'
+            });
+            const websocket = await waitForProviderConnect(provider);
+            await sleep(20);
+            expect(document.querySelector('.jp-Dialog')).toBe(dialog);
+            websocket.emit('sync', true);
+            await provider.ready;
+            await sleep(20);
+            expect(document.querySelector('.jp-Dialog')).toBeNull();
+          } finally {
+            provider.dispose();
+          }
+        }
+      );
 
       it('should not show loading dialog if sync happened before timeout', async () => {
         const provider = createProvider();
@@ -523,7 +567,7 @@ describe('@jupyter/docprovider', () => {
         await expect(provider.ready).resolves.toBeUndefined();
 
         // Fire timeout without awaiting
-        (provider as any)._onLoadTimeout();
+        (provider as any)._loading._showDialog();
 
         // Dialog should not have appeared since document was already synced
         await expect(waitForDialog(undefined, 1000)).rejects.toThrow(
@@ -539,7 +583,7 @@ describe('@jupyter/docprovider', () => {
         await waitForProviderConnect(provider);
 
         // Fire timeout without awaiting
-        (provider as any)._onLoadTimeout();
+        (provider as any)._loading._showDialog();
 
         await waitForDialog(undefined, 1000);
         // Cancel button is the first button (accept=false)
@@ -562,7 +606,7 @@ describe('@jupyter/docprovider', () => {
         await waitForProviderConnect(provider);
 
         // Fire timeout without awaiting
-        (provider as any)._onLoadTimeout();
+        (provider as any)._loading._showDialog();
 
         await waitForDialog(undefined, 1000);
         await dangerDialog(undefined, 50);
@@ -575,13 +619,13 @@ describe('@jupyter/docprovider', () => {
 
       it('should restart timeout when continue waiting is clicked', async () => {
         const startLoadTimeoutSpy = jest.spyOn(
-          WebSocketProvider.prototype as any,
-          '_startLoadTimeout'
+          DocumentLoadingHandler.prototype,
+          'start'
         );
         const provider = createProvider();
         await waitForProviderConnect(provider);
 
-        (provider as any)._onLoadTimeout();
+        (provider as any)._loading._showDialog();
 
         await waitForDialog(undefined, 1000);
         await acceptDialog(undefined, 50);
