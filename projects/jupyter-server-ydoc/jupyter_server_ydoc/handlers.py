@@ -247,7 +247,7 @@ class YDocWebSocketHandler(WebSocketHandler, JupyterHandler):
         """
         return await super().get(*args, **kwargs)
 
-    async def open(self, room_id: str) -> None:  # type:ignore[override]
+    async def open(self, room_id: str) -> None:
         """
         On connection open.
         """
