@@ -67,9 +67,11 @@ export class DocumentLoadingHandler implements IDisposable {
     const trans = this._options.translator;
     const dialog = new Dialog({
       title: trans.__('Loading'),
-      body: trans.__(
-        'The document is taking some time to load. What would you like to do?'
-      ),
+      body:
+        this._options.loadingMessage ??
+        trans.__(
+          'The document is taking some time to load. What would you like to do?'
+        ),
       buttons: [
         Dialog.cancelButton({ label: trans.__('Cancel') }),
         Dialog.okButton({
@@ -117,6 +119,8 @@ export namespace DocumentLoadingHandler {
     /** Settles when initial document loading succeeds or fails. */
     ready: Promise<void>;
     translator: TranslationBundle;
+    /** Optional translated loading dialog message, supplied by the caller. */
+    loadingMessage?: string;
     /** Reconnect or otherwise retry the document's transport. */
     onRetry: () => Promise<void>;
     /** Stop loading, reject readiness, and close the document as appropriate. */

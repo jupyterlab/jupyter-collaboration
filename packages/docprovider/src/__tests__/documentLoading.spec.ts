@@ -31,7 +31,7 @@ jest.mock('@jupyterlab/apputils', () => {
 });
 
 interface ITestDialog {
-  options: { buttons: { label: string; actions: string[] }[] };
+  options: { body: string; buttons: { label: string; actions: string[] }[] };
   resolve: jest.Mock;
 }
 const dialogs = (Dialog as unknown as { instances: ITestDialog[] }).instances;
@@ -70,6 +70,9 @@ describe('DocumentLoadingHandler', () => {
     expect(dialogs).toHaveLength(0);
     jest.advanceTimersByTime(1);
     expect(dialogs).toHaveLength(1);
+    expect(dialogs[0].options.body).toBe(
+      'The document is taking some time to load. What would you like to do?'
+    );
     expect(dialogs[0].options.buttons.map(button => button.label)).toEqual([
       'Cancel',
       'Continue waiting',
@@ -79,6 +82,21 @@ describe('DocumentLoadingHandler', () => {
     handler.start();
     jest.advanceTimersByTime(5000);
     expect(dialogs).toHaveLength(2);
+  });
+
+  it('uses the caller-provided loading message', () => {
+    handler.dispose();
+    handler = new DocumentLoadingHandler({
+      ready: ready.promise,
+      translator: nullTranslator.load('test'),
+      loadingMessage: 'Connecting to collaborators. Please check your network.',
+      onRetry,
+      onCancel
+    });
+    jest.advanceTimersByTime(5000);
+    expect(dialogs[0].options.body).toBe(
+      'Connecting to collaborators. Please check your network.'
+    );
   });
 
   it('does not prompt if readiness resolves before the deadline', async () => {
