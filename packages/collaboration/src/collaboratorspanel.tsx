@@ -7,7 +7,12 @@ import { DocumentRegistry } from '@jupyterlab/docregistry';
 
 import { User } from '@jupyterlab/services';
 
-import { LabIcon, caretDownIcon, fileIcon } from '@jupyterlab/ui-components';
+import {
+  LabIcon,
+  caretDownIcon,
+  fileIcon,
+  searchIcon
+} from '@jupyterlab/ui-components';
 
 import { Signal, ISignal } from '@lumino/signaling';
 
@@ -64,12 +69,19 @@ const COLLABORATOR_FILES_CLASS = 'jp-CollaboratorFiles';
  */
 const COLLABORATOR_FILE_CLASS = 'jp-CollaboratorFile';
 
+/**
+ * The CSS class added to collaborator cursor follow button.
+ */
+const COLLABORATOR_FOLLOW_CURSOR_CLASS = 'jp-CollaboratorFollowCursor';
+
 export class CollaboratorsPanel extends Panel {
   constructor(
     currentUser: User.IManager,
     awareness: Awareness,
     fileopener: (path: string) => void,
-    docRegistry?: DocumentRegistry
+    docRegistry?: DocumentRegistry,
+    followCursor?: (collaborator: ICollaboratorAwareness) => void,
+    followCursorTitle?: string
   ) {
     super({});
 
@@ -85,6 +97,8 @@ export class CollaboratorsPanel extends Panel {
           fileopener={fileopener}
           collaboratorsChanged={this._collaboratorsChanged}
           docRegistry={docRegistry}
+          followCursor={followCursor}
+          followCursorTitle={followCursorTitle}
         ></CollaboratorsBody>
       )
     );
@@ -110,8 +124,18 @@ export class CollaboratorsPanel extends Panel {
         const uniqueKey = `${value.user.username}-${
           value.current || 'no-current'
         }`;
-        if (!collaboratorsMap.has(uniqueKey)) {
-          collaboratorsMap.set(uniqueKey, value as ICollaboratorAwareness);
+        const clientId =
+          typeof key === 'number' && Number.isInteger(key) ? key : undefined;
+        const collaborator = {
+          ...(value as ICollaboratorAwareness),
+          clientId
+        };
+        const existing = collaboratorsMap.get(uniqueKey);
+        const existingClientId = existing?.clientId ?? Number.POSITIVE_INFINITY;
+        const collaboratorClientId =
+          collaborator.clientId ?? Number.POSITIVE_INFINITY;
+        if (!existing || existingClientId > collaboratorClientId) {
+          collaboratorsMap.set(uniqueKey, collaborator);
         }
       }
     });
@@ -129,6 +153,8 @@ export function CollaboratorsBody(props: {
   collaboratorsChanged: ISignal<CollaboratorsPanel, ICollaboratorAwareness[]>;
   fileopener: (path: string) => void;
   docRegistry?: DocumentRegistry;
+  followCursor?: (collaborator: ICollaboratorAwareness) => void;
+  followCursorTitle?: string;
 }): JSX.Element {
   const [collaborators, setCollaborators] = useState<ICollaboratorAwareness[]>(
     []
@@ -150,6 +176,8 @@ export function CollaboratorsBody(props: {
             collaborator={collaborator}
             fileopener={props.fileopener}
             docRegistry={props.docRegistry}
+            followCursor={props.followCursor}
+            followCursorTitle={props.followCursorTitle}
           ></Collaborator>
         );
       })}
@@ -161,15 +189,19 @@ export function Collaborator(props: {
   collaborator: ICollaboratorAwareness;
   fileopener: (path: string) => void;
   docRegistry?: DocumentRegistry;
+  followCursor?: (collaborator: ICollaboratorAwareness) => void;
+  followCursorTitle?: string;
 }): JSX.Element {
   const [open, setOpen] = useState<boolean>(false);
-  const { collaborator, fileopener } = props;
+  const { collaborator, fileopener, followCursor, followCursorTitle } = props;
   let currentMain = '';
 
   if (collaborator.current) {
     // Discard widget tracker prefix (e.g. `notebook:` or `editor:`)
-    const path = collaborator.current.split(':');
-    currentMain = `${path[1]}`;
+    const separator = collaborator.current.indexOf(':');
+    if (separator !== -1) {
+      currentMain = collaborator.current.slice(separator + 1);
+    }
   }
 
   const documents: string[] = collaborator.documents || [];
@@ -203,6 +235,12 @@ export function Collaborator(props: {
     }
   };
 
+  const onFollowCursor = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    followCursor?.(collaborator);
+  };
+
   return (
     <div className={COLLABORATOR_CLASS}>
       <div
@@ -211,7 +249,7 @@ export function Collaborator(props: {
             ? `${CLICKABLE_COLLABORATOR_CLASS} ${COLLABORATOR_HEADER_CLASS}`
             : COLLABORATOR_HEADER_CLASS
         }
-        onClick={documents ? onClick : undefined}
+        onClick={docs.length ? onClick : undefined}
       >
         <LabIcon.resolveReact
           icon={caretDownIcon}
@@ -228,6 +266,16 @@ export function Collaborator(props: {
           <span>{collaborator.user.initials}</span>
         </div>
         <span>{collaborator.user.display_name}</span>
+        {followCursor && collaborator.current ? (
+          <button
+            className={COLLABORATOR_FOLLOW_CURSOR_CLASS}
+            onClick={onFollowCursor}
+            title={followCursorTitle}
+            type={'button'}
+          >
+            <LabIcon.resolveReact icon={searchIcon} tag={'span'} />
+          </button>
+        ) : null}
       </div>
       <div
         className={`${COLLABORATOR_FILES_CLASS} jp-DirListing`}
