@@ -26,4 +26,4 @@ header:
     - 'yarn.lock'
     - '**/_version.py'
 
-  comment: on-failure
+  comment: never

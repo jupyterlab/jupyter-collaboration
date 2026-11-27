@@ -1,3 +1,6 @@
+# Copyright (c) Jupyter Development Team.
+# Distributed under the terms of the Modified BSD License.
+
 """Check that all endpoints of the extension require authentication.
 
 When unauthenticated access is not allowed, Jupyter Server warns about every
